@@ -2462,7 +2462,7 @@ window.showReceipt=function showReceipt(collection,id){
  <div class="receipt-bottom-line" style="font-size:.54rem;line-height:1.18;margin-top:3px!important;white-space:normal;overflow:visible;word-break:normal">${t.bottom}</div>
  <div class="contact-card" style="padding:8px 9px;margin-top:7px;text-align:center;font-size:.68rem;line-height:1.28;white-space:normal;overflow:visible">
    <div style="white-space:normal;overflow:visible;overflow-wrap:anywhere"><strong>${t.wa}:</strong> ${escapeHtml(contact.phone||'')}</div>
-   <div style="white-space:normal;overflow:visible;overflow-wrap:anywhere;margin-top:4px"><strong>${t.email}:</strong> ${escapeHtml(contact.email||'')}<div class="receipt-capture" style="display:flex;justify-content:center;margin-top:8px"><button type="button" class="btn btn-primary btn-sm" onclick="swCopyReceiptText();return false" onpointerup="if(event.pointerType==='touch'){event.preventDefault();swCopyReceiptText();return false}">COPIAR</button></div>
+   <div style="white-space:normal;overflow:visible;overflow-wrap:anywhere;margin-top:4px"><strong>${t.email}:</strong> ${escapeHtml(contact.email||'')}<div class="receipt-capture" style="display:flex;justify-content:center;margin-top:8px"><button type="button" class="btn btn-primary btn-sm" onclick="swCopyReceiptImage();return false" onpointerup="if(event.pointerType==='touch'){event.preventDefault();swCopyReceiptImage();return false}">COPIAR</button></div>
  </div>
  </div>
  </div>`;
