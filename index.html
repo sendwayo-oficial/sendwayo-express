@@ -501,16 +501,13 @@ aside{height:100vh;min-height:0;overflow:hidden}
       <div id="service-search-empty" class="muted" style="display:none;margin-top:8px">No aparece en el catálogo oficial.</div>
     </div>
     <div class="service-catalog">
-      <div class="service-catalog-title"><i class="fa-solid fa-list-check"></i> Todos los servicios y facturas disponibles</div>
+      <div class="service-catalog-title"><i class="fa-solid fa-list-check"></i> Servicios oficiales de Facturas y Servicios</div>
       <div class="service-catalog-grid">
-        <div class="service-catalog-group"><h4>1. Recargas de teléfono</h4><div class="service-chip-list"><span class="service-chip">Claro</span><span class="service-chip">Altice</span><span class="service-chip">Viva</span><span class="service-chip">Digicel</span><span class="service-chip">Moun</span><span class="service-chip">Natcom</span><span class="service-chip">Activa</span></div></div>
-        <div class="service-catalog-group"><h4>2. Recargas de Internet Prepago</h4><div class="service-chip-list"><span class="service-chip">Wind</span></div></div>
-        <div class="service-catalog-group"><h4>3. Recargas de Energía Eléctrica</h4><div class="service-chip-list"><span class="service-chip">CEPM</span><span class="service-chip">EDESur</span></div></div>
-        <div class="service-catalog-group"><h4>4. Recarga de Peaje / Paso Rápido</h4><div class="service-chip-list"><span class="service-chip">Paso Rápido</span></div></div>
-        <div class="service-catalog-group"><h4>5. Cuentas de apuestas deportivas online</h4><div class="service-chip-list"><span class="service-chip">Betcris</span><span class="service-chip">Juancito Sport</span><span class="service-chip">OROBET</span><span class="service-chip">SuperBets</span><span class="service-chip">Star Sport</span></div></div>
-        <div class="service-catalog-group"><h4>6. Póliza de seguros de vehículos</h4><div class="service-chip-list"><span class="service-chip">Amalia Seguros</span><span class="service-chip">Dominicana Compañía de Seguros</span></div></div>
-        <div class="service-catalog-group"><h4>10. Envíos y Recepción de Paquetes</h4><div class="service-chip-list"><span class="service-chip">Envíos de paquetes</span><span class="service-chip">Recepción de paquetes</span></div></div>
-        <div class="service-catalog-group"><h4>Servicios Financieros</h4><div class="service-chip-list"><span class="service-chip">MonCash</span><span class="service-chip">NatCash</span><span class="service-chip">Envíos y Retiros Nacionales</span><span class="service-chip">Envíos y Retiros Internacionales</span></div></div>
+        <div class="service-catalog-group"><h4>1. Internet Prepago</h4><div class="service-chip-list"><span class="service-chip">Wind</span></div></div>
+        <div class="service-catalog-group"><h4>2. Energía Eléctrica</h4><div class="service-chip-list"><span class="service-chip">CEPM</span><span class="service-chip">EDESur</span></div></div>
+        <div class="service-catalog-group"><h4>3. Peaje / Paso Rápido</h4><div class="service-chip-list"><span class="service-chip">Paso Rápido</span></div></div>
+        <div class="service-catalog-group"><h4>4. Cuentas de apuestas deportivas online</h4><div class="service-chip-list"><span class="service-chip">Betcris</span><span class="service-chip">Juancito Sport</span><span class="service-chip">OROBET</span><span class="service-chip">SuperBets</span><span class="service-chip">Star Sport</span></div></div>
+        <div class="service-catalog-group"><h4>5. Pólizas de seguros de vehículos</h4><div class="service-chip-list"><span class="service-chip">Amalia Seguros</span><span class="service-chip">Dominicana Compañía de Seguros</span></div></div>
       </div>
     </div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','pagoTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','pagoTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','pagoTable')">CSV</button></div><input class="search-box" placeholder="Buscar servicio..." oninput="filterTable(this,'pagoTable')"></div>
@@ -2436,7 +2433,7 @@ currentUser.name=name;currentUser.username=newUser;currentUser.usernameCustomize
 }
 async function setProfileAvatar(input){const file=input?.files?.[0];if(!file||!currentUser)return;const reader=new FileReader();reader.onload=async()=>{currentUser.avatar=reader.result;state.users[currentUser.id]=currentUser;document.getElementById('profile-preview').src=currentUser.avatar;document.getElementById('header-avatar').src=currentUser.avatar;await persist();toast('Foto de perfil actualizada.')};reader.readAsDataURL(file)}
 
-const OFFICIAL_SENDWAYO_SERVICES=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa','Wind','CEPM','EDESur','Paso Rápido','Betcris','Juancito Sport','OROBET','SuperBets','Star Sport','Amalia Seguros','Dominicana Compañía de Seguros','MonCash','NatCash','Envíos y Retiros Nacionales','Envíos y Retiros Internacionales'];
+const OFFICIAL_SENDWAYO_SERVICES=['Wind','CEPM','EDESur','Paso Rápido','Betcris','Juancito Sport','OROBET','SuperBets','Star Sport','Amalia Seguros','Dominicana Compañía de Seguros'];
 function updatePaymentServiceSuggestions(query){
  const box=document.getElementById('payment-service-suggestions');if(!box)return;
  const q=String(query||'').trim().toLowerCase();
@@ -6417,7 +6414,7 @@ img[data-current-brand-logo="true"]{
   window.__sendwayoOfficialServiceCatalogLockV1=true;
   const RECARGAS=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa'];
   const PAQUETICOS=['Claro','Viva','Altice'];
-  const FACTURAS=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa','Wind','CEPM','EDESur','Paso Rápido','Betcris','Juancito Sport','OROBET','SuperBets','Star Sport','Amalia Seguros','Dominicana Compañía de Seguros','MonCash','NatCash','Envíos y Retiros Nacionales','Envíos y Retiros Internacionales'];
+  const FACTURAS=['Wind','CEPM','EDESur','Paso Rápido','Betcris','Juancito Sport','OROBET','SuperBets','Star Sport','Amalia Seguros','Dominicana Compañía de Seguros'];
   const canon=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   function setSelect(id,allowed){
     const el=document.getElementById(id); if(!el)return;
