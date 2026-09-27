@@ -2728,9 +2728,17 @@ window.showReceipt=async function showReceipt(collection,id){
  let r=state[collection]?.[id];
  if(!r&&state.transacciones?.[id]){r={...state.transacciones[id],_sourceCollection:'transacciones'};state[collection]=state[collection]||{};state[collection][id]=r}
  if(!r||r.status!=='Aprobado')return toast('El recibo solo aparece después de la aprobación del Administrador.','warn');
+ if(!r.receipt&&firebaseReady&&firebase.auth().currentUser){
+   try{
+     const src=sendwayoRecordSource(collection,id,r);
+     const snap=await firebase.database().ref(src.path+'/receipt').once('value');
+     const savedReceipt=snap.val();
+     if(savedReceipt){r.receipt=savedReceipt;state[collection][id]=r;}
+   }catch(e){console.warn('Lectura de comprobante:',e)}
+ }
  if(!r.receipt){
    generateReceipt(collection,id);r=state[collection]?.[id];
-   if(!r?.receipt)return toast('No se pudo generar el recibo.','error');
+   if(!r?.receipt)return toast('No se pudo generar el comprobante.','error');
  }
  await persistGeneratedReceipt(collection,id,r);
  const u=state.users?.[r.userId]||state.users?.admin||{};
@@ -3993,7 +4001,7 @@ window.editRecord=function(collection,id){const r=state[collection]?.[id];if(!r)
 window.actionButtons=function(collection,id,status){
   const admin=isAdmin(),rec=state[collection]?.[id],owner=rec?.userId===currentUser?.id||rec?.createdUserId===currentUser?.id;
   let a='<button class="btn btn-light btn-sm" type="button" title="Ver" onclick="event.preventDefault();event.stopPropagation();viewRecord(\''+collection+'\',\''+id+'\');return false">Ver</button>';
-  if(status==='Aprobado')a+='<button class="btn btn-primary btn-sm" title="Recibo" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>';
+  if(status==='Aprobado'&&collection!=='deposits')a+='<button class="btn btn-primary btn-sm" title="Recibo" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>';
   if(admin){
     a+='<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\''+collection+'\',\''+id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\''+collection+'\',\''+id+'\')">Eliminar</button>';
     if(status==='Pendiente'&&collection!=='accountWithdrawals')a+='<button class="btn btn-success btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'No coincide\')">NO COINCIDE</button>';
