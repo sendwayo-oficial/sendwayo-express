@@ -1789,7 +1789,7 @@ async function deleteCreditGrant(id){
 function creditActionButtons(r){return '<div class="actions"><button class="btn btn-light btn-sm" onclick="viewCreditRecord(\''+r.id+'\')">Ver</button>'+(isAdmin()?'<button class="btn btn-warning btn-sm" onclick="editCreditGrant(\''+r.id+'\')">Modificar</button><button class="btn btn-danger btn-sm" onclick="deleteCreditGrant(\''+r.id+'\')">Eliminar</button>':'')+'</div>'}
 function renderCredit(){
  const body=document.querySelector('#creditTable tbody'),summary=document.getElementById('credit-summary-kpis');if(!body||!currentUser)return;const q=normalizeSearchText(document.querySelector('#view-credito .search-box')?.value||'');
- const users=(isAdmin()?Object.values(state.users||{}).filter(u=>u?.role==='Remitente'):Object.values(state.users||{}).filter(u=>u?.id===currentUser.id));let rows=[];
+ const users=(isAdmin()?Object.values(state.users||{}).filter(u=>isManagedUser(u)):Object.values(state.users||{}).filter(u=>u?.id===currentUser.id));let rows=[];
  users.forEach(u=>{const x=creditInfo(u),status=x.out>0?'Pendiente':x.limit>0?'Disponible':'Sin crédito';if((creditStatusFilter!=='Todos'&&status!==creditStatusFilter)||(q&&!normalizeSearchText(u.name).includes(q)&&!normalizeSearchText(u.username).includes(q)&&!normalizeSearchText(u.staffId).includes(q)))return;const grants=Object.values(u.creditGrants||{});if(!grants.length)rows.push({u,g:null,x,status});else grants.forEach(g=>rows.push({u,g:{...g,userId:u.id,username:u.username},x,status}))});
  let totalLimit=0,totalOut=0;rows.forEach(row=>{totalLimit+=row.x.limit;totalOut+=row.x.out});
  body.innerHTML=rows.map((row,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(row.g?.id||'—')+'</td><td><b>'+escapeHtml(row.u.name||row.u.username||row.u.id)+'</b><br><small>'+escapeHtml(row.u.username||'')+'</small></td><td>'+money(row.x.limit)+'</td><td>'+money(row.x.out)+'</td><td>'+money(row.x.available)+'</td><td>'+escapeHtml(row.status.toUpperCase())+'</td><td>'+ (row.g?creditActionButtons(row.g):(isAdmin()?'<button class="btn btn-primary btn-sm" onclick="openCreditGrantModal(\''+row.u.id+'\')">Agregar crédito</button>':'—')) +'</td></tr>').join('')||'<tr><td colspan="8" class="muted">No hay créditos registrados.</td></tr>';
@@ -1797,7 +1797,7 @@ function renderCredit(){
 }
 function openCreditGrantModal(targetId){
  if(!isAdmin())return toast('Solo Administración puede otorgar crédito.','warn');
- const users=Object.values(state.users||{}).filter(u=>u?.role==='Remitente'&&u.active!==false),sel=document.getElementById('credit-target');if(!sel)return;
+ const users=Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false),sel=document.getElementById('credit-target');if(!sel)return;
  sel.innerHTML=users.map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.staffId||u.username||u.id)+'</option>').join('');
  if(targetId)sel.value=targetId;
  document.getElementById('credit-amount').value='';document.getElementById('credit-note').value='';
@@ -2638,8 +2638,9 @@ function commissionTodayFor(userId){
      if(!admin&&String(ownerId)!==String(userId))continue;
      const gross=Math.max(0,Number(r.commissionTotal??r.commission??r.commissionAmount??r.comision??r.fee??0));
      if(gross<=0)continue;
+     const agentOwner=isAgentUser(ownerId)||isAgentUser(state.users?.[userId]);
      let share=admin?Number(r.commissionAdmin):Number(r.commissionUser);
-     if(!Number.isFinite(share)||share<=0)share=Number((gross*0.50).toFixed(2));
+     if(agentOwner&&!admin)share=0;else if(!Number.isFinite(share)||share<=0)share=Number((gross*0.50).toFixed(2));
      if(Number.isFinite(share)&&share>0){total+=share;seen.add(key)}
    }
  }
@@ -2662,8 +2663,9 @@ function commissionTotalFor(userId){
      const owner=r.userId??r.remitterId??r.remitenteId??r.senderId;
      if(!admin&&String(owner)!==String(userId))continue;
      const gross=Math.max(0,Number(r.commissionTotal??r.commission??r.commissionAmount??r.comision??r.fee??0));
+     const agentOwner=isAgentUser(owner)||isAgentUser(state.users?.[userId]);
      let share=admin?Number(r.commissionAdmin):Number(r.commissionUser);
-     if(!Number.isFinite(share)||share<=0)share=Number((gross*0.50).toFixed(2));
+     if(agentOwner&&!admin)share=0;else if(!Number.isFinite(share)||share<=0)share=Number((gross*0.50).toFixed(2));
      if(Number.isFinite(share)&&share>0)derived+=share;
    }
  }
@@ -2698,8 +2700,8 @@ function buildDailyReportRows(dateKey,userFilter=''){
    if(reportRecordDay(r)!==dateKey)continue;
    let share=0;
    if(r.status==='Aprobado'){
-     if(userFilter==='admin')share=Number(r.commissionAdmin??(Number(r.commission||0)*0.5));
-     else if(userFilter)share=(r.userId===userFilter?Number(r.commissionUser??(Number(r.commission||0)*0.5)):0);
+     if(userFilter==='admin')share=isAgentUser(r.userId)?Number(r.commissionAdmin??r.commission??0):Number(r.commissionAdmin??(Number(r.commission||0)*0.5));
+     else if(userFilter)share=(r.userId===userFilter?(isAgentUser(r.userId)?0:Number(r.commissionUser??(Number(r.commission||0)*0.5))):0);
      else share=Number(r.commission||0);
    }
    add(r,label,detailFn(r),r.amount,share,r.status);
@@ -3292,9 +3294,9 @@ async function guardarDepositoAdministrativo(){
         if(!r || r.status!=='Aprobado') continue;
         let share=0;
         if(userId==='admin'){
-          share=Number(r.commissionAdmin ?? (Number(r.commission||0)*0.5));
+          share=isAgentUser(r.userId)?Number(r.commissionAdmin ?? r.commission ?? 0):Number(r.commissionAdmin ?? (Number(r.commission||0)*0.5));
         }else if(r.userId===userId){
-          share=Number(r.commissionUser ?? (Number(r.commission||0)*0.5));
+          share=isAgentUser(r.userId)?0:Number(r.commissionUser ?? (Number(r.commission||0)*0.5));
         }
         if(Number.isFinite(share) && share>0) derived+=share;
       }
@@ -3903,6 +3905,9 @@ function swCommission(r,admin,uid,col){
     if(!matchesOwner)return 0;
   }
 
+  // Agente único: no recibe reparto automático.
+  const agent=isAgentUser(state?.users?.[current]);
+  if(agent&&!admin)return 0;
   // Si ya existe el reparto contable, usarlo exactamente.
   const storedShare=admin?swNum(r?.commissionAdmin):swNum(r?.commissionUser);
   if(storedShare>0)return storedShare;
@@ -3932,7 +3937,7 @@ function swCommission(r,admin,uid,col){
     if(amount>0&&rate>0)gross=Number((amount*rate).toFixed(2));
   }
 
-  return gross>0?Number((gross*0.50).toFixed(2)):0;
+  return gross>0?(agent?0:Number((gross*0.50).toFixed(2))):0;
 }
 function swRecordDay(r){
  const keys=[
@@ -4126,7 +4131,7 @@ function swReconciliation(){
     for(const id of Object.keys(ledger)){if(!live[id])orphanLedger.push(col+':'+id)}
   }
   let gross=0,userShare=0,adminShare=0;
-  approved.forEach(({r})=>{const g=swNum(r.commissionTotal??r.commission??r.commissionAmount??r.comision??r.fee);gross+=g;userShare+=swNum(r.commissionUser??g*.5);adminShare+=swNum(r.commissionAdmin??g*.5)});
+  approved.forEach(({r})=>{const g=swNum(r.commissionTotal??r.commission??r.commissionAmount??r.comision??r.fee);const agent=isAgentUser(r.userId)||!!r.agentOperation;gross+=g;userShare+=agent?0:swNum(r.commissionUser??g*.5);adminShare+=agent?swNum(r.commissionAdmin??g):swNum(r.commissionAdmin??g*.5)});
   const admin=window.state?.users?.admin||{},storedAdmin=swNum(admin.commissionAccrued);
   const capital=swNum(window.state?.capital?.balance);
   return {approved:approved.length,missingLedger,orphanLedger,gross:Number(gross.toFixed(2)),userShare:Number(userShare.toFixed(2)),adminShare:Number(adminShare.toFixed(2)),storedAdmin:Number(storedAdmin.toFixed(2)),adminDifference:Number((storedAdmin-adminShare).toFixed(2)),capital:Number(capital.toFixed(2))};
