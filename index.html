@@ -2731,7 +2731,9 @@ window.showReceipt=async function showReceipt(collection,id){
  if(!r.receipt&&firebaseReady&&firebase.auth().currentUser){
    try{
      const src=sendwayoRecordSource(collection,id,r);
-     const snap=await firebase.database().ref(src.path+'/receipt').once('value');
+     const readPromise=firebase.database().ref(src.path+'/receipt').once('value');
+     const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('RECEIPT_READ_TIMEOUT')),2500));
+     const snap=await Promise.race([readPromise,timeout]);
      const savedReceipt=snap.val();
      if(savedReceipt){r.receipt=savedReceipt;state[collection][id]=r;}
    }catch(e){console.warn('Lectura de comprobante:',e)}
@@ -2740,7 +2742,8 @@ window.showReceipt=async function showReceipt(collection,id){
    generateReceipt(collection,id);r=state[collection]?.[id];
    if(!r?.receipt)return toast('No se pudo generar el comprobante.','error');
  }
- await persistGeneratedReceipt(collection,id,r);
+ /* La pantalla no debe quedar esperando a Firebase para mostrar el comprobante. */
+ persistGeneratedReceipt(collection,id,r).catch(e=>console.warn('Guardado de comprobante:',e));
  const u=state.users?.[r.userId]||state.users?.admin||{};
  if(collection==='deposits'&&r.receipt){
    r.receipt.beneficiario=u.name||r.username||'Remitente';
