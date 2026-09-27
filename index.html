@@ -339,7 +339,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
       <li><a href="#" onclick="switchView('beneficiarios')"><i class="fa-solid fa-address-book"></i> Beneficiarios</a></li>
       <li><a href="#" onclick="switchView('paquetes')"><i class="fa-solid fa-box-open"></i> Paquetes Recepción y Envío</a></li>
       <li><a href="#" onclick="switchView('remitentes')"><i class="fa-solid fa-user-tie"></i> Remitentes</a></li>
-      <li><a href="#" onclick="switchView('recargas')"><i class="fa-solid fa-mobile-screen"></i> Recargas (5 Compañías)</a></li>
+      <li><a href="#" onclick="switchView('recargas')"><i class="fa-solid fa-mobile-screen"></i> Recargas (7 Compañías)</a></li>
       <li><a href="#" onclick="switchView('paqueticos')"><i class="fa-solid fa-gift"></i> Paqueticos (Claro, Viva, Altice)</a></li>
       <li><a href="#" onclick="switchView('pagos')"><i class="fa-solid fa-file-invoice-dollar"></i> Pago de Facturas y Servicios</a></li>
       <li><a href="#" onclick="switchView('cuentas_depositos')"><i class="fa-solid fa-university"></i> Cuentas Bancarias y Depósitos</a></li>
@@ -498,7 +498,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
     <div class="service-search-panel">
       <label for="service-catalog-search"><strong>Buscar factura o servicio</strong></label>
       <input id="service-catalog-search" class="form-control" type="search" autocomplete="off" placeholder="Escriba el nombre del servicio, empresa o factura..." oninput="filterServiceCatalog(this.value);updatePaymentServiceSuggestions(this.value)">
-      <div id="service-search-empty" class="muted" style="display:none;margin-top:8px">No aparece en el listado. Puede escribirlo como <strong>Otro servicio</strong> en la solicitud.</div>
+      <div id="service-search-empty" class="muted" style="display:none;margin-top:8px">No aparece en el catálogo oficial.</div>
     </div>
     <div class="service-catalog">
       <div class="service-catalog-title"><i class="fa-solid fa-list-check"></i> Todos los servicios y facturas disponibles</div>
@@ -621,7 +621,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 
 <div class="modal" id="paquetikoModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('paquetikoModal')">×</button><h3>Paquetico</h3><div class="form-grid"><div class="form-group"><label>Compañía</label><select id="pkt-comp" class="form-control"><option>Claro</option><option>VIVA</option><option>Altice</option></select></div><div class="form-group"><label>Número</label><input id="pkt-num" class="form-control"></div><div class="form-group"><label>Plan</label><input id="pkt-plan" class="form-control"></div><div class="form-group"><label>Monto RD$</label><input id="pkt-monto" type="number" class="form-control"></div></div><button class="btn btn-primary" onclick="guardarPaquetico()">Guardar y Notificar</button></div></div>
 
-<div class="modal" id="pagoModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('pagoModal')">×</button><h3>Pago de Factura / Servicio</h3><div class="form-grid"><div class="form-group"><label>Empresa / Servicio</label><input id="pag-empresa" class="form-control" list="service-options" autocomplete="off" placeholder="Escriba el nombre del servicio..." onfocus="updatePaymentServiceSuggestions(this.value)" oninput="filterServiceCatalog(this.value);updatePaymentServiceSuggestions(this.value)"><datalist id="service-options"><option value="Claro"><option value="Altice"><option value="Viva"><option value="Digicel"><option value="Moun"><option value="Natcom"><option value="Activa"><option value="Wind"><option value="CEPM"><option value="EDESur"><option value="Paso Rápido"><option value="Betcris"><option value="Juancito Sport"><option value="OROBET"><option value="SuperBets"><option value="Star Sport"><option value="Amalia Seguros"><option value="Dominicana Compañía de Seguros"><option value="MonCash"><option value="NatCash"><option value="Envíos y Retiros Nacionales"><option value="Envíos y Retiros Internacionales"><option value="Otro servicio"></datalist><div id="payment-service-suggestions" class="env-suggestions" style="display:none"></div></div><div class="form-group"><label>NIS / Contrato</label><input id="pag-contrato" class="form-control"></div><div class="form-group"><label>Concepto</label><input id="pag-concepto" class="form-control" placeholder="Ej.: factura de energía, internet, agua, etc."></div><div class="form-group"><label>Monto RD$</label><input id="pag-monto" type="number" class="form-control"></div></div><div class="muted" style="margin:8px 0">Si no encuentra el servicio, escriba su nombre directamente en «Empresa / Servicio».</div><button class="btn btn-primary" onclick="guardarPago()">Guardar y Notificar</button></div></div>
+<div class="modal" id="pagoModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('pagoModal')">×</button><h3>Pago de Factura / Servicio</h3><div class="form-grid"><div class="form-group"><label>Empresa / Servicio</label><input id="pag-empresa" class="form-control" list="service-options" autocomplete="off" placeholder="Escriba el nombre del servicio..." onfocus="updatePaymentServiceSuggestions(this.value)" oninput="filterServiceCatalog(this.value);updatePaymentServiceSuggestions(this.value)"><datalist id="service-options"><option value="Claro"><option value="Altice"><option value="Viva"><option value="Digicel"><option value="Moun"><option value="Natcom"><option value="Activa"><option value="Wind"><option value="CEPM"><option value="EDESur"><option value="Paso Rápido"><option value="Betcris"><option value="Juancito Sport"><option value="OROBET"><option value="SuperBets"><option value="Star Sport"><option value="Amalia Seguros"><option value="Dominicana Compañía de Seguros"><option value="MonCash"><option value="NatCash"><option value="Envíos y Retiros Nacionales"><option value="Envíos y Retiros Internacionales"></datalist><div id="payment-service-suggestions" class="env-suggestions" style="display:none"></div></div><div class="form-group"><label>NIS / Contrato</label><input id="pag-contrato" class="form-control"></div><div class="form-group"><label>Concepto</label><input id="pag-concepto" class="form-control" placeholder="Ej.: factura de energía, internet, agua, etc."></div><div class="form-group"><label>Monto RD$</label><input id="pag-monto" type="number" class="form-control"></div></div><div class="muted" style="margin:8px 0">Seleccione únicamente un servicio del catálogo oficial de SENDWAYO EXPRESS.</div><button class="btn btn-primary" onclick="guardarPago()">Guardar y Notificar</button></div></div>
 
 <div class="modal" id="paqueteModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('paqueteModal')">×</button><h3>Paquete - Recepción y Envío</h3><div class="form-grid"><div class="form-group"><label>Tipo</label><select id="paq-tipo" class="form-control"><option>Enviar paquete</option><option>Recibir paquete</option></select></div><div class="form-group"><label>Peso (kg)</label><input id="paq-peso" type="number" step=".01" class="form-control"></div><div class="form-group"><label>Descripción</label><input id="paq-desc" class="form-control"></div><div class="form-group"><label>Costo RD$</label><input id="paq-costo" type="number" step=".01" class="form-control"></div></div><button class="btn btn-primary" onclick="guardarPaquete()">Guardar y Notificar</button></div></div>
 
@@ -2311,20 +2311,29 @@ async function guardarDeposito(){
 async function guardarRecarga(){
  const _modal=document.getElementById('recargaModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
+ const company=String(document.getElementById('rec-comp')?.value||'').trim();
+ const allowed=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa'];
+ if(!allowed.some(x=>x.toLowerCase()===company.toLowerCase()))return toast('Seleccione una compañía oficial de Recargas.','warn');
  let amount=Number(document.getElementById('rec-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('recargaModal'))return;
- const id=await createTransaction('recargas',{company:document.getElementById('rec-comp').value,phone:document.getElementById('rec-num').value},amount);if(!id)return;closeModal('recargaModal');toast('Recarga guardada y notificada.')
+ const id=await createTransaction('recargas',{company,phone:document.getElementById('rec-num').value},amount);if(!id)return;closeModal('recargaModal');toast('Recarga guardada y notificada.')
 }
 async function guardarPaquetico(){
  const _modal=document.getElementById('paquetikoModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
+ const company=String(document.getElementById('pkt-comp')?.value||'').trim();
+ const allowed=['Claro','Viva','Altice'];
+ if(!allowed.some(x=>x.toLowerCase()===company.toLowerCase()))return toast('Seleccione una compañía oficial de Paqueticos.','warn');
  const amount=Number(document.getElementById('pkt-monto').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paquetikoModal'))return;
- const id=await createTransaction('paqueticos',{company:document.getElementById('pkt-comp').value,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id)return;closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
+ const id=await createTransaction('paqueticos',{company,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id)return;closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
 }
 async function guardarPago(){
  const _modal=document.getElementById('pagoModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
+ const company=String(document.getElementById('pag-empresa')?.value||'').trim();
+ const official=typeof OFFICIAL_SENDWAYO_SERVICES!=='undefined'&&OFFICIAL_SENDWAYO_SERVICES.some(x=>x.toLowerCase()===company.toLowerCase());
+ if(!official)return toast('Seleccione un servicio del catálogo oficial.','warn');
  let amount=Number(document.getElementById('pag-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('pagoModal'))return;
- const id=await createTransaction('pagos',{company:document.getElementById('pag-empresa').value,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id)return;closeModal('pagoModal');toast('Pago guardado y notificado.')
+ const id=await createTransaction('pagos',{company,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id)return;closeModal('pagoModal');toast('Pago guardado y notificado.')
 }
 async function guardarPaquete(){
  const _modal=document.getElementById('paqueteModal');if(_modal?.dataset.submitting==='1')return;
@@ -2433,7 +2442,6 @@ function updatePaymentServiceSuggestions(query){
  const q=String(query||'').trim().toLowerCase();
  const matches=OFFICIAL_SENDWAYO_SERVICES.filter(x=>!q||x.toLowerCase().includes(q)).slice(0,8);
  const items=matches.map(name=>'<button type="button" class="service-suggestion" onclick="selectPaymentService(\''+escapeHtml(name).replace(/'/g,"&#39;")+'\')">'+escapeHtml(name)+'</button>');
- if(q&&!matches.some(x=>x.toLowerCase()===q))items.push('<button type="button" class="service-suggestion service-suggestion-free" onclick="selectPaymentService(\''+escapeHtml(query).replace(/'/g,"&#39;")+'\')">Usar «'+escapeHtml(query)+'»</button>');
  box.innerHTML=items.join('');
  box.style.display=items.length?'block':'none';
 }
@@ -6425,7 +6433,6 @@ img[data-current-brand-logo="true"]{
     const dl=document.getElementById('service-options'); if(!dl)return;
     dl.innerHTML='';
     FACTURAS.forEach(v=>{const o=document.createElement('option');o.value=v;dl.appendChild(o)});
-    const o=document.createElement('option');o.value='Otro servicio';dl.appendChild(o);
   }
   function updateCatalogText(){
     const h=[...document.querySelectorAll('#view-recargas h3')].find(x=>/Recargas/i.test(x.textContent||''));
