@@ -1428,21 +1428,21 @@ async function realizarLoginOriginal(){
          const usersRef=firebase.database().ref(DB_PATH+'/users');
          let snap=await usersRef.orderByChild('authUid').equalTo(authUser.uid).once('value');
          let vals=snap.val()||{};
-         found=Object.values(vals).find(u=>u&&u.role==='Remitente')||null;
+         found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
          if(!found && authUser.email){
            snap=await usersRef.orderByChild('authEmail').equalTo(String(authUser.email).toLowerCase()).once('value');
            vals=snap.val()||{};
-           found=Object.values(vals).find(u=>u&&u.role==='Remitente')||null;
+           found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
          }
          if(!found && identifier && !identifier.includes('@')){
            snap=await usersRef.orderByChild('username').equalTo(identifier.toLowerCase()).once('value');
            vals=snap.val()||{};
-           found=Object.values(vals).find(u=>u&&u.role==='Remitente')||null;
+           found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
          }
          if(!found && identifier){
            snap=await usersRef.orderByChild('staffId').equalTo(identifier.toUpperCase()).once('value');
            vals=snap.val()||{};
-           found=Object.values(vals).find(u=>u&&u.role==='Remitente')||null;
+           found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
          }
        }catch(profileLookupError){
          console.warn('SENDWAYO perfil por identidad:',profileLookupError);
@@ -1455,6 +1455,7 @@ async function realizarLoginOriginal(){
      state.users[found.id]=found;
    }
 
+   if(normalizeSearchText(found?.name||'')==='betina lindor'){found={...found,role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true};state.users[found.id]=found;}
    currentUser=found;
    lastActivity=Date.now();
    sessionStartedAt=Date.now();
@@ -1552,6 +1553,7 @@ async function loadAuthorizedState(authUser){
    }
    if(Object.keys(officialBankPatch).length)try{await root.update(officialBankPatch);Object.entries(officialBankPatch).forEach(([p,v])=>{const id=p.split('/')[1];state.accounts[id]=v})}catch(e){console.warn('No se pudieron restaurar las cuentas bancarias oficiales:',e)}
    ensureSeedData();
+   await ensureUniqueAgentIdentity();
    mergeFinancialLedgerIntoState();
    lastSyncedState=cloneState(state);
    attachRealtimeListeners();
@@ -1717,15 +1719,20 @@ function envioCommissionRate(type,amount){const fee=officialHtiCashFee(amount,ty
 function commissionRateFor(collection,record){if(collection!=='envios')return 0.05;const amount=Number(record?.amount||0),fee=officialHtiCashFee(amount,record?.type);return fee!==null&&amount>0?fee/amount:envioCommissionRate(record?.type,amount)}
 function calcEnvio(m,type){const amount=Number(m||0),fee=officialHtiCashFee(amount,type);if(isOfficialHtiCashRoute(type)&&fee===null)return{commission:0,net:0,total:0,valid:false,official:true};const commission=fee!==null?fee:amount*envioCommissionRate(type,amount),net=amount-commission,total=net*2.10;return{commission,net,total,valid:amount>0,official:fee!==null}}
 function calcularEnvioModal(){const type=document.getElementById('env-tipo-trans')?.value,amount=Number(document.getElementById('env-monto')?.value||0),x=calcEnvio(amount,type);document.getElementById('calc-neto').textContent=x.valid?money(x.net):'—';document.getElementById('calc-comision').textContent=x.valid?money(x.commission):(isOfficialHtiCashRoute(type)?'RD$ 50.00 mínimo':'—');document.getElementById('calc-total').textContent=x.valid?x.total.toFixed(2)+' HTG':'—';const hint=document.getElementById('env-official-tariff-hint');if(hint)hint.textContent=isOfficialHtiCashRoute(type)?'Tarifa oficial MonCash/NatCash: RD$50 mínimo · RD$36,000 máximo. La comisión se calcula exactamente según el rango del monto enviado.':'Las tarifas por rango solo aplican a RD→Haití vía MonCash y RD→Haití vía NatCash.'}
-function canTransact(){return currentUser&&['Remitente','Administrador'].includes(currentUser.role)}
+function canTransact(){return !!currentUser&&(isAdmin()||isManagedUser(currentUser))}
 function owner(){return currentUser}
 function userById(id){return state.users[id]||{}}
 function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').trim().toLowerCase()==='administrador' || String(currentUser.role||'').trim().toLowerCase()==='admin' || String(currentUser.username||'').trim().toLowerCase()==='admin' || String(currentUser.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com')}
+function isAdminUser(user){const u=user||{};return u.id==='admin'||String(u.role||'').trim().toLowerCase()==='administrador'||String(u.username||'').trim().toLowerCase()==='admin'||String(u.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com'}
+function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();const name=normalizeSearchText(u.name||u.nombre||u.fullName||'');return role==='agente'||name==='betina lindor'}
+function isManagedUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});return !!u&&(String(u.role||'').trim().toLowerCase()==='remitente'||isAgentUser(u))}
+function isOperationalUser(userOrId){return isAdminUser(userOrId)||isManagedUser(userOrId)}
+async function ensureUniqueAgentIdentity(){if(!isAdmin())return;const match=Object.values(state.users||{}).find(u=>normalizeSearchText(u?.name||'')==='betina lindor');if(!match)return;const changed=match.role!=='Agente'||match.agentType!=='AGENTE_UNICO'||match.commissionMode!=='PLATFORM_100'||match.uniqueAgent!==true;if(!changed)return;const patch={role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true};try{await firebase.database().ref(DB_PATH+'/users/'+match.id).update(patch);state.users[match.id]={...match,...patch};if(lastSyncedState?.users)lastSyncedState.users[match.id]=cloneState(state.users[match.id]);if(currentUser?.id===match.id)currentUser=state.users[match.id]}catch(e){console.warn('No se pudo configurar el Agente único Betina Lindor:',e)}}}
 async function createTransaction(collection,fields,amount){
  if(!canTransact()){toast('Su cuenta no tiene permiso para realizar operaciones.','error');return null}
  if(!firebaseReady||!firebase.auth().currentUser){toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');return null}
  const id=uid(collection),amountNumber=Number(amount||0),creditUsed=isAdmin()?0:Number(currentUser.__creditUsedForOperation||0),suppliedCommission=Number.isFinite(Number(fields?.commission))?Number(fields.commission):null,rate=commissionRateFor(collection,{...fields,amount:amountNumber,commission:suppliedCommission}),commissionAmount=suppliedCommission!==null?suppliedCommission:amountNumber*rate;
- const record={id,...fields,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount:amountNumber,commissionRate:amountNumber>0?commissionAmount/amountNumber:rate,commission:commissionAmount,status:'Pendiente',createdAt:now(),balanceDebited:false,balanceRefunded:false,accountingType:'COMERCIAL',commissionSplit:'50/50',creditUsed,adminVisible:true,adminInbox:true};
+ const agentMode=isAgentUser(currentUser);const record={id,...fields,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount:amountNumber,commissionRate:amountNumber>0?commissionAmount/amountNumber:rate,commission:commissionAmount,status:'Pendiente',createdAt:now(),balanceDebited:false,balanceRefunded:false,accountingType:'COMERCIAL',commissionSplit:agentMode?'100% PLATAFORMA':'50/50',commissionBeneficiary:agentMode?'PLATAFORMA':'REPARTIDO',agentOperation:agentMode,creditUsed,adminVisible:true,adminInbox:true};
  if(!isAdmin())record.balanceDebited=true;
  state[collection]=state[collection]||{};state[collection][id]=record;addAudit('Crear '+collection,id);
  try{
@@ -1800,7 +1807,7 @@ async function saveCreditGrant(){
  if(!isAdmin())return;const id=document.getElementById('credit-target')?.value,amount=Number(document.getElementById('credit-amount')?.value||0),note=document.getElementById('credit-note')?.value.trim()||'';
  if(!id||!Number.isFinite(amount)||amount<=0)return toast('Indique un remitente y un monto mayor que cero.','warn');if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');
  const cid=uid('crd'),ref=firebase.database().ref(DB_PATH+'/users/'+id);
- try{const tx=await ref.transaction(u=>{if(!u||u.role!=='Remitente')return undefined;const grants={...(u.creditGrants||{})};return {...u,creditLimit:Number(u.creditLimit||0)+amount,creditGrantedTotal:Number(u.creditGrantedTotal||0)+amount,creditGrants:{...grants,[cid]:{id:cid,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'}}}});if(!tx.committed)return toast('No se pudo guardar el crédito. Verifique que el remitente exista.','error');const updated=tx.snapshot.val(),record={id:cid,userId:id,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'};state.users[id]=updated;state.credits=state.credits||{};state.credits[cid]=record;try{await firebase.database().ref(DB_PATH+'/credits/'+cid).set(record)}catch(e){console.warn('Índice de crédito no disponible:',e)}if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);localSave();closeModal('creditGrantModal');renderAll();try{await addNotification(id,'Administración le otorgó '+money(amount)+' de crédito. Cupo disponible: '+money(creditInfo(updated).available)+'.','credits',cid)}catch(_){}toast('Crédito otorgado y guardado correctamente.','success')}catch(e){console.warn('saveCreditGrant:',e);toast('No se pudo guardar el crédito en Firebase.','error')}
+ try{const tx=await ref.transaction(u=>{if(!u||!isManagedUser(u))return undefined;const grants={...(u.creditGrants||{})};return {...u,creditLimit:Number(u.creditLimit||0)+amount,creditGrantedTotal:Number(u.creditGrantedTotal||0)+amount,creditGrants:{...grants,[cid]:{id:cid,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'}}}});if(!tx.committed)return toast('No se pudo guardar el crédito. Verifique que el remitente exista.','error');const updated=tx.snapshot.val(),record={id:cid,userId:id,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'};state.users[id]=updated;state.credits=state.credits||{};state.credits[cid]=record;try{await firebase.database().ref(DB_PATH+'/credits/'+cid).set(record)}catch(e){console.warn('Índice de crédito no disponible:',e)}if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);localSave();closeModal('creditGrantModal');renderAll();try{await addNotification(id,'Administración le otorgó '+money(amount)+' de crédito. Cupo disponible: '+money(creditInfo(updated).available)+'.','credits',cid)}catch(_){}toast('Crédito otorgado y guardado correctamente.','success')}catch(e){console.warn('saveCreditGrant:',e);toast('No se pudo guardar el crédito en Firebase.','error')}
 }
 async function guardBalance(amount){
  if(isAdmin())return true;
@@ -1852,7 +1859,7 @@ function updateEnvioSuggestions(kind){
  const col=kind==='remitente'?state.users:state.beneficiaries;
  if(!q){box.innerHTML='';box.style.display='none';return;}
  const list=Object.values(col||{})
-   .filter(x=>x&&x.active!==false&&(kind==='remitente'?x.role==='Remitente':true))
+   .filter(x=>x&&x.active!==false&&(kind==='remitente'?isManagedUser(x):true))
    .filter(x=>isAdmin()||kind!=='remitente'||x.id===currentUser?.id)
    .filter(x=>personMatchesQuery(x,q))
    .sort((a,b)=>{
@@ -2041,22 +2048,16 @@ async function guardarPaquete(){
 }
 function calculateCommissionAvailable(userId){
  const u=state.users?.[userId];if(!u)return 0;
- const accrued=Number(u.commissionAccrued||0);
- const current=Number(u.commission||0);
- let earned=0;
- const cols=['envios','recargas','paqueticos','pagos','paquetes'];
+ const accrued=Number(u.commissionAccrued||0),current=Number(u.commission||0),agent=isAgentUser(u);
+ let earned=0;const cols=['envios','recargas','paqueticos','pagos','paquetes'];
  for(const col of cols)for(const r of Object.values(state[col]||{})){
    if(!r||r.status!=='Aprobado'||r.userId!==userId)continue;
-   const share=Number(r.commissionUser??(Number(r.commission||0)*0.5));
+   const share=agent?0:Number(r.commissionUser??(Number(r.commission||0)*0.5));
    if(Number.isFinite(share)&&share>0)earned+=share;
  }
- for(const x of Object.values(u.commissionCredits||{})){
-   if(x?.type==='COMISION_ACREDITADA'){const n=Number(x.amount||0);if(Number.isFinite(n)&&n>0)earned+=n}
- }
+ for(const x of Object.values(u.commissionCredits||{})){if(x?.type==='COMISION_ACREDITADA'){const n=Number(x.amount||0);if(Number.isFinite(n)&&n>0)earned+=n}}
  const paid=Object.values(state.commissions||{}).filter(x=>x&&x.userId===userId&&x.accountingType==='COMISION_PAGADA').reduce((s,x)=>s+Math.max(0,Number(x.amount||0)),0);
- const derived=Math.max(0,earned-paid);
- const fallback=Math.max(0,accrued-paid);
- const available=earned>0?derived:(accrued>0?fallback:Math.max(0,current));
+ const derived=Math.max(0,earned-paid),fallback=Math.max(0,accrued-paid),available=earned>0?derived:(accrued>0?fallback:Math.max(0,current));
  return Number(available.toFixed(2));
 }
 function reconcileCommissionDisplay(userId){
@@ -2066,7 +2067,7 @@ function reconcileCommissionDisplay(userId){
  if(currentUser?.id===userId)currentUser=u;
  return available;
 }
-function updateCommissionTarget(){let sel=document.getElementById('com-target');if(!sel)return;let users=Object.values(state.users).filter(u=>u.role==='Remitente'&&u.active);sel.innerHTML=users.map(u=>`<option value="${u.id}">${escapeHtml(u.name)} — ${escapeHtml(u.username)} (${escapeHtml(u.role)})</option>`).join('');if(!isAdmin()&&currentUser)sel.value=currentUser.id;let target=state.users[sel.value]||currentUser;const available=reconcileCommissionDisplay(target?.id);document.getElementById('com-disp').value=money(available);const info=document.querySelector('#comisionModal .info-box');if(info)info.textContent=isAdmin()?'Administración puede aplicar la comisión de cualquier Remitente inmediatamente, sin aprobación adicional. El monto debe ser menor o igual a la comisión disponible y pasa directamente a su balance.':'Este módulo permite al Remitente aplicar su propia comisión inmediatamente, sin aprobación administrativa. El monto debe ser menor o igual a su comisión disponible y pasa directamente a su balance.'}
+function updateCommissionTarget(){let sel=document.getElementById('com-target');if(!sel)return;let users=Object.values(state.users).filter(u=>isManagedUser(u)&&u.active);sel.innerHTML=users.map(u=>`<option value="${u.id}">${escapeHtml(u.name)} — ${escapeHtml(u.username)} (${escapeHtml(u.role)})</option>`).join('');if(!isAdmin()&&currentUser)sel.value=currentUser.id;let target=state.users[sel.value]||currentUser;const available=reconcileCommissionDisplay(target?.id);document.getElementById('com-disp').value=money(available);const info=document.querySelector('#comisionModal .info-box');if(info)info.textContent=isAdmin()?'Administración puede aplicar la comisión de cualquier Remitente inmediatamente, sin aprobación adicional. El monto debe ser menor o igual a la comisión disponible y pasa directamente a su balance.':'Este módulo permite al Remitente aplicar su propia comisión inmediatamente, sin aprobación administrativa. El monto debe ser menor o igual a su comisión disponible y pasa directamente a su balance.'}
 async function guardarComision(){
  const _modal=document.getElementById('comisionModal');if(_modal?.dataset.submitting==='1')return;
  if(!currentUser)return;
@@ -2266,98 +2267,34 @@ async function refundTransactionReservation(userId,transactionId,amount,creditUs
   if(!tx.committed)return false;state.users[userId]=tx.snapshot.val();if(currentUser?.id===userId)currentUser=state.users[userId];if(lastSyncedState?.users?.[userId])lastSyncedState.users[userId]=cloneState(state.users[userId]);return true;
  }catch(e){console.warn('Devolución idempotente:',e);return false}
 }
-async function setTransactionStatus(collection,id,status){
+async async function setTransactionStatus(collection,id,status){
  if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. La operación financiera no se puede procesar offline.','error');
  if(!isAdmin())return toast('Acción exclusiva del Administrador.','error');
  if(collection==='deposits')return approveDeposit(id,status);
- let r=state[collection]?.[id];
- let sourceCollection=r?._sourceCollection||collection;
- if(!r){
-   try{const snap=await firebase.database().ref(DB_PATH+'/'+sourceCollection+'/'+id).once('value');r=snap.val();if(r)state[collection]=state[collection]||{},state[collection][id]={...r,_sourceCollection:sourceCollection}}catch(e){return toast('No se pudo cargar la operación.','error')}
- }
+ let r=state[collection]?.[id],sourceCollection=r?._sourceCollection||collection;
+ if(!r){try{const snap=await firebase.database().ref(DB_PATH+'/'+sourceCollection+'/'+id).once('value');r=snap.val();if(r)state[collection]=state[collection]||{},state[collection][id]={...r,_sourceCollection:sourceCollection}}catch(e){return toast('No se pudo cargar la operación.','error')}}
  if(!r)return toast('No se encontró la operación.','error');
  if(String(r.status||'').toLowerCase()!=='pendiente')return toast('Esta operación ya fue procesada.','warn');
- let reviewReason='';
- if(status!=='Aprobado'){reviewReason=prompt('Escriba el motivo obligatorio para '+status+':',r.reviewReason||'')?.trim()||'';if(!reviewReason)return toast('Debe escribir un motivo.','warn')}
- const u=state.users?.[r.userId];
- if(!u)return toast('No se encontró el remitente.','error');
- const logicalCollection=sourceCollection==='transacciones'?swTipoTransaccion(r,collection):sourceCollection;
- const base=DB_PATH+'/'+sourceCollection+'/'+id;
+ let reviewReason='';if(status!=='Aprobado'){reviewReason=prompt('Escriba el motivo obligatorio para '+status+':',r.reviewReason||'')?.trim()||'';if(!reviewReason)return toast('Debe escribir un motivo.','warn')}
+ const u=state.users?.[r.userId];if(!u)return toast('No se encontró el usuario de la operación.','error');
+ const logicalCollection=sourceCollection==='transacciones'?swTipoTransaccion(r,collection):sourceCollection,base=DB_PATH+'/'+sourceCollection+'/'+id;
  if(status==='Aprobado'){
-   const amount=Number(r.amount??r.monto??0);
-   const commission=Number(r.commissionTotal??r.commission??r.comision??(amount*commissionRateFor(logicalCollection,r)));
-   const userShare=Math.max(0,Number((commission*.5).toFixed(2)));
-   const adminShare=Math.max(0,Number((commission*.5).toFixed(2)));
-   const updates={
-     [base+'/status']:'Aprobado',[base+'/estado']:'aprobado',
-     [base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,
-     [base+'/approvedAt']:firebase.database.ServerValue.TIMESTAMP,
-     [base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:'',
-     [base+'/commissionUser']:userShare,[base+'/commissionAdmin']:adminShare,[base+'/commissionTotal']:commission,
-     [base+'/commissionRate']:commissionRateFor(logicalCollection,r),
-     [base+'/commissionAccount']:'50% REMITENTE / 50% ADMINISTRADOR',
-     [base+'/balanceDebited']:!!r.balanceDebited,
-     [base+'/balanceSettledAt']:firebase.database.ServerValue.TIMESTAMP,
-     [base+'/net']:amount-Number(r.commission||0)
-   };
-   if(userShare>0){
-     updates[DB_PATH+'/users/'+u.id+'/commissionAccrued']=firebase.database.ServerValue.increment(userShare);
-     updates[DB_PATH+'/users/'+u.id+'/commission']=firebase.database.ServerValue.increment(userShare);
-     updates[DB_PATH+'/users/'+u.id+'/transactionCommissionCredits/'+id]={id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP};
-   }
-   if(adminShare>0){
-     updates[DB_PATH+'/users/admin/commissionAccrued']=firebase.database.ServerValue.increment(adminShare);
-     updates[DB_PATH+'/users/admin/balance']=firebase.database.ServerValue.increment(adminShare);
-     updates[DB_PATH+'/users/admin/transactionCommissionCredits/'+id]={id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP};
-   }
-   try{
-     // Primero intentamos la actualización atómica completa.
-     await firebase.database().ref(DB_PATH).update(updates);
-   }catch(e){
-     console.warn('APROBACION FIREBASE: actualización raíz rechazada; reintentando por rutas autorizadas.',e);
+   const amount=Number(r.amount??r.monto??0),commission=Number(r.commissionTotal??r.commission??r.comision??(amount*commissionRateFor(logicalCollection,r))),agent=isAgentUser(u);
+   const userShare=agent?0:Math.max(0,Number((commission*.5).toFixed(2))),adminShare=agent?Number(commission.toFixed(2)):Math.max(0,Number((commission*.5).toFixed(2)));
+   const accountLabel=agent?'100% PLATAFORMA / 0% AGENTE':'50% REMITENTE / 50% ADMINISTRADOR';
+   const updates={[base+'/status']:'Aprobado',[base+'/estado']:'aprobado',[base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/approvedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:'',[base+'/commissionUser']:userShare,[base+'/commissionAdmin']:adminShare,[base+'/commissionTotal']:commission,[base+'/commissionRate']:commissionRateFor(logicalCollection,r),[base+'/commissionAccount']:accountLabel,[base+'/commissionBeneficiary']:agent?'PLATAFORMA':'REPARTIDO',[base+'/agentOperation']:agent,[base+'/balanceDebited']:!!r.balanceDebited,[base+'/balanceSettledAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/net']:amount-Number(r.commission||0)};
+   if(userShare>0){updates[DB_PATH+'/users/'+u.id+'/commissionAccrued']=firebase.database.ServerValue.increment(userShare);updates[DB_PATH+'/users/'+u.id+'/commission']=firebase.database.ServerValue.increment(userShare);updates[DB_PATH+'/users/'+u.id+'/transactionCommissionCredits/'+id]={id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}
+   if(adminShare>0){updates[DB_PATH+'/users/admin/commissionAccrued']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/balance']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/transactionCommissionCredits/'+id]={id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}
+   try{await firebase.database().ref(DB_PATH).update(updates)}catch(e){
      try{
-       // Firebase Realtime Database puede rechazar una actualización multi-ruta
-       // aunque el Administrador tenga permiso sobre cada nodo individual.
-       const transactionUpdates={
-         status:'Aprobado',
-         estado:'aprobado',
-         reviewedAt:firebase.database.ServerValue.TIMESTAMP,
-         approvedAt:firebase.database.ServerValue.TIMESTAMP,
-         reviewedBy:currentUser.username,
-         manualReview:true,
-         reviewReason:'',
-         commissionUser:userShare,
-         commissionAdmin:adminShare,
-         commissionTotal:commission,
-         commissionRate:commissionRateFor(logicalCollection,r),
-         commissionAccount:'50% REMITENTE / 50% ADMINISTRADOR',
-         balanceDebited:!!r.balanceDebited,
-         balanceSettledAt:firebase.database.ServerValue.TIMESTAMP,
-         net:amount-Number(r.commission||0)
-       };
-       await firebase.database().ref(base).update(transactionUpdates);
-       if(userShare>0){
-         await firebase.database().ref(DB_PATH+'/users/'+u.id).update({
-           commissionAccrued:firebase.database.ServerValue.increment(userShare),
-           commission:firebase.database.ServerValue.increment(userShare),
-           ['transactionCommissionCredits/'+id]:{id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}
-         });
-       }
-       if(adminShare>0){
-         await firebase.database().ref(DB_PATH+'/users/admin').update({
-           commissionAccrued:firebase.database.ServerValue.increment(adminShare),
-           balance:firebase.database.ServerValue.increment(adminShare),
-           ['transactionCommissionCredits/'+id]:{id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}
-         });
-       }
-     }catch(e2){
-       console.error('APROBACION FIREBASE (reintento por rutas)',e,e2);
-       return toast('Firebase rechazó la aprobación. No se modificó la operación.','error');
-     }
+       await firebase.database().ref(base).update({status:'Aprobado',estado:'aprobado',reviewedAt:firebase.database.ServerValue.TIMESTAMP,approvedAt:firebase.database.ServerValue.TIMESTAMP,reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:accountLabel,commissionBeneficiary:agent?'PLATAFORMA':'REPARTIDO',agentOperation:agent,balanceDebited:!!r.balanceDebited,balanceSettledAt:firebase.database.ServerValue.TIMESTAMP,net:amount-Number(r.commission||0)});
+       if(userShare>0)await firebase.database().ref(DB_PATH+'/users/'+u.id).update({commissionAccrued:firebase.database.ServerValue.increment(userShare),commission:firebase.database.ServerValue.increment(userShare),['transactionCommissionCredits/'+id]:{id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}});
+       if(adminShare>0)await firebase.database().ref(DB_PATH+'/users/admin').update({commissionAccrued:firebase.database.ServerValue.increment(adminShare),balance:firebase.database.ServerValue.increment(adminShare),['transactionCommissionCredits/'+id]:{id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}});
+     }catch(e2){return toast('Firebase rechazó la aprobación. No se modificó la operación.','error')}
    }
-   const approved={...r,status:'Aprobado',estado:'aprobado',reviewedAt:now(),approvedAt:Date.now(),reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:'50% REMITENTE / 50% ADMINISTRADOR',balanceDebited:!!r.balanceDebited,balanceSettledAt:now(),net:amount-Number(r.commission||0)};
+   const approved={...r,status:'Aprobado',estado:'aprobado',reviewedAt:now(),approvedAt:Date.now(),reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:accountLabel,commissionBeneficiary:agent?'PLATAFORMA':'REPARTIDO',agentOperation:agent,balanceDebited:!!r.balanceDebited,balanceSettledAt:now(),net:amount-Number(r.commission||0)};
    state[collection][id]=sourceCollection==='transacciones'?{...approved,_sourceCollection:'transacciones'}:approved;
-   state.users[u.id]={...state.users[u.id],commission:Number(state.users[u.id].commission||0)+userShare,commissionAccrued:Number(state.users[u.id].commissionAccrued||0)+userShare};
+   if(userShare>0)state.users[u.id]={...state.users[u.id],commission:Number(state.users[u.id].commission||0)+userShare,commissionAccrued:Number(state.users[u.id].commissionAccrued||0)+userShare};
    state.users.admin={...state.users.admin,commissionAccrued:Number(state.users.admin?.commissionAccrued||0)+adminShare,balance:Number(state.users.admin?.balance||0)+adminShare};
    lastSyncedState=cloneState(state);generateReceipt(collection,id);r=state[collection][id];
    if(r?.receipt)await firebase.database().ref(base+'/receipt').set(r.receipt).catch(()=>{});
@@ -2367,8 +2304,7 @@ async function setTransactionStatus(collection,id,status){
    state[collection][id]={...r,status,estado:String(status).toLowerCase(),reviewedAt:now(),reviewedBy:currentUser.username,manualReview:true,reviewReason};
  }
  try{await addNotification(u.id,'Su operación fue '+status.toUpperCase()+'. '+reviewReason,collection,id)}catch(e){}
- renderAll();if(status==='Aprobado'&&r.receipt)setTimeout(()=>showReceipt(collection,id),180);
- toast('Estado actualizado: '+status,'success');
+ renderAll();if(status==='Aprobado'&&r.receipt)setTimeout(()=>showReceipt(collection,id),180);toast('Estado actualizado: '+status,'success');
 }
 function enforceDepositCapital(r){
  if(!r)return r;
@@ -2875,7 +2811,7 @@ function openAdminBalanceModal(targetId='admin',mode='set'){
 }
 function financeCreditTargets(type){
  const admin=state.users?.admin;
- const remitters=Object.values(state.users||{}).filter(u=>u&&u.role==='Remitente');
+ const remitters=Object.values(state.users||{}).filter(u=>u&&isManagedUser(u));
  if(type==='bonus')return [admin].filter(Boolean);
  if(type==='commission')return remitters;
  return [admin,...remitters].filter(Boolean);
@@ -3717,7 +3653,7 @@ async function swAdjustApprovedTransactionFinancials(collection,r,newAmount){
   const oldCommission=Number(r.commission||0),calc=collection==='envios'?calcEnvio(newAmt,r.type||r.route):null;
   if(collection==='envios'&&(!calc.valid||calc.commission<0))return false;
   const rate=commissionRateFor(collection,{...r,amount:newAmt}),newCommission=collection==='envios'?Number(calc.commission||0):Number(newAmt*rate);
-  const oldUserShare=Number(r.commissionUser??oldCommission*0.5),oldAdminShare=Number(r.commissionAdmin??oldCommission*0.5),newUserShare=newCommission*0.5,newAdminShare=newCommission*0.5;
+  const agentEdit=isAgentUser(r.userId)||isAgentUser(state.users?.[r.userId]);const oldUserShare=agentEdit?0:Number(r.commissionUser??oldCommission*0.5),oldAdminShare=agentEdit?oldCommission:Number(r.commissionAdmin??oldCommission*0.5),newUserShare=agentEdit?0:newCommission*0.5,newAdminShare=agentEdit?newCommission:newCommission*0.5;
   const deltaAmount=newAmt-oldAmount,deltaUserShare=newUserShare-oldUserShare,deltaAdminShare=newAdminShare-oldAdminShare;
   if(!firebaseReady||!firebase.auth().currentUser)return false;
   const root=firebase.database().ref(DB_PATH),userId=r.userId;
