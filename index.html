@@ -1557,6 +1557,9 @@ async function realizarLoginOriginal(){
      if(fresh){
        fresh.authUid=authUser.uid;
        fresh.authEmail=authenticatedAdmin?ADMIN_EMAIL:authUser.email;
+       if(isAgentUser(fresh)||String(fresh.id||'')==='4'||String(fresh.staffId||'').replace(/\D/g,'')==='4'||String(fresh.agentNumber||fresh.staffNumber||fresh.numero||'')==='4'){
+         Object.assign(fresh,{role:'Agente',agentNumber:'4',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG',approvalRequired:true,commissionWithdrawAllowed:false});
+       }
        state.users[fresh.id]=fresh;
        currentUser=fresh;
      }
@@ -1685,7 +1688,7 @@ function applyRoleVisibility(){
  document.querySelectorAll('.admin-only').forEach(e=>{if(e.classList.contains('view-section'))return;e.style.setProperty('display',admin?(e.classList.contains('modal')?'flex':'block'):'none','important')});
  document.querySelectorAll('.remitente-only').forEach(e=>e.style.display=admin?'none':'');
  const roleLabel=document.getElementById('sidebar-role-label');if(roleLabel)roleLabel.textContent=agent?'AGENTE':(admin?'ADMINISTRADOR':String(currentUser?.role||'REMITENTE').toUpperCase());
- const envLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));if(envLink)envLink.innerHTML=agent?'<i class="fa-solid fa-right-left"></i> Envíos / Retiros':'<i class="fa-solid fa-paper-plane"></i> Envíos (Transacciones Globales)';
+ const envLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));if(envLink)envLink.innerHTML=agent?'<i class="fa-solid fa-right-left"></i> Envíos y Retiros':'<i class="fa-solid fa-paper-plane"></i> Envíos (Transacciones Globales)';
  const remLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('remitentes')"))?.closest('li');if(remLink)remLink.style.display=agent?'none':(admin?'':'');
  const view=document.getElementById('view-envios'),title=view?.querySelector('.card-header h3'),add=document.getElementById('envio-add-btn');if(title)title.textContent=agent?'Registro de Envío / Retiro':'Gestión de Envíos y Transacciones Globales';if(add)add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
  if(agent){const table=document.getElementById('enviosTable');if(table){const hs=table.querySelectorAll('thead th');['N°','Tipo','Agente','Envío / Retiro','Beneficiario','Monto HTG','Comisión HTG','Monto Total HTG','Estado','Comprobante','Acciones'].forEach((v,i)=>{if(hs[i])hs[i].textContent=v})}}
@@ -1721,7 +1724,7 @@ function switchView(id){
  document.querySelectorAll('.view-section').forEach(x=>x.classList.remove('active'));
  let el=document.getElementById('view-'+id);if(el)el.classList.add('active');
  document.querySelectorAll('.sidebar-menu a').forEach(a=>a.classList.remove('active'));
- let title={dashboard:'Tablero Principal',informes:'Informes del Día',credito:'Crédito',capital:'Capital de Administración',envios:'Envíos',beneficiarios:'Beneficiarios',paquetes:'Paquetes',remitentes:'Remitentes',recargas:'Recargas',paqueticos:'Paqueticos',pagos:'Facturas y Servicios',cuentas_depositos:'Cuentas Bancarias y Depósitos',mi_cuenta:'Mi Cuenta',contacto:'Contactarnos',comisiones:'Retiro / Pago de Comisiones',solicitudes:'Solicitudes y Aprobaciones',secretas:'Información Secreta',contabilidad:'Contabilidad Financiera',conciliacion:'Conciliación Financiera',bonos:'Bonos de Administración',perfil:'Mi Perfil'}[id]||'SENDWAYO EXPRESS';
+ let title={dashboard:'Tablero Principal',informes:'Informes del Día',credito:'Crédito',capital:'Capital de Administración',envios:(isAgentUser(currentUser)?'Envíos y Retiros':'Envíos'),beneficiarios:'Beneficiarios',paquetes:'Paquetes',remitentes:'Remitentes',recargas:'Recargas',paqueticos:'Paqueticos',pagos:'Facturas y Servicios',cuentas_depositos:'Cuentas Bancarias y Depósitos',mi_cuenta:'Mi Cuenta',contacto:'Contactarnos',comisiones:'Retiro / Pago de Comisiones',solicitudes:'Solicitudes y Aprobaciones',secretas:'Información Secreta',contabilidad:'Contabilidad Financiera',conciliacion:'Conciliación Financiera',bonos:'Bonos de Administración',perfil:'Mi Perfil'}[id]||'SENDWAYO EXPRESS';
  document.getElementById('page-title').textContent=title;
  if(window.innerWidth<=800)toggleMobileMenu();
  if(id==='conciliacion')renderConciliacion();
@@ -2017,7 +2020,7 @@ function resolveEnvioPerson(kind){
  if(kind==='remitente'&&!isAdmin()&&currentUser){const me=state.users?.[currentUser.id];if(me)return setEnvioPersonFields(kind,me,me.id)}
  hidden.value='';
 }
-async function openTransactionEntry(){if(isAgentUser(currentUser)){openModal('agentEnvioModal');return}openModal('envioModal')}
+async function openTransactionEntry(){if(isAgentUser(currentUser)){const m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.name||'Agente 4')+' ('+(u.staffId||'ID00000004')+')';const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(m)openModal('agentEnvioModal');return}openModal('envioModal')}
 function htgMoney(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' HTG'}
 const HTI_AGENT_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
 const HTI_AGENT_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
