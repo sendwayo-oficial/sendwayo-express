@@ -5518,7 +5518,7 @@ img[data-current-brand-logo="true"]{
       const hint=document.querySelector('#retiroCuentaModal .info-box');if(hint&&agent)hint.textContent='Le retrait reste EN ATTENTE et sera appliqué au solde HTG seulement après approbation de l’Administrateur.';
     }
     if(id==='envioModal'&&currentUser&&swAgent(currentUser)){
-      const typ=document.getElementById('env-tipo-trans');if(typ){typ.innerHTML='<option value="HTI a HTI Natcash">Natcash — HTI à HTI</option><option value="HTI a HTI MonCash">MonCash — HTI à HTI</option>';typ.value='HTI a HTI Natcash'}
+      const typ=document.getElementById('env-tipo-trans');if(typ){typ.innerHTML='<option value="HTI a HTI Natcash">Envío de Haití a Haití — Natcash</option><option value="HTI a HTI Retiro Natcash">Retiro de Haití a Haití — Natcash</option><option value="HTI a HTI MonCash">Envío de Haití a Haití — MonCash</option><option value="HTI a HTI Retiro MonCash">Retiro de Haití a Haití — MonCash</option>';typ.value='HTI a HTI Natcash'}
       const lab=document.getElementById('env-monto')?.closest('.form-group')?.querySelector('label');if(lab)lab.textContent='Montant en GDES';
       const info=document.getElementById('env-official-tariff-hint');if(info)info.textContent='Natcash puis MonCash: même grille GDES. Les frais sont déduits de la balance.';
       swRenderHtiTariffPanel();setTimeout(()=>calcularEnvioModal(),30);
