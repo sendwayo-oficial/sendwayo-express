@@ -1392,7 +1392,7 @@ async function realizarLoginOriginal(){
  const ADMIN_EMAIL='sendwayoexpress@gmail.com';
  window.__sendwayoLoginInProgress=true;
  if(!identifier||!password){setStatus('Escriba su correo de administración y su contraseña.','warn');return toast('Escriba sus credenciales de acceso.','warn')}
- const btn=document.querySelector('#login-screen button[onclick="realizarLogin()"]');
+ const btn=document.querySelector('#login-screen button[onclick*="sendwayoLogin"]');
  if(btn){btn.disabled=true;btn.dataset.originalText=btn.textContent;btn.textContent='Conectando…'}
  try{
    setStatus('Conectando con Firebase Authentication…');
@@ -1443,7 +1443,13 @@ async function realizarLoginOriginal(){
          addCandidate('8@sendwayoexpress.com');
          addCandidate('id00000008@sendwayoexpress.com');
          addCandidate('betinalindor@sendwayoexpress.com');
+         addCandidate('betina.lindor@sendwayoexpress.com');
          addCandidate('betinalindor@gmail.com');
+         addCandidate('betina.lindor@gmail.com');
+         addCandidate('agente8@sendwayoexpress.com');
+         addCandidate('agent8@sendwayoexpress.com');
+         addCandidate('8@sendwayoexpress.com');
+         addCandidate('8@gmail.com');
        }
      }
      let lastError=firstError;
