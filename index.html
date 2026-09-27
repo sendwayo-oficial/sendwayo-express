@@ -6238,6 +6238,21 @@ img[data-current-brand-logo="true"]{
       });
     }catch(_){}
   }
+  // Cierra cualquier modal que haya quedado abierto de una sesión anterior.
+  // Un modal residual es capaz de cubrir toda la pantalla y hacer parecer congelados
+  // los menús y formularios que están debajo.
+  function clearStaleModal(){
+    try{
+      document.querySelectorAll('.modal').forEach(m=>{
+        m.style.display='none';
+        m.classList.remove('show');
+        delete m.dataset.submitting;
+      });
+      document.body.style.overflow='';
+    }catch(_){}
+  }
+  clearStaleModal();
+  window.addEventListener('load',clearStaleModal,{once:true});
   recoverInteraction();
   window.addEventListener('resize',recoverInteraction,{passive:true});
   document.addEventListener('visibilitychange',recoverInteraction,{passive:true});
