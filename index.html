@@ -863,7 +863,7 @@ async function restoreSession(){
       profile=Object.values(vals).find(u=>u&&u.id===saved.userId)||Object.values(vals).find(u=>u&&u.active!==false)||null;
     }
     if(!profile||profile.active===false)return false;
-    if(isAgentUser(profile))profile={...profile,role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'ADMIN_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,commissionWithdrawAllowed:false,approvalRequired:true};
+    if(isAgentUser(profile)){const isBetina=profile.id==='agent-betina-lindor'||profile.agentKey==='BETINA_LINDOR'||String(profile.authEmail||'').toLowerCase()==='betinalindor@gmail.com';profile={...profile,role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,commissionWithdrawAllowed:false,approvalRequired:true};if(isBetina){profile.id='agent-betina-lindor';profile.agentKey='BETINA_LINDOR';profile.username='betinalindor@gmail.com';profile.authEmail='betinalindor@gmail.com';}}
     state.users=state.users||{};state.users[profile.id]=profile;
     currentUser=profile;lastActivity=Number(saved.lastActivity);sessionStartedAt=Date.now();
     showAppForUser(profile);applyRoleVisibility();renderAll();
@@ -1525,6 +1525,13 @@ async function realizarLoginOriginal(){
          console.warn('SENDWAYO perfil por identidad:',profileLookupError);
        }
      }
+     // Betina Lindor: permitir el acceso con su cuenta propia aunque la consulta
+     // del perfil RTDB falle temporalmente. Su cuenta queda completamente separada del Agente #4.
+     if(!found && (String(authUser.email||'').toLowerCase()==='betinalindor@gmail.com'||String(identifier||'').toLowerCase()==='betinalindor@gmail.com'||String(identifier||'').toLowerCase()==='betinalindor')){
+       found={id:'agent-betina-lindor',agentKey:'BETINA_LINDOR',role:'Agente',name:'Betina Lindor',phone:'',username:'betinalindor@gmail.com',staffId:'AG-BETINA',authEmail:'betinalindor@gmail.com',authUid:authUser.uid,active:true,balance:0,commission:0,referrals:0,accountSchemaV3:1,agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG',approvalRequired:true,commissionWithdrawAllowed:false};
+       state.users[found.id]=found;
+       try{await firebase.database().ref(DB_PATH+'/users/'+found.id).set(found)}catch(e){console.warn('Perfil Betina RTDB:',e)}
+     }
      // Recuperación segura para el Agente #4: si Firebase Authentication valida
      // las credenciales pero la lectura del perfil quedó temporalmente bloqueada,
      // no se debe impedir el acceso por un fallo de sincronización del perfil.
@@ -1559,7 +1566,9 @@ async function realizarLoginOriginal(){
        fresh.authUid=authUser.uid;
        fresh.authEmail=authenticatedAdmin?ADMIN_EMAIL:authUser.email;
        if(isAgentUser(fresh)||String(fresh.id||'')==='4'||String(fresh.staffId||'').replace(/\D/g,'')==='4'||String(fresh.agentNumber||fresh.staffNumber||fresh.numero||'')==='4'){
-         Object.assign(fresh,{role:'Agente',agentNumber:'4',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG',approvalRequired:true,commissionWithdrawAllowed:false});
+         const isBetina=fresh.id==='agent-betina-lindor'||fresh.agentKey==='BETINA_LINDOR'||String(fresh.authEmail||'').toLowerCase()==='betinalindor@gmail.com'||String(fresh.username||'').toLowerCase()==='betinalindor@gmail.com';
+         Object.assign(fresh,{role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG',approvalRequired:true,commissionWithdrawAllowed:false});
+         if(isBetina){fresh.username='betinalindor@gmail.com';fresh.authEmail='betinalindor@gmail.com';fresh.agentKey='BETINA_LINDOR';fresh.id='agent-betina-lindor';}
        }
        state.users[fresh.id]=fresh;
        currentUser=fresh;
