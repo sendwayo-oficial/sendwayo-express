@@ -6070,5 +6070,112 @@ img[data-current-brand-logo="true"]{
   setTimeout(enforce,2500);
 })();
 </script>
-</body>
+
+<!-- SENDWAYO AGENT FOUR UI FINAL V5 -->
+<script id="sendwayo-agent-four-ui-final-v5">
+(function(){
+  if(window.__sendwayo_agent_four_ui_final_v5)return;
+  window.__sendwayo_agent_four_ui_final_v5=true;
+  function isFour(u){
+    u=u||window.currentUser||{};
+    const id=String(u.id||'').trim().toLowerCase();
+    const staff=String(u.staffId||'').trim().toUpperCase();
+    const n=String(u.agentNumber||u.staffNumber||u.numero||'').trim();
+    return id==='4'||id==='id00000004'||staff==='4'||staff==='ID00000004'||n==='4';
+  }
+  function forceAgentUI(){
+    const u=window.currentUser;
+    if(!isFour(u))return;
+    try{
+      u.role='Agente';u.agentNumber='4';u.agentType='AGENTE_UNICO';u.agentPolicy='HTI_A_HTI';
+      u.agentScope='OPERACIONES';u.commissionMode='PLATFORM_100';u.commissionShare=0;u.platformCommissionShare=1;
+      u.uniqueAgent=true;u.balanceCurrency='HTG';u.approvalRequired=true;
+    }catch(_){}
+    const role=document.getElementById('sidebar-role-label');
+    if(role)role.textContent='AGENTE';
+    const menu=document.getElementById('sidebar-menu');
+    if(menu){
+      menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
+      menu.querySelectorAll('li').forEach(li=>{
+        const a=li.querySelector('a');
+        const text=String(li.textContent||'').toLowerCase().replace(/\s+/g,' ').trim();
+        const oc=String(a?.getAttribute('onclick')||'');
+        if(text.includes('remitentes')||text.includes('envíos (transacciones globales)')||text.includes('envios (transacciones globales)')){
+          if(oc.includes("switchView('envios')")){
+            li.style.display='';
+            if(a){
+              a.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
+              a.onclick=function(e){e.preventDefault();if(typeof switchView==='function')switchView('envios');};
+            }
+          }else li.style.display='none';
+        }
+        if(a && /switchView\('envios'\)/.test(oc)){
+          a.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
+          a.onclick=function(e){e.preventDefault();if(typeof switchView==='function')switchView('envios');};
+          li.style.display='';
+        }
+      });
+      // Remove any old separate agent links created by previous patches.
+      menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
+      [...menu.querySelectorAll('li')].forEach(li=>{
+        const a=li.querySelector('a');
+        const t=String(li.textContent||'').trim().toLowerCase();
+        if((t==='envío'||t==='retiro') && a && !/switchView\('envios'\)/.test(String(a.getAttribute('onclick')||''))) li.remove();
+      });
+    }
+    document.querySelectorAll('.remitente-only').forEach(e=>e.style.display='none');
+    const title=document.getElementById('page-title');if(title)title.textContent='Envíos y Retiros';
+    const add=document.getElementById('envio-add-btn');
+    if(add){
+      add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
+      add.onclick=function(e){e.preventDefault();openTransactionEntry();};
+    }
+  }
+  window.openTransactionEntry=function(operation){
+    if(!isFour(window.currentUser)){
+      if(typeof openModal==='function')return openModal('envioModal');
+      return;
+    }
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    const u=window.currentUser||{};
+    const label=document.querySelector('#agentEnvioModal .form-group:nth-child(2) label');
+    if(label)label.textContent='Agente';
+    const current=document.getElementById('agent-current');
+    if(current)current.value=(u.name||'Agente 4')+' ('+(u.staffId||u.phone||u.username||'ID00000004')+')';
+    const typ=document.getElementById('agent-tipo-trans');
+    if(typ){
+      typ.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';
+      typ.value='HAITI A HAITI NatCash';
+    }
+    const op=document.getElementById('agent-operation');if(op)op.value=operation==='Retiro'?'Retiro':'Envío';
+    const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';
+    const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';
+    const amount=document.getElementById('agent-monto');if(amount)amount.value='';
+    if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();
+    openModal('agentEnvioModal');
+  };
+  function hook(){
+    forceAgentUI();
+    if(isFour(window.currentUser)){
+      const modal=document.getElementById('agentEnvioModal');
+      if(modal){
+        const h=modal.querySelector('h3');if(h)h.textContent='Haití a Haití — Envíos y Retiros';
+        const labels=modal.querySelectorAll('.form-group label');
+        if(labels[0])labels[0].textContent='Servicio';
+        if(labels[1])labels[1].textContent='Agente';
+        if(labels[2])labels[2].textContent='Envío / Retiro';
+        if(labels[3])labels[3].textContent='Beneficiario';
+        if(labels[4])labels[4].textContent='Monto en GDES';
+        const btn=modal.querySelector('button[onclick*="guardarAgentEnvio"]');
+        if(btn)btn.textContent='Enviar esta transacción';
+      }
+    }
+  }
+  const oldApply=window.applyRoleVisibility;
+  window.applyRoleVisibility=function(){if(typeof oldApply==='function')oldApply.apply(this,arguments);setTimeout(hook,0);};
+  setTimeout(hook,50);setTimeout(hook,500);setTimeout(hook,1500);setTimeout(hook,3000);
+})();
+</script>
+\n</body>
 </html>
