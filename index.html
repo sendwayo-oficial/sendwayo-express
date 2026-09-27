@@ -2506,7 +2506,17 @@ async function setTransactionStatus(collection,id,status){
    const amount=Number(r.amount??r.monto??0),commission=Number(r.commissionTotal??r.commission??r.comision??(amount*commissionRateFor(logicalCollection,r))),agent=isAgentUser(u);
    const userShare=agent?0:Math.max(0,Number((commission*.5).toFixed(2))),adminShare=agent?Number(commission.toFixed(2)):Math.max(0,Number((commission*.5).toFixed(2)));
    const accountLabel=agent?'100% PLATAFORMA / 0% AGENTE':'50% REMITENTE / 50% ADMINISTRADOR';
-   const updates={[base+'/status']:'Aprobado',[base+'/estado']:'aprobado',[base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/approvedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:'',[base+'/commissionUser']:userShare,[base+'/commissionAdmin']:adminShare,[base+'/commissionTotal']:commission,[base+'/commissionRate']:commissionRateFor(logicalCollection,r),[base+'/commissionAccount']:accountLabel,[base+'/commissionBeneficiary']:agent?'PLATAFORMA':'REPARTIDO',[base+'/agentOperation']:agent,[base+'/balanceDebited']:!!r.balanceDebited,[base+'/balanceSettledAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/net']:amount-Number(r.commission||0)};
+   let agentCapitalReserved=false;
+   if(agent){
+     const capTx=await firebase.database().ref(DB_PATH+'/agentCapital').transaction(v=>{
+       const cur=v&&typeof v==='object'?v:{},balance=Number(cur.balance||0);
+       if(balance<amount)return undefined;
+       return {...cur,balance:Number((balance-amount).toFixed(2)),totalUtilizado:Number((Number(cur.totalUtilizado||0)+amount).toFixed(2)),operationsApproved:Number(cur.operationsApproved||0)+1,updatedAt:now(),updatedBy:currentUser.username||'admin'};
+     });
+     if(!capTx.committed)return toast('Capital compartido insuficiente. El Administrador debe acreditar fondos antes de aprobar esta operación.','warn');
+     agentCapitalReserved=true;
+   }
+   const updates={[base+'/status']:'Aprobado',[base+'/estado']:'aprobado',[base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/approvedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:'',[base+'/commissionUser']:userShare,[base+'/commissionAdmin']:adminShare,[base+'/commissionTotal']:commission,[base+'/commissionRate']:commissionRateFor(logicalCollection,r),[base+'/commissionAccount']:accountLabel,[base+'/commissionBeneficiary']:agent?'PLATAFORMA':'REPARTIDO',[base+'/agentOperation']:agent,[base+'/balanceDebited']:agent?true:!!r.balanceDebited,[base+'/agentCapitalDebited']:agent,[base+'/agentCapitalDebitAmount']:agent?amount:0,[base+'/balanceSettledAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/net']:amount-Number(r.commission||0)};
    if(userShare>0){updates[DB_PATH+'/users/'+u.id+'/commissionAccrued']=firebase.database.ServerValue.increment(userShare);updates[DB_PATH+'/users/'+u.id+'/commission']=firebase.database.ServerValue.increment(userShare);updates[DB_PATH+'/users/'+u.id+'/transactionCommissionCredits/'+id]={id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}
    if(adminShare>0){updates[DB_PATH+'/users/admin/commissionAccrued']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/commission']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/balance']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/transactionCommissionCredits/'+id]={id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}
    try{
@@ -2515,9 +2525,10 @@ async function setTransactionStatus(collection,id,status){
      await firebase.database().ref(DB_PATH).update(updates);
    }catch(e){
      console.warn('Aprobación atómica rechazada:',e);
+     if(agentCapitalReserved)try{await firebase.database().ref(DB_PATH+'/agentCapital').transaction(v=>v?{...v,balance:Number((Number(v.balance||0)+amount).toFixed(2)),totalUtilizado:Math.max(0,Number(v.totalUtilizado||0)-amount),operationsApproved:Math.max(0,Number(v.operationsApproved||0)-1),updatedAt:now(),updatedBy:'ROLLBACK_APROBACION'}:v)}catch(_){}
      return toast('Firebase rechazó la aprobación. La operación se mantuvo PENDIENTE y no se acreditó ningún saldo.','error');
    }
-   const approved={...r,status:'Aprobado',estado:'aprobado',reviewedAt:now(),approvedAt:Date.now(),reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:accountLabel,commissionBeneficiary:agent?'PLATAFORMA':'REPARTIDO',agentOperation:agent,balanceDebited:!!r.balanceDebited,balanceSettledAt:now(),net:amount-Number(r.commission||0)};
+   const approved={...r,status:'Aprobado',estado:'aprobado',reviewedAt:now(),approvedAt:Date.now(),reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:accountLabel,commissionBeneficiary:agent?'PLATAFORMA':'REPARTIDO',agentOperation:agent,balanceDebited:agent?true:!!r.balanceDebited,agentCapitalDebited:agent,agentCapitalDebitAmount:agent?amount:0,balanceSettledAt:now(),net:amount-Number(r.commission||0)};
    state[collection][id]=sourceCollection==='transacciones'?{...approved,_sourceCollection:'transacciones'}:approved;
    if(userShare>0)state.users[u.id]={...state.users[u.id],commission:Number(state.users[u.id].commission||0)+userShare,commissionAccrued:Number(state.users[u.id].commissionAccrued||0)+userShare};
    state.users.admin={...state.users.admin,commissionAccrued:Number(state.users.admin?.commissionAccrued||0)+adminShare,balance:Number(state.users.admin?.balance||0)+adminShare};
@@ -6455,7 +6466,46 @@ img[data-current-brand-logo="true"]{
     setTimeout(()=>{unlock();loadCapital();renderCapitalLabel()},30); return r;
   };
 })();
-</script>\n</body>
+</script>\n<script id="sendwayo-agent-reports-v1">
+(function(){
+  function getAgentRows(agentId,startKey,endKey){
+    const out=[];
+    Object.values(state.envios||{}).forEach(r=>{
+      if(!r||r.status!=='Aprobado'||!isAgentUser(r.userId)||agentId&&r.userId!==agentId)return;
+      const d=new Date(Number(r.approvedAt||r.createdAtMs||Date.parse(r.createdAt||'')));if(isNaN(d))return;
+      const key=d.toISOString().slice(0,10);if(key<startKey||key>endKey)return;
+      out.push(r);
+    });
+    return out;
+  }
+  function renderAgentPeriodReport(){
+    const host=document.getElementById('agent-period-report');if(!host)return;
+    const end=document.getElementById('agent-report-end')?.value||todayDateKey();
+    const mode=document.getElementById('agent-report-period')?.value||'day';
+    const endD=new Date(end+'T12:00:00');const startD=new Date(endD);
+    if(mode==='15')startD.setDate(startD.getDate()-14);
+    const start=startD.toISOString().slice(0,10);
+    const agentId=document.getElementById('agent-report-agent')?.value||'';
+    const agents=Object.values(state.users||{}).filter(isAgentUser);
+    const rows=agents.flatMap(a=>getAgentRows(agentId?agentId:a.id,start,end).map(r=>({...r,_agent:a})));
+    const amount=rows.reduce((s,r)=>s+Number(r.amount||0),0),commission=rows.reduce((s,r)=>s+Number(r.commissionTotal??r.commission??0),0);
+    host.querySelector('[data-ar-summary]').textContent=(mode==='15'?'15 días':'Día')+' · '+start+' → '+end+' · Operaciones: '+rows.length+' · Monto: '+htgMoney(amount)+' · Comisión: '+htgMoney(commission)+' · Capital compartido: '+htgMoney(Number(state.agentCapital?.balance||0));
+    host.querySelector('tbody').innerHTML=rows.sort((a,b)=>Number(b.approvedAt||0)-Number(a.approvedAt||0)).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r._agent.name||'')+'</td><td>'+escapeHtml(r.agentOperationKey||r.operation||'Envío')+'</td><td>'+escapeHtml(r.id||'')+'</td><td>'+escapeHtml(r.beneficiarioNombre||r.beneficiario||'')+'</td><td>'+htgMoney(r.amount||0)+'</td><td>'+htgMoney(r.commissionTotal??r.commission??0)+'</td></tr>').join('')||'<tr><td colspan="7">No hay operaciones aprobadas en este período.</td></tr>';
+  }
+  function install(){
+    const view=document.getElementById('view-informes');if(!view||document.getElementById('agent-period-report'))return;
+    const card=document.createElement('div');card.id='agent-period-report';card.className='card';card.style.marginTop='16px';
+    const opts=Object.values(state.users||{}).filter(isAgentUser).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.name||a.id)+'</option>').join('');
+    card.innerHTML='<div class="card-header"><div><h3>Informes de Agentes</h3><p class="muted">Cada agente conserva su producción individual, pero ambos comparten un único capital y una única comisión de plataforma.</p></div><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData(\'Excel\',\'agentPeriodReportTable\')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData(\'PDF\',\'agentPeriodReportTable\')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData(\'CSV\',\'agentPeriodReportTable\')">CSV</button></div></div><div class="report-controls"><div class="form-group"><label>Período</label><select id="agent-report-period" class="form-control" onchange="renderAgentPeriodReport()"><option value="day">Informe diario</option><option value="15">Informe cada 15 días</option></select></div><div class="form-group"><label>Fecha final</label><input id="agent-report-end" type="date" class="form-control" value="'+todayDateKey()+'" onchange="renderAgentPeriodReport()"></div><div class="form-group"><label>Agente</label><select id="agent-report-agent" class="form-control" onchange="renderAgentPeriodReport()"><option value="">Los dos agentes</option>'+opts+'</select></div></div><div class="info-box" data-ar-summary></div><div class="table-wrap"><table id="agentPeriodReportTable"><thead><tr><th>N°</th><th>Agente</th><th>Operación</th><th>ID</th><th>Beneficiario</th><th>Monto</th><th>Comisión</th></tr></thead><tbody></tbody></table></div>';
+    view.appendChild(card);renderAgentPeriodReport();
+  }
+  window.renderAgentPeriodReport=renderAgentPeriodReport;
+  const oldRenderAll=window.renderAll;
+  window.renderAll=function(){if(typeof oldRenderAll==='function')oldRenderAll.apply(this,arguments);setTimeout(install,0)};
+  setTimeout(install,800);
+})();
+</script>
+</body>
 </html>
 <!-- SENDWAYO ADD-NEW HARDENED V1 -->
 <script id="sendwayo-add-new-hardened-v1">
