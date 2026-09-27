@@ -482,7 +482,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
   </section>
 
   <section id="view-recargas" class="view-section">
-    <div class="card"><div class="card-header"><h3>Módulo de Recargas (5 Compañías)</h3><button class="btn btn-primary" onclick="openModal('recargaModal')">Agregar Nuevo</button></div>
+    <div class="card"><div class="card-header"><h3>Módulo de Recargas (7 Compañías)</h3><button class="btn btn-primary" onclick="openModal('recargaModal')">Agregar Nuevo</button></div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','recTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','recTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','recTable')">CSV</button></div><input class="search-box" placeholder="Buscar recarga..." oninput="filterTable(this,'recTable')"></div>
     <div class="table-wrap"><table id="recTable"><thead><tr><th>N°</th><th>Compañía</th><th>Número</th><th>Monto RD$</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
@@ -6394,6 +6394,48 @@ img[data-current-brand-logo="true"]{
   document.addEventListener('visibilitychange',recover,{passive:true});
   setTimeout(bindAddButtons,100);
   setTimeout(bindAddButtons,800);
+})();
+</script>
+<!-- SENDWAYO OFFICIAL SERVICE CATALOG LOCK V1 -->
+<script id="sendwayo-official-service-catalog-lock-v1">
+(function(){
+  if(window.__sendwayoOfficialServiceCatalogLockV1)return;
+  window.__sendwayoOfficialServiceCatalogLockV1=true;
+  const RECARGAS=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa'];
+  const PAQUETICOS=['Claro','Viva','Altice'];
+  const FACTURAS=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa','Wind','CEPM','EDESur','Paso Rápido','Betcris','Juancito Sport','OROBET','SuperBets','Star Sport','Amalia Seguros','Dominicana Compañía de Seguros','MonCash','NatCash','Envíos y Retiros Nacionales','Envíos y Retiros Internacionales'];
+  const canon=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  function setSelect(id,allowed){
+    const el=document.getElementById(id); if(!el)return;
+    const old=el.value;
+    const keep=allowed.map(v=>canon(v));
+    [...el.options].forEach(o=>{if(!keep.includes(canon(o.value||o.textContent)))o.remove()});
+    const values=[...el.options].map(o=>canon(o.value||o.textContent));
+    allowed.forEach(v=>{if(!values.includes(canon(v))){const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)}});
+    const match=[...el.options].find(o=>canon(o.value||o.textContent)===canon(old));
+    if(match)el.value=match.value; else if(el.options.length)el.selectedIndex=0;
+  }
+  function lockDatalist(){
+    const dl=document.getElementById('service-options'); if(!dl)return;
+    dl.innerHTML='';
+    FACTURAS.forEach(v=>{const o=document.createElement('option');o.value=v;dl.appendChild(o)});
+    const o=document.createElement('option');o.value='Otro servicio';dl.appendChild(o);
+  }
+  function updateCatalogText(){
+    const h=[...document.querySelectorAll('#view-recargas h3')].find(x=>/Recargas/i.test(x.textContent||''));
+    if(h)h.textContent='Módulo de Recargas (7 Compañías)';
+    const p=[...document.querySelectorAll('#view-paqueticos h3')].find(x=>/Paqueticos/i.test(x.textContent||''));
+    if(p)p.textContent='Módulo de Paqueticos (Claro, Viva, Altice)';
+  }
+  function apply(){
+    setSelect('rec-comp',RECARGAS);
+    setSelect('pkt-comp',PAQUETICOS);
+    lockDatalist();
+    updateCatalogText();
+  }
+  document.addEventListener('DOMContentLoaded',()=>{apply();setTimeout(apply,250);setTimeout(apply,1000)},{once:true});
+  window.addEventListener('load',apply,{once:true});
+  window.sendwayoApplyOfficialServiceCatalog=apply;
 })();
 </script>
 </body>
