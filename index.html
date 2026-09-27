@@ -264,6 +264,17 @@ aside{height:100vh;min-height:0;overflow:hidden}
   .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
   input,select,textarea,button{touch-action:manipulation}
 }
+<style id="sendwayo-service-suggestion-mobile-final">
+.form-group:has(#pag-empresa){position:relative}
+#payment-service-suggestions{position:absolute;left:0;right:0;top:calc(100% - 8px);z-index:12050;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 10px 24px rgba(0,0,0,.16);overflow:hidden;max-height:240px;overflow-y:auto}
+.service-suggestion{display:block;width:100%;padding:9px 12px;border:0;border-bottom:1px solid #eef2f7;background:#fff;text-align:left;cursor:pointer;font:inherit;color:#0f2c59;touch-action:manipulation}
+.service-suggestion:hover,.service-suggestion:focus{background:#eef6ff}
+.service-suggestion-free{font-weight:700}
+@media(max-width:800px){
+ #payment-service-suggestions{position:static;margin-top:4px;max-height:190px;box-shadow:none}
+ .service-suggestion{min-height:42px;padding:10px 12px;font-size:16px}
+}
+</style>
 </style>
 </head>
 <body>
