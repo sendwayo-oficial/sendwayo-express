@@ -6456,6 +6456,8 @@ img[data-current-brand-logo="true"]{
      else if(viewId==='credito')ok=typeof window.openCreditGrantModal==='function'?!!window.openCreditGrantModal():false;
      else if(viewId==='bonos')ok=typeof window.openAdminCreditModal==='function'?!!window.openAdminCreditModal('bonus'):false;
      else if(viewId==='capital')ok=typeof window.openCapitalModal==='function'?!!window.openCapitalModal():false;
+     else if(viewId==='contacto')ok=typeof window.editContact==='function'?!!window.editContact():false;
+     else if(viewId==='solicitudes')ok=typeof window.openRequest==='function'?!!window.openRequest('Enviar dinero'):false;
      else ok=open(map[viewId]||'');
      if(!ok)console.warn('SENDWAYO: no se pudo abrir '+viewId);
    },0);
