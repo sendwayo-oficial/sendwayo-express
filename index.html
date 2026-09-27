@@ -2090,18 +2090,18 @@ async async function guardarEnvio(){
  if(!beginFormSubmit('envioModal'))return;
  const ben=state.beneficiaries[benId],rem=userById(remId),remName=personName(rem),remPhone=personPhone(rem),benName=personName(ben),benPhone=personPhone(ben);
  const id=await createTransaction('envios',{type,route:type,remitenteId:remId,remitente:remName,remitenteNombre:remName,remitentePhone:remPhone,remitenteDoc:rem.doc||rem.document||'',beneficiarioId:benId,beneficiario:benName,beneficiarioNombre:benName,beneficiarioPhone:benPhone,net:c.net,commission:c.commission,destination:c.total},amount);
- if(!id)return;
+ if(!id){resetFormSubmitState('envioModal');return;}
  closeModal('envioModal');toast('Envío guardado como PENDIENTE y enviado a la página del Administrador.','success');
 }
 async function guardarBeneficiario(){
- const _modal=document.getElementById('beneficiarioModal');if(_modal?.dataset.submitting==='1')return;
+ const _modal=document.getElementById('beneficiarioModal');if(_modal?.dataset.submitting==='1')return;if(!beginFormSubmit('beneficiarioModal'))return;
  let name=document.getElementById('ben-nombre').value.trim(),phone=fullPhone('ben-country',document.getElementById('ben-cel').value.trim());
- if(!name||!phone)return toast('Nombre y celular son obligatorios.','warn');
+ if(!name||!phone){resetFormSubmitState('beneficiarioModal');return toast('Nombre y celular son obligatorios.','warn');}
  let id=uid('bn');
  state.beneficiaries[id]={id,name,phone,address:document.getElementById('ben-dir').value.trim(),active:document.getElementById('ben-active').value==='true',userId:currentUser?.id||'admin',ownerAuthUid:firebase.auth().currentUser?.uid||null,createdAt:now()};
  addAudit('Crear beneficiario',id);
  const ok=await persist();
- if(!ok)return toast('No se pudo guardar el beneficiario en Firebase.','error');
+ if(!ok){resetFormSubmitState('beneficiarioModal');return toast('No se pudo guardar el beneficiario en Firebase.','error');}
  closeModal('beneficiarioModal');renderAll();toast('Beneficiario guardado y sincronizado con Firebase.','success');
 }
 function openPerson(role){if(!isAdmin())return toast('Solo el Administrador puede crear remitentes.','warn');document.getElementById('persona-title').textContent='Registrar '+role;document.getElementById('personaModal').dataset.role=role;['pers-nombre','pers-wsp','pers-doc','pers-user','pers-auth-email'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''})
@@ -2216,7 +2216,7 @@ async async function guardarRecarga(){
  const allowed=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa'];
  if(!allowed.some(x=>x.toLowerCase()===company.toLowerCase()))return toast('Seleccione una compañía oficial de Recargas.','warn');
  let amount=Number(document.getElementById('rec-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('recargaModal'))return;
- const id=await createTransaction('recargas',{company,phone:document.getElementById('rec-num').value},amount);if(!id)return;closeModal('recargaModal');toast('Recarga guardada y notificada.')
+ const id=await createTransaction('recargas',{company,phone:document.getElementById('rec-num').value},amount);if(!id){resetFormSubmitState('recargaModal');return;}closeModal('recargaModal');toast('Recarga guardada y notificada.')
 }
 async async function guardarPaquetico(){
  const _modal=document.getElementById('paquetikoModal');if(_modal?.dataset.submitting==='1')return;
@@ -2225,7 +2225,7 @@ async async function guardarPaquetico(){
  const allowed=['Claro','Viva','Altice'];
  if(!allowed.some(x=>x.toLowerCase()===company.toLowerCase()))return toast('Seleccione una compañía oficial de Paqueticos.','warn');
  const amount=Number(document.getElementById('pkt-monto').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paquetikoModal'))return;
- const id=await createTransaction('paqueticos',{company,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id)return;closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
+ const id=await createTransaction('paqueticos',{company,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id){resetFormSubmitState('paquetikoModal');return;}closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
 }
 async async function guardarPago(){
  const _modal=document.getElementById('pagoModal');if(_modal?.dataset.submitting==='1')return;
@@ -2234,13 +2234,13 @@ async async function guardarPago(){
  const official=typeof OFFICIAL_SENDWAYO_SERVICES!=='undefined'&&OFFICIAL_SENDWAYO_SERVICES.some(x=>x.toLowerCase()===company.toLowerCase());
  if(!official)return toast('Seleccione un servicio del catálogo oficial.','warn');
  let amount=Number(document.getElementById('pag-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('pagoModal'))return;
- const id=await createTransaction('pagos',{company,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id)return;closeModal('pagoModal');toast('Pago guardado y notificado.')
+ const id=await createTransaction('pagos',{company,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id){resetFormSubmitState('pagoModal');return;}closeModal('pagoModal');toast('Pago guardado y notificado.')
 }
 async async function guardarPaquete(){
  const _modal=document.getElementById('paqueteModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const amount=Number(document.getElementById('paq-costo').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paqueteModal'))return;
- const id=await createTransaction('paquetes',{type:document.getElementById('paq-tipo').value,weight:document.getElementById('paq-peso').value,description:document.getElementById('paq-desc').value,cost:amount},amount);if(!id)return;closeModal('paqueteModal');toast('Paquete guardado y notificado.');
+ const id=await createTransaction('paquetes',{type:document.getElementById('paq-tipo').value,weight:document.getElementById('paq-peso').value,description:document.getElementById('paq-desc').value,cost:amount},amount);if(!id){resetFormSubmitState('paqueteModal');return;}closeModal('paqueteModal');toast('Paquete guardado y notificado.');
 }
 function calculateCommissionAvailable(userId){
  const u=state.users?.[userId];if(!u)return 0;
