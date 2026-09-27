@@ -2604,24 +2604,12 @@ async function setTransactionStatus(collection,id,status){
    if(userShare>0){updates[DB_PATH+'/users/'+u.id+'/commissionAccrued']=firebase.database.ServerValue.increment(userShare);updates[DB_PATH+'/users/'+u.id+'/commission']=firebase.database.ServerValue.increment(userShare);updates[DB_PATH+'/users/'+u.id+'/transactionCommissionCredits/'+id]={id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}
    if(adminShare>0){updates[DB_PATH+'/users/admin/commissionAccrued']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/commission']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/balance']=firebase.database.ServerValue.increment(adminShare);updates[DB_PATH+'/users/admin/transactionCommissionCredits/'+id]={id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}
    try{
+     // La aprobación financiera debe ser UNA sola operación atómica.
+     // Si Firebase la rechaza, no se cambia el estado ni se acredita ninguna comisión.
      await firebase.database().ref(DB_PATH).update(updates);
    }catch(e){
-     try{
-       await firebase.database().ref(base).update({status:'Aprobado',estado:'aprobado',reviewedAt:firebase.database.ServerValue.TIMESTAMP,approvedAt:firebase.database.ServerValue.TIMESTAMP,reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:accountLabel,commissionBeneficiary:agent?'PLATAFORMA':'REPARTIDO',agentOperation:agent,balanceDebited:!!r.balanceDebited,balanceSettledAt:firebase.database.ServerValue.TIMESTAMP,net:amount-Number(r.commission||0)});
-       if(userShare>0){
-         const ur=firebase.database().ref(DB_PATH+'/users/'+u.id);
-         const ut=await ur.transaction(x=>{if(!x)return undefined;const credits={...(x.transactionCommissionCredits||{})};if(credits[id]!==undefined)return x;return {...x,commissionAccrued:Number(x.commissionAccrued||0)+userShare,commission:Number(x.commission||0)+userShare,transactionCommissionCredits:{...credits,[id]:{id,amount:userShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}}});
-         if(!ut.committed)throw new Error('USER_COMMISSION_REJECTED');
-       }
-       if(adminShare>0){
-         const ar=firebase.database().ref(DB_PATH+'/users/admin');
-         const at=await ar.transaction(x=>{if(!x)return undefined;const credits={...(x.transactionCommissionCredits||{})};if(credits[id]!==undefined)return x;const ca=Number(x.commissionAccrued||0)+adminShare;const nb=Math.max(Number(x.balance||0)+adminShare,ca);return {...x,commissionAccrued:ca,balance:nb,transactionCommissionCredits:{...credits,[id]:{id,amount:adminShare,creditedAt:firebase.database.ServerValue.TIMESTAMP}}}});
-         if(!at.committed)throw new Error('ADMIN_COMMISSION_REJECTED');
-       }
-     }catch(e2){
-       try{await firebase.database().ref(base).update({status:'Pendiente',estado:'pendiente',reviewReason:''})}catch(_){}
-       return toast('Firebase rechazó la aprobación. La operación se mantuvo PENDIENTE y no se acreditó ningún saldo.','error');
-     }
+     console.warn('Aprobación atómica rechazada:',e);
+     return toast('Firebase rechazó la aprobación. La operación se mantuvo PENDIENTE y no se acreditó ningún saldo.','error');
    }
    const approved={...r,status:'Aprobado',estado:'aprobado',reviewedAt:now(),approvedAt:Date.now(),reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:userShare,commissionAdmin:adminShare,commissionTotal:commission,commissionRate:commissionRateFor(logicalCollection,r),commissionAccount:accountLabel,commissionBeneficiary:agent?'PLATAFORMA':'REPARTIDO',agentOperation:agent,balanceDebited:!!r.balanceDebited,balanceSettledAt:now(),net:amount-Number(r.commission||0)};
    state[collection][id]=sourceCollection==='transacciones'?{...approved,_sourceCollection:'transacciones'}:approved;
@@ -2632,7 +2620,11 @@ async function setTransactionStatus(collection,id,status){
      generateReceipt(collection,id);
      r=state[collection][id];
      if(r?.receipt)await persistGeneratedReceipt(collection,id,r);
-   }catch(e){console.warn('Comprobante tras aprobación:',e);return toast('La operación fue aprobada, pero no se pudo generar el comprobante automáticamente.','error')}
+   }catch(e){
+     console.warn('Comprobante tras aprobación:',e);
+     // El comprobante no puede convertir una aprobación financiera ya confirmada en un falso rechazo.
+     // Se deja la operación APROBADA y se muestra el recibo local si fue generado.
+   }
  }else{
    const updates={[base+'/status']:status,[base+'/estado']:String(status).toLowerCase(),[base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:reviewReason};
    try{await firebase.database().ref(DB_PATH).update(updates)}catch(e){return toast('Firebase rechazó el cambio.','error')}
@@ -2695,7 +2687,17 @@ async function approveDeposit(id,status){
    r.balanceCredited=true;r.balanceCreditedAt=r.balanceCreditedAt||now();r.depositPrincipal=depositAmount;
    r.status='Aprobado';r.reviewedAt=now();r.reviewedBy=currentUser.username;r.manualReview=true;r.reviewReason='';
    state.deposits[id]=r;
-   try{generateReceipt('deposits',id);r=state.deposits[id];state.deposits[id]=r;await firebase.database().ref(DB_PATH+'/deposits/'+id).set(r);if(r?.receipt)await persistGeneratedReceipt('deposits',id,r)}catch(e){console.warn('Comprobante de depósito:',e);return toast('El depósito fue aprobado, pero no se pudo guardar el comprobante.','error')}
+   try{
+     generateReceipt('deposits',id);r=state.deposits[id];state.deposits[id]=r;
+     await firebase.database().ref(DB_PATH+'/deposits/'+id).set(r);
+     if(r?.receipt){
+       const saved=await persistGeneratedReceipt('deposits',id,r);
+       if(!saved)console.warn('Comprobante de depósito no persistió en Firebase; queda disponible localmente.');
+     }
+   }catch(e){
+     console.warn('Comprobante de depósito:',e);
+     // El depósito ya fue acreditado de forma idempotente. No se debe reportar como rechazado por el recibo.
+   }
    try{await addNotification(u.id,'Balance de '+u.name+' actualizado: el depósito de '+money(depositAmount)+' fue acreditado directamente a su balance/capital. Comisión: RD$0.00. No afecta el balance ni la comisión del Administrador.','deposits',id)}catch(e){console.warn('Notificación de depósito:',e)}
    // IMPORTANTE: NO usar persist() aquí. Un depósito no debe pasar por el motor de comisiones ni por un guardado global que pueda tocar otros balances.
    // El balance del Remitente y el registro del depósito ya fueron escritos directamente en Firebase.
