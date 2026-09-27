@@ -2077,7 +2077,7 @@ async function guardarAgentEnvio(){
  if(!id)return;
  closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE. Total entregado: '+htgMoney(total)+'; tarifa incluida: '+htgMoney(fee)+'.','success');
 }
-async async function guardarEnvio(){
+async function guardarEnvio(){
  const _modal=document.getElementById('envioModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return;
  resolveEnvioPerson('remitente');resolveEnvioPerson('beneficiario');
@@ -2210,7 +2210,7 @@ async function guardarDeposito(){
    toast(e?.code==='PERMISSION_DENIED'?'Firebase rechazó el depósito por permisos.':'No se pudo guardar el depósito en Firebase.','error');
  }
 }
-async async function guardarRecarga(){
+async function guardarRecarga(){
  const _modal=document.getElementById('recargaModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const company=String(document.getElementById('rec-comp')?.value||'').trim();
@@ -2219,7 +2219,7 @@ async async function guardarRecarga(){
  let amount=Number(document.getElementById('rec-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('recargaModal'))return;
  const id=await createTransaction('recargas',{company,phone:document.getElementById('rec-num').value},amount);if(!id){resetFormSubmitState('recargaModal');return;}closeModal('recargaModal');toast('Recarga guardada y notificada.')
 }
-async async function guardarPaquetico(){
+async function guardarPaquetico(){
  const _modal=document.getElementById('paquetikoModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const company=String(document.getElementById('pkt-comp')?.value||'').trim();
@@ -2228,7 +2228,7 @@ async async function guardarPaquetico(){
  const amount=Number(document.getElementById('pkt-monto').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paquetikoModal'))return;
  const id=await createTransaction('paqueticos',{company,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id){resetFormSubmitState('paquetikoModal');return;}closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
 }
-async async function guardarPago(){
+async function guardarPago(){
  const _modal=document.getElementById('pagoModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const company=String(document.getElementById('pag-empresa')?.value||'').trim();
@@ -2237,7 +2237,7 @@ async async function guardarPago(){
  let amount=Number(document.getElementById('pag-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('pagoModal'))return;
  const id=await createTransaction('pagos',{company,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id){resetFormSubmitState('pagoModal');return;}closeModal('pagoModal');toast('Pago guardado y notificado.')
 }
-async async function guardarPaquete(){
+async function guardarPaquete(){
  const _modal=document.getElementById('paqueteModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const amount=Number(document.getElementById('paq-costo').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paqueteModal'))return;
