@@ -6354,5 +6354,54 @@ img[data-current-brand-logo="true"]{
   window.sendwayoApplyOfficialServiceCatalog=apply;
 })();
 </script>
+<!-- SENDWAYO FINAL INTERACTION REPAIR V1 -->
+<script id="sendwayo-final-interaction-repair-v1">
+(function(){
+  if(window.__sendwayoFinalInteractionRepairV1)return;
+  window.__sendwayoFinalInteractionRepairV1=true;
+  const map={beneficiarios:'beneficiarioModal',paquetes:'paqueteModal',recargas:'recargaModal',paqueticos:'paquetikoModal',pagos:'pagoModal',cuentas_depositos:'cuentaModal',comisiones:'comisionModal'};
+  function visible(id){const m=document.getElementById(id);return !!m&&getComputedStyle(m).display!=='none';}
+  function force(id){
+    const m=document.getElementById(id);if(!m)return false;
+    delete m.dataset.submitting;m.style.display='flex';m.classList.add('show');m.style.pointerEvents='auto';
+    m.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='auto';b.style.opacity='1'}});
+    document.body.style.overflow='hidden';return true;
+  }
+  function open(id){
+    try{if(typeof window.openModal==='function')window.openModal(id)}catch(e){console.warn('openModal',id,e)}
+    return visible(id)||force(id);
+  }
+  function add(view,btn){
+    if(view==='envios'){
+      try{if(typeof window.sendwayoSafeOpenTransaction==='function'&&window.sendwayoSafeOpenTransaction())return true}catch(e){}
+      try{if(typeof window.openTransactionEntry==='function')window.openTransactionEntry();}catch(e){}
+      return visible('envioModal')||visible('agentEnvioModal')||force('envioModal');
+    }
+    if(view==='remitentes'){
+      if(typeof isAdmin==='function'&&!isAdmin()){toast('Solo el Administrador puede agregar remitentes.','warn');return false}
+      try{if(typeof window.openPerson==='function')window.openPerson('Remitente')}catch(e){}
+      return visible('personaModal')||force('personaModal');
+    }
+    if(view==='cuentas_depositos'&&/dep[oó]sito/i.test(btn.textContent||''))return open('depositoModal');
+    if(view==='cuentas_depositos')return open('cuentaModal');
+    if(view==='mi_cuenta'&&/agregar dinero/i.test(btn.textContent||''))return open('depositoModal');
+    if(view==='comisiones'&&typeof isAgentUser==='function'&&isAgentUser(currentUser)){toast('Las comisiones son gestionadas por el Administrador.','warn');return false}
+    const id=map[view];return id?open(id):false;
+  }
+  document.addEventListener('click',function(e){
+    const btn=e.target?.closest?.('.view-section .card-header button');
+    if(!btn)return;
+    const label=String(btn.textContent||'').trim();
+    if(!/agregar nuevo|agregar nuevo|agregar dinero|agregar depósito|agregar deposito/i.test(label))return;
+    const view=String(btn.closest('.view-section')?.id||'').replace(/^view-/,'');
+    if(!view)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    add(view,btn);
+  },true);
+  function unlockAll(){document.querySelectorAll('.modal').forEach(m=>{if(m.dataset.submitting==='1'&&m.style.display==='none')delete m.dataset.submitting})}
+  window.sendwayoFinalUnlockForms=function(){unlockAll()};
+  setTimeout(unlockAll,1500);
+})();
+</script>
 </body>
 </html>
