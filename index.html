@@ -2719,31 +2719,21 @@ function generateReceipt(collection,id){
 }
 function downloadReceipt(collection,id){
  const r=state[collection]?.[id];
- if(!r?.receipt||r.status!=='Aprobado')return toast('El recibo solo está disponible después de la aprobación.','warn');
+ if(!r?.receipt||String(r.status||'').trim().toLowerCase()!=='aprobado')return toast('El recibo solo está disponible después de la aprobación.','warn');
  showReceipt(collection,id);
  setTimeout(()=>window.print(),250);
 }
-window.showReceipt=async function showReceipt(collection,id){
+window.showReceipt=function showReceipt(collection,id){
  /* Apertura directa en un solo toque/clic. */
  let r=state[collection]?.[id];
  if(!r&&state.transacciones?.[id]){r={...state.transacciones[id],_sourceCollection:'transacciones'};state[collection]=state[collection]||{};state[collection][id]=r}
- if(!r||r.status!=='Aprobado')return toast('El recibo solo aparece después de la aprobación del Administrador.','warn');
- if(!r.receipt&&firebaseReady&&firebase.auth().currentUser){
-   try{
-     const src=sendwayoRecordSource(collection,id,r);
-     const readPromise=firebase.database().ref(src.path+'/receipt').once('value');
-     const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('RECEIPT_READ_TIMEOUT')),2500));
-     const snap=await Promise.race([readPromise,timeout]);
-     const savedReceipt=snap.val();
-     if(savedReceipt){r.receipt=savedReceipt;state[collection][id]=r;}
-   }catch(e){console.warn('Lectura de comprobante:',e)}
- }
+ if(!r||String(r.status||'').trim().toLowerCase()!=='aprobado')return toast('El recibo solo aparece después de la aprobación del Administrador.','warn');
  if(!r.receipt){
    generateReceipt(collection,id);r=state[collection]?.[id];
    if(!r?.receipt)return toast('No se pudo generar el comprobante.','error');
  }
  /* La pantalla no debe quedar esperando a Firebase para mostrar el comprobante. */
- persistGeneratedReceipt(collection,id,r).catch(e=>console.warn('Guardado de comprobante:',e));
+ Promise.resolve(persistGeneratedReceipt(collection,id,r)).catch(e=>console.warn('Guardado de comprobante:',e));
  const u=state.users?.[r.userId]||state.users?.admin||{};
  if(collection==='deposits'&&r.receipt){
    r.receipt.beneficiario=u.name||r.username||'Remitente';
@@ -4002,7 +3992,7 @@ window.editRecord=function(collection,id){const r=state[collection]?.[id];if(!r)
 window.actionButtons=function(collection,id,status){
   const admin=isAdmin(),rec=state[collection]?.[id],owner=rec?.userId===currentUser?.id||rec?.createdUserId===currentUser?.id;
   let a='<button class="btn btn-light btn-sm" type="button" title="Ver" onclick="event.preventDefault();event.stopPropagation();viewRecord(\''+collection+'\',\''+id+'\');return false">Ver</button>';
-  if(status==='Aprobado'&&collection!=='deposits')a+='<button class="btn btn-primary btn-sm" title="Recibo" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>';
+  if(String(status||'').trim().toLowerCase()==='aprobado'&&collection!=='deposits')a+='<button class="btn btn-primary btn-sm" title="Recibo" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>';
   if(admin){
     a+='<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\''+collection+'\',\''+id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\''+collection+'\',\''+id+'\')">Eliminar</button>';
     if(status==='Pendiente'&&collection!=='accountWithdrawals')a+='<button class="btn btn-success btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'No coincide\')">NO COINCIDE</button>';
