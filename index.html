@@ -6796,3 +6796,11 @@ img[data-current-brand-logo="true"]{
  };
 })();
 </script>
+
+<!-- SENDWAYO UNIVERSAL FORM UNFREEZE v1 -->
+<script id="sendwayo-universal-form-unfreeze-v1">
+(function(){'use strict';if(window.__swUniversalUnfreeze)return;window.__swUniversalUnfreeze=true;
+function fix(){document.querySelectorAll('.modal').forEach(function(m){if(m.style.display==='none'&&m.getAttribute('aria-hidden')!=='false')return;m.querySelectorAll('input,select,textarea,button').forEach(function(e){if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;if(e.id==='profile-staff-id'||e.id==='cuenta-disp'||e.id==='agent-current')return;e.disabled=false;e.removeAttribute('disabled');if(e.tagName==='INPUT'||e.tagName==='TEXTAREA')e.readOnly=false;e.style.pointerEvents='auto';e.style.opacity='1';});m.style.pointerEvents='auto';});}
+window.swEnableAllFormFields=fix;document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(fix,0)},true);document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(fix,0)},true);new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['disabled','readonly','style','class']});setInterval(fix,300);setTimeout(fix,100);
+})();
+</script>
