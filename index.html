@@ -6919,3 +6919,53 @@ window.swEnableAllFormFields=fix;document.addEventListener('click',function(e){i
   window.SENDWAYO_UNLOCK_AGENT_FIELDS=unlockAgentFields;
 })();
 </script>
+
+<!-- SENDWAYO FINAL INTERACTION HARDENING v2 -->
+<script id="sendwayo-final-interaction-hardening-v2">
+(function(){'use strict';
+ if(window.__swFinalInteractionHardeningV2)return; window.__swFinalInteractionHardeningV2=true;
+ function isSubmitting(m){return m&&m.dataset&&m.dataset.submitting==='1'}
+ function unlockModal(m){
+   if(!m||isSubmitting(m))return;
+   m.style.pointerEvents='auto';
+   m.querySelectorAll('input,select,textarea,button').forEach(function(e){
+     if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;
+     if(e.id==='profile-staff-id'||e.id==='cuenta-disp')return;
+     e.disabled=false;e.removeAttribute('disabled');e.style.pointerEvents='auto';e.style.opacity='1';e.style.visibility='visible';
+     if((e.tagName==='INPUT'||e.tagName==='TEXTAREA')&&!e.hasAttribute('data-readonly'))e.readOnly=false;
+   });
+ }
+ function repair(){document.querySelectorAll('.modal').forEach(function(m){var s=getComputedStyle(m);if(s.display!=='none'&&s.visibility!=='hidden')unlockModal(m)});}
+ window.SENDWAYO_REPAIR_FIELDS=repair;
+ document.addEventListener('click',function(e){
+   var m=e.target&&e.target.closest?e.target.closest('.modal'):null;
+   if(m&&!isSubmitting(m))setTimeout(function(){unlockModal(m)},0);
+ },true);
+ document.addEventListener('focusin',function(e){
+   var m=e.target&&e.target.closest?e.target.closest('.modal'):null;
+   if(m&&!isSubmitting(m))setTimeout(function(){unlockModal(m)},0);
+ },true);
+ setTimeout(repair,100);setInterval(repair,700);
+
+ // Agentes: los campos operativos deben permanecer utilizables, sin tocar permisos administrativos.
+ function agentRepair(){
+   var m=document.getElementById('agentEnvioModal');if(!m||isSubmitting(m))return;
+   ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-monto'].forEach(function(id){var e=document.getElementById(id);if(e){e.disabled=false;e.removeAttribute('disabled');e.readOnly=false;e.style.pointerEvents='auto';e.style.visibility='visible';e.style.opacity='1';}});
+   var plus=document.querySelector('#agent-beneficiario-input')?.parentElement?.querySelector('.plus-btn');
+   if(plus){plus.disabled=false;plus.removeAttribute('disabled');plus.style.pointerEvents='auto';plus.style.visibility='visible';plus.style.opacity='1';}
+ }
+ window.SENDWAYO_REPAIR_AGENT_FIELDS=agentRepair;setInterval(agentRepair,400);
+
+ // Comprobante: captura el clic antes de cualquier otro manejador y garantiza la apertura del modal de detalle.
+ document.addEventListener('click',function(e){
+   var b=e.target&&e.target.closest?e.target.closest('.sw-receipt-btn'):null;if(!b)return;
+   var oc=String(b.getAttribute('onclick')||'');var m=oc.match(/showReceipt\\(\\s*['\"]([^'\"]+)['\"]\\s*,\\s*['\"]([^'\"]+)['\"]\\s*\\)/);
+   if(!m)return;
+   var collection=m[1],id=m[2];
+   setTimeout(function(){
+     try{if(typeof window.showReceipt==='function')window.showReceipt(collection,id)}catch(err){console.error('Comprobante:',err)}
+     var d=document.getElementById('detailModal');if(d){d.style.display='flex';d.classList.add('show');d.style.visibility='visible';d.style.opacity='1';d.style.pointerEvents='auto';d.style.zIndex='50000';}
+   },20);
+ },true);
+})();
+</script>
