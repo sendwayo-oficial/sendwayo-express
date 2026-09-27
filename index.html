@@ -6407,3 +6407,63 @@ img[data-current-brand-logo="true"]{
 </script>
 </body>
 </html>
+<!-- SENDWAYO ADD-NEW HARDENED V1 -->
+<script id="sendwayo-add-new-hardened-v1">
+(function(){
+ 'use strict';
+ const map={
+   beneficiarios:'beneficiarioModal',
+   paquetes:'paqueteModal',
+   recargas:'recargaModal',
+   paqueticos:'paquetikoModal',
+   pagos:'pagoModal',
+   cuentas_depositos:'depositoModal',
+   mi_cuenta:'depositoModal',
+   comisiones:'comisionModal'
+ };
+ function visible(id){const m=document.getElementById(id);return !!m&&getComputedStyle(m).display!=='none';}
+ function force(id){
+   const m=document.getElementById(id); if(!m)return false;
+   delete m.dataset.submitting;
+   m.style.display='flex'; m.classList.add('show'); m.style.pointerEvents='auto';
+   m.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.style.pointerEvents='auto';b.style.opacity='';}});
+   document.body.style.overflow='hidden';
+   return true;
+ }
+ function open(id){
+   try{if(typeof window.openModal==='function')window.openModal(id)}catch(e){console.warn('SENDWAYO open modal',id,e)}
+   return visible(id)||force(id);
+ }
+ function openEnvios(){
+   try{if(typeof window.openTransactionEntry==='function')window.openTransactionEntry()}catch(e){console.warn('SENDWAYO open transaction',e)}
+   if(visible('envioModal')||visible('agentEnvioModal'))return true;
+   return force('envioModal');
+ }
+ function handle(ev){
+   const btn=ev.target&&ev.target.closest?ev.target.closest('.view-section .card-header button'):null;
+   if(!btn)return;
+   const label=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+   if(!/^agregar nuevo$|^agregar depósito$|^agregar dinero$/.test(label))return;
+   const view=btn.closest('.view-section'); if(!view)return;
+   const viewId=String(view.id||'').replace(/^view-/,'');
+   if(viewId==='remitentes'&&!document.body.classList.contains('force-remitente-add'))return;
+   ev.preventDefault(); ev.stopImmediatePropagation();
+   setTimeout(function(){
+     let ok=false;
+     if(viewId==='envios')ok=openEnvios();
+     else if(viewId==='cuentas_depositos'&&label==='agregar nuevo')ok=open('cuentaModal');
+     else ok=open(map[viewId]||'');
+     if(!ok)console.warn('SENDWAYO: no se pudo abrir '+viewId);
+   },0);
+ }
+ document.addEventListener('click',handle,true);
+ document.addEventListener('touchend',function(e){
+   if(window.innerWidth<=800)handle(e);
+ },true);
+ window.SENDWAYO_OPEN_NEW=function(viewId){
+   if(viewId==='envios')return openEnvios();
+   if(viewId==='remitentes')return open('personaModal');
+   return open(map[viewId]||'');
+ };
+})();
+</script>
