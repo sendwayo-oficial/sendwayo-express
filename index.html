@@ -1083,6 +1083,10 @@ async function initFirebase(){
       }
       if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
       if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+      if(!firebase.storage){
+        const base='https://www.gstatic.com/firebasejs/9.23.0/';
+        await loadScript(base+'firebase-storage-compat.js',7000);
+      }
       try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Persistencia Firebase:',e)}
       firebaseReady=true;
       return true;
@@ -2147,6 +2151,22 @@ async function creditDepositToRemitente(depositId,remitenteId,amount){ if(!isAdm
  if(!tx.committed)throw new Error('DEPOSITO_NO_ACREDITADO');const updated=tx.snapshot.val();state.users[remitenteId]=updated;if(currentUser?.id===remitenteId)currentUser=updated;if(lastSyncedState?.users?.[remitenteId])lastSyncedState.users[remitenteId]=cloneState(updated);localSave();return {user:updated,creditRepaid:result.creditRepaid,balanceAdded:result.balanceAdded};
 }
 
+async function uploadDepositVoucher(file,depositId,userId){
+  if(!file)return {name:'Sin archivo',uploaded:false};
+  const safeName=String(file.name||'comprobante').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-120);
+  if(file.size>10*1024*1024)throw new Error('VOUCHER_TOO_LARGE');
+  if(!firebaseReady||!firebase.auth().currentUser||!firebase.storage)throw new Error('STORAGE_UNAVAILABLE');
+  const path=DB_PATH+'/vouchers/'+String(userId||'unknown')+'/'+String(depositId)+'_'+safeName;
+  const ref=firebase.storage().ref().child(path);
+  const metadata={contentType:file.type||'application/octet-stream',customMetadata:{depositId:String(depositId),userId:String(userId||''),uploadedBy:String(firebase.auth().currentUser.uid||'')}};
+  const task=ref.put(file,metadata);
+  const snap=await Promise.race([
+    new Promise((resolve,reject)=>task.on(firebase.storage.TaskEvent.STATE_CHANGED,()=>{},reject,()=>resolve(task.snapshot))),
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('VOUCHER_UPLOAD_TIMEOUT')),30000))
+  ]);
+  const url=await snap.ref.getDownloadURL();
+  return {name:safeName,type:file.type||'',size:file.size,url,path,uploaded:true};
+}
 async function guardarDeposito(){
  const _modal=document.getElementById('depositoModal');if(_modal?.dataset.submitting==='1')return;
  const amount=Number(document.getElementById('dep-monto')?.value||0);
@@ -2158,10 +2178,20 @@ async function guardarDeposito(){
  const target=state.users?.[targetId];
  if(!target||!isManagedUser(target))return toast('La cuenta seleccionada no es válida.','warn');
  if(!firebaseReady||!firebase.auth().currentUser)return toast('La sesión de Firebase no está activa.','error');
- const file=document.getElementById('dep-voucher')?.files?.[0],voucher=file?file.name:'Sin archivo';
+ const file=document.getElementById('dep-voucher')?.files?.[0];
  const id=uid('dep'),directAdmin=isAdmin(),createdAt=now();
  if(!beginFormSubmit('depositoModal'))return;
- const record={id,userId:target.id,username:target.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId,amount,voucher,status:directAdmin?'Aprobado':'Pendiente',createdAt,accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:directAdmin,balanceCredited:false,balanceRefunded:false,targetType:isAgentUser(target)?'AGENTE':'REMITENTE'};
+ let voucher={name:'Sin archivo',uploaded:false};
+ try{
+   if(file)voucher=await uploadDepositVoucher(file,id,target.id);
+ }catch(uploadError){
+   console.warn('Voucher depósito:',uploadError);
+   const modal=document.getElementById('depositoModal');
+   if(modal)delete modal.dataset.submitting;
+   const code=uploadError?.message||'';
+   return toast(code==='VOUCHER_TOO_LARGE'?'El comprobante supera 10 MB. Seleccione un archivo más pequeño.':code==='VOUCHER_UPLOAD_TIMEOUT'?'La subida del comprobante tardó demasiado. Revise Internet e inténtelo nuevamente.':'No se pudo subir el comprobante a Firebase Storage. Revise las reglas de Storage e inténtelo nuevamente.','error');
+ }
+ const record={id,userId:target.id,username:target.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId,amount,voucher:voucher.name,voucherFile:voucher,status:directAdmin?'Aprobado':'Pendiente',createdAt,accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:directAdmin,balanceCredited:false,balanceRefunded:false,targetType:isAgentUser(target)?'AGENTE':'REMITENTE'};
  try{
    // Remitente: guarda el depósito como PENDIENTE y NO toca el balance.
    // Administrador: guarda y acredita inmediatamente al balance del Remitente.
@@ -3213,7 +3243,10 @@ function editAccount(id){
  a.bank=prompt('Banco:',a.bank)??a.bank;a.holder=prompt('Titular:',a.holder)??a.holder;a.number=prompt('Número de cuenta:',a.number)??a.number;
  persist();renderAll();toast('Cuenta bancaria actualizada por el Administrador.')
 }
-function renderDeposits(){let rows=newestFirst(state.deposits).filter(r=>isAdmin()||r.userId===currentUser.id);document.querySelector('#depTable tbody').innerHTML=rows.map((r,i)=>{let a=state.accounts[r.accountId],st=r.status||'Pendiente';let adminActions=isAdmin()?'<button class="btn btn-warning btn-sm" onclick="editRecord(\'deposits\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord(\'deposits\',\''+r.id+'\')">Eliminar</button>':'';let reviewActions=isAdmin()&&st==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="approveDeposit(\''+r.id+'\',\'No coincide\')">NO COINCIDE</button>':'';return '<tr><td>'+(i+1)+'</td><td><b>'+escapeHtml(r.id||'—')+'</b></td><td>'+escapeHtml(r.username)+'</td><td>'+escapeHtml(a?.bank||'')+' - '+escapeHtml(a?.number||'')+'</td><td>'+money(r.amount)+'</td><td>'+money(r.creditRepaid||0)+'</td><td>'+money(r.balanceAdded||0)+'</td><td>'+escapeHtml(r.voucher)+'</td><td><span class="status '+statusClass(st)+'">'+escapeHtml(st)+'</span></td><td>'+(st==='Aprobado'?'<button class="btn btn-primary btn-sm" title="Ver comprobante" type="button" type="button" onclick="showReceipt(\'deposits\',\''+r.id+'\');return false" onpointerup="if(event.pointerType===\'touch\'){event.preventDefault();showReceipt(\'deposits\',\''+r.id+'\');return false}">COMPROBANTE</button>':'—')+'</td><td data-record-id="'+r.id+'"><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord(\'deposits\',\''+r.id+'\')">Ver</button>'+adminActions+reviewActions+'</div></td></tr>'}).join('')||'<tr><td colspan="11" class="muted">No hay depósitos.</td></tr>'}
+function renderDeposits(){let rows=newestFirst(state.deposits).filter(r=>isAdmin()||r.userId===currentUser.id);document.querySelector('#depTable tbody').innerHTML=rows.map((r,i)=>{let a=state.accounts[r.accountId],st=r.status||'Pendiente';let adminActions=isAdmin()?'<button class="btn btn-warning btn-sm" onclick="editRecord(\'deposits\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord(\'deposits\',\''+r.id+'\')">Eliminar</button>':'';let reviewActions=isAdmin()&&st==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="approveDeposit(\''+r.id+'\',\'No coincide\')">NO COINCIDE</button>':'';const voucherCell=r.voucherFile?.uploaded&&r.voucherFile?.url
+  ? '<a class="btn btn-light btn-sm" href="'+escapeHtml(r.voucherFile.url)+'" target="_blank" rel="noopener">VER COMPROBANTE</a>'
+  : escapeHtml(r.voucher||'Sin archivo');
+return '<tr><td>'+(i+1)+'</td><td><b>'+escapeHtml(r.id||'—')+'</b></td><td>'+escapeHtml(r.username)+'</td><td>'+escapeHtml(a?.bank||'')+' - '+escapeHtml(a?.number||'')+'</td><td>'+money(r.amount)+'</td><td>'+money(r.creditRepaid||0)+'</td><td>'+money(r.balanceAdded||0)+'</td><td>'+voucherCell+'</td><td><span class="status '+statusClass(st)+'">'+escapeHtml(st)+'</span></td><td>'+(st==='Aprobado'?'<button class="btn btn-primary btn-sm" title="Ver comprobante" type="button" type="button" onclick="showReceipt(\'deposits\',\''+r.id+'\');return false" onpointerup="if(event.pointerType===\'touch\'){event.preventDefault();showReceipt(\'deposits\',\''+r.id+'\');return false}">COMPROBANTE</button>':'—')+'</td><td data-record-id="'+r.id+'"><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord(\'deposits\',\''+r.id+'\')">Ver</button>'+adminActions+reviewActions+'</div></td></tr>'}).join('')||'<tr><td colspan="11" class="muted">No hay depósitos.</td></tr>'}
 function renderSimple(collection,table,fields){
  let rows=newestFirst(state[collection]).filter(r=>isAdmin()||r.userId===currentUser.id);
  document.querySelector('#'+table+' tbody').innerHTML=rows.map((r,i)=>{let vals=fields.map(f=>f==='amount'||f==='cost'?money(r[f]):escapeHtml(r[f]??'')).join('</td><td>');return `<tr><td>${i+1}</td><td>${vals}</td><td><span class="status ${statusClass(r.status||'Pendiente')}">${escapeHtml(r.status||'Pendiente')}</span></td><td data-record-id="${r.id}">${actionButtons(collection,r.id,r.status||'Pendiente')}</td></tr>`}).join('')||'<tr><td colspan="'+(fields.length+3)+'" class="muted">No hay registros.</td></tr>'
