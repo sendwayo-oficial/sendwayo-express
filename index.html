@@ -590,7 +590,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <h3>Haití a Haití — Envío / Retiro</h3>
 <div class="form-grid">
 <div class="form-group"><label>Tipo de Transacción</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option></select></div>
-<div class="form-group"><label>Agente</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="toast('La cuenta de Agente es la cuenta activa.','info')" title="Agente">+</button></div></div>
+<div class="form-group"><label>Agente</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="openAgentCreate()" title="Agregar Agente">+</button></div></div>
 <div class="form-group"><label>Envío / Retiro</label><select id="agent-operation" class="form-control" onchange="calcularAgentEnvio()"><option value="Envío">Envío</option><option value="Retiro">Retiro</option></select></div>
 <div class="form-group"><label>Beneficiario</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Escriba nombre o número..." autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="openModal('beneficiarioModal')" title="Agregar beneficiario">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
 <div class="form-group"><label>Monto en Gourdes haitianos (GDES)</label><input id="agent-monto" type="number" min="0" step="1" class="form-control" oninput="calcularAgentEnvio()" placeholder="0"></div>
@@ -2024,8 +2024,7 @@ function resolveEnvioPerson(kind){
  if(kind==='remitente'&&!isAdmin()&&currentUser){const me=state.users?.[currentUser.id];if(me)return setEnvioPersonFields(kind,me,me.id)}
  hidden.value='';
 }
-async function openTransactionEntry(){if(isAgentUser(currentUser)){const m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.name||'Agente')+(u.phone?' ('+u.phone+')':' (Cuenta de Agente)');const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(m)openModal('agentEnvioModal');return}openModal('envioModal')}
-function htgMoney(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' HTG'}
+async function openTransactionEntry(){if(isAgentUser(currentUser)){const m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.phone||'Sin número')+' ('+(u.name||'Agente')+')';const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(m)openModal('agentEnvioModal');return}openModal('envioModal')}
 const HTI_AGENT_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
 const HTI_AGENT_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
 function agentOperationKey(operation){return String(operation||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').startsWith('retiro')?'RETIRO':'ENVIO'}
@@ -3756,26 +3755,62 @@ async function guardarDepositoAdministrativo(){
   window.ensureAdminStartAtZero=async function(){return false};
 })();
 
-</script><script>
-/* SENDWAYO — acceso estable: espera la función real sin mostrar un falso error de módulo. */
-(function(){
-  var status=document.getElementById('login-status');
-  function set(m,c){if(status){status.textContent=m;status.className='login-status '+(c||'')}}
-  window.sendwayoLogin=async function(){
-    var user=(document.getElementById('login-user')?.value||'').trim(),pass=document.getElementById('login-pass')?.value||'';
-    if(!user||!pass){set('Escriba usuario y contraseña.','warn');return}
-    for(var tries=0;tries<60;tries++){
-      if(typeof window.realizarLogin==='function')return window.realizarLogin();
-      if(typeof window.realizarLoginOriginal==='function')return window.realizarLoginOriginal();
-      set('Preparando el acceso…');
-      await new Promise(function(resolve){setTimeout(resolve,100)});
-    }
-    set('No se pudo inicializar el acceso. Recargue la página e intente nuevamente.','error');
-  };
-})();
-</script>
 
-<script>
+/* SENDWAYO — gestión limpia de Agentes (una sola implementación). */
+function openAgentCreate(){
+  if(typeof isAdmin!=='function'||!isAdmin())return toast('Solo el Administrador puede agregar un Agente.','warn');
+  let m=document.getElementById('sw-agent-create-modal');
+  if(!m){
+    m=document.createElement('div');m.id='sw-agent-create-modal';m.className='modal';
+    m.innerHTML='<div class="modal-content" style="max-width:560px">'+
+      '<button class="modal-close-x" type="button" id="sw-agent-create-close">×</button>'+
+      '<h3>Agregar Agente</h3>'+
+      '<p class="muted">El Agente tendrá acceso independiente. Contraseña inicial: 12345678.</p>'+
+      '<div class="form-grid">'+
+      '<div class="form-group"><label>Nombre completo *</label><input id="sw-agent-name" class="form-control"></div>'+
+      '<div class="form-group"><label>Celular *</label><input id="sw-agent-phone" class="form-control" inputmode="tel"></div>'+
+      '<div class="form-group" style="grid-column:1/-1"><label>Correo / usuario de acceso *</label><input id="sw-agent-email" class="form-control" type="email"></div>'+
+      '</div><div class="actions" style="margin-top:14px">'+
+      '<button class="btn btn-light" type="button" id="sw-agent-create-cancel">Cancelar</button>'+
+      '<button class="btn btn-success" type="button" id="sw-agent-create-save">Agregar Agente</button></div></div>';
+    document.body.appendChild(m);
+    const close=()=>{delete m.dataset.saving;m.style.display='none';m.setAttribute('aria-hidden','true');};
+    document.getElementById('sw-agent-create-close').onclick=close;
+    document.getElementById('sw-agent-create-cancel').onclick=close;
+    document.getElementById('sw-agent-create-save').onclick=async()=>{
+      if(m.dataset.saving==='1')return;
+      const nm=document.getElementById('sw-agent-name').value.trim();
+      const ph=document.getElementById('sw-agent-phone').value.trim();
+      const em=document.getElementById('sw-agent-email').value.trim().toLowerCase();
+      if(!nm||!ph||!em)return toast('Complete nombre, celular y correo del Agente.','warn');
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return toast('Escriba un correo válido.','warn');
+      if(Object.values(state.users||{}).some(a=>isAgentUser(a)&&String(a.authEmail||a.username||'').toLowerCase()===em))
+        return toast('Ese correo ya pertenece a un Agente.','warn');
+      m.dataset.saving='1';
+      const id=uid('ag');
+      const user={id,role:'Agente',name:nm,phone:ph,username:em,authEmail:em,
+        staffId:makePermanentId(),active:true,accountStatus:'Pendiente de activación',balance:0,commission:0,referrals:0,
+        agentKey:String(nm).toUpperCase().replace(/[^A-Z0-9]+/g,'_'),agentType:'AGENTE',agentScope:'OPERACIONES',
+        agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,
+        uniqueAgent:false,commissionWithdrawAllowed:false,approvalRequired:true,balanceCurrency:'HTG',accountSchemaV3:1};
+      try{
+        const cr=await createFirebaseAccountForUser(user);
+        if(!cr||!['created','exists'].includes(cr.status))throw new Error('FIREBASE_ACCOUNT_NOT_CONFIRMED');
+        await firebase.database().ref(DB_PATH+'/users/'+id).set(user);
+        state.users[id]=user;
+        if(typeof markSynced==='function')markSynced(['users',id],user);
+        if(typeof localSave==='function')localSave();
+        close();renderAll();toast('Agente agregado correctamente.','success');
+      }catch(e){console.warn('Agregar Agente:',e);toast('No se pudo agregar el Agente en Firebase.','error')}
+      finally{delete m.dataset.saving;}
+    };
+  }
+  ['sw-agent-name','sw-agent-phone','sw-agent-email'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  m.style.display='flex';m.setAttribute('aria-hidden','false');
+  setTimeout(()=>document.getElementById('sw-agent-name')?.focus(),40);
+}
+
+</script><script>
 /* SENDWAYO EXPRESS — CORRECCIÓN INTEGRAL DE PRODUCCIÓN 2026-09-24 */
 (function(){
 'use strict';
@@ -6101,252 +6136,8 @@ img[data-current-brand-logo="true"]{
 
 
 
-<script id="sendwayo-agent-clean-v1">
-(function(){
-  if(window.__sendwayo_agent_clean_v1)return;
-  window.__sendwayo_agent_clean_v1=true;
-
-  function isAgent(){
-    try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser);}catch(_){return false}
-  }
-
-  function detachModal(){
-    const modal=document.getElementById('agentEnvioModal');
-    if(!modal)return null;
-    if(modal.parentElement!==document.body)document.body.appendChild(modal);
-    modal.style.position='fixed';
-    modal.style.inset='0';
-    modal.style.zIndex='20000';
-    modal.style.pointerEvents='auto';
-    return modal;
-  }
-
-  function unlockModal(modal){
-    if(!modal)return;
-    delete modal.dataset.submitting;
-    modal.querySelectorAll('input,select,textarea,button').forEach(el=>{
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='auto';
-      el.style.opacity='1';
-    });
-    const current=document.getElementById('agent-current');
-    if(current){current.disabled=false;current.readOnly=true;}
-  }
-
-  function prepareMenu(){
-    if(!isAgent())return;
-    const menu=document.getElementById('sidebar-menu');
-    if(!menu)return;
-    const link=[...menu.querySelectorAll('a')].find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));
-    if(link){
-      link.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
-      const li=link.closest('li');if(li)li.style.display='';
-      link.onclick=function(e){e.preventDefault();switchView('envios');return false;};
-    }
-    menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
-    [...menu.querySelectorAll('li')].forEach(li=>{
-      const txt=String(li.textContent||'').trim().toLowerCase();
-      if((txt==='envío'||txt==='retiro'||txt==='envios'||txt==='retiros')&&!li.querySelector('a[onclick*="switchView(\'envios\')"]'))li.remove();
-    });
-  }
-
-  function openAgent(operation){
-    if(!isAgent())return;
-    const modal=detachModal();
-    if(!modal)return;
-    const u=window.currentUser||currentUser||{};
-    const current=document.getElementById('agent-current');
-    if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
-    const service=document.getElementById('agent-tipo-trans');
-    if(service){
-      service.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';
-      service.value='HAITI A HAITI NatCash';
-    }
-    const op=document.getElementById('agent-operation');
-    if(op){
-      op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';
-      op.value=operation==='Retiro'?'Retiro':'Envío';
-    }
-    const ben=document.getElementById('agent-beneficiario-input');if(ben){ben.value='';ben.disabled=false;ben.readOnly=false;}
-    const benId=document.getElementById('agent-beneficiario-select');if(benId)benId.value='';
-    const amount=document.getElementById('agent-monto');if(amount){amount.value='';amount.disabled=false;amount.readOnly=false;}
-    const labels=modal.querySelectorAll('.form-group label');
-    if(labels[0])labels[0].textContent='Servicio';
-    if(labels[1])labels[1].textContent='Agente';
-    if(labels[2])labels[2].textContent='Envío / Retiro';
-    if(labels[3])labels[3].textContent='Beneficiario';
-    if(labels[4])labels[4].textContent='Monto en GDES';
-    unlockModal(modal);
-    modal.style.display='flex';
-    modal.classList.add('show');
-    document.body.style.overflow='hidden';
-    try{if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}catch(_){}
-  }
-
-  const baseApply=window.applyRoleVisibility;
-  window.applyRoleVisibility=function(){
-    if(typeof baseApply==='function')baseApply.apply(this,arguments);
-    if(isAgent())setTimeout(prepareMenu,0);
-  };
-
-  const baseShow=window.showAppForUser;
-  window.showAppForUser=function(found){
-    if(typeof baseShow==='function')baseShow.apply(this,arguments);
-    if(found&&typeof isAgentUser==='function'&&isAgentUser(found))setTimeout(prepareMenu,0);
-  };
-
-  const baseOpenEntry=window.openTransactionEntry;
-  window.openTransactionEntry=function(operation){
-    if(isAgent())return openAgent(operation);
-    if(typeof baseOpenEntry==='function')return baseOpenEntry.apply(this,arguments);
-  };
-
-  const baseOpenModal=window.openModal;
-  window.openModal=function(id){
-    if(id==='envioModal'&&isAgent())return openAgent();
-    return typeof baseOpenModal==='function'?baseOpenModal.apply(this,arguments):undefined;
-  };
-
-  const add=document.getElementById('envio-add-btn');
-  if(add){
-    add.onclick=function(e){e.preventDefault();e.stopPropagation();if(isAgent())openAgent();else if(typeof baseOpenEntry==='function')baseOpenEntry();return false;};
-    add.disabled=false;
-    add.removeAttribute('disabled');
-    add.style.pointerEvents='auto';
-    add.style.opacity='1';
-  }
-
-  document.addEventListener('click',function(e){
-    const a=e.target?.closest?.('#sidebar-menu a');
-    if(a&&isAgent()&&/envi[oó]s\s+y\s+retiros/i.test(String(a.textContent||''))){
-      e.preventDefault();
-      switchView('envios');
-    }
-  },true);
-
-  setTimeout(function(){if(isAgent())prepareMenu();},50);
-})();
-</script>\n
+\n
 <!-- SENDWAYO UI RECOVERY FINAL v2 -->
-<script id="sendwayo-ui-recovery-stable-v3">
-(function(){
-  if(window.__sendwayoUIRecoveryStableV3)return;
-  window.__sendwayoUIRecoveryStableV3=true;
-
-  const modalMap={
-    beneficiarios:'beneficiarioModal',
-    paquetes:'paqueteModal',
-    recargas:'recargaModal',
-    paqueticos:'paquetikoModal',
-    pagos:'pagoModal',
-    cuentas_depositos:'cuentaModal',
-    comisiones:'comisionModal'
-  };
-
-  function isVisibleModal(m){return !!m && getComputedStyle(m).display!=='none';}
-
-  function forceOpen(id){
-    const m=document.getElementById(id);
-    if(!m)return false;
-    delete m.dataset.submitting;
-    m.style.display='flex';
-    m.classList.add('show');
-    m.style.pointerEvents='auto';
-    m.querySelectorAll('button').forEach(b=>{
-      if(!b.hasAttribute('data-hard-disabled')){
-        b.disabled=false;
-        b.style.pointerEvents='auto';
-      }
-    });
-    document.body.style.overflow='hidden';
-    return true;
-  }
-
-  function safeOpenModal(id){
-    let opened=false;
-    try{
-      if(typeof window.openModal==='function')window.openModal(id);
-      opened=isVisibleModal(document.getElementById(id));
-    }catch(err){console.warn('SENDWAYO safeOpenModal',id,err);}
-    if(!opened)opened=forceOpen(id);
-    return opened;
-  }
-
-  function safeOpenPerson(){
-    try{
-      if(typeof window.openPerson==='function'){
-        window.openPerson('Remitente');
-        if(isVisibleModal(document.getElementById('personaModal')))return true;
-      }
-    }catch(err){console.warn('SENDWAYO openPerson',err);}
-    return safeOpenModal('personaModal');
-  }
-
-  function safeOpenTransaction(){
-    let opened=false;
-    try{
-      if(typeof window.openTransactionEntry==='function'){
-        window.openTransactionEntry();
-        opened=isVisibleModal(document.getElementById('envioModal'))||isVisibleModal(document.getElementById('agentEnvioModal'));
-      }
-    }catch(err){console.warn('SENDWAYO openTransactionEntry',err);}
-    if(opened)return true;
-    const agent=(()=>{try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser)}catch(_){return false}})();
-    return agent&&document.getElementById('agentEnvioModal')?forceOpen('agentEnvioModal'):forceOpen('envioModal');
-  }
-
-  function safeAdd(viewId,button){
-    if(viewId==='remitentes')return safeOpenPerson();
-    if(viewId==='envios')return safeOpenTransaction();
-    if(viewId==='cuentas_depositos'&&/dep[oó]sito/i.test(button.textContent||''))return safeOpenModal('depositoModal');
-    if(viewId==='mi_cuenta'&&/agregar dinero/i.test(button.textContent||''))return safeOpenModal('depositoModal');
-    const id=modalMap[viewId];
-    return id?safeOpenModal(id):false;
-  }
-
-  function bindAddButtons(){
-    document.querySelectorAll('.view-section .card-header button').forEach(btn=>{
-      if(btn.dataset.sendwayoStableBound==='1')return;
-      const text=String(btn.textContent||'').trim();
-      if(!/(agregar nuevo|agregar dep[oó]sito|agregar dinero)/i.test(text))return;
-      btn.dataset.sendwayoStableBound='1';
-      btn.addEventListener('click',function(){
-        setTimeout(function(){
-          const view=btn.closest('.view-section');
-          if(!view)return;
-          const visible=[...document.querySelectorAll('.modal')].some(isVisibleModal);
-          if(!visible)safeAdd(String(view.id||'').replace(/^view-/,'').trim(),btn);
-        },0);
-      },false);
-    });
-  }
-
-  function recover(){
-    try{
-      document.querySelectorAll('.modal').forEach(m=>{
-        if(m.style.display==='none'){
-          m.classList.remove('show');
-          delete m.dataset.submitting;
-        }
-      });
-      bindAddButtons();
-    }catch(err){console.warn('SENDWAYO UI recovery',err);}
-  }
-
-  window.sendwayoSafeOpenModal=safeOpenModal;
-  window.sendwayoSafeOpenTransaction=safeOpenTransaction;
-  window.sendwayoSafeOpenPerson=safeOpenPerson;
-  window.sendwayoBindAddButtons=bindAddButtons;
-
-  document.addEventListener('DOMContentLoaded',bindAddButtons,{once:true});
-  window.addEventListener('load',bindAddButtons,{once:true});
-  window.addEventListener('resize',recover,{passive:true});
-  document.addEventListener('visibilitychange',recover,{passive:true});
-  setTimeout(bindAddButtons,100);
-  setTimeout(bindAddButtons,800);
-})();
-</script>
 <!-- SENDWAYO OFFICIAL SERVICE CATALOG LOCK V1 -->
 <script id="sendwayo-official-service-catalog-lock-v1">
 (function(){
@@ -6389,54 +6180,6 @@ img[data-current-brand-logo="true"]{
 })();
 </script>
 <!-- SENDWAYO FINAL INTERACTION REPAIR V1 -->
-<script id="sendwayo-final-interaction-repair-v1">
-(function(){
-  if(window.__sendwayoFinalInteractionRepairV1)return;
-  window.__sendwayoFinalInteractionRepairV1=true;
-  const map={beneficiarios:'beneficiarioModal',paquetes:'paqueteModal',recargas:'recargaModal',paqueticos:'paquetikoModal',pagos:'pagoModal',cuentas_depositos:'cuentaModal',comisiones:'comisionModal'};
-  function visible(id){const m=document.getElementById(id);return !!m&&getComputedStyle(m).display!=='none';}
-  function force(id){
-    const m=document.getElementById(id);if(!m)return false;
-    delete m.dataset.submitting;m.style.display='flex';m.classList.add('show');m.style.pointerEvents='auto';
-    m.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='auto';b.style.opacity='1'}});
-    document.body.style.overflow='hidden';return true;
-  }
-  function open(id){
-    try{if(typeof window.openModal==='function')window.openModal(id)}catch(e){console.warn('openModal',id,e)}
-    return visible(id)||force(id);
-  }
-  function add(view,btn){
-    if(view==='envios'){
-      try{if(typeof window.sendwayoSafeOpenTransaction==='function'&&window.sendwayoSafeOpenTransaction())return true}catch(e){}
-      try{if(typeof window.openTransactionEntry==='function')window.openTransactionEntry();}catch(e){}
-      return visible('envioModal')||visible('agentEnvioModal')||force('envioModal');
-    }
-    if(view==='remitentes'){
-      if(typeof isAdmin==='function'&&!isAdmin()){toast('Solo el Administrador puede agregar remitentes.','warn');return false}
-      try{if(typeof window.openPerson==='function')window.openPerson('Remitente')}catch(e){}
-      return visible('personaModal')||force('personaModal');
-    }
-    if(view==='cuentas_depositos'&&/dep[oó]sito/i.test(btn.textContent||''))return open('depositoModal');
-    if(view==='cuentas_depositos')return open('cuentaModal');
-    if(view==='mi_cuenta'&&/agregar dinero/i.test(btn.textContent||''))return open('depositoModal');
-    if(view==='comisiones'&&typeof isAgentUser==='function'&&isAgentUser(currentUser)){toast('Las comisiones son gestionadas por el Administrador.','warn');return false}
-    const id=map[view];return id?open(id):false;
-  }
-  document.addEventListener('click',function(e){
-    const btn=e.target?.closest?.('.view-section .card-header button');
-    if(!btn)return;
-    const label=String(btn.textContent||'').trim();
-    if(!/agregar nuevo|agregar nuevo|agregar dinero|agregar depósito|agregar deposito/i.test(label))return;
-    const view=String(btn.closest('.view-section')?.id||'').replace(/^view-/,'');
-    if(!view)return;
-    e.preventDefault();e.stopImmediatePropagation();
-    add(view,btn);
-  },true);
-  function unlockAll(){document.querySelectorAll('.modal').forEach(m=>{if(m.dataset.submitting==='1'&&m.style.display==='none')delete m.dataset.submitting})}
-  window.sendwayoFinalUnlockForms=function(){unlockAll()};
-  setTimeout(unlockAll,1500);
-})();
-</script>
 <script id="sendwayo-agent-shared-capital-v2">
 (function(){
   if(window.__sendwayoAgentSharedCapitalV2)return;
@@ -6584,413 +6327,9 @@ img[data-current-brand-logo="true"]{
   document.addEventListener('click',e=>{if(e.target?.closest?.('#view-capital'))setTimeout(install,0)});
 })();
 </script>
-<script id="sendwayo-agent-person-select-v1">
-(function(){
-  if(window.__sendwayoAgentPersonSelectV1)return;
-  window.__sendwayoAgentPersonSelectV1=true;
-
-  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const phone=u=>typeof personPhone==='function'?personPhone(u):String(u?.phone||'');
-  const name=u=>typeof personName==='function'?personName(u):String(u?.name||u?.username||'');
-  const agentLabel=u=>(phone(u)||'Sin número')+' ('+(name(u)||'Sin nombre')+')';
-
-  function agents(){
-    return Object.values(state?.users||{}).filter(u=>u&&typeof isAgentUser==='function'&&isAgentUser(u)&&u.active!==false)
-      .sort((a,b)=>name(a).localeCompare(name(b),'es'));
-  }
-
-  function ensureStyles(){
-    if(document.getElementById('sw-agent-person-ui-style'))return;
-    const s=document.createElement('style');s.id='sw-agent-person-ui-style';
-    s.textContent='.sw-person-plus-wrap{display:flex!important;gap:6px!important;align-items:stretch!important}.sw-person-plus-wrap input{flex:1 1 auto!important;min-width:0!important}.sw-person-plus{flex:0 0 42px!important;width:42px!important;min-width:42px!important;font-size:1.25rem!important;font-weight:900!important;line-height:1!important;padding:0!important}.sw-person-suggestions{position:relative;z-index:30000}.sw-person-suggestions .env-suggestion{display:block;width:100%;text-align:left;border:1px solid #dbe3ef;background:#fff;padding:9px 11px;cursor:pointer}.sw-person-suggestions .env-suggestion:hover{background:#f4f7fb}';
-    document.head.appendChild(s);
-  }
-
-  function openAgentCreate(){
-    if(typeof isAdmin!=='function'||!isAdmin())return toast('Solo el Administrador puede agregar un Agente.','warn');
-    let m=document.getElementById('sw-agent-create-modal');
-    if(!m){
-      m=document.createElement('div');m.id='sw-agent-create-modal';m.className='modal';
-      m.innerHTML='<div class="modal-content" style="max-width:560px"><button class="modal-close-x" type="button" id="sw-agent-create-close">×</button><h3>Agregar Agente</h3><p class="muted">El Agente se agregará a SENDWAYO EXPRESS con acceso independiente. La contraseña inicial será 12345678.</p><div class="form-grid"><div class="form-group"><label>Nombre completo *</label><input id="sw-agent-name" class="form-control"></div><div class="form-group"><label>Celular *</label><input id="sw-agent-phone" class="form-control" inputmode="tel"></div><div class="form-group" style="grid-column:1/-1"><label>Correo / usuario de acceso *</label><input id="sw-agent-email" class="form-control" type="email"></div></div><div class="actions" style="margin-top:14px"><button class="btn btn-light" type="button" id="sw-agent-create-cancel">Cancelar</button><button class="btn btn-success" type="button" id="sw-agent-create-save">Agregar Agente</button></div></div>';
-      document.body.appendChild(m);
-      const close=()=>{m.style.display='none';};
-      document.getElementById('sw-agent-create-close').onclick=close;
-      document.getElementById('sw-agent-create-cancel').onclick=close;
-      document.getElementById('sw-agent-create-save').onclick=async()=>{
-        if(m.dataset.saving==='1')return;
-        const nm=document.getElementById('sw-agent-name').value.trim(),ph=document.getElementById('sw-agent-phone').value.trim(),em=document.getElementById('sw-agent-email').value.trim().toLowerCase();
-        if(!nm||!ph||!em)return toast('Complete nombre, celular y correo del Agente.','warn');
-        if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em))return toast('Escriba un correo válido.','warn');
-        if(agents().some(a=>String(a.authEmail||a.username||'').toLowerCase()===em))return toast('Ese correo ya pertenece a un Agente.','warn');
-        m.dataset.saving='1';
-        const id=typeof uid==='function'?uid('ag'):('agent-'+Date.now());
-        const user={id,role:'Agente',name:nm,phone:ph,username:em,authEmail:em,staffId:typeof makePermanentId==='function'?makePermanentId():('ID'+String(Date.now()).slice(-8)),active:true,accountStatus:'Pendiente de activación',balance:0,commission:0,referrals:0,agentKey:String(nm).toUpperCase().replace(/[^A-Z0-9]+/g,'_'),agentType:'AGENTE',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:false,commissionWithdrawAllowed:false,approvalRequired:true,balanceCurrency:'HTG',accountSchemaV3:1};
-        try{
-          if(typeof firebaseReady!=='undefined'&&!firebaseReady)throw new Error('FIREBASE_NO_AUTORIZADO');
-          const cr=await createFirebaseAccountForUser(user);
-          if(cr.status!=='created'&&cr.status!=='exists')throw new Error('FIREBASE_ACCOUNT_NOT_CONFIRMED');
-          await firebase.database().ref(DB_PATH+'/users/'+id).set(user);
-          state.users[id]=user;if(typeof markSynced==='function')markSynced(['users',id],user);if(typeof localSave==='function')localSave();
-          close();renderAll();refreshAgentField();toast('Agente agregado correctamente: '+agentLabel(user),'success');
-        }catch(e){console.warn('Agregar Agente:',e);toast('No se pudo agregar el Agente en Firebase.','error')}
-        finally{delete m.dataset.saving;}
-      };
-    }
-    ['sw-agent-name','sw-agent-phone','sw-agent-email'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-    m.style.display='flex';
-  }
-
-  function refreshAgentField(){
-    ensureStyles();
-    const input=document.getElementById('agent-current');if(!input)return;
-    const oldWrap=input.closest('.sw-person-plus-wrap');
-    let wrap=oldWrap;
-    if(!wrap){
-      wrap=document.createElement('div');wrap.className='sw-person-plus-wrap';
-      input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
-      const plus=document.createElement('button');plus.type='button';plus.className='btn btn-light sw-person-plus';plus.title='Agregar Agente';plus.textContent='+';
-      plus.onclick=e=>{e.preventDefault();e.stopPropagation();openAgentCreate();};
-      wrap.appendChild(plus);
-      const box=document.createElement('div');box.id='agent-current-suggestions';box.className='sw-person-suggestions';wrap.parentNode.insertBefore(box,wrap.nextSibling);
-    }
-    const list=agents();
-    const current=window.currentUser||currentUser||{};
-    if(typeof isAdmin==='function'&&isAdmin()){
-      input.readOnly=false;input.disabled=false;input.placeholder='Celular (Nombre completo)';
-      input.value=input.dataset.personId?(agentLabel(state.users?.[input.dataset.personId]||current)):agentLabel(current);
-      input.oninput=function(){
-        const q=String(input.value||'').trim().toLowerCase();
-        const box=document.getElementById('agent-current-suggestions');if(!box)return;
-        const matches=list.filter(a=>!q||agentLabel(a).toLowerCase().includes(q)||name(a).toLowerCase().includes(q)||phone(a).toLowerCase().includes(q));
-        box.innerHTML=matches.map(a=>'<button type="button" class="env-suggestion" data-agent-id="'+esc(a.id)+'"><b>'+esc(phone(a)||'Sin número')+'</b> <span>('+esc(name(a)||'Sin nombre')+')</span></button>').join('');
-        box.querySelectorAll('[data-agent-id]').forEach(b=>b.onclick=()=>{const a=state.users?.[b.dataset.agentId];if(!a)return;input.value=agentLabel(a);input.dataset.personId=a.id;box.innerHTML='';});
-        box.style.display=matches.length?'block':'none';
-      };
-    }else{
-      input.readOnly=true;input.disabled=false;input.value=agentLabel(current);
-      input.oninput=null;
-      input.dataset.personId=current.id||'';
-      const box=document.getElementById('agent-current-suggestions');if(box){box.innerHTML='';box.style.display='none';}
-    }
-  }
-
-  function refreshBeneficiaryField(){
-    ensureStyles();
-    const input=document.getElementById('agent-beneficiario-input');if(!input)return;
-    const oldWrap=input.closest('.sw-person-plus-wrap');
-    if(!oldWrap){
-      const wrap=document.createElement('div');wrap.className='sw-person-plus-wrap';
-      input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
-      const plus=document.createElement('button');plus.type='button';plus.className='btn btn-light sw-person-plus';plus.title='Agregar beneficiario';plus.textContent='+';
-      plus.onclick=e=>{e.preventDefault();e.stopPropagation();if(typeof openModal==='function')openModal('beneficiarioModal');};
-      wrap.appendChild(plus);
-      const box=document.getElementById('agent-beneficiario-suggestions');
-      if(box&&box.parentNode!==wrap.parentNode)wrap.parentNode.appendChild(box);
-    }
-  }
-
-  const baseOpenAgent=window.openTransactionEntry;
-  window.openTransactionEntry=function(operation){
-    const out=typeof baseOpenAgent==='function'?baseOpenAgent.apply(this,arguments):undefined;
-    setTimeout(()=>{if(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)){refreshAgentField();refreshBeneficiaryField();}},30);
-    return out;
-  };
-  const baseCalc=window.calcularAgentEnvio;
-  if(typeof baseCalc==='function')window.calcularAgentEnvio=function(){const out=baseCalc.apply(this,arguments);setTimeout(()=>{refreshAgentField();refreshBeneficiaryField();},0);return out;};
-  document.addEventListener('click',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(()=>{if(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)){refreshAgentField();refreshBeneficiaryField();}},20)},true);
-  document.addEventListener('input',e=>{if(e.target?.id==='agent-beneficiario-input')setTimeout(refreshBeneficiaryField,0)},true);
-  setInterval(()=>{if(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)){refreshAgentField();refreshBeneficiaryField();}},1500);
-  window.refreshAgentField=refreshAgentField;
-  window.refreshAgentPersonFields=()=>{refreshAgentField();refreshBeneficiaryField();};
-})();
-</script>
-
 <!-- SENDWAYO AGENT INPUT FINAL GUARD v2 -->
-<script id="sendwayo-agent-input-final-guard-v2">
-(function(){
-  'use strict';
-  if(window.__sendwayoAgentInputFinalGuardV2)return;
-  window.__sendwayoAgentInputFinalGuardV2=true;
-  const IDS=['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-beneficiario-select','agent-monto'];
-  const AGENT_IDS=new Set(['agent-betina-lindor','agent-herace-fleuranvil']);
-  const AGENT_EMAILS=new Set(['betinalindor@gmail.com','heracefleuranvil@gmail.com']);
-  function user(){try{return window.currentUser||currentUser||{}}catch(_){return {}}}
-  function agent(){const u=user(),id=String(u.id||u.staffId||'').toLowerCase(),em=String(u.authEmail||u.username||u.email||'').toLowerCase();try{if(typeof isAgentUser==='function'&&isAgentUser(u))return true}catch(_){}return AGENT_IDS.has(id)||AGENT_EMAILS.has(em)}
-  function unlock(){if(!agent())return;const m=document.getElementById('agentEnvioModal');if(!m)return;
-    IDS.forEach(id=>{const e=document.getElementById(id);if(!e)return;e.disabled=false;e.removeAttribute('disabled');e.readOnly=false;e.style.pointerEvents='auto';e.style.opacity='1';e.style.visibility='visible';});
-    const cur=document.getElementById('agent-current');if(cur){cur.disabled=false;cur.removeAttribute('disabled');cur.readOnly=true;cur.style.pointerEvents='auto';cur.style.opacity='1';}
-    m.style.pointerEvents='auto';m.style.visibility='visible';
-  }
-  window.swUnlockAgentFields=unlock;
-  document.addEventListener('DOMContentLoaded',unlock,{once:true});
-  document.addEventListener('focusin',unlock,true);document.addEventListener('click',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(unlock,0)},true);
-  const mo=new MutationObserver(unlock);setTimeout(()=>{const m=document.getElementById('agentEnvioModal');if(m)mo.observe(m,{subtree:true,attributes:true,attributeFilter:['disabled','readonly','style','class']});unlock()},300);
-  setInterval(unlock,150);
-})();
-</script>
 </body>
 </html>
 <!-- SENDWAYO ADD-NEW HARDENED V1 -->
-<script id="sendwayo-add-new-hardened-v1">
-(function(){
- 'use strict';
- const map={
-   beneficiarios:'beneficiarioModal',
-   paquetes:'paqueteModal',
-   recargas:'recargaModal',
-   paqueticos:'paquetikoModal',
-   pagos:'pagoModal',
-   cuentas_depositos:'cuentaModal',
-   mi_cuenta:'depositoModal',
-   comisiones:'comisionModal',
-   secretas:'secretaModal'
- };
- function visible(id){const m=document.getElementById(id);return !!m&&getComputedStyle(m).display!=='none';}
- function force(id){
-   const m=document.getElementById(id); if(!m)return false;
-   delete m.dataset.submitting;
-   m.style.display='flex'; m.classList.add('show'); m.style.pointerEvents='auto';
-   m.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.style.pointerEvents='auto';b.style.opacity='';}});
-   document.body.style.overflow='hidden';
-   return true;
- }
- function open(id){
-   try{if(typeof window.openModal==='function')window.openModal(id)}catch(e){console.warn('SENDWAYO open modal',id,e)}
-   return visible(id)||force(id);
- }
- function openEnvios(){
-   try{if(typeof window.openTransactionEntry==='function')window.openTransactionEntry()}catch(e){console.warn('SENDWAYO open transaction',e)}
-   if(visible('envioModal')||visible('agentEnvioModal'))return true;
-   return force('envioModal');
- }
- function handle(ev){
-   const btn=ev.target&&ev.target.closest?ev.target.closest('.view-section .card-header button'):null;
-   if(!btn)return;
-   const label=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-   if(!/^agregar nuevo$|^agregar depósito$|^agregar dinero$/.test(label))return;
-   const view=btn.closest('.view-section'); if(!view)return;
-   const viewId=String(view.id||'').replace(/^view-/,'');
-   if(viewId==='remitentes'&&!document.body.classList.contains('force-remitente-add'))return;
-   ev.preventDefault(); ev.stopImmediatePropagation();
-   setTimeout(function(){
-     let ok=false;
-     if(viewId==='envios')ok=openEnvios();
-     else if(viewId==='cuentas_depositos'&&label==='agregar nuevo')ok=open('cuentaModal');
-     else if(viewId==='credito')ok=typeof window.openCreditGrantModal==='function'?!!window.openCreditGrantModal():false;
-     else if(viewId==='bonos')ok=typeof window.openAdminCreditModal==='function'?!!window.openAdminCreditModal('bonus'):false;
-     else if(viewId==='capital')ok=typeof window.openCapitalModal==='function'?!!window.openCapitalModal():false;
-     else if(viewId==='contacto')ok=typeof window.editContact==='function'?!!window.editContact():false;
-     else if(viewId==='solicitudes')ok=typeof window.openRequest==='function'?!!window.openRequest('Enviar dinero'):false;
-     else ok=open(map[viewId]||'');
-     if(!ok)console.warn('SENDWAYO: no se pudo abrir '+viewId);
-   },0);
- }
- document.addEventListener('click',handle,true);
- document.addEventListener('touchend',function(e){
-   if(window.innerWidth<=800)handle(e);
- },true);
- window.SENDWAYO_OPEN_NEW=function(viewId){
-   if(viewId==='envios')return openEnvios();
-   if(viewId==='remitentes')return open('personaModal');
-   return open(map[viewId]||'');
- };
-})();
-</script>
-
 <!-- SENDWAYO UNIVERSAL FORM UNFREEZE v1 -->
-<script id="sendwayo-universal-form-unfreeze-v1">
-(function(){'use strict';if(window.__swUniversalUnfreeze)return;window.__swUniversalUnfreeze=true;
-function fix(){document.querySelectorAll('.modal').forEach(function(m){if(m.style.display==='none'&&m.getAttribute('aria-hidden')!=='false')return;m.querySelectorAll('input,select,textarea,button').forEach(function(e){if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;if(e.id==='profile-staff-id'||e.id==='cuenta-disp'||e.id==='agent-current')return;e.disabled=false;e.removeAttribute('disabled');if(e.tagName==='INPUT'||e.tagName==='TEXTAREA')e.readOnly=false;e.style.pointerEvents='auto';e.style.opacity='1';});m.style.pointerEvents='auto';});}
-window.swEnableAllFormFields=fix;document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(fix,0)},true);document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(fix,0)},true);new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['disabled','readonly','style','class']});setInterval(fix,300);setTimeout(fix,100);
-})();
-</script>
-
-<script id="sendwayo-final-receipt-agent-unfreeze-v1">
-(function(){
-  if(window.__sendwayoFinalReceiptAgentUnfreezeV1)return;
-  window.__sendwayoFinalReceiptAgentUnfreezeV1=true;
-
-  function forceDetailOpen(){
-    const m=document.getElementById('detailModal');
-    if(!m)return false;
-    m.style.display='flex';
-    m.classList.add('show');
-    m.style.visibility='visible';
-    m.style.opacity='1';
-    m.style.pointerEvents='auto';
-    m.style.zIndex='50000';
-    const c=m.querySelector('.modal-content');
-    if(c){c.style.pointerEvents='auto';c.style.visibility='visible';c.style.opacity='1';}
-    document.body.style.overflow='hidden';
-    return true;
-  }
-
-  const oldShowReceipt=window.showReceipt;
-  if(typeof oldShowReceipt==='function'){
-    window.showReceipt=function(collection,id){
-      try{
-        const r=state?.[collection]?.[id];
-        if(!r||String(r.status||'').trim().toLowerCase()!=='aprobado'){
-          return toast('El recibo solo aparece después de la aprobación del Administrador.','warn');
-        }
-        const result=oldShowReceipt.apply(this,arguments);
-        setTimeout(forceDetailOpen,0);
-        setTimeout(forceDetailOpen,80);
-        setTimeout(forceDetailOpen,250);
-        return result;
-      }catch(e){
-        console.error('SENDWAYO comprobante:',e);
-        return toast('No se pudo abrir el comprobante.','error');
-      }
-    };
-  }
-
-  document.addEventListener('click',function(e){
-    const b=e.target?.closest?.('button');
-    if(!b)return;
-    const onclick=String(b.getAttribute('onclick')||'');
-    if(/showReceipt\s*\(/.test(onclick)){
-      setTimeout(forceDetailOpen,0);
-      setTimeout(forceDetailOpen,100);
-    }
-  },true);
-
-  function isAgent(){
-    try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)}catch(_){return false}
-  }
-  function unlockAgentFields(){
-    if(!isAgent())return;
-    const m=document.getElementById('agentEnvioModal');
-    if(!m)return;
-    m.style.pointerEvents='auto';
-    m.style.visibility='visible';
-    m.querySelectorAll('input,select,textarea,button').forEach(el=>{
-      if(el.id==='agent-current'){el.disabled=false;el.readOnly=true;el.style.pointerEvents='auto';return;}
-      if(el.hasAttribute('data-hard-disabled')||el.hasAttribute('data-system-disabled'))return;
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='auto';
-      el.style.opacity='1';
-      el.style.visibility='visible';
-    });
-    const u=window.currentUser||currentUser||{};
-    const a=document.getElementById('agent-current');
-    if(a){
-      const p=typeof personPhone==='function'?personPhone(u):(u.phone||'');
-      const n=typeof personName==='function'?personName(u):(u.name||u.username||'Agente');
-      a.value=(p||'Sin número')+' ('+(n||'Sin nombre')+')';
-    }
-    const ben=document.getElementById('agent-beneficiario-input');
-    if(ben){ben.disabled=false;ben.readOnly=false;ben.style.pointerEvents='auto';}
-    const amount=document.getElementById('agent-monto');
-    if(amount){amount.disabled=false;amount.readOnly=false;amount.style.pointerEvents='auto';}
-    const type=document.getElementById('agent-tipo-trans');
-    const op=document.getElementById('agent-operation');
-    if(type){type.disabled=false;type.style.pointerEvents='auto';}
-    if(op){op.disabled=false;op.style.pointerEvents='auto';}
-  }
-
-  function ensurePlusButtons(){
-    if(!isAgent())return;
-    const m=document.getElementById('agentEnvioModal');if(!m)return;
-    const agentInput=document.getElementById('agent-current');
-    const agentPlus=agentInput?.parentElement?.querySelector('.sw-person-plus,.plus-btn');
-    if(agentPlus){
-      agentPlus.disabled=false;agentPlus.style.pointerEvents='auto';
-      agentPlus.onclick=function(e){e.preventDefault();e.stopPropagation();if(typeof openAgentCreate==='function')openAgentCreate();else if(typeof toast==='function')toast('Use el Administrador para agregar un Agente.','info');};
-    }
-    const benInput=document.getElementById('agent-beneficiario-input');
-    const benPlus=benInput?.parentElement?.querySelector('.sw-person-plus,.plus-btn');
-    if(benPlus){
-      benPlus.disabled=false;benPlus.style.pointerEvents='auto';
-      benPlus.onclick=function(e){e.preventDefault();e.stopPropagation();if(typeof openModal==='function')openModal('beneficiarioModal');};
-    }
-  }
-
-  document.addEventListener('focusin',e=>{
-    if(isAgent()&&e.target?.closest?.('#agentEnvioModal'))setTimeout(unlockAgentFields,0);
-  },true);
-  document.addEventListener('click',e=>{
-    if(isAgent()&&e.target?.closest?.('#agentEnvioModal'))setTimeout(()=>{unlockAgentFields();ensurePlusButtons()},0);
-  },true);
-  setInterval(()=>{if(isAgent()){unlockAgentFields();ensurePlusButtons()}},500);
-
-  window.SENDWAYO_FORCE_RECEIPT_OPEN=forceDetailOpen;
-  window.SENDWAYO_UNLOCK_AGENT_FIELDS=unlockAgentFields;
-})();
-</script>
-
 <!-- SENDWAYO FINAL INTERACTION HARDENING v2 -->
-<script id="sendwayo-final-interaction-hardening-v2">
-(function(){'use strict';
- if(window.__swFinalInteractionHardeningV2)return; window.__swFinalInteractionHardeningV2=true;
- function isSubmitting(m){return m&&m.dataset&&m.dataset.submitting==='1'}
- function unlockModal(m){
-   if(!m||isSubmitting(m))return;
-   m.style.pointerEvents='auto';
-   m.querySelectorAll('input,select,textarea,button').forEach(function(e){
-     if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;
-     if(e.id==='profile-staff-id'||e.id==='cuenta-disp')return;
-     e.disabled=false;e.removeAttribute('disabled');e.style.pointerEvents='auto';e.style.opacity='1';e.style.visibility='visible';
-     if((e.tagName==='INPUT'||e.tagName==='TEXTAREA')&&!e.hasAttribute('data-readonly'))e.readOnly=false;
-   });
- }
- function repair(){document.querySelectorAll('.modal').forEach(function(m){var s=getComputedStyle(m);if(s.display!=='none'&&s.visibility!=='hidden')unlockModal(m)});}
- window.SENDWAYO_REPAIR_FIELDS=repair;
- document.addEventListener('click',function(e){
-   var m=e.target&&e.target.closest?e.target.closest('.modal'):null;
-   if(m&&!isSubmitting(m))setTimeout(function(){unlockModal(m)},0);
- },true);
- document.addEventListener('focusin',function(e){
-   var m=e.target&&e.target.closest?e.target.closest('.modal'):null;
-   if(m&&!isSubmitting(m))setTimeout(function(){unlockModal(m)},0);
- },true);
- setTimeout(repair,100);setInterval(repair,700);
-
- // Agentes: los campos operativos deben permanecer utilizables, sin tocar permisos administrativos.
- function agentRepair(){
-   var m=document.getElementById('agentEnvioModal');if(!m||isSubmitting(m))return;
-   ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-monto'].forEach(function(id){var e=document.getElementById(id);if(e){e.disabled=false;e.removeAttribute('disabled');e.readOnly=false;e.style.pointerEvents='auto';e.style.visibility='visible';e.style.opacity='1';}});
-   var plus=document.querySelector('#agent-beneficiario-input')?.parentElement?.querySelector('.plus-btn');
-   if(plus){plus.disabled=false;plus.removeAttribute('disabled');plus.style.pointerEvents='auto';plus.style.visibility='visible';plus.style.opacity='1';}
- }
- window.SENDWAYO_REPAIR_AGENT_FIELDS=agentRepair;setInterval(agentRepair,400);
-
- // Comprobante: captura el clic antes de cualquier otro manejador y garantiza la apertura del modal de detalle.
- document.addEventListener('click',function(e){
-   var b=e.target&&e.target.closest?e.target.closest('.sw-receipt-btn'):null;if(!b)return;
-   var oc=String(b.getAttribute('onclick')||'');var m=oc.match(/showReceipt\\(\\s*['\"]([^'\"]+)['\"]\\s*,\\s*['\"]([^'\"]+)['\"]\\s*\\)/);
-   if(!m)return;
-   var collection=m[1],id=m[2];
-   setTimeout(function(){
-     try{if(typeof window.showReceipt==='function')window.showReceipt(collection,id)}catch(err){console.error('Comprobante:',err)}
-     var d=document.getElementById('detailModal');if(d){d.style.display='flex';d.classList.add('show');d.style.visibility='visible';d.style.opacity='1';d.style.pointerEvents='auto';d.style.zIndex='50000';}
-   },20);
- },true);
-})();
-</script>
-
-<script id="sendwayo-agent-fields-final-v2">
-(function(){
-  function by(id){return document.getElementById(id)}
-  function unlock(){
-    ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-monto'].forEach(function(id){
-      var e=by(id); if(!e)return; e.disabled=false; e.readOnly=false; e.removeAttribute('disabled'); e.style.pointerEvents='auto'; e.style.visibility='visible'; e.style.opacity='1';
-    });
-    var a=by('agent-current'); if(a){a.readOnly=true;a.disabled=false;a.removeAttribute('disabled');a.style.pointerEvents='auto';}
-    ['agentEnvioModal','beneficiarioModal'].forEach(function(id){var m=by(id);if(m){m.style.pointerEvents='auto';}}
-    var pluses=document.querySelectorAll('#agentEnvioModal .plus-btn');pluses.forEach(function(b){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='auto';b.style.visibility='visible';b.style.opacity='1';});
-  }
-  window.SENDWAYO_AGENT_FIELDS_OK=unlock;
-  document.addEventListener('click',function(e){
-    var b=e.target.closest && e.target.closest('#agentEnvioModal .plus-btn'); if(!b)return;
-    e.preventDefault();e.stopImmediatePropagation();
-    var parent=b.closest('.form-group'), input=parent&&parent.querySelector('input');
-    if(input && input.id==='agent-current'){ if(typeof openAgentCreate==='function' && typeof isAdmin==='function' && isAdmin()) openAgentCreate(); else if(typeof toast==='function') toast('El Agente activo no puede crear otra cuenta.','info'); }
-    else if(typeof openModal==='function') openModal('beneficiarioModal');
-  },true);
-  document.addEventListener('input',function(e){if(e.target && e.target.id==='agent-monto' && typeof calcularAgentEnvio==='function')calcularAgentEnvio();},true);
-  document.addEventListener('change',function(e){if(e.target && (e.target.id==='agent-tipo-trans'||e.target.id==='agent-operation') && typeof calcularAgentEnvio==='function')calcularAgentEnvio();},true);
-  setTimeout(unlock,50);setTimeout(unlock,300);setInterval(unlock,500);
-})();
-</script>
