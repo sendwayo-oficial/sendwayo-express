@@ -3014,16 +3014,15 @@ function renderRequests(){
 function renderSecrets(){
  if(!isAdmin())return;
  const adminUser=state.users?.admin;
- const rows=[...(adminUser?[adminUser]:[]),...Object.values(state.users||{}).filter(u=>u&&u.role==='Remitente')];
+ const rows=[...(adminUser?[adminUser]:[]),...Object.values(state.users||{}).filter(u=>u&&isManagedUser(u))];
  document.querySelector('#secTable tbody').innerHTML=rows.map((u,i)=>{
-   const admin=u.id==='admin';
+   const admin=u.id==='admin',agent=isAgentUser(u),roleLabel=admin?'ADMINISTRACIÓN':agent?'AGENTE ÚNICO':'Remitente';
    const actions=admin
      ?'<button class="btn btn-success btn-sm" onclick="openAdminBalanceModal(\'admin\',\'set\')">Acreditar Admin</button><button class="btn btn-warning btn-sm" onclick="openAdminBalanceModal(\'admin\',\'adjust\')">Ajustar balance</button><button class="btn btn-success btn-sm" onclick="openAdminCreditModal(\'bonus\')">Acreditar Bono</button>'
      :'<button class="btn btn-success btn-sm" onclick="openAdminBalanceModal(\''+u.id+'\',\'set\')">Acreditar</button><button class="btn btn-warning btn-sm" onclick="openAdminBalanceModal(\''+u.id+'\',\'adjust\')">Ajustar balance</button><button class="btn btn-warning btn-sm" onclick="openAdminCreditModal(\'commission\');setTimeout(()=>{const x=document.getElementById(\'admin-credit-target\');if(x){x.value=\''+u.id+'\';refreshAdminCreditModal()}},50)">Acreditar comisión</button><button class="btn btn-light btn-sm" onclick="viewUser(\''+u.id+'\')">Ver</button><button class="btn btn-warning btn-sm" onclick="editUser(\''+u.id+'\')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteUser(\''+u.id+'\')">Eliminar</button><button class="btn btn-success btn-sm" onclick="sendPasswordReset(\''+u.id+'\')">Restablecer acceso</button><button class="btn btn-success btn-sm" onclick="sendWhatsAppCredentials(state.users[\''+u.id+'\'],INITIAL_PASSWORD)">Enviar WhatsApp</button>';
-   return '<tr style="'+(admin?'background:#fff8e1;font-weight:600':'')+'"><td>'+(i+1)+'</td><td>'+ (admin?'ADMINISTRACIÓN':'Remitente') +'</td><td><b>'+escapeHtml(admin?'ADMIN':(u.staffId||''))+'</b></td><td>'+escapeHtml(u.name||'Administración SENDWAYO EXPRESS')+'</td><td>'+escapeHtml(u.phone||'')+'</td><td>'+escapeHtml(u.username||'admin')+'</td><td>'+escapeHtml(u.authEmail||authEmailFor(u))+'</td><td><span class="status '+(u.active?'st-Activo':'st-Inactivo')+'">'+(u.active?'Activo':'Inactivo')+'</span></td><td>Firebase Auth</td><td><b>'+money(u.balance)+'</b></td><td><b>'+money(admin?commissionTotalFor('admin'):u.commission)+'</b></td><td><div class="actions">'+actions+'</div></td></tr>';
+   return '<tr style="'+(admin?'background:#fff8e1;font-weight:600':agent?'background:#eef7ff;font-weight:600':'')+'"><td>'+(i+1)+'</td><td>'+roleLabel+'</td><td><b>'+escapeHtml(admin?'ADMIN':(u.staffId||''))+'</b></td><td>'+escapeHtml(u.name||'Administración SENDWAYO EXPRESS')+'</td><td>'+escapeHtml(u.phone||'')+'</td><td>'+escapeHtml(u.username||'admin')+'</td><td>'+escapeHtml(u.authEmail||authEmailFor(u))+'</td><td><span class="status '+(u.active?'st-Activo':'st-Inactivo')+'">'+(u.active?'Activo':'Inactivo')+'</span></td><td>Firebase Auth</td><td><b>'+money(u.balance)+'</b></td><td><b>'+money(admin?commissionTotalFor('admin'):u.commission)+'</b></td><td><div class="actions">'+actions+'</div></td></tr>';
  }).join('')||'<tr><td colspan="12" class="muted">No hay cuentas registradas.</td></tr>';
 }
-
 async function sendPasswordReset(id){
  const u=state.users[id];if(!u||!isAdmin())return;
  const email=u.authEmail||authEmailFor(u);
