@@ -5085,7 +5085,54 @@ img[data-current-brand-logo="true"]{
 }
 </style>
 
-<style id="sendwayo-receipt-mobile-final-pass"><style id="sendwayo-receipt-mobile-precision-and-pull">
+<style id="sendwayo-receipt-mobile-final-pass"><style id="sendwayo-receipt-mobile-exact-header">
+@media(max-width:800px){
+  .modal#detailModal .modal-content{
+    width:calc(100vw - 4px)!important;max-width:calc(100vw - 4px)!important;
+    padding:2px!important;overflow-x:hidden!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide{
+    width:100%!important;max-width:100%!important;margin:0!important;
+    padding:5px 2px!important;overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-head{
+    width:100%!important;margin:0!important;padding:0!important;overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row{
+    display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;
+    align-items:center!important;gap:0!important;width:100%!important;max-width:100%!important;
+    margin:0!important;padding:0!important;overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row .receipt-logo{
+    flex:0 0 46px!important;width:46px!important;height:38px!important;
+    max-width:46px!important;max-height:38px!important;margin:0!important;
+    object-fit:contain!important;object-position:left center!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name{
+    flex:1 1 auto!important;min-width:0!important;width:auto!important;
+    margin:0!important;padding:0!important;overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name h2{
+    display:block!important;width:max-content!important;max-width:none!important;
+    margin:0!important;padding:0!important;
+    font-size:.62rem!important;line-height:1!important;letter-spacing:-.06em!important;
+    font-weight:900!important;white-space:nowrap!important;overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-slogan{
+    display:block!important;width:100%!important;max-width:100%!important;
+    margin:-1px 0 0!important;padding:0!important;text-align:center!important;
+    font-size:.47rem!important;line-height:1.08!important;white-space:normal!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-original{
+    display:block!important;width:max-content!important;max-width:100%!important;
+    margin:3px auto 4px!important;padding:3px 8px!important;
+    box-sizing:border-box!important;font-size:.55rem!important;line-height:1!important;
+    white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;
+    border:2px solid #0f2c59!important;border-radius:999px!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-capture{display:none!important}
+}
+</style><style id="sendwayo-receipt-mobile-precision-and-pull">
 @media(max-width:800px){
   /* Encabezado móvil: todo el nombre visible, logo pegado a la izquierda. */
   .modal#detailModal .modal-content{width:calc(100vw - 10px)!important;max-width:calc(100vw - 10px)!important;padding:7px!important;overflow-x:hidden!important}
