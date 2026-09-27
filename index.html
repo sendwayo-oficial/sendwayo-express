@@ -5733,7 +5733,7 @@ img[data-current-brand-logo="true"]{
       if(anchor)anchor.insertAdjacentElement('afterend',panel);
     }
     const rows=HTI_TRANSFER.map(r=>'<tr><td>'+r[0].toLocaleString('fr-FR')+' – '+r[1].toLocaleString('fr-FR')+' GDES</td><td>'+gdes(r[2])+'</td></tr>').join('');
-    panel.innerHTML='<div class="card" style="margin-top:10px;border:1px solid #dbe4ef"><h4 style="margin:0 0 8px;color:#0f2c59">HTI → HTI — '+htiLabel(document.getElementById('env-tipo-trans')?.value)+' — TARIFS EN GDES</h4><div class="muted">Dépôt: 20 GDES minimum · 20 à 99,999 GDES: GRATUIT.</div><div class="table-wrap" style="display:block!important;margin-top:8px"><table><thead><tr><th>Montant en GDES</th><th>Coût en GDES</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="info-box" style="margin-top:10px"><b>Règle:</b> transfert = débit du montant + frais depuis la balance GDES. Aucune valeur RD$ n'intervient dans HTI → HTI.</div></div>';
+    panel.innerHTML='<div class="card" style="margin-top:10px;border:1px solid #dbe4ef"><h4 style="margin:0 0 8px;color:#0f2c59">HTI → HTI — '+htiLabel(document.getElementById('env-tipo-trans')?.value)+' — TARIFS EN GDES</h4><div class="muted">Dépôt: 20 GDES minimum · 20 à 99,999 GDES: GRATUIT.</div><div class="table-wrap" style="display:block!important;margin-top:8px"><table><thead><tr><th>Montant en GDES</th><th>Coût en GDES</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="info-box" style="margin-top:10px"><b>Règle:</b> transfert = débit du montant + frais depuis la balance GDES. Aucune valeur RD$ n\'intervient dans HTI → HTI.</div></div>';
   }
 
   const originalOpenModal=window.openModal;
