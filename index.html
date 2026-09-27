@@ -1531,7 +1531,7 @@ async function updateHistoricalReceipts(){
    const records=Object.values(state[collection]||{}).filter(r=>r&&r.status==='Aprobado'&&r.receipt);
    for(const r of records){
      try{
-       enrichReceipt(collection,r.id);
+       generateReceipt(collection,r.id);
        await firebase.database().ref(DB_PATH+'/'+collection+'/'+r.id+'/receipt').update(r.receipt);
      }catch(e){console.warn('Actualización de recibo histórico:',collection,r.id,e)}
    }
