@@ -6141,5 +6141,62 @@ img[data-current-brand-logo="true"]{
 
   setTimeout(function(){if(isAgent())prepareMenu();},50);
 })();
-</script>\n</body>
+</script>\n
+
+<!-- SENDWAYO ANTI-FREEZE FINAL v1 -->
+<script id="sendwayo-anti-freeze-final-v1">
+(function(){
+  if(window.__sendwayoAntiFreezeFinalV1)return;
+  window.__sendwayoAntiFreezeFinalV1=true;
+
+  function visible(el){
+    if(!el)return false;
+    const s=getComputedStyle(el);
+    return s.display!=='none' && s.visibility!=='hidden' && s.opacity!=='0';
+  }
+
+  function unlockVisibleModal(){
+    document.querySelectorAll('.modal').forEach(function(modal){
+      if(!visible(modal))return;
+      delete modal.dataset.submitting;
+      modal.querySelectorAll('input,select,textarea,button').forEach(function(el){
+        if(el.hasAttribute('data-hard-disabled'))return;
+        if(el.readOnly && el.tagName!=='BUTTON')return;
+        el.disabled=false;
+        el.removeAttribute('disabled');
+        el.style.pointerEvents='auto';
+        if(el.tagName==='BUTTON')el.style.opacity='1';
+      });
+    });
+  }
+
+  function recover(){
+    try{unlockVisibleModal()}catch(_){}
+  }
+
+  document.addEventListener('click',function(e){
+    const b=e.target&&e.target.closest&&e.target.closest('.modal button');
+    if(b) setTimeout(recover,30);
+  },true);
+  document.addEventListener('input',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(recover,0);
+  },true);
+  document.addEventListener('change',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(recover,0);
+  },true);
+
+  const observer=new MutationObserver(function(){
+    if(window.__sendwayoAntiFreezeTimer)return;
+    window.__sendwayoAntiFreezeTimer=setTimeout(function(){
+      window.__sendwayoAntiFreezeTimer=null;
+      recover();
+    },50);
+  });
+  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','style','class']});
+
+  setInterval(recover,1000);
+  setTimeout(recover,100);
+})();
+</script>
+</body>
 </html>
