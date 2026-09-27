@@ -6405,7 +6405,57 @@ img[data-current-brand-logo="true"]{
   setTimeout(unlockAll,1500);
 })();
 </script>
-</body>
+<script id="sendwayo-agent-shared-capital-v1">
+(function(){
+  if(window.__sendwayoAgentSharedCapitalV1)return;
+  window.__sendwayoAgentSharedCapitalV1=true;
+  function agent(){try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)}catch(_){return false}}
+  function unlock(){
+    if(!agent())return;
+    const m=document.getElementById('agentEnvioModal'); if(!m)return;
+    if(m.dataset.submitting==='1')return;
+    ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-beneficiario-select','agent-monto'].forEach(id=>{
+      const e=document.getElementById(id); if(!e)return;
+      e.disabled=false; e.removeAttribute('disabled'); e.readOnly=false;
+      e.style.pointerEvents='auto'; e.style.opacity='1';
+    });
+    const cur=document.getElementById('agent-current'); if(cur){cur.disabled=false;cur.removeAttribute('disabled');cur.readOnly=true;cur.style.pointerEvents='auto';cur.style.opacity='1'}
+    m.style.pointerEvents='auto';
+  }
+  async function loadCapital(){
+    if(!firebaseReady||!firebase.auth().currentUser)return;
+    try{
+      const snap=await firebase.database().ref(DB_PATH+'/agentCapital').once('value');
+      state.agentCapital=snap.val()||{balance:0,totalAcreditado:0,totalUtilizado:0,operationsApproved:0};
+      renderCapitalLabel();
+    }catch(e){console.warn('Capital compartido agentes:',e)}
+  }
+  function renderCapitalLabel(){
+    const m=document.getElementById('agentEnvioModal'); if(!m)return;
+    let box=document.getElementById('agent-shared-capital-box');
+    if(!box){
+      box=document.createElement('div');box.id='agent-shared-capital-box';box.className='info-box';
+      box.style.margin='10px 0';
+      const h=m.querySelector('.modal-content'); if(h)h.insertBefore(box,h.querySelector('div[style*="background:#f1f5f9"]')||h.lastElementChild);
+    }
+    const bal=Number(state.agentCapital?.balance||0);
+    box.innerHTML='<b>CAPITAL COMPARTIDO DE LOS DOS AGENTES:</b> '+(typeof htgMoney==='function'?htgMoney(bal):bal.toFixed(2)+' GDES')+'<br><small>Betina Lindor y Herace Fleuranvil utilizan exactamente este mismo fondo. La operación solo descuenta capital cuando el Administrador la aprueba.</small>';
+  }
+  window.swAgentSharedCapitalLoad=loadCapital;
+  window.swAgentSharedCapitalRefresh=renderCapitalLabel;
+  document.addEventListener('focusin',unlock,true);
+  document.addEventListener('click',function(e){if(e.target?.closest?.('#agentEnvioModal'))setTimeout(unlock,0)},true);
+  document.addEventListener('input',function(e){if(e.target?.id==='agent-monto'||e.target?.id==='agent-beneficiario-input')unlock()},true);
+  const mo=new MutationObserver(()=>unlock());
+  setTimeout(()=>{const m=document.getElementById('agentEnvioModal');if(m)mo.observe(m,{attributes:true,subtree:true,attributeFilter:['disabled','readonly','style']});loadCapital()},500);
+  setInterval(()=>{if(agent())unlock()},700);
+  const oldOpen=window.openTransactionEntry;
+  window.openTransactionEntry=function(op){
+    const r=typeof oldOpen==='function'?oldOpen.apply(this,arguments):undefined;
+    setTimeout(()=>{unlock();loadCapital();renderCapitalLabel()},30); return r;
+  };
+})();
+</script>\n</body>
 </html>
 <!-- SENDWAYO ADD-NEW HARDENED V1 -->
 <script id="sendwayo-add-new-hardened-v1">
