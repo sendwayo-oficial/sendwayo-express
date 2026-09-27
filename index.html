@@ -6416,25 +6416,35 @@ img[data-current-brand-logo="true"]{
   setTimeout(unlockAll,1500);
 })();
 </script>
-<script id="sendwayo-agent-shared-capital-v1">
+<script id="sendwayo-agent-shared-capital-v2">
 (function(){
-  if(window.__sendwayoAgentSharedCapitalV1)return;
-  window.__sendwayoAgentSharedCapitalV1=true;
-  function agent(){try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)}catch(_){return false}}
+  if(window.__sendwayoAgentSharedCapitalV2)return;
+  window.__sendwayoAgentSharedCapitalV2=true;
+  const AGENT_IDS=new Set(['agent-betina-lindor','agent-herace-fleuranvil']);
+  const AGENT_EMAILS=new Set(['betinalindor@gmail.com','heracefleuranvil@gmail.com']);
+  function activeUser(){
+    try{return window.currentUser||currentUser||{} }catch(_){return {}}
+  }
+  function isKnownAgent(){
+    const u=activeUser(), id=String(u.id||u.staffId||'').toLowerCase(), email=String(u.authEmail||u.username||u.email||'').toLowerCase();
+    try{if(typeof isAgentUser==='function'&&isAgentUser(u))return true}catch(_){}
+    return AGENT_IDS.has(id)||AGENT_EMAILS.has(email);
+  }
   function unlock(){
-    if(!agent())return;
+    if(!isKnownAgent())return;
     const m=document.getElementById('agentEnvioModal'); if(!m)return;
-    if(m.dataset.submitting==='1')return;
     ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-beneficiario-select','agent-monto'].forEach(id=>{
       const e=document.getElementById(id); if(!e)return;
-      e.disabled=false; e.removeAttribute('disabled'); e.readOnly=false;
+      e.disabled=false; e.removeAttribute('disabled');
+      if(e.tagName==='INPUT'&&e.id!=='agent-beneficiario-select')e.readOnly=false;
       e.style.pointerEvents='auto'; e.style.opacity='1';
     });
-    const cur=document.getElementById('agent-current'); if(cur){cur.disabled=false;cur.removeAttribute('disabled');cur.readOnly=true;cur.style.pointerEvents='auto';cur.style.opacity='1'}
+    const cur=document.getElementById('agent-current');
+    if(cur){cur.disabled=false;cur.removeAttribute('disabled');cur.readOnly=true;cur.style.pointerEvents='auto';cur.style.opacity='1'}
     m.style.pointerEvents='auto';
   }
   async function loadCapital(){
-    if(!firebaseReady||!firebase.auth().currentUser)return;
+    if(!window.firebaseReady||!firebase.auth().currentUser)return;
     try{
       const snap=await firebase.database().ref(DB_PATH+'/agentCapital').once('value');
       state.agentCapital=snap.val()||{balance:0,totalAcreditado:0,totalUtilizado:0,operationsApproved:0};
@@ -6456,17 +6466,22 @@ img[data-current-brand-logo="true"]{
   window.swAgentSharedCapitalRefresh=renderCapitalLabel;
   document.addEventListener('focusin',unlock,true);
   document.addEventListener('click',function(e){if(e.target?.closest?.('#agentEnvioModal'))setTimeout(unlock,0)},true);
-  document.addEventListener('input',function(e){if(e.target?.id==='agent-monto'||e.target?.id==='agent-beneficiario-input')unlock()},true);
-  const mo=new MutationObserver(()=>unlock());
-  setTimeout(()=>{const m=document.getElementById('agentEnvioModal');if(m)mo.observe(m,{attributes:true,subtree:true,attributeFilter:['disabled','readonly','style']});loadCapital()},500);
-  setInterval(()=>{if(agent())unlock()},700);
+  document.addEventListener('change',function(e){if(e.target?.closest?.('#agentEnvioModal'))setTimeout(unlock,0)},true);
+  document.addEventListener('input',function(e){if(e.target?.closest?.('#agentEnvioModal'))unlock()},true);
+  const mo=new MutationObserver(unlock);
+  setTimeout(()=>{const m=document.getElementById('agentEnvioModal');if(m)mo.observe(m,{attributes:true,subtree:true,attributeFilter:['disabled','readonly','style']});loadCapital();unlock()},500);
+  setInterval(()=>{if(isKnownAgent())unlock()},250);
   const oldOpen=window.openTransactionEntry;
   window.openTransactionEntry=function(op){
     const r=typeof oldOpen==='function'?oldOpen.apply(this,arguments):undefined;
-    setTimeout(()=>{unlock();loadCapital();renderCapitalLabel()},30); return r;
+    setTimeout(()=>{unlock();loadCapital();renderCapitalLabel()},30);
+    setTimeout(unlock,250);
+    setTimeout(unlock,700);
+    return r;
   };
 })();
-</script>\n<script id="sendwayo-agent-reports-v1">
+</script>
+<script id="sendwayo-agent-reports-v1">
 (function(){
   function getAgentRows(agentId,startKey,endKey){
     const out=[];
