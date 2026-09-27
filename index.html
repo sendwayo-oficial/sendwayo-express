@@ -1634,8 +1634,8 @@ function applyRoleVisibility(){
  document.querySelectorAll('.admin-only').forEach(e=>{if(e.classList.contains('view-section'))return;e.style.setProperty('display',admin?(e.classList.contains('modal')?'flex':'block'):'none','important')});
  document.querySelectorAll('.remitente-only').forEach(e=>e.style.display=admin?'none':'');
  const roleLabel=document.getElementById('sidebar-role-label');if(roleLabel)roleLabel.textContent=agent?'AGENTE':(admin?'ADMINISTRADOR':String(currentUser?.role||'REMITENTE').toUpperCase());
- const envLink=document.querySelector('#sidebar-menu a[onclick*="switchView(\\'envios\\')"]');if(envLink)envLink.innerHTML=agent?'<i class="fa-solid fa-right-left"></i> Envíos / Retiros':'<i class="fa-solid fa-paper-plane"></i> Envíos (Transacciones Globales)';
- const remLink=document.querySelector('#sidebar-menu a[onclick*="switchView(\\'remitentes\\')"]')?.closest('li');if(remLink)remLink.style.display=agent?'none':(admin?'':'');
+ const envLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));if(envLink)envLink.innerHTML=agent?'<i class="fa-solid fa-right-left"></i> Envíos / Retiros':'<i class="fa-solid fa-paper-plane"></i> Envíos (Transacciones Globales)';
+ const remLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('remitentes')"))?.closest('li');if(remLink)remLink.style.display=agent?'none':(admin?'':'');
  const view=document.getElementById('view-envios'),title=view?.querySelector('.card-header h3'),add=document.getElementById('envio-add-btn');if(title)title.textContent=agent?'Registro de Envío / Retiro':'Gestión de Envíos y Transacciones Globales';if(add)add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
  if(agent){const table=document.getElementById('enviosTable');if(table){const hs=table.querySelectorAll('thead th');['N°','Tipo','Agente','Envío / Retiro','Beneficiario','Monto HTG','Comisión HTG','Monto Total HTG','Estado','Comprobante','Acciones'].forEach((v,i)=>{if(hs[i])hs[i].textContent=v})}}
 }
