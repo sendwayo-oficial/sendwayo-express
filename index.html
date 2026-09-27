@@ -466,7 +466,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
   <section id="view-beneficiarios" class="view-section">
     <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button class="btn btn-primary" onclick="openModal('beneficiarioModal')">Agregar Nuevo</button></div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','benefTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','benefTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','benefTable')">CSV</button></div><input class="search-box" placeholder="Buscar por nombre o celular..." oninput="filterTable(this,'benefTable')"></div>
-    <div class="table-wrap"><table id="benefTable"><thead><tr><th>N°</th><th>Nombre y Apellido</th><th>Celular / WhatsApp</th><th>Dirección</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="table-wrap"><table id="benefTable"><thead><tr><th>N°</th><th>Nombre completo</th><th>Número de celular</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
 
   <section id="view-paquetes" class="view-section">
@@ -602,7 +602,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <p><strong>MONTO A RECIBIR:</strong> <b id="agent-calc-recibir">0.00 GDES</b></p>
 </div>
 <div style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 0"><button class="btn btn-light" onclick="closeModal('agentEnvioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarAgentEnvio()">Enviar esta transacción</button></div>
-</div></div><div class="modal" id="beneficiarioModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('beneficiarioModal')">×</button><h3>Registrar Beneficiario</h3><div class="form-grid"><div class="form-group"><label>Nombre y Apellido</label><input id="ben-nombre" class="form-control"></div><div class="form-group"><label>Número Celular / WhatsApp</label><div class="phone-wrap"><select id="ben-country" class="form-control"><option value="+509">🇭🇹 Haití (+509)</option><option value="+1-829">🇩🇴 República Dominicana (+1 829)</option><option value="+1-849">🇩🇴 República Dominicana (+1 849)</option><option value="+1">🇺🇸 Estados Unidos (+1)</option><option value="+33">🇫🇷 Francia (+33)</option><option value="+39">🇮🇹 Italia (+39)</option><option value="+34">🇪🇸 España (+34)</option><option value="+1-514">🇨🇦 Canadá (+1 514)</option><option value="+44">🇬🇧 Reino Unido (+44)</option><option value="+49">🇩🇪 Alemania (+49)</option><option value="+27">🇿🇦 Sudáfrica (+27)</option><option value="+55">🇧🇷 Brasil (+55)</option><option value="+57">🇨🇴 Colombia (+57)</option><option value="+58">🇻🇪 Venezuela (+58)</option></select><input id="ben-cel" class="form-control" inputmode="tel" placeholder="Número sin código"></div><div class="country-hint">Ejemplo Haití: +509.</div></div><div class="form-group"><label>Dirección</label><input id="ben-dir" class="form-control"></div><div class="form-group"><label>Estado</label><select id="ben-active" class="form-control"><option value="true">Activo</option><option value="false">Inactivo</option></select></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('beneficiarioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarBeneficiario()">Guardar</button></div></div></div>
+</div></div><div class="modal" id="beneficiarioModal"><div class="modal-content"><button class="modal-close-x" type="button" onclick="closeModal('beneficiarioModal')">×</button><h3>Registrar Beneficiario</h3><div class="form-grid"><div class="form-group"><label>Nombre completo *</label><input id="ben-nombre" class="form-control" autocomplete="name" placeholder="Nombre y apellido"></div><div class="form-group"><label>Número de celular *</label><input id="ben-cel" class="form-control" inputmode="tel" autocomplete="tel" placeholder="+509 0000 0000"></div></div><div class="field-hint">Solo se registran nombre completo y número de celular. No se requiere dirección.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" type="button" onclick="closeModal('beneficiarioModal')">Cerrar</button><button class="btn btn-primary" type="button" id="ben-save-btn" onclick="guardarBeneficiario()">Guardar beneficiario</button></div></div></div>
 
 <div class="modal" id="cuentaModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('cuentaModal')">×</button><h3>Agregar Cuenta Bancaria</h3><div class="form-grid"><div class="form-group"><label>Banco</label><input id="cta-banco" class="form-control"></div><div class="form-group"><label>Titular</label><input id="cta-titular" class="form-control"></div><div class="form-group"><label>Número de Cuenta</label><input id="cta-numero" class="form-control"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('cuentaModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarCuenta()">Guardar</button></div></div></div>
 
@@ -1700,7 +1700,7 @@ function switchView(id){
  if(id==='conciliacion')renderConciliacion();
  renderAll()
 }
-function openModal(id){const modal=document.getElementById(id);if(modal){delete modal.dataset.submitting;modal.querySelectorAll('button').forEach(b=>{b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='';b.style.opacity=''});const dynamicForms=['recargaModal','paquetikoModal','pagoModal','paqueteModal'];if(dynamicForms.includes(id)){modal.querySelectorAll('select,input,textarea').forEach(el=>{if(!el.readOnly){el.disabled=false;el.removeAttribute('disabled');el.style.pointerEvents='';el.style.opacity=''}})}modal.style.display='flex';}if(id==='depositoModal'&&currentUser){let rw=document.getElementById('dep-remitente-wrap'),sel=document.getElementById('dep-remitente');if(rw)rw.style.display=isAdmin()?'block':'none';if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.username||'')+'</option>').join('');const ds=document.getElementById('dep-remitente-search');if(ds)ds.value='';const db=document.getElementById('dep-remitente-suggestions');if(db)db.style.display='none';setTimeout(()=>{if(isAdmin()&&typeof updateDepositSuggestions==='function')updateDepositSuggestions()},80);let ac=document.getElementById('dep-cuenta');if(ac){let accounts=Object.values(state.accounts||{});if(!accounts.length)accounts=[];ac.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+accounts.filter(a=>a.active!==false).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.bank||'')+' — '+escapeHtml(a.number||'')+'</option>').join('')}}if(id==='agentEnvioModal'&&isAgentUser(currentUser)){const a=document.getElementById('agent-current');if(a)a.value=(currentUser.staffId||currentUser.id)+' ('+(currentUser.name||'')+')';const i=document.getElementById('agent-beneficiario-input'),s=document.getElementById('agent-beneficiario-select');if(i)i.value='';if(s)s.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}if(id==='comisionModal'&&currentUser){let wrap=document.getElementById('com-target-wrap');if(wrap)wrap.style.display=isAdmin()?'block':'none';updateCommissionTarget();document.getElementById('com-disp').value=money(currentUser.commission)}if(id==='retiroCuentaModal'&&currentUser)document.getElementById('cuenta-disp').value=money(currentUser.balance)}
+function openModal(id){const modal=document.getElementById(id);if(modal){delete modal.dataset.submitting;modal.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='';b.style.opacity=''}});modal.querySelectorAll('select,input,textarea').forEach(el=>{if(!el.hasAttribute('data-hard-disabled')&&!el.hasAttribute('data-system-disabled')){el.disabled=false;el.removeAttribute('disabled');if(!el.hasAttribute('data-readonly'))el.readOnly=false;el.style.pointerEvents='auto';el.style.opacity='1'}});modal.style.pointerEvents='auto';modal.style.display='flex';}if(id==='depositoModal'&&currentUser){let rw=document.getElementById('dep-remitente-wrap'),sel=document.getElementById('dep-remitente');if(rw)rw.style.display=isAdmin()?'block':'none';if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.username||'')+'</option>').join('');const ds=document.getElementById('dep-remitente-search');if(ds)ds.value='';const db=document.getElementById('dep-remitente-suggestions');if(db)db.style.display='none';setTimeout(()=>{if(isAdmin()&&typeof updateDepositSuggestions==='function')updateDepositSuggestions()},80);let ac=document.getElementById('dep-cuenta');if(ac){let accounts=Object.values(state.accounts||{});if(!accounts.length)accounts=[];ac.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+accounts.filter(a=>a.active!==false).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.bank||'')+' — '+escapeHtml(a.number||'')+'</option>').join('')}}if(id==='agentEnvioModal'&&isAgentUser(currentUser)){const a=document.getElementById('agent-current');if(a)a.value=(currentUser.staffId||currentUser.id)+' ('+(currentUser.name||'')+')';const i=document.getElementById('agent-beneficiario-input'),s=document.getElementById('agent-beneficiario-select');if(i)i.value='';if(s)s.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}if(id==='comisionModal'&&currentUser){let wrap=document.getElementById('com-target-wrap');if(wrap)wrap.style.display=isAdmin()?'block':'none';updateCommissionTarget();document.getElementById('com-disp').value=money(currentUser.commission)}if(id==='retiroCuentaModal'&&currentUser)document.getElementById('cuenta-disp').value=money(currentUser.balance)}
 document.addEventListener('click',function(ev){
  const m=ev.target?.closest?.('.modal');
  if(m&&ev.target===m){closeModal(m.id)}
@@ -2095,15 +2095,36 @@ async function guardarEnvio(){
  closeModal('envioModal');toast('Envío guardado como PENDIENTE y enviado a la página del Administrador.','success');
 }
 async function guardarBeneficiario(){
- const _modal=document.getElementById('beneficiarioModal');if(_modal?.dataset.submitting==='1')return;if(!beginFormSubmit('beneficiarioModal'))return;
- let name=document.getElementById('ben-nombre').value.trim(),phone=fullPhone('ben-country',document.getElementById('ben-cel').value.trim());
- if(!name||!phone){resetFormSubmitState('beneficiarioModal');return toast('Nombre y celular son obligatorios.','warn');}
- let id=uid('bn');
- state.beneficiaries[id]={id,name,phone,address:document.getElementById('ben-dir').value.trim(),active:document.getElementById('ben-active').value==='true',userId:currentUser?.id||'admin',ownerAuthUid:firebase.auth().currentUser?.uid||null,createdAt:now()};
- addAudit('Crear beneficiario',id);
- const ok=await persist();
- if(!ok){resetFormSubmitState('beneficiarioModal');return toast('No se pudo guardar el beneficiario en Firebase.','error');}
- closeModal('beneficiarioModal');renderAll();toast('Beneficiario guardado y sincronizado con Firebase.','success');
+ const modal=document.getElementById('beneficiarioModal');
+ if(modal?.dataset.submitting==='1')return;
+ if(!beginFormSubmit('beneficiarioModal'))return;
+ const name=String(document.getElementById('ben-nombre')?.value||'').trim();
+ const phone=String(document.getElementById('ben-cel')?.value||'').trim().replace(/\s+/g,' ');
+ if(!name||!phone){
+   resetFormSubmitState('beneficiarioModal');
+   return toast('Nombre y número de celular son obligatorios.','warn');
+ }
+ const id=uid('bn');
+ state.beneficiaries[id]={id,name,phone,active:true,userId:currentUser?.id||'admin',ownerAuthUid:firebase.auth().currentUser?.uid||null,createdAt:now()};
+ try{
+   addAudit('Crear beneficiario',id);
+   const ok=await persist();
+   if(!ok){
+     delete state.beneficiaries[id];
+     localSave();
+     return toast('No se pudo guardar el beneficiario en Firebase.','error');
+   }
+   closeModal('beneficiarioModal');
+   renderAll();
+   toast('Beneficiario guardado y sincronizado con Firebase.','success');
+ }catch(e){
+   delete state.beneficiaries[id];
+   localSave();
+   console.warn('guardarBeneficiario:',e);
+   toast('No se pudo guardar el beneficiario. Revise la conexión con Firebase.','error');
+ }finally{
+   resetFormSubmitState('beneficiarioModal');
+ }
 }
 function openPerson(role){if(!isAdmin())return toast('Solo el Administrador puede crear remitentes.','warn');document.getElementById('persona-title').textContent='Registrar '+role;document.getElementById('personaModal').dataset.role=role;['pers-nombre','pers-wsp','pers-doc','pers-user','pers-auth-email'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''})
 const ip=document.getElementById('pers-initial-pass');if(ip)ip.value=INITIAL_PASSWORD;document.getElementById('pers-active').value='true';openModal('personaModal')}
@@ -3256,7 +3277,7 @@ async function editUser(id){
  u.staffId=permanentId;if(!u.authEmail)u.authEmail=authEmailFor(u);state.users[id]=u;await persist();renderAll();toast('Usuario actualizado. El ID permanente '+permanentId+' y el acceso de Firebase se conservaron.');
 }
 function deleteUser(id){if(id==='admin')return;if(!confirm('¿Eliminar usuario?'))return;delete state.users[id];persist();renderAll();toast('Usuario eliminado.')}
-function renderBeneficiaries(){let rows=newestFirst(state.beneficiaries).filter(b=>isAdmin()||b.userId===currentUser?.id);document.querySelector('#benefTable tbody').innerHTML=rows.map((b,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(b.name)}</td><td>${escapeHtml(b.phone)}</td><td>${escapeHtml(b.address)}</td><td><span class="status ${b.active?'st-Activo':'st-Inactivo'}">${b.active?'Activo':'Inactivo'}</span></td><td><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord('beneficiaries','${b.id}')">Ver</button><button class="btn btn-warning btn-sm" onclick="editBeneficiary('${b.id}')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('beneficiaries','${b.id}')">Eliminar</button></div></td></tr>`).join('')}
+function renderBeneficiaries(){const body=document.querySelector('#benefTable tbody');if(!body)return;const rows=newestFirst(state.beneficiaries).filter(b=>isAdmin()||b.userId===currentUser?.id);body.innerHTML=rows.map((b,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(b.name||'')}</td><td>${escapeHtml(b.phone||'')}</td><td><span class="status ${b.active!==false?'st-Activo':'st-Inactivo'}">${b.active!==false?'Activo':'Inactivo'}</span></td><td><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord('beneficiaries','${b.id}')">Ver</button><button class="btn btn-warning btn-sm" onclick="editBeneficiary('${b.id}')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('beneficiaries','${b.id}')">Eliminar</button></div></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No hay beneficiarios.</td></tr>'}
 function editBeneficiary(id){let b=state.beneficiaries[id];b.name=prompt('Nombre y apellido:',b.name)??b.name;b.phone=prompt('Celular:',b.phone)??b.phone;b.active=confirm('¿Beneficiario activo?');persist();renderAll()}
 function renderAccounts(){
  let rows=Object.values(state.accounts||{});
@@ -3685,7 +3706,7 @@ async function guardarDepositoAdministrativo(){
   window.renderBeneficiaries=function(){
     const rows=newestFirst(state.beneficiaries).filter(b=>isAdmin()||b.userId===currentUser?.id);
     const body=document.querySelector('#benefTable tbody');if(!body)return;
-    body.innerHTML=rows.map((b,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(b.name)+'</td><td>'+escapeHtml(b.phone)+'</td><td>'+escapeHtml(b.address)+'</td><td><span class="status '+statusClass(b.active?'Activo':'Inactivo')+'">'+(b.active?'Activo':'Inactivo')+'</span></td><td><div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\'beneficiaries\',\''+b.id+'\')">Ver</button><button class="btn btn-warning btn-sm" title="Editar" onclick="editBeneficiary(\''+b.id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\'beneficiaries\',\''+b.id+'\')">Eliminar</button></div></td></tr>').join('')||'<tr><td colspan="6" class="muted">No hay beneficiarios.</td></tr>';
+    body.innerHTML=rows.map((b,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(b.name||'')+'</td><td>'+escapeHtml(b.phone||'')+'</td><td><span class="status '+statusClass(b.active!==false?'Activo':'Inactivo')+'">'+(b.active!==false?'Activo':'Inactivo')+'</span></td><td><div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\'beneficiaries\',\''+b.id+'\')">Ver</button><button class="btn btn-warning btn-sm" title="Editar" onclick="editBeneficiary(\''+b.id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\'beneficiaries\',\''+b.id+'\')">Eliminar</button></div></td></tr>').join('')||'<tr><td colspan="5" class="muted">No hay beneficiarios.</td></tr>';
   };
 
   window.renderAccounts=function(){
