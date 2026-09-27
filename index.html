@@ -5954,6 +5954,44 @@ img[data-current-brand-logo="true"]{
       setTimeout(()=>{
         const typ=document.getElementById('env-tipo-trans');
         if(!typ)return;
+        // SOLO para el Agente HTI: primero las 4 operaciones Haití→Haití,
+        // después exactamente las opciones normales de los Remitentes.
+        if(typeof isAgentUser==='function' && isAgentUser(currentUser)){
+          const normal=[...typ.options].filter(o=>!isHtiHtiRoute(o.value));
+          const seen=new Set(), clean=normal.filter(o=>{
+            const k=String(o.value||'').trim();
+            if(!k||seen.has(k))return false;
+            seen.add(k);return true;
+          });
+          typ.innerHTML=
+            '<option value="HTI a HTI Natcash">Envío de Haití a Haití — Natcash</option>'+
+            '<option value="HTI a HTI Retiro Natcash">Retiro de Haití a Haití — Natcash</option>'+
+            '<option value="HTI a HTI MonCash">Envío de Haití a Haití — MonCash</option>'+
+            '<option value="HTI a HTI Retiro MonCash">Retiro de Haití a Haití — MonCash</option>';
+          clean.forEach(o=>typ.appendChild(o.cloneNode(true)));
+          if(!isHtiHtiRoute(typ.value))typ.value='HTI a HTI Natcash';
+          normalizeHtiSelector();
+        }
+        const current=typ.value;
+        if(isHtiHtiRoute(current)){
+          normalizeHtiSelector();
+          typ.onchange=function(){
+            if(isHtiHtiRoute(this.value))applyHtiUi();
+            else if(typeof window.calcularEnvioModal==='function')window.calcularEnvioModal();
+          };
+          const amt=document.getElementById('env-monto');
+          if(amt)amt.oninput=function(){if(isHtiHtiRoute(typ.value))applyHtiUi();};
+          applyHtiUi();
+        }
+      },10);
+    }
+    return out;
+  };
+    const out=originalOpenModal.apply(this,arguments);
+    if(id==='envioModal'){
+      setTimeout(()=>{
+        const typ=document.getElementById('env-tipo-trans');
+        if(!typ)return;
         const current=typ.value;
         if(isHtiHtiRoute(current)){
           normalizeHtiSelector();
