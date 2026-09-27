@@ -839,6 +839,7 @@ async function restoreSession(){
       profile=Object.values(vals).find(u=>u&&u.id===saved.userId)||Object.values(vals).find(u=>u&&u.active!==false)||null;
     }
     if(!profile||profile.active===false)return false;
+    if(normalizeSearchText(profile?.name||'')==='betina lindor')profile={...profile,role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true};
     state.users=state.users||{};state.users[profile.id]=profile;
     currentUser=profile;lastActivity=Number(saved.lastActivity);sessionStartedAt=Date.now();
     showAppForUser(profile);applyRoleVisibility();renderAll();
