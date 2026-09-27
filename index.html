@@ -6505,6 +6505,49 @@ img[data-current-brand-logo="true"]{
   setTimeout(install,800);
 })();
 </script>
+<script id="sendwayo-agent-capital-admin-simple-v1">
+(function(){
+  async function openShared(){
+    if(!isAdmin())return toast('Solo el Administrador puede gestionar el capital compartido.','warn');
+    try{const snap=await firebase.database().ref(DB_PATH+'/agentCapital').once('value');state.agentCapital=snap.val()||{balance:0,totalAcreditado:0,totalUtilizado:0,operationsApproved:0}}catch(e){}
+    let m=document.getElementById('agentSharedCapitalModal');
+    if(!m){
+      m=document.createElement('div');m.className='modal';m.id='agentSharedCapitalModal';
+      m.innerHTML=`<div class="modal-content"><button class="modal-close-x" id="agentSharedCapitalClose">×</button><h3>Capital compartido de agentes</h3><div class="info-box">Betina Lindor y Herace Fleuranvil trabajan con un único fondo común. Cada operación conserva su agente para los informes.</div><div class="form-group"><label>Monto a acreditar (GDES)</label><input id="agentSharedCapitalAmount" type="number" min="0.01" step="0.01" class="form-control"></div><div class="form-group"><label>Nota</label><textarea id="agentSharedCapitalNote" class="form-control" rows="2"></textarea></div><div class="info-box">Capital actual: <b id="agentSharedCapitalCurrent"></b></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" id="agentSharedCapitalCancel">Cerrar</button><button class="btn btn-primary" id="agentSharedCapitalSave">Acreditar</button></div></div>`;
+      document.body.appendChild(m);
+      document.getElementById('agentSharedCapitalClose').onclick=()=>m.remove();
+      document.getElementById('agentSharedCapitalCancel').onclick=()=>m.remove();
+      document.getElementById('agentSharedCapitalSave').onclick=saveShared;
+    }
+    document.getElementById('agentSharedCapitalCurrent').textContent=htgMoney(Number(state.agentCapital?.balance||0));
+    document.getElementById('agentSharedCapitalAmount').value='';
+    document.getElementById('agentSharedCapitalNote').value='';
+    m.style.display='flex';
+  }
+  async function saveShared(){
+    const amount=Number(document.getElementById('agentSharedCapitalAmount')?.value||0),note=String(document.getElementById('agentSharedCapitalNote')?.value||'').trim();
+    if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto válido.','warn');
+    const ref=firebase.database().ref(DB_PATH+'/agentCapital');
+    try{
+      const tx=await ref.transaction(v=>{
+        const cur=v&&typeof v==='object'?v:{},id=uid('acap');
+        return {...cur,balance:Number((Number(cur.balance||0)+amount).toFixed(2)),totalAcreditado:Number((Number(cur.totalAcreditado||0)+amount).toFixed(2)),updatedAt:now(),updatedBy:currentUser.username||'admin',movements:{...(cur.movements||{}),[id]:{id,type:'ACREDITACIÓN CAPITAL COMPARTIDO AGENTES',amount:Number(amount.toFixed(2)),note,by:currentUser.username||'admin',createdAt:now()}}};
+      });
+      if(!tx.committed)return toast('No se pudo acreditar el capital compartido.','error');
+      state.agentCapital=tx.snapshot.val()||{};localSave();document.getElementById('agentSharedCapitalModal')?.remove();renderAll();toast('Capital compartido acreditado correctamente.','success');
+    }catch(e){toast('No se pudo guardar el capital compartido.','error')}
+  }
+  function install(){
+    if(!isAdmin())return;
+    const head=document.querySelector('#view-capital .card-header');
+    if(!head||head.querySelector('[data-agent-shared-button]'))return;
+    const b=document.createElement('button');b.className='btn btn-warning';b.dataset.agentSharedButton='1';b.textContent='Capital compartido de agentes';b.onclick=openShared;head.appendChild(b);
+  }
+  window.swOpenAgentSharedCapitalModal=openShared;
+  setTimeout(install,1000);
+  document.addEventListener('click',e=>{if(e.target?.closest?.('#view-capital'))setTimeout(install,0)});
+})();
+</script>
 </body>
 </html>
 <!-- SENDWAYO ADD-NEW HARDENED V1 -->
