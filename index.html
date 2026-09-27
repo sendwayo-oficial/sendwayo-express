@@ -1439,17 +1439,12 @@ async function realizarLoginOriginal(){
        const base=normalizeUsername(identifier);
        addCandidate(base+'@gmail.com');
        addCandidate(base+'@sendwayoexpress.com');
-       if(isAgentEightIdentifier || normalizedIdentifier==='betinalindor' || normalizedIdentifier==='betinalindor8'){
-         addCandidate('8@sendwayoexpress.com');
-         addCandidate('id00000008@sendwayoexpress.com');
-         addCandidate('betinalindor@sendwayoexpress.com');
-         addCandidate('betina.lindor@sendwayoexpress.com');
-         addCandidate('betinalindor@gmail.com');
-         addCandidate('betina.lindor@gmail.com');
-         addCandidate('agente8@sendwayoexpress.com');
-         addCandidate('agent8@sendwayoexpress.com');
-         addCandidate('8@sendwayoexpress.com');
-         addCandidate('8@gmail.com');
+       if(isAgentFourIdentifier){
+         addCandidate('4@sendwayoexpress.com');
+         addCandidate('id00000004@sendwayoexpress.com');
+         addCandidate('agente4@sendwayoexpress.com');
+         addCandidate('agent4@sendwayoexpress.com');
+         addCandidate('4@gmail.com');
        }
      }
      let lastError=firstError;
@@ -1508,19 +1503,19 @@ async function realizarLoginOriginal(){
            vals=snap.val()||{};
            found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
          }
-         if(!found && isAgentEightIdentifier){
+         if(!found && isAgentFourIdentifier){
            for(const key of ['4','ID00000004']){
              snap=await usersRef.child(key).once('value');
              const one=snap.val();
              if(one&&isOperationalUser(one)&&one.active!==false){found=one;break}
            }
            if(!found){
-             snap=await usersRef.orderByChild('agentNumber').equalTo('8').once('value');
+             snap=await usersRef.orderByChild('agentNumber').equalTo('4').once('value');
              vals=snap.val()||{};
              found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
            }
            if(!found){
-             snap=await usersRef.orderByChild('staffId').equalTo('8').once('value');
+             snap=await usersRef.orderByChild('staffId').equalTo('4').once('value');
              vals=snap.val()||{};
              found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
            }
