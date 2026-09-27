@@ -6969,3 +6969,28 @@ window.swEnableAllFormFields=fix;document.addEventListener('click',function(e){i
  },true);
 })();
 </script>
+
+<script id="sendwayo-agent-fields-final-v2">
+(function(){
+  function by(id){return document.getElementById(id)}
+  function unlock(){
+    ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-monto'].forEach(function(id){
+      var e=by(id); if(!e)return; e.disabled=false; e.readOnly=false; e.removeAttribute('disabled'); e.style.pointerEvents='auto'; e.style.visibility='visible'; e.style.opacity='1';
+    });
+    var a=by('agent-current'); if(a){a.readOnly=true;a.disabled=false;a.removeAttribute('disabled');a.style.pointerEvents='auto';}
+    ['agentEnvioModal','beneficiarioModal'].forEach(function(id){var m=by(id);if(m){m.style.pointerEvents='auto';}}
+    var pluses=document.querySelectorAll('#agentEnvioModal .plus-btn');pluses.forEach(function(b){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='auto';b.style.visibility='visible';b.style.opacity='1';});
+  }
+  window.SENDWAYO_AGENT_FIELDS_OK=unlock;
+  document.addEventListener('click',function(e){
+    var b=e.target.closest && e.target.closest('#agentEnvioModal .plus-btn'); if(!b)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    var parent=b.closest('.form-group'), input=parent&&parent.querySelector('input');
+    if(input && input.id==='agent-current'){ if(typeof openAgentCreate==='function' && typeof isAdmin==='function' && isAdmin()) openAgentCreate(); else if(typeof toast==='function') toast('El Agente activo no puede crear otra cuenta.','info'); }
+    else if(typeof openModal==='function') openModal('beneficiarioModal');
+  },true);
+  document.addEventListener('input',function(e){if(e.target && e.target.id==='agent-monto' && typeof calcularAgentEnvio==='function')calcularAgentEnvio();},true);
+  document.addEventListener('change',function(e){if(e.target && (e.target.id==='agent-tipo-trans'||e.target.id==='agent-operation') && typeof calcularAgentEnvio==='function')calcularAgentEnvio();},true);
+  setTimeout(unlock,50);setTimeout(unlock,300);setInterval(unlock,500);
+})();
+</script>
