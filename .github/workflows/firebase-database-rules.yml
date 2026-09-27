@@ -2,6 +2,11 @@ name: Publicar reglas de Firebase
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'database.rules.json'
+      - 'firebase.json'
+      - '.github/workflows/firebase-database-rules.yml'
 
 jobs:
   deploy-database-rules:
