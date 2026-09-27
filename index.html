@@ -5616,5 +5616,85 @@ img[data-current-brand-logo="true"]{
   if(window.UI_TRANSLATIONS)UI_TRANSLATIONS.fr={...UI_TRANSLATIONS.fr,'Solicitar Retiro':'Demander un retrait','Solicitar Retiro de Mi Cuenta':'Demander un retrait de mon compte','Monto a retirar':'Montant à retirer','Retiro de cuenta':'Retrait du compte','Envíos (Transacciones Globales)':'Envois (transactions globales)','Agente':'Agent','AGENTE':'AGENT','Balance disponible GDES':'Solde disponible GDES','Montant en GDES':'Montant en GDES'};
 })();
 </script>
+
+<script id="sendwayo-agent-commission-separation-v1">
+(function(){
+  if(window.__sendwayo_agent_commission_separation_v1)return;
+  window.__sendwayo_agent_commission_separation_v1=true;
+
+  function agent(u){
+    try{return typeof isAgentUser==='function' && isAgentUser(u||currentUser)}catch(_){return false}
+  }
+
+  const originalGuardarComision=window.guardarComision;
+  window.guardarComision=async function(){
+    if(agent(currentUser)){
+      return toast('Le traitement des commissions est réservé à l’Administrateur.','warn');
+    }
+    return originalGuardarComision.apply(this,arguments);
+  };
+
+  const originalOpenModal=window.openModal;
+  window.openModal=function(id){
+    if(id==='comisionModal' && agent(currentUser)){
+      return toast('Le traitement des commissions est réservé à l’Administrateur.','warn');
+    }
+    return originalOpenModal.apply(this,arguments);
+  };
+
+  const originalSwitchView=window.switchView;
+  window.switchView=function(id){
+    if(id==='comisiones' && agent(currentUser)){
+      const v=document.getElementById('view-comisiones');
+      if(v)v.classList.remove('active');
+      return toast('Les commissions sont gérées uniquement par l’Administrateur.','warn');
+    }
+    return originalSwitchView.apply(this,arguments);
+  };
+
+  const originalApplyRoleVisibility=window.applyRoleVisibility;
+  window.applyRoleVisibility=function(){
+    originalApplyRoleVisibility.apply(this,arguments);
+    const isAgent=agent(currentUser);
+    const link=[...document.querySelectorAll('#sidebar-menu a')].find(a=>String(a.textContent||'').includes('Retiro / Pago de Comisiones'));
+    if(link&&link.closest('li'))link.closest('li').style.setProperty('display',isAgent?'none':'','important');
+    const view=document.getElementById('view-comisiones');
+    if(view&&isAgent){
+      view.classList.remove('active');
+      view.style.setProperty('display','none','important');
+    }else if(view){
+      view.style.removeProperty('display');
+    }
+  };
+
+  const originalAcreditarToda=window.acreditarTodaComisionDisponible;
+  if(typeof originalAcreditarToda==='function'){
+    window.acreditarTodaComisionDisponible=async function(){
+      if(!isAdmin())return toast('Action réservée à l’Administrateur.','error');
+      return originalAcreditarToda.apply(this,arguments);
+    };
+  }
+
+  const originalSaveAdminCredit=window.saveAdminCredit;
+  if(typeof originalSaveAdminCredit==='function'){
+    window.saveAdminCredit=async function(){
+      if(!isAdmin())return toast('Action réservée à l’Administrateur.','error');
+      return originalSaveAdminCredit.apply(this,arguments);
+    };
+  }
+
+  const originalRenderDashboard=window.renderDashboard;
+  window.renderDashboard=function(){
+    originalRenderDashboard.apply(this,arguments);
+    if(agent(currentUser)){
+      const k=document.querySelector('#kpi-commission')?.closest('.kpi');
+      const label=k?.querySelector('b');
+      if(label)label.textContent='Comisión (separada del balance)';
+    }
+  };
+
+  try{window.applyRoleVisibility()}catch(_){}
+})();
+</script>
 </body>
 </html>
