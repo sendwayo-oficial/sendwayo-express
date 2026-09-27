@@ -2194,8 +2194,13 @@ async function guardarDeposito(){
    }
 
    // Administrador: acreditar exactamente una vez mediante transacción atómica.
-   const cr=await creditDepositToRemitente(id,target.id,amount);
-   record.creditRepaid=Number(cr?.creditRepaid||0);record.balanceAdded=Number(cr?.balanceAdded||amount);
+   if(isAgentUser(target)){
+     await creditAgentSharedDeposit(id,amount,currentUser.username);
+     record.creditRepaid=0;record.balanceAdded=amount;
+   }else{
+     const cr=await creditDepositToRemitente(id,target.id,amount);
+     record.creditRepaid=Number(cr?.creditRepaid||0);record.balanceAdded=Number(cr?.balanceAdded||amount);
+   }
    record.balanceCredited=true;record.balanceCreditedAt=now();record.depositPrincipal=amount;
    record.reviewedAt=now();record.reviewedBy=currentUser.username;record.manualReview=true;
    generateReceipt('deposits',id);
@@ -2587,11 +2592,17 @@ async function approveDeposit(id,status){
  // 4) Idempotencia obligatoria por depositCredits[depositId]: un mismo depósito no puede volver a sumar.
  if(status==='Aprobado'){
    if(firebaseReady){
-     try{const cr=await creditDepositToRemitente(id,u.id,depositAmount);
+     try{
+       if(isAgentUser(u)){
+         await creditAgentSharedDeposit(id,depositAmount,currentUser.username);
+         r.balanceAdded=depositAmount;r.creditRepaid=0;
+       }else{
+         const cr=await creditDepositToRemitente(id,u.id,depositAmount);
      const creditedUser=cr?.user;
      r.creditRepaid=Number(cr?.creditRepaid||0);r.balanceAdded=Number(cr?.balanceAdded||depositAmount);
-     if(!creditedUser||Number(creditedUser.depositCredits?.[id])!==depositAmount)return toast('Firebase no confirmó la acreditación exacta del depósito al balance del remitente.','error')}
-     catch(e){return toast('No se pudo acreditar el 100% del depósito al balance del remitente.','error')}
+         if(!creditedUser||Number(creditedUser.depositCredits?.[id])!==depositAmount)return toast('Firebase no confirmó la acreditación exacta del depósito al balance del remitente.','error')}
+       }
+     }catch(e){return toast(isAgentUser(u)?'No se pudo acreditar el depósito al capital compartido de los agentes.':'No se pudo acreditar el 100% del depósito al balance del remitente.','error')}
    }else{
      const credits={...(u.depositCredits||{})};
      if(credits[id]===undefined){u.balance=Number(u.balance||0)+depositAmount;credits[id]=depositAmount;u.depositCredits=credits}
@@ -6503,6 +6514,58 @@ img[data-current-brand-logo="true"]{
   const oldRenderAll=window.renderAll;
   window.renderAll=function(){if(typeof oldRenderAll==='function')oldRenderAll.apply(this,arguments);setTimeout(install,0)};
   setTimeout(install,800);
+})();
+</script>
+<script id="sendwayo-agent-capital-admin-v1">
+(function(){
+  async function creditAgentSharedDeposit(id,amount,by){
+    if(!firebaseReady||!firebase.auth().currentUser)throw new Error('FIREBASE_UNAVAILABLE');
+    const ref=firebase.database().ref(DB_PATH+'/agentCapital');
+    const tx=await ref.transaction(v=>{
+      const cur=v&&typeof v==='object'?v:{},credits={...(cur.depositCredits||{})};
+      if(credits[id]!==undefined)return cur;
+      credits[id]={id,amount:Number(amount),creditedAt:now(),creditedBy:by||currentUser?.username||'admin'};
+      return {...cur,balance:Number((Number(cur.balance||0)+Number(amount)).toFixed(2)),totalAcreditado:Number((Number(cur.totalAcreditado||0)+Number(amount)).toFixed(2)),depositCredits:credits,updatedAt:now(),updatedBy:by||currentUser?.username||'admin'};
+    });
+    if(!tx.committed)throw new Error('AGENT_CAPITAL_CREDIT_FAILED');
+    state.agentCapital=tx.snapshot.val()||state.agentCapital||{};
+    return state.agentCapital;
+  }
+  window.creditAgentSharedDeposit=creditAgentSharedDeposit;
+  window.swOpenAgentSharedCapitalModal=function(){
+    if(!isAdmin())return toast('Solo el Administrador puede acreditar el capital compartido de los agentes.','warn');
+    let m=document.getElementById('agentSharedCapitalModal');
+    if(!m){
+      m=document.createElement('div');m.id='agentSharedCapitalModal';m.className='modal';
+      m.innerHTML='<div class="modal-content"><button class="modal-close-x" onclick="closeModal(\'agentSharedCapitalModal\')">×</button><h3>Capital compartido de agentes</h3><div class="info-box">Este fondo pertenece a la operación conjunta de Betina Lindor y Herace Fleuranvil. Ambos trabajan con el mismo capital; sus operaciones siguen registradas individualmente.</div><div class="form-group"><label>Monto a acreditar (GDES)</label><input id="agent-capital-credit-amount" type="number" min="0.01" step="0.01" class="form-control"></div><div class="form-group"><label>Nota</label><textarea id="agent-capital-credit-note" class="form-control" rows="2"></textarea></div><div class="info-box">Capital actual: <b id="agent-shared-capital-current">0.00 GDES</b></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal(\'agentSharedCapitalModal\')">Cerrar</button><button class="btn btn-primary" onclick="swSaveAgentSharedCapital()">Acreditar capital</button></div></div>';
+      document.body.appendChild(m);
+    }
+    document.getElementById('agent-capital-credit-amount').value='';
+    document.getElementById('agent-capital-credit-note').value='';
+    document.getElementById('agent-shared-capital-current').textContent=htgMoney(Number(state.agentCapital?.balance||0));
+    m.style.display='flex';
+  };
+  window.swSaveAgentSharedCapital=async function(){
+    if(!isAdmin())return;
+    const amount=Number(document.getElementById('agent-capital-credit-amount')?.value||0),note=String(document.getElementById('agent-capital-credit-note')?.value||'').trim();
+    if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto válido.','warn');
+    try{
+      const ref=firebase.database().ref(DB_PATH+'/agentCapital');
+      const tx=await ref.transaction(v=>{
+        const cur=v&&typeof v==='object'?v:{},id=uid('acap');
+        return {...cur,balance:Number((Number(cur.balance||0)+amount).toFixed(2)),totalAcreditado:Number((Number(cur.totalAcreditado||0)+amount).toFixed(2)),updatedAt:now(),updatedBy:currentUser.username||'admin',movements:{...(cur.movements||{}),[id]:{id,type:'ACREDITACIÓN CAPITAL COMPARTIDO AGENTES',amount:Number(amount.toFixed(2)),note,by:currentUser.username||'admin',createdAt:now()}}};
+      });
+      if(!tx.committed)return toast('No se pudo acreditar el capital compartido.','error');
+      state.agentCapital=tx.snapshot.val()||{};localSave();document.getElementById('agent-shared-capital-current').textContent=htgMoney(Number(state.agentCapital.balance||0));closeModal('agentSharedCapitalModal');renderAll();toast('Capital compartido acreditado correctamente.','success');
+    }catch(e){console.warn(e);toast('No se pudo guardar el capital compartido.','error')}
+  };
+  function installButton(){
+    if(!isAdmin())return;
+    const head=document.querySelector('#view-capital .card-header');if(!head||head.querySelector('[data-agent-shared-capital-btn]'))return;
+    const b=document.createElement('button');b.className='btn btn-warning';b.dataset.agentSharedCapitalBtn='1';b.textContent='Capital compartido de agentes';b.onclick=swOpenAgentSharedCapitalModal;head.appendChild(b);
+  }
+  const oldShow=window.showAppForUser;window.showAppForUser=function(found){if(typeof oldShow==='function')oldShow.apply(this,arguments);setTimeout(installButton,300)};
+  setTimeout(installButton,1200);
 })();
 </script>
 </body>
