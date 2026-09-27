@@ -5374,7 +5374,7 @@ img[data-current-brand-logo="true"]{
     const n=Number(v||0);
     if(String(c||'RD').toUpperCase()==='HTG'){
       const lang=localStorage.getItem('sendwayo_language')==='fr'?'fr-FR':'es-DO';
-      return 'HTG '+n.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2});
+      return 'GDES '+n.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2});
     }
     return money(n);
   }
@@ -5518,7 +5518,7 @@ img[data-current-brand-logo="true"]{
       swRenderHtiTariffPanel();setTimeout(()=>calcularEnvioModal(),30);
     }
     if(id==='depositoModal'&&currentUser&&swAgent(currentUser)){
-      const lab=[...document.querySelectorAll('#depositoModal label')].find(x=>/Cantidad/i.test(x.textContent||''));if(lab)lab.textContent='Montant HTG';
+      const lab=[...document.querySelectorAll('#depositoModal label')].find(x=>/Cantidad/i.test(x.textContent||''));if(lab)lab.textContent='Montant GDES';
     }
   };
 
@@ -5566,14 +5566,14 @@ img[data-current-brand-logo="true"]{
   window.refreshAdminBalanceModal=function(){
     originalRefreshAdminBalance();
     const id=document.getElementById('admin-balance-target')?.value,u=state.users?.[id];
-    if(u&&swAgent(u)){const mode=document.getElementById('admin-balance-mode')?.value,lab=document.getElementById('admin-balance-amount-label'),cur=document.getElementById('admin-balance-current');if(lab)lab.textContent=mode==='set'?'Nuevo saldo exacto (HTG)':mode==='add'?'Monto a agregar (HTG)':'Monto a quitar (HTG)';if(cur)cur.textContent=accountMoney(u.balance,u)}
+    if(u&&swAgent(u)){const mode=document.getElementById('admin-balance-mode')?.value,lab=document.getElementById('admin-balance-amount-label'),cur=document.getElementById('admin-balance-current');if(lab)lab.textContent=mode==='set'?'Nuevo saldo exacto (GDES)':mode==='add'?'Monto a agregar (GDES)':'Monto a quitar (GDES)';if(cur)cur.textContent=accountMoney(u.balance,u)}
   };
 
   const originalRefreshAdminCredit=window.refreshAdminCreditModal;
   window.refreshAdminCreditModal=function(){
     originalRefreshAdminCredit();
     const id=document.getElementById('admin-credit-target')?.value,u=state.users?.[id];
-    if(u&&swAgent(u)){const g=document.getElementById('admin-credit-amount')?.closest('.form-group')?.querySelector('label'),cur=document.getElementById('admin-credit-current');if(g)g.textContent='Monto a acreditar (HTG)';if(cur)cur.textContent=accountMoney(u.balance,u)}
+    if(u&&swAgent(u)){const g=document.getElementById('admin-credit-amount')?.closest('.form-group')?.querySelector('label'),cur=document.getElementById('admin-credit-current');if(g)g.textContent='Monto a acreditar (GDES)';if(cur)cur.textContent=accountMoney(u.balance,u)}
   };
 
   const originalRenderEnvios=window.renderEnvios;
@@ -5595,7 +5595,7 @@ img[data-current-brand-logo="true"]{
       if(!tx.committed)return toast('Balance GDES insuffisante pour le retrait et ses frais.','warn');
       const record={...r,status:'Aprobado',reviewedAt:now(),reviewedBy:currentUser.username,reviewReason:'',fee,totalDebit,balanceDebit:totalDebit,netReceived:amount,currency:'HTG',balanceCurrency:'HTG',balanceSettled:true,balanceSettledAt:now(),commission:fee,commissionTotal:fee,commissionAdmin:fee,commissionUser:0,commissionAccount:'100% PLATAFORMA / 0% AGENTE'};
       try{const updates={};updates[DB_PATH+'/accountWithdrawals/'+id]=record;updates[DB_PATH+'/users/admin/commissionAccrued']=firebase.database.ServerValue.increment(fee);updates[DB_PATH+'/users/admin/balance']=firebase.database.ServerValue.increment(fee);updates[DB_PATH+'/users/admin/transactionCommissionCredits/'+id]={id,amount:fee,creditedAt:firebase.database.ServerValue.TIMESTAMP,type:'RETRAIT_GDES'};await firebase.database().ref(DB_PATH).update(updates)}catch(e){if(!already)await ref.transaction(user=>user?{...user,balance:Number(user.balance||0)+totalDebit,accountWithdrawalSettlements:Object.fromEntries(Object.entries(user.accountWithdrawalSettlements||{}).filter(([k])=>k!==id))}:undefined).catch(()=>{});return toast('Firebase n’a pas confirmé le retrait.','error')}
-      state.accountWithdrawals[id]=record;state.users[u.id]=tx.snapshot.val();generateReceipt('accountWithdrawals',id);const rr=state.accountWithdrawals[id];if(rr?.receipt){rr.receipt.currency='HTG';rr.receipt.fee=fee;rr.receipt.totalDebit=totalDebit;await persistGeneratedReceipt('accountWithdrawals',id,rr)}try{await addNotification(u.id,'Votre retrait de '+swGdes(amount)+' a été APPROUVÉ. Frais: '+swGdes(fee)+'. Débit total: '+swGdes(totalDebit),'accountWithdrawals',id)}catch(_){}renderAll();setTimeout(()=>showReceipt('accountWithdrawals',id),180);toast('Retrait approuvé. Débit total: '+swGdes(totalDebit),'success');return;
+      state.accountWithdrawals[id]=record;state.users[u.id]=tx.snapshot.val();generateReceipt('accountWithdrawals',id);const rr=state.accountWithdrawals[id];if(rr?.receipt){rr.receipt.currency='GDES';rr.receipt.balanceCurrency='HTG';rr.receipt.fee=fee;rr.receipt.totalDebit=totalDebit;await persistGeneratedReceipt('accountWithdrawals',id,rr)}try{await addNotification(u.id,'Votre retrait de '+swGdes(amount)+' a été APPROUVÉ. Frais: '+swGdes(fee)+'. Débit total: '+swGdes(totalDebit),'accountWithdrawals',id)}catch(_){}renderAll();setTimeout(()=>showReceipt('accountWithdrawals',id),180);toast('Retrait approuvé. Débit total: '+swGdes(totalDebit),'success');return;
     }
     const record={...r,status,reviewedAt:now(),reviewedBy:currentUser.username,reviewReason,fee:fee||0,totalDebit,currency:'HTG',balanceCurrency:'HTG'};try{await firebase.database().ref(DB_PATH+'/accountWithdrawals/'+id).set(record)}catch(e){return toast('Firebase n’a pas confirmé le changement.','error')}state.accountWithdrawals[id]=record;try{await addNotification(u.id,'Votre demande de retrait a été '+status.toUpperCase()+'. '+reason,'accountWithdrawals',id)}catch(_){}renderAll();toast('Retrait '+status+'.','success');
   };
