@@ -6548,6 +6548,126 @@ img[data-current-brand-logo="true"]{
   document.addEventListener('click',e=>{if(e.target?.closest?.('#view-capital'))setTimeout(install,0)});
 })();
 </script>
+<script id="sendwayo-agent-person-select-v1">
+(function(){
+  if(window.__sendwayoAgentPersonSelectV1)return;
+  window.__sendwayoAgentPersonSelectV1=true;
+
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const phone=u=>typeof personPhone==='function'?personPhone(u):String(u?.phone||'');
+  const name=u=>typeof personName==='function'?personName(u):String(u?.name||u?.username||'');
+  const agentLabel=u=>(phone(u)||'Sin número')+' ('+(name(u)||'Sin nombre')+')';
+
+  function agents(){
+    return Object.values(state?.users||{}).filter(u=>u&&typeof isAgentUser==='function'&&isAgentUser(u)&&u.active!==false)
+      .sort((a,b)=>name(a).localeCompare(name(b),'es'));
+  }
+
+  function ensureStyles(){
+    if(document.getElementById('sw-agent-person-ui-style'))return;
+    const s=document.createElement('style');s.id='sw-agent-person-ui-style';
+    s.textContent='.sw-person-plus-wrap{display:flex!important;gap:6px!important;align-items:stretch!important}.sw-person-plus-wrap input{flex:1 1 auto!important;min-width:0!important}.sw-person-plus{flex:0 0 42px!important;width:42px!important;min-width:42px!important;font-size:1.25rem!important;font-weight:900!important;line-height:1!important;padding:0!important}.sw-person-suggestions{position:relative;z-index:30000}.sw-person-suggestions .env-suggestion{display:block;width:100%;text-align:left;border:1px solid #dbe3ef;background:#fff;padding:9px 11px;cursor:pointer}.sw-person-suggestions .env-suggestion:hover{background:#f4f7fb}';
+    document.head.appendChild(s);
+  }
+
+  function openAgentCreate(){
+    if(typeof isAdmin!=='function'||!isAdmin())return toast('Solo el Administrador puede agregar un Agente.','warn');
+    let m=document.getElementById('sw-agent-create-modal');
+    if(!m){
+      m=document.createElement('div');m.id='sw-agent-create-modal';m.className='modal';
+      m.innerHTML='<div class="modal-content" style="max-width:560px"><button class="modal-close-x" type="button" id="sw-agent-create-close">×</button><h3>Agregar Agente</h3><p class="muted">El Agente se agregará a SENDWAYO EXPRESS con acceso independiente. La contraseña inicial será 12345678.</p><div class="form-grid"><div class="form-group"><label>Nombre completo *</label><input id="sw-agent-name" class="form-control"></div><div class="form-group"><label>Celular *</label><input id="sw-agent-phone" class="form-control" inputmode="tel"></div><div class="form-group" style="grid-column:1/-1"><label>Correo / usuario de acceso *</label><input id="sw-agent-email" class="form-control" type="email"></div></div><div class="actions" style="margin-top:14px"><button class="btn btn-light" type="button" id="sw-agent-create-cancel">Cancelar</button><button class="btn btn-success" type="button" id="sw-agent-create-save">Agregar Agente</button></div></div>';
+      document.body.appendChild(m);
+      const close=()=>{m.style.display='none';};
+      document.getElementById('sw-agent-create-close').onclick=close;
+      document.getElementById('sw-agent-create-cancel').onclick=close;
+      document.getElementById('sw-agent-create-save').onclick=async()=>{
+        if(m.dataset.saving==='1')return;
+        const nm=document.getElementById('sw-agent-name').value.trim(),ph=document.getElementById('sw-agent-phone').value.trim(),em=document.getElementById('sw-agent-email').value.trim().toLowerCase();
+        if(!nm||!ph||!em)return toast('Complete nombre, celular y correo del Agente.','warn');
+        if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em))return toast('Escriba un correo válido.','warn');
+        if(agents().some(a=>String(a.authEmail||a.username||'').toLowerCase()===em))return toast('Ese correo ya pertenece a un Agente.','warn');
+        m.dataset.saving='1';
+        const id=typeof uid==='function'?uid('ag'):('agent-'+Date.now());
+        const user={id,role:'Agente',name:nm,phone:ph,username:em,authEmail:em,staffId:typeof makePermanentId==='function'?makePermanentId():('ID'+String(Date.now()).slice(-8)),active:true,accountStatus:'Pendiente de activación',balance:0,commission:0,referrals:0,agentKey:String(nm).toUpperCase().replace(/[^A-Z0-9]+/g,'_'),agentType:'AGENTE',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:false,commissionWithdrawAllowed:false,approvalRequired:true,balanceCurrency:'HTG',accountSchemaV3:1};
+        try{
+          if(typeof firebaseReady!=='undefined'&&!firebaseReady)throw new Error('FIREBASE_NO_AUTORIZADO');
+          const cr=await createFirebaseAccountForUser(user);
+          if(cr.status!=='created'&&cr.status!=='exists')throw new Error('FIREBASE_ACCOUNT_NOT_CONFIRMED');
+          await firebase.database().ref(DB_PATH+'/users/'+id).set(user);
+          state.users[id]=user;if(typeof markSynced==='function')markSynced(['users',id],user);if(typeof localSave==='function')localSave();
+          close();renderAll();refreshAgentField();toast('Agente agregado correctamente: '+agentLabel(user),'success');
+        }catch(e){console.warn('Agregar Agente:',e);toast('No se pudo agregar el Agente en Firebase.','error')}
+        finally{delete m.dataset.saving;}
+      };
+    }
+    ['sw-agent-name','sw-agent-phone','sw-agent-email'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    m.style.display='flex';
+  }
+
+  function refreshAgentField(){
+    ensureStyles();
+    const input=document.getElementById('agent-current');if(!input)return;
+    const oldWrap=input.closest('.sw-person-plus-wrap');
+    let wrap=oldWrap;
+    if(!wrap){
+      wrap=document.createElement('div');wrap.className='sw-person-plus-wrap';
+      input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
+      const plus=document.createElement('button');plus.type='button';plus.className='btn btn-light sw-person-plus';plus.title='Agregar Agente';plus.textContent='+';
+      plus.onclick=e=>{e.preventDefault();e.stopPropagation();openAgentCreate();};
+      wrap.appendChild(plus);
+      const box=document.createElement('div');box.id='agent-current-suggestions';box.className='sw-person-suggestions';wrap.parentNode.insertBefore(box,wrap.nextSibling);
+    }
+    const list=agents();
+    const current=window.currentUser||currentUser||{};
+    if(typeof isAdmin==='function'&&isAdmin()){
+      input.readOnly=false;input.disabled=false;input.placeholder='Celular (Nombre completo)';
+      input.value=input.dataset.personId?(agentLabel(state.users?.[input.dataset.personId]||current)):agentLabel(current);
+      input.oninput=function(){
+        const q=String(input.value||'').trim().toLowerCase();
+        const box=document.getElementById('agent-current-suggestions');if(!box)return;
+        const matches=list.filter(a=>!q||agentLabel(a).toLowerCase().includes(q)||name(a).toLowerCase().includes(q)||phone(a).toLowerCase().includes(q));
+        box.innerHTML=matches.map(a=>'<button type="button" class="env-suggestion" data-agent-id="'+esc(a.id)+'"><b>'+esc(phone(a)||'Sin número')+'</b> <span>('+esc(name(a)||'Sin nombre')+')</span></button>').join('');
+        box.querySelectorAll('[data-agent-id]').forEach(b=>b.onclick=()=>{const a=state.users?.[b.dataset.agentId];if(!a)return;input.value=agentLabel(a);input.dataset.personId=a.id;box.innerHTML='';});
+        box.style.display=matches.length?'block':'none';
+      };
+    }else{
+      input.readOnly=true;input.disabled=false;input.value=agentLabel(current);
+      input.oninput=null;
+      input.dataset.personId=current.id||'';
+      const box=document.getElementById('agent-current-suggestions');if(box){box.innerHTML='';box.style.display='none';}
+    }
+  }
+
+  function refreshBeneficiaryField(){
+    ensureStyles();
+    const input=document.getElementById('agent-beneficiario-input');if(!input)return;
+    const oldWrap=input.closest('.sw-person-plus-wrap');
+    if(!oldWrap){
+      const wrap=document.createElement('div');wrap.className='sw-person-plus-wrap';
+      input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
+      const plus=document.createElement('button');plus.type='button';plus.className='btn btn-light sw-person-plus';plus.title='Agregar beneficiario';plus.textContent='+';
+      plus.onclick=e=>{e.preventDefault();e.stopPropagation();if(typeof openModal==='function')openModal('beneficiarioModal');};
+      wrap.appendChild(plus);
+      const box=document.getElementById('agent-beneficiario-suggestions');
+      if(box&&box.parentNode!==wrap.parentNode)wrap.parentNode.appendChild(box);
+    }
+  }
+
+  const baseOpenAgent=window.openTransactionEntry;
+  window.openTransactionEntry=function(operation){
+    const out=typeof baseOpenAgent==='function'?baseOpenAgent.apply(this,arguments):undefined;
+    setTimeout(()=>{if(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)){refreshAgentField();refreshBeneficiaryField();}},30);
+    return out;
+  };
+  const baseCalc=window.calcularAgentEnvio;
+  if(typeof baseCalc==='function')window.calcularAgentEnvio=function(){const out=baseCalc.apply(this,arguments);setTimeout(()=>{refreshAgentField();refreshBeneficiaryField();},0);return out;};
+  document.addEventListener('click',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(()=>{if(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)){refreshAgentField();refreshBeneficiaryField();}},20)},true);
+  document.addEventListener('input',e=>{if(e.target?.id==='agent-beneficiario-input')setTimeout(refreshBeneficiaryField,0)},true);
+  setInterval(()=>{if(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)){refreshAgentField();refreshBeneficiaryField();}},1500);
+  window.refreshAgentField=refreshAgentField;
+  window.refreshAgentPersonFields=()=>{refreshAgentField();refreshBeneficiaryField();};
+})();
+</script>
 </body>
 </html>
 <!-- SENDWAYO ADD-NEW HARDENED V1 -->
