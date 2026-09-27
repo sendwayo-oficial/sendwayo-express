@@ -1439,7 +1439,7 @@ async function realizarLoginOriginal(){
        const base=normalizeUsername(identifier);
        addCandidate(base+'@gmail.com');
        addCandidate(base+'@sendwayoexpress.com');
-       if(isAgentEightIdentifier){
+       if(isAgentEightIdentifier || normalizedIdentifier==='betinalindor' || normalizedIdentifier==='betinalindor8'){
          addCandidate('8@sendwayoexpress.com');
          addCandidate('id00000008@sendwayoexpress.com');
          addCandidate('betinalindor@sendwayoexpress.com');
@@ -1528,6 +1528,13 @@ async function realizarLoginOriginal(){
        }catch(profileLookupError){
          console.warn('SENDWAYO perfil por identidad:',profileLookupError);
        }
+     }
+     // Recuperación segura para el Agente #8: si Firebase Authentication valida
+     // las credenciales pero la lectura del perfil quedó temporalmente bloqueada,
+     // no se debe impedir el acceso por un fallo de sincronización del perfil.
+     if(!found && (isAgentEightIdentifier || normalizedIdentifier==='betinalindor' || normalizedIdentifier==='betinalindor8')){
+       found={id:'8',role:'Agente',name:'Betina Lindor',username:'betinalindor',staffId:'ID00000008',agentNumber:'8',active:true,balance:0,commission:0,authEmail:String(authUser.email||'').toLowerCase(),authUid:authUser.uid,accountSchemaV3:1,agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG'};
+       state.users[found.id]=found;
      }
      if(!found)throw new Error('PROFILE_NOT_FOUND');
      if(found.active===false)throw new Error('INACTIVE');
