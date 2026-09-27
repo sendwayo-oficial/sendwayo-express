@@ -2402,8 +2402,8 @@ function actionButtons(collection,id,status){
    arr.push('<button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\''+collection+'\',\''+id+'\')"><i class="fa-solid fa-eye"></i></button>');
    // Envíos y depósitos ya tienen su única columna Factura / Recibo propia.
    // No se agrega otro botón aquí para evitar comprobantes duplicados.
-   if(collection!=='envios' && collection!=='deposits'){
-     arr.push('<button class="btn btn-primary btn-sm" title="Ver comprobante oficial" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>');
+   if(collection!=='deposits'){
+     arr.push('<button class="btn btn-primary btn-sm sw-receipt-btn" title="Ver comprobante oficial" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>');
    }
  }else if(admin||status!=="Pendiente"){
    arr.push('<button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\''+collection+'\',\''+id+'\')"><i class="fa-solid fa-eye"></i></button>');
