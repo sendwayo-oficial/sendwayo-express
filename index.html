@@ -2267,7 +2267,7 @@ async function refundTransactionReservation(userId,transactionId,amount,creditUs
   if(!tx.committed)return false;state.users[userId]=tx.snapshot.val();if(currentUser?.id===userId)currentUser=state.users[userId];if(lastSyncedState?.users?.[userId])lastSyncedState.users[userId]=cloneState(state.users[userId]);return true;
  }catch(e){console.warn('Devolución idempotente:',e);return false}
 }
-async async function setTransactionStatus(collection,id,status){
+async function setTransactionStatus(collection,id,status){
  if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. La operación financiera no se puede procesar offline.','error');
  if(!isAdmin())return toast('Acción exclusiva del Administrador.','error');
  if(collection==='deposits')return approveDeposit(id,status);
