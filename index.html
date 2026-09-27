@@ -2870,69 +2870,45 @@ function refreshAdminCreditModal(){
 }
 async function saveAdminCredit(){
  if(!isAdmin())return;
- const type=window.__adminCreditType||'balance',id=document.getElementById('admin-credit-target')?.value;
- const amount=Number(document.getElementById('admin-credit-amount')?.value),u=state.users?.[id];
+ const type=window.__adminCreditType||'balance',id=document.getElementById('admin-credit-target')?.value,amount=Number(document.getElementById('admin-credit-amount')?.value),u=state.users?.[id];
  if(!u||!['balance','bonus','commission'].includes(type))return toast('Seleccione una cuenta válida.','warn');
  if(type==='bonus'&&id!=='admin')return toast('El bono solo puede acreditarse a la Administración.','warn');
- if(type==='commission'&&id==='admin')return toast('La comisión de Administración ya está integrada en su balance. Use Acreditar Balance o Acreditar Bono para una entrada manual.','warn');
- const availableCommission=commissionAvailableForAdminCredit(u);
+ if(type==='commission'&&id==='admin')return toast('La comisión de Administración ya está integrada en su balance.','warn');
  if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto mayor que cero.','warn');
- if(type==='commission'&&id!=='admin'&&amount>availableCommission)return toast('El monto no puede superar la comisión disponible.','warn');
  if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');
  const ref=firebase.database().ref(DB_PATH+'/users/'+id);
  try{
   const tx=await ref.transaction(v=>{
    if(!v)return undefined;
-   const balance=Number(v.balance||0),commission=Number(v.commission||0);
-   if(type==='commission'&&id!=='admin'&&commission<amount)return undefined;
-   const next={...v,balance:balance+amount};
-   if(type==='commission'&&id!=='admin'){
-     // Cobro/retiro de comisión: la comisión disminuye y el mismo monto
-     // pasa inmediatamente al balance del Remitente.
-     if(commission<amount)return undefined;
-     next.commission=commission-amount;
-   }
-   if(type==='commission'&&id==='admin'){
-     // La comisión de Administración sí se refleja directamente en su balance.
+   const balance=Number(v.balance||0),commission=Number(v.commission||0),agent=isAgentUser(v),next={...v};
+   if(type==='commission'&&id!=='admin'&&agent){
+     next.commission=Number((commission+amount).toFixed(2));
      next.commissionAccrued=Number(v.commissionAccrued||0)+amount;
-   }
-   if(type==='bonus'){
-    const bonusCredits={...(v.bonusCredits||{})};
-    const bid=uid('bon');
-    next.bonusAccrued=Number(v.bonusAccrued||0)+amount;
-    next.bonusCredits={...bonusCredits,[bid]:{id:bid,amount,creditedAt:now(),creditedBy:currentUser.username}};
-   }
-   if(type==='balance'){
-    const credits={...(v.directCredits||{})};
-    const cid=uid('acr');
-    next.directCredits={...credits,[cid]:{id:cid,amount,creditedAt:now(),creditedBy:currentUser.username}};
-   }
-   if(type==='commission'){
-    const credits={...(v.commissionCredits||{})};
-    const cid=uid('acm');
-    next.commissionCredits={...credits,[cid]:{id:cid,amount,creditedAt:now(),creditedBy:currentUser.username,type:'COMISION_ACREDITADA'}};
-    if(id==='admin'){
-      const manual={...(v.manualCommissionCredits||{})};
-      const mid=uid('mac');
-      next.manualCommissionCredits={...manual,[mid]:{id:mid,amount,creditedAt:now(),creditedBy:currentUser.username}};
-    }
+     const credits={...(v.commissionCredits||{})},cid=uid('acm');
+     next.commissionCredits={...credits,[cid]:{id:cid,amount,creditedAt:now(),creditedBy:currentUser.username,type:'COMISION_ACREDITADA',manual:true}};
+   }else if(type==='commission'&&id!=='admin'){
+     if(commission<amount)return undefined;
+     next.commission=Number((commission-amount).toFixed(2));next.balance=Number((balance+amount).toFixed(2));
+   }else if(type==='commission'&&id==='admin'){
+     next.commissionAccrued=Number(v.commissionAccrued||0)+amount;next.balance=Number((balance+amount).toFixed(2));
+   }else if(type==='bonus'){
+     const bonusCredits={...(v.bonusCredits||{})},bid=uid('bon');
+     next.bonusAccrued=Number(v.bonusAccrued||0)+amount;next.balance=Number((balance+amount).toFixed(2));
+     next.bonusCredits={...bonusCredits,[bid]:{id:bid,amount,creditedAt:now(),creditedBy:currentUser.username}};
+   }else{
+     const credits={...(v.directCredits||{})},cid=uid('acr');
+     next.directCredits={...credits,[cid]:{id:cid,amount,creditedAt:now(),creditedBy:currentUser.username}};next.balance=Number((balance+amount).toFixed(2));
    }
    return next;
   });
   if(!tx.committed)return toast('La operación no pudo acreditarse. El balance o la comisión cambió; vuelva a intentarlo.','warn');
-  const updated=tx.snapshot.val();state.users[id]=updated;
-  if(currentUser?.id===id)currentUser=updated;
-  if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);
-  localSave();
-  const label=type==='bonus'?'Acreditar Bono':type==='commission'?'Acreditar Comisiones':'Acreditar Balance';
-  const auditId=uid('acr');
-  const audit={id:auditId,action:label,targetUserId:id,amount,commissionBefore:Number(u.commission||0),commissionAfter:Number(updated.commission||0),balanceBefore:Number(u.balance||0),balanceAfter:Number(updated.balance||0),processedBy:currentUser.username,createdAt:now()};
-  try{await firebase.database().ref(DB_PATH+'/audit/'+auditId).set(audit)}catch(_){}
-  try{await addNotification(id,label+' aplicado por '+money(amount)+'. Nuevo balance: '+money(updated.balance), 'audit', auditId)}catch(_){}
-  closeModal('adminCreditModal');renderAll();toast(label+' aplicado directamente al balance de '+(updated.name||updated.username)+'.','success');
+  const updated=tx.snapshot.val();state.users[id]=updated;if(currentUser?.id===id)currentUser=updated;if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);localSave();
+  const label=type==='bonus'?'Acreditar Bono':type==='commission'?(isAgentUser(u)?'Acreditar Comisión al Agente':'Aplicar Comisión'):'Acreditar Balance';
+  const auditId=uid('acr');try{await firebase.database().ref(DB_PATH+'/audit/'+auditId).set({id:auditId,action:label,targetUserId:id,amount,commissionBefore:Number(u.commission||0),commissionAfter:Number(updated.commission||0),balanceBefore:Number(u.balance||0),balanceAfter:Number(updated.balance||0),processedBy:currentUser.username,createdAt:now()})}catch(_){}
+  try{await addNotification(id,label+' aplicado por '+money(amount)+'. Nuevo balance: '+money(updated.balance),'audit',auditId)}catch(_){}
+  closeModal('adminCreditModal');renderAll();toast(label+' aplicado correctamente a '+(updated.name||updated.username)+'.','success');
  }catch(e){console.warn('Acreditación administrativa:',e);toast('No se pudo acreditar el monto en Firebase.','error')}
 }
-
 function refreshAdminBalanceModal(){
  const id=document.getElementById('admin-balance-target')?.value,mode=document.getElementById('admin-balance-mode')?.value,u=state.users?.[id]||state.users?.admin;
  if(!u)return;
