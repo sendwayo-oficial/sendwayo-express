@@ -6470,5 +6470,87 @@ img[data-current-brand-logo="true"]{
 
   setTimeout(()=>{if(agent()){const b=document.getElementById('envio-add-btn');if(b){b.disabled=false;b.style.pointerEvents='auto';b.style.opacity='1';}}},100);
 })();
+</script>
+<script id="sendwayo-agent-modal-parent-fix-v3">
+(function(){
+  if(window.__sendwayo_agent_modal_parent_fix_v3)return;
+  window.__sendwayo_agent_modal_parent_fix_v3=true;
+
+  function detachAgentModal(){
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    if(modal.parentElement && modal.parentElement.id!=='agent-modal-root'){
+      let root=document.getElementById('agent-modal-root');
+      if(!root){
+        root=document.createElement('div');
+        root.id='agent-modal-root';
+        root.style.position='fixed';
+        root.style.inset='0';
+        root.style.zIndex='19999';
+        root.style.pointerEvents='none';
+        document.body.appendChild(root);
+      }
+      root.appendChild(modal);
+    }
+    modal.style.zIndex='20000';
+    modal.style.pointerEvents='auto';
+  }
+
+  function unlock(){
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    detachAgentModal();
+    modal.querySelectorAll('input,select,textarea,button').forEach(el=>{
+      el.disabled=false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents='auto';
+      el.style.opacity='1';
+    });
+    const current=document.getElementById('agent-current');
+    if(current){current.disabled=false;current.readOnly=true;}
+  }
+
+  const originalOpenTransactionEntry=window.openTransactionEntry;
+  window.openTransactionEntry=function(){
+    if(!(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser))){
+      if(originalOpenTransactionEntry)return originalOpenTransactionEntry.apply(this,arguments);
+      return;
+    }
+    detachAgentModal();
+    unlock();
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    const u=window.currentUser||currentUser||{};
+    const current=document.getElementById('agent-current');
+    if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
+    const op=document.getElementById('agent-operation');
+    if(op){op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';op.value='Envío';}
+    modal.style.display='flex';
+    modal.classList.add('show');
+    modal.style.pointerEvents='auto';
+    document.body.style.overflow='hidden';
+    try{calcularAgentEnvio()}catch(e){}
+  };
+
+  const add=document.getElementById('envio-add-btn');
+  if(add){
+    add.disabled=false;
+    add.removeAttribute('disabled');
+    add.style.pointerEvents='auto';
+    add.style.opacity='1';
+    add.onclick=function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      window.openTransactionEntry();
+      return false;
+    };
+  }
+
+  detachAgentModal();
+  unlock();
+  setTimeout(detachAgentModal,0);
+  setTimeout(detachAgentModal,250);
+  setTimeout(detachAgentModal,1000);
+})();
 </script>\n</body>
 </html>
