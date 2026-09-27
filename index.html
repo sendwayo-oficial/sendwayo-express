@@ -6208,120 +6208,123 @@ img[data-current-brand-logo="true"]{
 })();
 </script>\n
 <!-- SENDWAYO UI RECOVERY FINAL v2 -->
-<script id="sendwayo-ui-recovery-final-v2">
+<script id="sendwayo-ui-recovery-stable-v3">
 (function(){
-  if(window.__sendwayoUIRecoveryV2)return;
-  window.__sendwayoUIRecoveryV2=true;
+  if(window.__sendwayoUIRecoveryStableV3)return;
+  window.__sendwayoUIRecoveryStableV3=true;
 
-  function show(id){
-    try{
-      const m=document.getElementById(id);
-      if(!m)return false;
-      delete m.dataset.submitting;
-      m.style.display='flex';
-      m.classList.add('show');
-      m.style.pointerEvents='auto';
-      document.body.style.overflow='hidden';
-      m.querySelectorAll('button').forEach(b=>{
+  const modalMap={
+    beneficiarios:'beneficiarioModal',
+    paquetes:'paqueteModal',
+    recargas:'recargaModal',
+    paqueticos:'paquetikoModal',
+    pagos:'pagoModal',
+    cuentas_depositos:'cuentaModal',
+    comisiones:'comisionModal'
+  };
+
+  function isVisibleModal(m){return !!m && getComputedStyle(m).display!=='none';}
+
+  function forceOpen(id){
+    const m=document.getElementById(id);
+    if(!m)return false;
+    delete m.dataset.submitting;
+    m.style.display='flex';
+    m.classList.add('show');
+    m.style.pointerEvents='auto';
+    m.querySelectorAll('button').forEach(b=>{
+      if(!b.hasAttribute('data-hard-disabled')){
         b.disabled=false;
-        b.removeAttribute('disabled');
         b.style.pointerEvents='auto';
-        b.style.opacity='1';
-      });
-      m.querySelectorAll('input,select,textarea').forEach(el=>{
-        if(!el.hasAttribute('data-hard-disabled') && !el.readOnly){
-          el.disabled=false;
-          el.removeAttribute('disabled');
-          el.style.pointerEvents='auto';
-          el.style.opacity='1';
-        }
-      });
-      return true;
-    }catch(e){console.warn('UI recovery',e);return false}
-  }
-
-  function addAction(btn){
-    const view=btn.closest('.view-section');
-    const id=view&&view.id;
-    if(id==='view-remitentes'){
-      if(typeof openPerson==='function')openPerson('Remitente');
-      else show('personaModal');
-      return true;
-    }
-    if(id==='view-envios'){
-      if(typeof openTransactionEntry==='function')openTransactionEntry();
-      return true;
-    }
-    const map={
-      'view-beneficiarios':'beneficiarioModal',
-      'view-recargas':'recargaModal',
-      'view-paqueticos':'paquetikoModal',
-      'view-pagos':'pagoModal',
-      'view-paquetes':'paqueteModal',
-      'view-cuentas_depositos':'depositoModal',
-      'view-mi_cuenta':'cuentaModal'
-    };
-    const modal=map[id];
-    if(modal)return show(modal);
-    return false;
-  }
-
-  // Captura los botones Agregar antes de cualquier handler antiguo que haya quedado congelado.
-  document.addEventListener('click',function(e){
-    const btn=e.target&&e.target.closest&&e.target.closest('.card-header button');
-    if(!btn)return;
-    const label=(btn.textContent||'').trim().toLowerCase();
-    if(!label.includes('agregar'))return;
-    if(addAction(btn)){
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-  },true);
-
-  // Recuperación específica del formulario de Remitentes.
-  document.addEventListener('click',function(e){
-    const b=e.target&&e.target.closest&&e.target.closest('#personaModal button.btn-primary');
-    if(!b)return;
-    const m=document.getElementById('personaModal');
-    if(m){delete m.dataset.submitting;b.disabled=false;b.removeAttribute('disabled');}
-  },true);
-
-  // Recuperación segura de interacción: no toca permisos, estados ni botones de aprobación.
-  // Evita que un overlay móvil residual o un estilo heredado bloquee toda la aplicación.
-  function recoverInteraction(){
-    try{
-      const ov=document.getElementById('sidebar-overlay');
-      if(ov && window.innerWidth>800){
-        ov.classList.remove('active');
-        ov.style.pointerEvents='none';
       }
-      document.querySelectorAll('.content-body,.content-body .view-section.active,.content-body .view-section.active input,.content-body .view-section.active select,.content-body .view-section.active textarea,.content-body .view-section.active button').forEach(el=>{
-        if(el)el.style.pointerEvents='auto';
-      });
-      document.querySelectorAll('.sidebar-menu a,header button,header input,header select,header textarea').forEach(el=>{
-        if(el)el.style.pointerEvents='auto';
-      });
-    }catch(_){}
+    });
+    document.body.style.overflow='hidden';
+    return true;
   }
-  // Cierra cualquier modal que haya quedado abierto de una sesión anterior.
-  // Un modal residual es capaz de cubrir toda la pantalla y hacer parecer congelados
-  // los menús y formularios que están debajo.
-  function clearStaleModal(){
+
+  function safeOpenModal(id){
+    let opened=false;
+    try{
+      if(typeof window.openModal==='function')window.openModal(id);
+      opened=isVisibleModal(document.getElementById(id));
+    }catch(err){console.warn('SENDWAYO safeOpenModal',id,err);}
+    if(!opened)opened=forceOpen(id);
+    return opened;
+  }
+
+  function safeOpenPerson(){
+    try{
+      if(typeof window.openPerson==='function'){
+        window.openPerson('Remitente');
+        if(isVisibleModal(document.getElementById('personaModal')))return true;
+      }
+    }catch(err){console.warn('SENDWAYO openPerson',err);}
+    return safeOpenModal('personaModal');
+  }
+
+  function safeOpenTransaction(){
+    let opened=false;
+    try{
+      if(typeof window.openTransactionEntry==='function'){
+        window.openTransactionEntry();
+        opened=isVisibleModal(document.getElementById('envioModal'))||isVisibleModal(document.getElementById('agentEnvioModal'));
+      }
+    }catch(err){console.warn('SENDWAYO openTransactionEntry',err);}
+    if(opened)return true;
+    const agent=(()=>{try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser)}catch(_){return false}})();
+    return agent&&document.getElementById('agentEnvioModal')?forceOpen('agentEnvioModal'):forceOpen('envioModal');
+  }
+
+  function safeAdd(viewId,button){
+    if(viewId==='remitentes')return safeOpenPerson();
+    if(viewId==='envios')return safeOpenTransaction();
+    if(viewId==='cuentas_depositos'&&/dep[oó]sito/i.test(button.textContent||''))return safeOpenModal('depositoModal');
+    if(viewId==='mi_cuenta'&&/agregar dinero/i.test(button.textContent||''))return safeOpenModal('depositoModal');
+    const id=modalMap[viewId];
+    return id?safeOpenModal(id):false;
+  }
+
+  function bindAddButtons(){
+    document.querySelectorAll('.view-section .card-header button').forEach(btn=>{
+      if(btn.dataset.sendwayoStableBound==='1')return;
+      const text=String(btn.textContent||'').trim();
+      if(!/(agregar nuevo|agregar dep[oó]sito|agregar dinero)/i.test(text))return;
+      btn.dataset.sendwayoStableBound='1';
+      btn.addEventListener('click',function(){
+        setTimeout(function(){
+          const view=btn.closest('.view-section');
+          if(!view)return;
+          const visible=[...document.querySelectorAll('.modal')].some(isVisibleModal);
+          if(!visible)safeAdd(String(view.id||'').replace(/^view-/,'').trim(),btn);
+        },0);
+      },false);
+    });
+  }
+
+  function recover(){
     try{
       document.querySelectorAll('.modal').forEach(m=>{
-        m.style.display='none';
-        m.classList.remove('show');
-        delete m.dataset.submitting;
+        if(m.style.display==='none'){
+          m.classList.remove('show');
+          delete m.dataset.submitting;
+        }
       });
-      document.body.style.overflow='';
-    }catch(_){}
+      bindAddButtons();
+    }catch(err){console.warn('SENDWAYO UI recovery',err);}
   }
-  clearStaleModal();
-  window.addEventListener('load',clearStaleModal,{once:true});
-  recoverInteraction();
-  window.addEventListener('resize',recoverInteraction,{passive:true});
-  document.addEventListener('visibilitychange',recoverInteraction,{passive:true});
-  document.addEventListener('click',recoverInteraction,true);
+
+  window.sendwayoSafeOpenModal=safeOpenModal;
+  window.sendwayoSafeOpenTransaction=safeOpenTransaction;
+  window.sendwayoSafeOpenPerson=safeOpenPerson;
+  window.sendwayoBindAddButtons=bindAddButtons;
+
+  document.addEventListener('DOMContentLoaded',bindAddButtons,{once:true});
+  window.addEventListener('load',bindAddButtons,{once:true});
+  document.addEventListener('click',function(){setTimeout(bindAddButtons,0)},{passive:true});
+  window.addEventListener('resize',recover,{passive:true});
+  document.addEventListener('visibilitychange',recover,{passive:true});
+  setTimeout(bindAddButtons,100);
+  setTimeout(bindAddButtons,800);
 })();
 </script>
 </body>
