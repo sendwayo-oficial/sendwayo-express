@@ -6217,5 +6217,65 @@ img[data-current-brand-logo="true"]{
   setTimeout(hook,50);setTimeout(hook,500);setTimeout(hook,1500);setTimeout(hook,3000);
 })();
 </script>
-\n</body>
+
+<script id="sendwayo-betina-final-hti-rules-v1">
+(function(){
+  if(window.__sendwayo_betina_final_hti_rules_v1)return;
+  window.__sendwayo_betina_final_hti_rules_v1=true;
+
+  const TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
+  const WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
+  function opKey(v){return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').startsWith('retiro')?'RETIRO':'ENVIO'}
+  function fee(amount,operation){const n=Math.floor(Number(amount||0));if(!Number.isFinite(n)||n<20||n>99999)return null;const table=opKey(operation)==='RETIRO'?WITHDRAWAL:TRANSFER;const row=table.find(r=>n>=r[0]&&n<=r[1]);return row?row[2]:null}
+  function gdes(v){return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES'}
+  window.__sendwayoBetinaFee=fee;
+
+  window.calcularAgentEnvio=function(){
+    const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',f=fee(amount,operation),safe=f===null?0:f,total=amount+safe;
+    const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total'),rr=document.getElementById('agent-calc-recibir');
+    if(a)a.textContent=gdes(amount);if(b)b.textContent=gdes(safe);if(t)t.textContent=gdes(total);if(rr)rr.textContent=gdes(amount);
+    const hint=document.getElementById('agent-hti-fee-hint');if(hint)hint.textContent=opKey(operation)==='RETIRO'?'Tarifa de RETIRO aplicada automáticamente según el rango en GDES.':'Tarifa de ENVÍO aplicada automáticamente según el rango en GDES.';
+  };
+
+  window.guardarAgentEnvio=async function(){
+    const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;
+    if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');
+    const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Envío',operationKey=opKey(operation),amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'',f=fee(amount,operation);
+    if(f===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
+    if(!benId)return toast('Seleccione el beneficiario.','warn');
+    const ben=state.beneficiaries?.[benId];if(!ben)return toast('Seleccione un beneficiario válido.','warn');
+    const total=Number((amount+f).toFixed(2));if(!beginFormSubmit('agentEnvioModal'))return;
+    const id=await createTransaction('envios',{type,route:type,operation,operationKey,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:f,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net:amount,commission:f,commissionTotal:f,total,destination:amount,fee:f,balanceDebit:total,totalDebit:total,feeType:(operationKey==='RETIRO'?'RETIRO':'TRANSFERT')+'_'+swHtiRouteType(type).toUpperCase(),tariffCurrency:'GDES',tariffProvider:/MONCASH/i.test(type)?'MonCash':'NatCash'},amount);
+    if(!id)return;closeModal('agentEnvioModal');toast((operationKey==='RETIRO'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE.','success');
+  };
+
+  const baseOpen=window.openTransactionEntry;
+  window.openTransactionEntry=function(operation){
+    if(!isAgentUser(currentUser))return baseOpen?baseOpen.apply(this,arguments):openModal('envioModal');
+    const modal=document.getElementById('agentEnvioModal');if(!modal)return;
+    const u=currentUser||{},current=document.getElementById('agent-current');
+    if(current)current.value=(u.name||'Agente')+(u.phone?' ('+u.phone+')':' (Cuenta de Agente)');
+    const typ=document.getElementById('agent-tipo-trans');if(typ){typ.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';typ.value='HAITI A HAITI NatCash';}
+    const op=document.getElementById('agent-operation');if(op)op.value=operation==='Retiro'?'Retiro':'Envío';
+    const labels=modal.querySelectorAll('.form-group label');if(labels[0])labels[0].textContent='Servicio';if(labels[1])labels[1].textContent='Agente';if(labels[2])labels[2].textContent='Envío / Retiro';if(labels[3])labels[3].textContent='Beneficiario';if(labels[4])labels[4].textContent='Monto en GDES';
+    const bi=document.getElementById('agent-beneficiario-input');if(bi){bi.value='';bi.dataset.personId='';}
+    const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';
+    const amount=document.getElementById('agent-monto');if(amount)amount.value='';
+    calcularAgentEnvio();openModal('agentEnvioModal');
+  };
+
+  const baseOpenModal=window.openModal;
+  window.openModal=function(id){if(id==='envioModal'&&isAgentUser(currentUser)){window.openTransactionEntry();return;}return baseOpenModal.apply(this,arguments);};
+
+  const add=document.getElementById('envio-add-btn');
+  if(add){add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';add.onclick=function(e){e.preventDefault();window.openTransactionEntry();};}
+
+  const modal=document.getElementById('agentEnvioModal');
+  if(modal&&!document.getElementById('agent-hti-fee-hint')){
+    const box=document.createElement('div');box.id='agent-hti-fee-hint';box.className='info-box';box.style.margin='8px 0 12px';
+    const summary=modal.querySelector('#agent-calc-monto')?.closest('div');if(summary)summary.insertAdjacentElement('beforebegin',box);
+  }
+  setTimeout(()=>{try{if(isAgentUser(currentUser))calcularAgentEnvio()}catch(_){}},100);
+})();
+</script>\n</body>
 </html>
