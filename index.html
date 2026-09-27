@@ -827,7 +827,7 @@ function authEmailFor(user){
   if(!user)return '';
   if(user.id==='admin')return 'sendwayoexpress@gmail.com';
   if(user.agentKey==='BETINA_LINDOR'||user.id==='agent-betina-lindor'||String(user.name||'').trim().toLowerCase()==='betina lindor')return 'betinalindor@gmail.com';
-  if(user.agentKey==='HERACE_FLEURANVIL||user.id==='agent-herace-fleuranvil'||String(user.name||'').trim().toLowerCase()==='herace fleuranvil')return 'heracefleuranvil@gmail.com';
+  if(user.agentKey==='HERACE_FLEURANVIL'||user.id==='agent-herace-fleuranvil'||String(user.name||'').trim().toLowerCase()==='herace fleuranvil')return 'heracefleuranvil@gmail.com';
   const base=String(user.name||user.username||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
   return (base||String(user.staffId||'').toLowerCase())+'@sendwayoexpress.com';
 }
