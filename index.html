@@ -3161,20 +3161,52 @@ async function refreshFromFirebaseNow(){
  if(typeof manualRefresh==='function')return manualRefresh(true);
  return false;
 }
-let __sendwayoPullStartY=0,__sendwayoPullStartX=0,__sendwayoPullBusy=false;
+let __sendwayoPullStartY=0,__sendwayoPullStartX=0,__sendwayoPullBusy=false,__sendwayoPullArmed=false;
+function __sendwayoPullScroller(){
+ return document.querySelector('.content-body');
+}
+function __sendwayoPullIndicator(show,label){
+ let el=document.getElementById('sendwayo-pull-refresh-indicator');
+ if(!el){
+  el=document.createElement('div');
+  el.id='sendwayo-pull-refresh-indicator';
+  el.innerHTML='<span class="sw-pull-icon">↻</span><span class="sw-pull-text">Desliza para actualizar</span>';
+  document.body.appendChild(el);
+ }
+ el.classList.toggle('show',!!show);
+ if(label)el.querySelector('.sw-pull-text').textContent=label;
+}
 document.addEventListener('touchstart',function(e){
  if(e.touches?.length!==1)return;
+ const sc=__sendwayoPullScroller();
+ if(sc&&sc.scrollTop>2)return;
  __sendwayoPullStartY=e.touches[0].clientY;
  __sendwayoPullStartX=e.touches[0].clientX;
+ __sendwayoPullArmed=true;
+},{passive:true});
+document.addEventListener('touchmove',function(e){
+ if(!__sendwayoPullArmed||__sendwayoPullBusy||!e.touches?.length)return;
+ const sc=__sendwayoPullScroller();
+ if(sc&&sc.scrollTop>2){__sendwayoPullArmed=false;__sendwayoPullIndicator(false);return;}
+ const dy=e.touches[0].clientY-__sendwayoPullStartY;
+ const dx=Math.abs(e.touches[0].clientX-__sendwayoPullStartX);
+ if(dy>25&&dx<70){
+   __sendwayoPullIndicator(true,dy>=85?'Suelta para actualizar':'Desliza para actualizar');
+ }
 },{passive:true});
 document.addEventListener('touchend',function(e){
- if(__sendwayoPullBusy||!e.changedTouches?.length)return;
+ if(__sendwayoPullBusy||!__sendwayoPullArmed||!e.changedTouches?.length)return;
+ __sendwayoPullArmed=false;
  const y=e.changedTouches[0].clientY,x=e.changedTouches[0].clientX;
  const dy=y-__sendwayoPullStartY,dx=Math.abs(x-__sendwayoPullStartX);
- if(dy<90||dx>70||window.scrollY>5)return;
+ __sendwayoPullIndicator(false);
+ const sc=__sendwayoPullScroller();
+ if(dy<85||dx>70||(sc&&sc.scrollTop>2))return;
  __sendwayoPullBusy=true;
+ __sendwayoPullIndicator(true,'Actualizando...');
+ const done=()=>{__sendwayoPullBusy=false;__sendwayoPullIndicator(false)};
  if(currentUser&&firebaseReady&&firebase.auth().currentUser){
-   Promise.resolve(refreshFromFirebaseNow()).finally(()=>setTimeout(()=>{__sendwayoPullBusy=false},700));
+   Promise.resolve(refreshFromFirebaseNow()).then(done).catch(done);
  }else{
    setTimeout(()=>location.reload(),50);
  }
@@ -5053,7 +5085,25 @@ img[data-current-brand-logo="true"]{
 }
 </style>
 
-<style id="sendwayo-receipt-mobile-final-pass">
+<style id="sendwayo-receipt-mobile-final-pass"><style id="sendwayo-receipt-mobile-precision-and-pull">
+@media(max-width:800px){
+  /* Encabezado móvil: todo el nombre visible, logo pegado a la izquierda. */
+  .modal#detailModal .modal-content{width:calc(100vw - 10px)!important;max-width:calc(100vw - 10px)!important;padding:7px!important;overflow-x:hidden!important}
+  .receipt-shell.receipt-final.receipt-brand-wide{width:100%!important;max-width:100%!important;margin:0!important;padding:8px 5px!important;overflow:hidden!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-head{width:100%!important;max-width:100%!important;overflow:visible!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;align-items:center!important;gap:0!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;overflow:visible!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row .receipt-logo{flex:0 0 50px!important;width:50px!important;height:42px!important;max-width:50px!important;max-height:42px!important;margin:0!important;object-fit:contain!important;object-position:left center!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name{flex:1 1 auto!important;min-width:0!important;width:auto!important;margin:0!important;padding:0!important;overflow:visible!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name h2{display:block!important;width:max-content!important;max-width:none!important;margin:0!important;padding:0!important;font-size:.68rem!important;line-height:1!important;letter-spacing:-.055em!important;font-weight:900!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-slogan{font-size:.48rem!important;line-height:1.12!important;margin:3px 0 0!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-original{font-size:.56rem!important;margin:6px auto 4px!important}
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-capture{display:none!important}
+  #sendwayo-pull-refresh-indicator{position:fixed;top:7px;left:50%;transform:translate(-50%,-16px);z-index:20000;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0f2c59;color:#fff;font-size:11px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  #sendwayo-pull-refresh-indicator.show{opacity:1;transform:translate(-50%,0)}
+  #sendwayo-pull-refresh-indicator .sw-pull-icon{font-size:16px;line-height:1;display:inline-block}
+}
+@media(min-width:801px){#sendwayo-pull-refresh-indicator{display:none!important}}
+</style>
 @media (max-width:800px){
   .receipt-final .receipt-head>div:first-child,
   .receipt-final .receipt-brand-row,
