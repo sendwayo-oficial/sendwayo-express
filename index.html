@@ -1232,7 +1232,12 @@ function attachRealtimeListeners(){
          if(fresh&&fresh.active!==false)currentUser=fresh;
        }
        renderRealtimeView();
-         try{translateInterface()}catch(_){}
+       // Actualización de ganancias solo cuando el tablero está visible:
+       // evita escanear toda la contabilidad continuamente en segundo plano.
+       if(document.querySelector('.view-section.active#view-dashboard') && typeof swRenderGanancias==='function'){
+         try{swRenderGanancias()}catch(_){}
+       }
+       try{translateInterface()}catch(_){}
      }catch(e){console.warn('SENDWAYO render realtime:',e)}
    },220);
  };
@@ -4372,10 +4377,9 @@ window.SENDWAYO_HARDENING.refreshDailyNow=function(){
   try{if(typeof swRenderGanancias==='function')swRenderGanancias()}catch(e){console.warn('SENDWAYO Ganancia de hoy:',e)}
 };
 
-// Se actualiza en el dashboard del Administrador y también en el dashboard
-// de cada Remitente, sin depender del rol ni de que el primer render haya
-// ocurrido antes de restaurar la sesión.
-setInterval(()=>{if(typeof swRenderGanancias==='function'&&document.getElementById('ganancias-dia-card'))swRenderGanancias()},1200);
+/* Las ganancias se actualizan por eventos de datos y por renderAll().
+   No se usa un intervalo de 1,2 s: ese escaneo continuo podía consumir CPU
+   y dejar lentos los campos, botones y modales en bases con muchos registros. */
 
 /* Evita que un render repetido congele la interfaz. */
 let queued=false;
@@ -4386,15 +4390,8 @@ function swQueue(){
 window.addEventListener('load',()=>setTimeout(swQueue,250));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)swQueue()});
 window.addEventListener('focus',swQueue);
-setInterval(()=>{if(!document.hidden&&document.querySelector('.view-section.active#view-dashboard'))swQueue()},15000);
-
-/* Recalcula después de renderAll/renderRealtimeView sin reemplazar la contabilidad existente. */
-try{
-  if(typeof window.renderAll==='function'){
-    const oldRenderAll=window.renderAll;
-    window.renderAll=function(){const r=oldRenderAll.apply(this,arguments);setTimeout(swQueue,30);return r}
-  }
-}catch(e){}
+/* Sin sondeo permanente: los cambios de Firebase ya disparan renderRealtimeView().
+   focus/visibility cubren el regreso del usuario a la pestaña. */
 
 /* Integridad financiera de solo lectura. */
 function swIntegrity(){
@@ -4486,7 +4483,8 @@ function swEnsureHealthCard(){
   anchor.parentNode.insertBefore(card,anchor.nextSibling);swHealth();
 }
 function swAdminPanel(){setTimeout(swEnsureHealthCard,80)}
-setInterval(swAdminPanel,3000);
+// La tarjeta de salud no necesita comprobarse cada 3 segundos.
+setInterval(swAdminPanel,15000);
 window.addEventListener('load',swAdminPanel);
 
 /* Errores globales: informa sin bloquear el negocio. */
@@ -6320,7 +6318,6 @@ img[data-current-brand-logo="true"]{
 
   document.addEventListener('DOMContentLoaded',bindAddButtons,{once:true});
   window.addEventListener('load',bindAddButtons,{once:true});
-  document.addEventListener('click',function(){setTimeout(bindAddButtons,0)},{passive:true});
   window.addEventListener('resize',recover,{passive:true});
   document.addEventListener('visibilitychange',recover,{passive:true});
   setTimeout(bindAddButtons,100);
