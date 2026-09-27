@@ -6381,5 +6381,94 @@ img[data-current-brand-logo="true"]{
   setTimeout(function(){normalizeAgentMenu();activateAgentFields();},700);
   setTimeout(function(){normalizeAgentMenu();activateAgentFields();},1600);
 })();
+</script>
+<script id="sendwayo-agent-modal-unfreeze-v2">
+(function(){
+  if(window.__sendwayo_agent_modal_unfreeze_v2)return;
+  window.__sendwayo_agent_modal_unfreeze_v2=true;
+
+  function agent(){return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser);}
+  function unlock(modal){
+    if(!modal)return;
+    delete modal.dataset.submitting;
+    modal.style.display='flex';
+    modal.classList.add('show');
+    modal.style.pointerEvents='auto';
+    modal.style.zIndex='20000';
+    const content=modal.querySelector('.modal-content');
+    if(content){content.style.pointerEvents='auto';content.style.opacity='1';}
+    modal.querySelectorAll('input,select,textarea,button').forEach(el=>{
+      el.disabled=false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents='auto';
+      el.style.opacity='1';
+    });
+    const current=document.getElementById('agent-current');
+    if(current){current.readOnly=true;current.disabled=false;}
+    document.body.style.overflow='hidden';
+  }
+
+  function showAgent(operation){
+    if(!agent())return;
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    const u=window.currentUser||currentUser||{};
+    const current=document.getElementById('agent-current');
+    if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
+    const service=document.getElementById('agent-tipo-trans');
+    if(service){
+      service.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';
+      service.value='HAITI A HAITI NatCash';
+    }
+    const op=document.getElementById('agent-operation');
+    if(op){op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';op.value=operation==='Retiro'?'Retiro':'Envío';}
+    const ben=document.getElementById('agent-beneficiario-input');if(ben){ben.value='';ben.readOnly=false;ben.disabled=false;}
+    const benId=document.getElementById('agent-beneficiario-select');if(benId)benId.value='';
+    const amount=document.getElementById('agent-monto');if(amount){amount.value='';amount.readOnly=false;amount.disabled=false;}
+    unlock(modal);
+    try{if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}catch(e){console.warn('Betina cálculo:',e)}
+  }
+
+  window.openTransactionEntry=function(operation){showAgent(operation);};
+
+  const add=document.getElementById('envio-add-btn');
+  if(add){
+    add.removeAttribute('disabled');
+    add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
+    add.style.pointerEvents='auto';
+    add.style.opacity='1';
+    add.onclick=function(e){e.preventDefault();e.stopPropagation();showAgent();return false;};
+  }
+
+  const originalClose=window.closeModal;
+  window.closeModal=function(id){
+    if(id==='agentEnvioModal'){
+      const m=document.getElementById('agentEnvioModal');
+      if(m)m.style.display='none';
+      document.body.style.overflow='';
+      return;
+    }
+    return originalClose.apply(this,arguments);
+  };
+
+  document.addEventListener('click',function(e){
+    const a=e.target?.closest?.('#sidebar-menu a');
+    if(a&&agent()&&String(a.textContent||'').toLowerCase().includes('envíos y retiros')){
+      e.preventDefault();e.stopPropagation();
+      switchView('envios');
+      setTimeout(()=>{unlock(document.getElementById('agentEnvioModal'));},0);
+    }
+  },true);
+
+  document.addEventListener('pointerdown',function(e){
+    const b=e.target?.closest?.('#envio-add-btn');
+    if(b&&agent()){
+      e.preventDefault();e.stopPropagation();
+      showAgent();
+    }
+  },true);
+
+  setTimeout(()=>{if(agent()){const b=document.getElementById('envio-add-btn');if(b){b.disabled=false;b.style.pointerEvents='auto';b.style.opacity='1';}}},100);
+})();
 </script>\n</body>
 </html>
