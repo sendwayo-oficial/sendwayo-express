@@ -1439,6 +1439,12 @@ async function realizarLoginOriginal(){
        const base=normalizeUsername(identifier);
        addCandidate(base+'@gmail.com');
        addCandidate(base+'@sendwayoexpress.com');
+       if(isAgentEightIdentifier){
+         addCandidate('8@sendwayoexpress.com');
+         addCandidate('id00000008@sendwayoexpress.com');
+         addCandidate('betinalindor@sendwayoexpress.com');
+         addCandidate('betinalindor@gmail.com');
+       }
      }
      let lastError=firstError;
      let recovered=null;
@@ -1495,6 +1501,23 @@ async function realizarLoginOriginal(){
            snap=await usersRef.orderByChild('staffId').equalTo(identifier.toUpperCase()).once('value');
            vals=snap.val()||{};
            found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
+         }
+         if(!found && isAgentEightIdentifier){
+           for(const key of ['8','ID00000008']){
+             snap=await usersRef.child(key).once('value');
+             const one=snap.val();
+             if(one&&isOperationalUser(one)&&one.active!==false){found=one;break}
+           }
+           if(!found){
+             snap=await usersRef.orderByChild('agentNumber').equalTo('8').once('value');
+             vals=snap.val()||{};
+             found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
+           }
+           if(!found){
+             snap=await usersRef.orderByChild('staffId').equalTo('8').once('value');
+             vals=snap.val()||{};
+             found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
+           }
          }
        }catch(profileLookupError){
          console.warn('SENDWAYO perfil por identidad:',profileLookupError);
