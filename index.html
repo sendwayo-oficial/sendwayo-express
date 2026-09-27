@@ -5013,3 +5013,42 @@ img[data-current-brand-logo="true"]{
   .receipt-brand-wide .receipt-head .receipt-brand-name h2{font-size:1.08rem!important}
 }
 </style>
+
+<style id="sendwayo-receipt-mobile-header-final">
+/* Comprobante móvil: logo al extremo izquierdo y nombre completo junto al logo. */
+@media (max-width: 800px){
+  .receipt-brand-wide .receipt-head .receipt-brand-row{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    justify-content:flex-start!important;
+    gap:3px!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
+  }
+  .receipt-brand-wide .receipt-head .receipt-brand-row .receipt-logo{
+    flex:0 0 82px!important;
+    width:82px!important;
+    height:58px!important;
+    max-width:82px!important;
+    max-height:58px!important;
+  }
+  .receipt-brand-wide .receipt-head .receipt-brand-name{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    overflow:hidden!important;
+  }
+  .receipt-brand-wide .receipt-head .receipt-brand-name h2{
+    width:100%!important;
+    max-width:100%!important;
+    font-size:1rem!important;
+    line-height:1.05!important;
+    letter-spacing:-.02em!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+}
+</style>
