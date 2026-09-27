@@ -145,6 +145,114 @@ aside{height:100vh;min-height:0;overflow:hidden}
 .receipt-brand-wide .receipt-head .receipt-slogan{font-size:.5rem!important;line-height:1.18!important;margin-top:5px!important}
 }
 </style>
+
+<style id="sendwayo-mobile-receipt-final-verified-pass">
+/* SENDWAYO: eliminar cualquier marca de agua del logo */
+.content-body:before{display:none!important;background-image:none!important;opacity:0!important}
+.receipt-watermark{display:none!important}
+
+/* Comprobante móvil: todo el encabezado debe caber sin recortes. */
+@media(max-width:800px){
+  .modal#detailModal .modal-content{
+    width:calc(100vw - 2px)!important;
+    max-width:calc(100vw - 2px)!important;
+    padding:2px!important;
+    overflow-x:hidden!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:5px 1px!important;
+    overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-head{
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    gap:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row .receipt-logo{
+    flex:0 0 39px!important;
+    width:39px!important;
+    height:34px!important;
+    max-width:39px!important;
+    max-height:34px!important;
+    margin:0!important;
+    object-fit:contain!important;
+    object-position:left center!important;
+    mix-blend-mode:multiply!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name h2{
+    display:block!important;
+    width:auto!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:.56rem!important;
+    line-height:1!important;
+    letter-spacing:-.065em!important;
+    font-weight:900!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+  /* El lema queda pegado al encabezado logo + nombre. */
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-slogan{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:-2px 0 0!important;
+    padding:0!important;
+    text-align:center!important;
+    font-size:.45rem!important;
+    line-height:1.05!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    overflow-wrap:anywhere!important;
+  }
+  /* El número/ticket queda completamente dentro del recuadro. */
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-original{
+    display:block!important;
+    width:max-content!important;
+    max-width:calc(100% - 6px)!important;
+    box-sizing:border-box!important;
+    margin:2px auto 4px!important;
+    padding:3px 7px!important;
+    border:2px solid #0f2c59!important;
+    border-radius:999px!important;
+    font-size:.5rem!important;
+    line-height:1!important;
+    letter-spacing:.03em!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:clip!important;
+  }
+  .receipt-shell.receipt-final.receipt-brand-wide .receipt-capture{
+    display:none!important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="welcome-screen">
@@ -2436,8 +2544,7 @@ window.showReceipt=function showReceipt(collection,id){
  const t=RT[lang]||RT.es;
  const amountText=displayAmount.toLocaleString(lang==='en'?'en-US':lang==='fr'?'fr-FR':lang==='ht'?'fr-FR':'es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+displayCurrency;
  const html=`<div class="receipt-shell receipt-compact receipt-final receipt-brand-wide" style="max-width:900px!important;padding:14px!important">
- <div class="receipt-watermark"><img src="${LOGO_DATA}" alt="" aria-hidden="true"></div>
- <div class="receipt-head">
+  <div class="receipt-head">
    <div class="receipt-brand-row">
      <img class="receipt-logo" src="${LOGO_DATA}" alt="${t.company}" data-current-brand-logo="true">
      <div class="receipt-brand-name">
