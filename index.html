@@ -5467,7 +5467,8 @@ img[data-current-brand-logo="true"]{
     resolveEnvioPerson('remitente');resolveEnvioPerson('beneficiario');
     const amount=Number(document.getElementById('env-monto')?.value||0),remId=document.getElementById('env-remitente-select')?.value||currentUser.id,benId=document.getElementById('env-beneficiario-select')?.value||'',type=document.getElementById('env-tipo-trans')?.value||'HTI a HTI Natcash';
     if(amount<20)return toast('Le montant minimum est de 20 GDES.','warn');if(amount>99999)return toast('Le montant maximum est de 99,999 GDES.','warn');if(!benId)return toast('Sélectionnez le bénéficiaire.','warn');if(remId!==currentUser.id)return toast('L’Agent ne peut enregistrer que ses propres opérations.','warn');
-    const fee=swHtiTransferFee(amount);if(fee===null)return toast('Montant hors de la grille tarifaire.','warn');const totalDebit=Number((amount+fee).toFixed(2));
+    const fee=swHtiTransferFee(amount);if(fee===null)return toast('Montant hors de la grille tarifaire.','warn');const withdrawal=isHtiWithdrawal(type);
+    const totalDebit=Number((amount+fee).toFixed(2));
     if(!await guardBalance(totalDebit))return;if(!beginFormSubmit('envioModal'))return;
     const ben=state.beneficiaries?.[benId]||{},rem=currentUser,benName=personName(ben),benPhone=personPhone(ben);
     const id=await createTransaction('envios',{type,route:type,currency:'HTG',balanceCurrency:'HTG',remitenteId:rem.id,remitente:personName(rem),remitenteNombre:personName(rem),remitentePhone:personPhone(rem),remitenteDoc:rem.doc||rem.document||'',beneficiarioId:benId,beneficiario:benName,beneficiarioNombre:benName,beneficiarioPhone:benPhone,net:amount,commission:fee,destination:amount,fee,balanceDebit:totalDebit,feeType:'TRANSFERT_'+swHtiRouteType(type).toUpperCase(),balanceDebited:true},amount);
@@ -5708,17 +5709,20 @@ img[data-current-brand-logo="true"]{
   window.__sendwayo_hti_haiti_unified_v1=true;
 
   const HTI_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
+  const HTI_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
 
   function isHtiHti(type){
     const t=String(type||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[→]/g,' A ').replace(/\s+/g,' ').trim();
     return /\bHTI\s*A\s*HTI\b/.test(t);
   }
-  function htiFee(amount){
+  function htiFee(amount,type){
     const n=Math.floor(Number(amount||0));
     if(!Number.isFinite(n)||n<20||n>99999)return null;
-    const row=HTI_TRANSFER.find(x=>n>=x[0]&&n<=x[1]);
+    const tariff=/RETIRO/i.test(String(type||''))?HTI_WITHDRAWAL:HTI_TRANSFER;
+    const row=tariff.find(x=>n>=x[0]&&n<=x[1]);
     return row?row[2]:null;
   }
+  function isHtiWithdrawal(type){return /HTI\s*A\s*HTI/i.test(String(type||''))&&/RETIRO/i.test(String(type||''));}
   function agent(){try{return typeof isAgentUser==='function'&&isAgentUser(currentUser)}catch(_){return false}}
   function htiLabel(type){
     return /MONCASH/i.test(String(type||''))?'MonCash':'Natcash';
@@ -5752,7 +5756,7 @@ img[data-current-brand-logo="true"]{
 
     if(agent()){
       const normal=[...typ.options].filter(o=>!isHtiHti(o.value));
-      typ.innerHTML='<option value="HTI a HTI Natcash">Haití a Haití Natcash</option><option value="HTI a HTI MonCash">Haití a Haití MonCash</option>';
+      typ.innerHTML='<option value="HTI a HTI Natcash">Envío de Haití a Haití — Natcash</option><option value="HTI a HTI Retiro Natcash">Retiro de Haití a Haití — Natcash</option><option value="HTI a HTI MonCash">Envío de Haití a Haití — MonCash</option><option value="HTI a HTI Retiro MonCash">Retiro de Haití a Haití — MonCash</option>';
       normal.forEach(o=>typ.appendChild(o));
       typ.value='HTI a HTI Natcash';
     }else{
@@ -5765,7 +5769,7 @@ img[data-current-brand-logo="true"]{
       const n=document.getElementById('calc-neto'),c=document.getElementById('calc-comision'),t=document.getElementById('calc-total');
       if(h){
         if(lab)lab.textContent='Montant en GDES';
-        if(hint)hint.textContent='HTI → HTI: Gourdes (GDES) exclusivamente. Natcash y MonCash utilizan la misma grille.';
+        if(hint)hint.textContent='HTI → HTI: Gourdes (GDES) exclusivamente. Envío y retiro disponibles para Natcash y MonCash.';
         if(n)n.previousSibling&&(n.previousSibling.textContent='MONTO ENVIADO:');
         if(c)c.previousSibling&&(c.previousSibling.textContent='COMISIÓN:');
         if(t)t.previousSibling&&(t.previousSibling.textContent='MONTO TOTAL:');
@@ -5785,7 +5789,7 @@ img[data-current-brand-logo="true"]{
     const type=document.getElementById('env-tipo-trans')?.value;
     if(!isHtiHti(type))return previousCalc.apply(this,arguments);
     const amount=Number(document.getElementById('env-monto')?.value||0);
-    const fee=htiFee(amount);
+    const fee=htiFee(amount,type);
     const n=document.getElementById('calc-neto'),c=document.getElementById('calc-comision'),t=document.getElementById('calc-total');
     if(n)n.textContent=amount>=20&&amount<=99999?gdes(amount):'—';
     if(c)c.textContent=fee!==null?gdes(fee):'—';
@@ -5842,8 +5846,10 @@ img[data-current-brand-logo="true"]{
       destination:amount,
       fee,
       balanceDebit:agent()?totalDebit:0,
-      feeType:'TRANSFERT_'+htiLabel(type).toUpperCase(),
-      balanceDebited:agent()
+      feeType:(withdrawal?'RETRAIT_':'TRANSFERT_')+htiLabel(type).toUpperCase(),
+      operation:withdrawal?'RETRAIT':'ENVIO',
+      balanceDebited:agent(),
+      withdrawal
     };
 
     const id=await createTransaction('envios',fields,amount);
@@ -5856,7 +5862,7 @@ img[data-current-brand-logo="true"]{
     state.envios[id]={...(state.envios[id]||{}),...fields};
     try{await firebase.database().ref(DB_PATH+'/envios/'+id).update(fields)}catch(_){}
     closeModal('envioModal');
-    toast('Transfert HTI → HTI enregistré. Débit total: '+gdes(totalDebit),'success');
+    toast((withdrawal?'Retrait':'Transfert')+' HTI → HTI enregistré. Débit total: '+gdes(totalDebit),'success');
   };
 
   // El cálculo debe ser HTI/GDES incluso si el selector estaba ya abierto antes del parche.
@@ -5875,15 +5881,21 @@ img[data-current-brand-logo="true"]{
     [2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],
     [20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]
   ];
+  const HTI_GDES_WITHDRAWAL_TARIFF=[
+    [20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],
+    [2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],
+    [20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]
+  ];
 
   function isHtiHtiRoute(v){
     const t=String(v||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[→]/g,' A ').replace(/\s+/g,' ').trim();
     return /\bHTI\s*A\s*HTI\b/.test(t);
   }
-  function htiGdesFee(amount){
+  function htiGdesFee(amount,type){
     const n=Math.floor(Number(amount||0));
     if(!Number.isFinite(n)||n<20||n>99999)return null;
-    const row=HTI_GDES_TRANSFER_TARIFF.find(r=>n>=r[0]&&n<=r[1]);
+    const tariff=/RETIRO/i.test(String(type||''))?HTI_GDES_WITHDRAWAL_TARIFF:HTI_GDES_TRANSFER_TARIFF;
+    const row=tariff.find(r=>n>=r[0]&&n<=r[1]);
     return row?row[2]:null;
   }
   function moneyGdes(v){
@@ -5897,14 +5909,18 @@ img[data-current-brand-logo="true"]{
     const opts=[...typ.options];
     const nonHti=opts.filter(o=>!isHtiHtiRoute(o.value));
     const nat=document.createElement('option');
-    nat.value='HTI a HTI Natcash';nat.textContent='Natcash — HTI à HTI';
+    nat.value='HTI a HTI Natcash';nat.textContent='Envío de Haití a Haití — Natcash';
+    const natR=document.createElement('option');
+    natR.value='HTI a HTI Retiro Natcash';natR.textContent='Retiro de Haití a Haití — Natcash';
     const mon=document.createElement('option');
-    mon.value='HTI a HTI MonCash';mon.textContent='MonCash — HTI à HTI';
+    mon.value='HTI a HTI MonCash';mon.textContent='Envío de Haití a Haití — MonCash';
+    const monR=document.createElement('option');
+    monR.value='HTI a HTI Retiro MonCash';monR.textContent='Retiro de Haití a Haití — MonCash';
     typ.innerHTML='';
+    typ.appendChild(nat);typ.appendChild(natR);typ.appendChild(mon);typ.appendChild(monR);
     nonHti.forEach(o=>typ.appendChild(o));
-    typ.appendChild(nat);typ.appendChild(mon);
-    const wantsMon=/MONCASH/i.test(current);
-    typ.value=wantsMon?mon.value:nat.value;
+    const wantsMon=/MONCASH/i.test(current), wantsRetiro=/RETIRO/i.test(current);
+    typ.value=wantsMon?(wantsRetiro?monR.value:mon.value):(wantsRetiro?natR.value:nat.value);
   }
   function applyHtiUi(){
     const typ=document.getElementById('env-tipo-trans');
@@ -5913,7 +5929,7 @@ img[data-current-brand-logo="true"]{
     if(lab)lab.textContent='Montant en GDES';
     const n=document.getElementById('calc-neto'),c=document.getElementById('calc-comision'),t=document.getElementById('calc-total');
     const amount=Number(document.getElementById('env-monto')?.value||0);
-    const fee=htiGdesFee(amount);
+    const fee=htiGdesFee(amount,typ.value);
     if(n)n.textContent=fee!==null?moneyGdes(amount):'—';
     if(c)c.textContent=fee!==null?moneyGdes(fee):'—';
     if(t)t.textContent=fee!==null?moneyGdes(amount+fee):'—';
