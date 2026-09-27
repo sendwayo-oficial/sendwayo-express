@@ -2047,14 +2047,17 @@ function agentHtiFee(amount,operation){
 }
 function htgMoney(v){return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES'}
 function calcularAgentEnvio(){
- const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',key=agentOperationKey(operation),fee=agentHtiFee(amount,operation),safeFee=fee===null?0:fee,total=amount+safeFee;
+ const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',key=agentOperationKey(operation),fee=agentHtiFee(amount,operation),safeFee=fee===null?0:fee;
+ // En el módulo de Agente, el monto introducido YA INCLUYE la tarifa.
+ // Ejemplo: 2,000 GDES con tarifa 25 GDES => recibe 1,975 GDES y el total sigue siendo 2,000 GDES.
+ const net=Math.max(0,amount-safeFee),total=amount;
  const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total'),r=document.getElementById('agent-calc-recibir');
- if(a)a.textContent=htgMoney(amount);
+ if(a)a.textContent=htgMoney(net);
  if(b)b.textContent=htgMoney(safeFee);
  if(t)t.textContent=htgMoney(total);
- if(r)r.textContent=htgMoney(amount);
+ if(r)r.textContent=htgMoney(net);
  const op=document.getElementById('agent-operation');
- if(op)op.title=key==='RETIRO'?'Tarifa de Retiro: 6, 12, 15, 28, 46, 81, 130, 248, 342, 576, 945, 1260 o 1440 GDES según rango.':'Tarifa de Envío: 0, 0, 0, 6, 18, 25, 35, 54, 63, 68, 90, 108 o 115 GDES según rango.';
+ if(op)op.title=key==='RETIRO'?'Tarifa de Retiro incluida dentro del monto ingresado.':'Tarifa de Envío incluida dentro del monto ingresado.';
 }
 function updateAgentBeneficiarySuggestions(){
  const input=document.getElementById('agent-beneficiario-input'),box=document.getElementById('agent-beneficiario-suggestions');if(!input||!box)return;
@@ -2077,11 +2080,11 @@ async function guardarAgentEnvio(){
  if(fee===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
  if(!benId)return toast('Escriba el nombre o número del beneficiario y seleccione la sugerencia.','warn');
  const ben=state.beneficiaries?.[benId];if(!ben)return toast('Seleccione un beneficiario válido.','warn');
- const total=amount+fee;
+ const net=Math.max(0,amount-fee),total=amount;
  if(!beginFormSubmit('agentEnvioModal'))return;
- const id=await createTransaction('envios',{type,route:type,operation,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:fee,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net:amount,commission:fee,commissionTotal:fee,total,destination:amount,fee,balanceDebit:total,totalDebit:total,feeType:(operationKey==='RETIRO'?'RETIRO':'TRANSFERT')+'_'+swHtiRouteType(type).toUpperCase(),agentOperationKey:operationKey},amount);
+ const id=await createTransaction('envios',{type,route:type,operation,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:fee,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net,commission:fee,commissionTotal:fee,total,destination:net,fee,balanceDebit:amount,totalDebit:amount,feeType:(operationKey==='RETIRO'?'RETIRO':'TRANSFERT')+'_'+swHtiRouteType(type).toUpperCase(),agentOperationKey:operationKey},amount);
  if(!id)return;
- closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE.','success');
+ closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE. Total entregado: '+htgMoney(total)+'; tarifa incluida: '+htgMoney(fee)+'.','success');
 }
 async function guardarEnvio(){
  const _modal=document.getElementById('envioModal');if(_modal?.dataset.submitting==='1')return;
