@@ -829,7 +829,21 @@ function money(v){return 'RD$ '+Number(v||0).toLocaleString('es-DO',{minimumFrac
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function statusClass(s){return 'st-'+String(s).replace(/\s/g,'-')}
 function displayStatus(status){if(isAdmin())return status;return status==='Pendiente'?'EN REVISIÓN':'PROCESADO'}
-function toast(msg,type='success'){let t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type;setTimeout(()=>t.classList.add('hidden'),3800)}
+let __sendwayoToastTimer=null,__sendwayoLastToast='',__sendwayoLastToastAt=0;
+function toast(msg,type='success'){
+  const text=String(msg??'').trim();
+  if(!text)return;
+  const nowMs=Date.now();
+  // Evita tormentas de avisos duplicados producidas por handlers encadenados o reintentos.
+  if(text===__sendwayoLastToast && nowMs-__sendwayoLastToastAt<2200)return;
+  __sendwayoLastToast=text;__sendwayoLastToastAt=nowMs;
+  const t=document.getElementById('toast');if(!t)return;
+  if(__sendwayoToastTimer)clearTimeout(__sendwayoToastTimer);
+  t.textContent=text;
+  t.className='toast '+String(type||'success');
+  t.classList.remove('hidden');
+  __sendwayoToastTimer=setTimeout(()=>{t.classList.add('hidden');__sendwayoToastTimer=null},3600);
+}
 function saveSession(){if(!currentUser)return;localStorage.setItem(SESSION_KEY,JSON.stringify({userId:currentUser.id,lastActivity}));lastSessionWrite=Date.now()}
 function touch(){if(!currentUser)return;lastActivity=Date.now();if(Date.now()-lastSessionWrite>8000)saveSession()}
 ['mousemove','keypress','click','touchstart'].forEach(e=>window.addEventListener(e,touch,{passive:true}))
