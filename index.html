@@ -567,18 +567,21 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div id="env-actions" style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 14px;position:sticky;top:0;z-index:5;background:#fff;padding:8px 0;border-bottom:1px solid #e5eaf0"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
 <div class="table-wrap" style="margin:10px 0"><table style="font-size:.72rem"><thead><tr><th colspan="2">TABLA OFICIAL MONCASH / NATCASH</th></tr><tr><th>Monto enviado RD$</th><th>Comisión RD$</th></tr></thead><tbody><tr><td>RD$ 50 – RD$ 500</td><td>RD$ 50</td></tr><tr><td>RD$ 501 – RD$ 1,000</td><td>RD$ 100</td></tr><tr><td>RD$ 1,001 – RD$ 2,000</td><td>RD$ 150</td></tr><tr><td>RD$ 2,001 – RD$ 3,000</td><td>RD$ 200</td></tr><tr><td>RD$ 3,001 – RD$ 4,000</td><td>RD$ 250</td></tr><tr><td>RD$ 4,001 – RD$ 5,000</td><td>RD$ 300</td></tr><tr><td>RD$ 5,001 – RD$ 6,000</td><td>RD$ 350</td></tr><tr><td>RD$ 6,001 – RD$ 7,000</td><td>RD$ 400</td></tr><tr><td>RD$ 7,001 – RD$ 8,000</td><td>RD$ 450</td></tr><tr><td>RD$ 8,001 – RD$ 9,000</td><td>RD$ 500</td></tr><tr><td>RD$ 9,001 – RD$ 10,000</td><td>RD$ 550</td></tr><tr><td>RD$ 10,001 – RD$ 11,000</td><td>RD$ 600</td></tr><tr><td>RD$ 11,001 – RD$ 12,000</td><td>RD$ 650</td></tr><tr><td>RD$ 12,001 – RD$ 13,000</td><td>RD$ 700</td></tr><tr><td>RD$ 13,001 – RD$ 14,000</td><td>RD$ 750</td></tr><tr><td>RD$ 14,001 – RD$ 15,000</td><td>RD$ 800</td></tr><tr><td>RD$ 15,001 – RD$ 16,000</td><td>RD$ 850</td></tr><tr><td>RD$ 16,001 – RD$ 17,000</td><td>RD$ 900</td></tr><tr><td>RD$ 17,001 – RD$ 18,000</td><td>RD$ 950</td></tr><tr><td>RD$ 18,001 – RD$ 19,000</td><td>RD$ 1,000</td></tr><tr><td>RD$ 19,001 – RD$ 20,000</td><td>RD$ 1,050</td></tr><tr><td>RD$ 20,001 – RD$ 21,000</td><td>RD$ 1,100</td></tr><tr><td>RD$ 21,001 – RD$ 22,000</td><td>RD$ 1,150</td></tr><tr><td>RD$ 22,001 – RD$ 23,000</td><td>RD$ 1,200</td></tr><tr><td>RD$ 23,001 – RD$ 24,000</td><td>RD$ 1,250</td></tr><tr><td>RD$ 24,001 – RD$ 25,000</td><td>RD$ 1,300</td></tr><tr><td>RD$ 25,001 – RD$ 26,000</td><td>RD$ 1,350</td></tr><tr><td>RD$ 26,001 – RD$ 27,000</td><td>RD$ 1,400</td></tr><tr><td>RD$ 27,001 – RD$ 28,000</td><td>RD$ 1,500</td></tr><tr><td>RD$ 28,001 – RD$ 29,000</td><td>RD$ 1,550</td></tr><tr><td>RD$ 29,001 – RD$ 30,000</td><td>RD$ 1,600</td></tr><tr><td>RD$ 30,001 – RD$ 31,000</td><td>RD$ 1,650</td></tr><tr><td>RD$ 31,001 – RD$ 32,000</td><td>RD$ 1,700</td></tr><tr><td>RD$ 32,001 – RD$ 33,000</td><td>RD$ 1,750</td></tr><tr><td>RD$ 33,001 – RD$ 34,000</td><td>RD$ 1,800</td></tr><tr><td>RD$ 34,001 – RD$ 35,000</td><td>RD$ 1,850</td></tr><tr><td>RD$ 35,001 – RD$ 36,000</td><td>RD$ 1,900</td></tr></tbody></table></div><div class="modal" id="agentEnvioModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()">
 <button class="modal-close-x" onclick="closeModal('agentEnvioModal')">×</button>
-<h3>Registro de Envío / Retiro — Haití a Haití</h3>
+<h3>Haití a Haití — Envío / Retiro</h3>
 <div class="form-grid">
-<div class="form-group"><label>Tipo de Transacción</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">HAITI A HAITI NatCash</option><option value="HAITI A HAITI MonCash">HAITI A HAITI MonCash</option></select></div>
-<div class="form-group"><label>Agente</label><input id="agent-current" class="form-control" readonly><div class="field-hint">Número del agente (nombre).</div></div>
+<div class="form-group"><label>Tipo de Transacción</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option></select></div>
+<div class="form-group"><label>Agente</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="toast('La cuenta de Agente es la cuenta activa.','info')" title="Agente">+</button></div></div>
 <div class="form-group"><label>Envío / Retiro</label><select id="agent-operation" class="form-control" onchange="calcularAgentEnvio()"><option value="Envío">Envío</option><option value="Retiro">Retiro</option></select></div>
 <div class="form-group"><label>Beneficiario</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Escriba nombre o número..." autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="openModal('beneficiarioModal')" title="Agregar beneficiario">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
-<div class="form-group"><label>Monto en Gourdes (HTG)</label><input id="agent-monto" type="number" min="0" step="1" class="form-control" oninput="calcularAgentEnvio()" placeholder="0"></div>
+<div class="form-group"><label>Monto en Gourdes haitianos (GDES)</label><input id="agent-monto" type="number" min="0" step="1" class="form-control" oninput="calcularAgentEnvio()" placeholder="0"></div>
 </div>
-<div class="info-box" style="margin:10px 0">La operación Haití a Haití se registra completamente en gourdes haitianos (HTG). La comisión se calcula sobre el monto indicado.</div>
-<div style="background:#f1f5f9;padding:12px;border-radius:7px;margin:12px 0"><p><strong>MONTO ENVIADO EN HTG:</strong> <b id="agent-calc-monto">0.00 HTG</b></p><p><strong>COMISIÓN:</strong> <b id="agent-calc-comision">0.00 HTG</b></p><p><strong>MONTO TOTAL:</strong> <b id="agent-calc-total">0.00 HTG</b></p></div>
-<div style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 14px;position:sticky;top:0;z-index:5;background:#fff;padding:8px 0;border-bottom:1px solid #e5eaf0"><button class="btn btn-light" onclick="closeModal('agentEnvioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarAgentEnvio()">Enviar transacción</button></div>
-<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">Tarifa HTI a HTI (informativa)</summary><div class="info-box" style="margin-top:8px">La tarifa se deja como referencia y no es obligatoria para registrar la operación.</div></details>
+<div style="background:#f1f5f9;padding:12px;border-radius:7px;margin:12px 0">
+<p><strong>MONTO NETO:</strong> <b id="agent-calc-monto">0.00 GDES</b></p>
+<p><strong>COMISIÓN / TARIFA:</strong> <b id="agent-calc-comision">0.00 GDES</b></p>
+<p><strong>MONTO TOTAL:</strong> <b id="agent-calc-total">0.00 GDES</b></p>
+<p><strong>MONTO A RECIBIR:</strong> <b id="agent-calc-recibir">0.00 GDES</b></p>
+</div>
+<div style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 0"><button class="btn btn-light" onclick="closeModal('agentEnvioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarAgentEnvio()">Enviar esta transacción</button></div>
 </div></div><div class="modal" id="beneficiarioModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('beneficiarioModal')">×</button><h3>Registrar Beneficiario</h3><div class="form-grid"><div class="form-group"><label>Nombre y Apellido</label><input id="ben-nombre" class="form-control"></div><div class="form-group"><label>Número Celular / WhatsApp</label><div class="phone-wrap"><select id="ben-country" class="form-control"><option value="+509">🇭🇹 Haití (+509)</option><option value="+1-829">🇩🇴 República Dominicana (+1 829)</option><option value="+1-849">🇩🇴 República Dominicana (+1 849)</option><option value="+1">🇺🇸 Estados Unidos (+1)</option><option value="+33">🇫🇷 Francia (+33)</option><option value="+39">🇮🇹 Italia (+39)</option><option value="+34">🇪🇸 España (+34)</option><option value="+1-514">🇨🇦 Canadá (+1 514)</option><option value="+44">🇬🇧 Reino Unido (+44)</option><option value="+49">🇩🇪 Alemania (+49)</option><option value="+27">🇿🇦 Sudáfrica (+27)</option><option value="+55">🇧🇷 Brasil (+55)</option><option value="+57">🇨🇴 Colombia (+57)</option><option value="+58">🇻🇪 Venezuela (+58)</option></select><input id="ben-cel" class="form-control" inputmode="tel" placeholder="Número sin código"></div><div class="country-hint">Ejemplo Haití: +509.</div></div><div class="form-group"><label>Dirección</label><input id="ben-dir" class="form-control"></div><div class="form-group"><label>Estado</label><select id="ben-active" class="form-control"><option value="true">Activo</option><option value="false">Inactivo</option></select></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('beneficiarioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarBeneficiario()">Guardar</button></div></div></div>
 
 <div class="modal" id="cuentaModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('cuentaModal')">×</button><h3>Agregar Cuenta Bancaria</h3><div class="form-grid"><div class="form-group"><label>Banco</label><input id="cta-banco" class="form-control"></div><div class="form-group"><label>Titular</label><input id="cta-titular" class="form-control"></div><div class="form-group"><label>Número de Cuenta</label><input id="cta-numero" class="form-control"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('cuentaModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarCuenta()">Guardar</button></div></div></div>
@@ -1968,9 +1971,14 @@ function resolveEnvioPerson(kind){
 }
 async function openTransactionEntry(){if(isAgentUser(currentUser)){openModal('agentEnvioModal');return}openModal('envioModal')}
 function htgMoney(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' HTG'}
+const HTI_AGENT_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
+const HTI_AGENT_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
+function agentHtiFee(amount,operation){const n=Math.floor(Number(amount||0));if(!Number.isFinite(n)||n<20||n>99999)return null;const row=(operation==='Retiro'?HTI_AGENT_WITHDRAWAL:HTI_AGENT_TRANSFER).find(r=>n>=r[0]&&n<=r[1]);return row?row[2]:null}
+function htgMoney(v){return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES'}
 function calcularAgentEnvio(){
- const amount=Number(document.getElementById('agent-monto')?.value||0),commission=amount>0?amount*0.05:0,total=amount+commission;
- const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total');if(a)a.textContent=htgMoney(amount);if(b)b.textContent=htgMoney(commission);if(t)t.textContent=htgMoney(total);
+ const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',fee=agentHtiFee(amount,operation),safeFee=fee===null?0:fee,total=amount+safeFee;
+ const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total'),r=document.getElementById('agent-calc-recibir');
+ if(a)a.textContent=htgMoney(amount);if(b)b.textContent=htgMoney(safeFee);if(t)t.textContent=htgMoney(total);if(r)r.textContent=htgMoney(amount);
 }
 function updateAgentBeneficiarySuggestions(){
  const input=document.getElementById('agent-beneficiario-input'),box=document.getElementById('agent-beneficiario-suggestions');if(!input||!box)return;
@@ -1983,22 +1991,19 @@ function chooseAgentBeneficiary(id){
  const b=state.beneficiaries?.[id],input=document.getElementById('agent-beneficiario-input'),sel=document.getElementById('agent-beneficiario-select'),box=document.getElementById('agent-beneficiario-suggestions');if(!b||!input||!sel)return;
  sel.value=id;input.value=(personPhone(b)||'Sin número')+' ('+(personName(b)||'')+')';input.dataset.personId=id;if(box)box.style.display='none';
 }
-async function aprobarEnvioAgente(id,decision='Aprobado',nota=''){
- if(!isAdmin())return toast('Solo el administrador puede aprobar operaciones del Agente.','error');
- const r=state.envios?.[id];if(!r)return toast('Transacción no encontrada.','error');
- return typeof updateTransactionStatus==='function'?updateTransactionStatus('envios',id,decision,nota):false;
-}
+async function aprobarEnvioAgente(id,decision='Aprobado',nota=''){if(!isAdmin())return toast('Solo el administrador puede aprobar operaciones del Agente.','error');const r=state.envios?.[id];if(!r)return toast('Transacción no encontrada.','error');return typeof updateTransactionStatus==='function'?updateTransactionStatus('envios',id,decision,nota):false}
 function canAgentWithdrawCommission(){return false}
 async function guardarAgentEnvio(){
  const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;
  if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');
  const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Envío',amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'';
- if(!amount||amount<=0)return toast('Ingrese un monto válido en gourdes haitianos.','warn');
+ const fee=agentHtiFee(amount,operation);
+ if(fee===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
  if(!benId)return toast('Escriba el nombre o número del beneficiario y seleccione la sugerencia.','warn');
  const ben=state.beneficiaries?.[benId];if(!ben)return toast('Seleccione un beneficiario válido.','warn');
- const commission=amount*0.05,total=amount+commission;
+ const total=amount+fee;
  if(!beginFormSubmit('agentEnvioModal'))return;
- const id=await createTransaction('envios',{type,route:type,operation,currency:'HTG',amountHTG:amount,commissionHTG:commission,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net:amount,commission,total,destination:amount},amount);
+ const id=await createTransaction('envios',{type,route:type,operation,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:fee,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net:amount,commission:fee,commissionTotal:fee,total,destination:amount,fee,balanceDebit:total},amount);
  if(!id)return;
  closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE.','success');
 }
@@ -5889,5 +5894,35 @@ img[data-current-brand-logo="true"]{
   document.addEventListener('input',e=>{if(e.target?.id==='env-monto')apply();});
 })();
 </script>
-</body>
+<script id="sendwayo-agent-menu-v3">
+(function(){
+ if(window.__sendwayo_agent_menu_v3)return;window.__sendwayo_agent_menu_v3=true;
+ const base=window.applyRoleVisibility;
+ window.applyRoleVisibility=function(){
+   if(typeof base==='function')base.apply(this,arguments);
+   const agent=typeof isAgentUser==='function'&&isAgentUser(currentUser),menu=document.getElementById('sidebar-menu');
+   if(!menu)return;
+   const global=Array.from(menu.querySelectorAll('a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"))?.closest('li');
+   if(!agent){if(global)global.style.display='';menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());return}
+   if(global)global.style.display='none';
+   menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
+   const make=(label,op,icon)=>{const li=document.createElement('li');li.dataset.agentOnlyMenu='1';const a=document.createElement('a');a.href='#';a.innerHTML='<i class="fa-solid '+icon+'"></i> '+label;a.onclick=function(e){e.preventDefault();openTransactionEntry(op)};li.appendChild(a);return li};
+   const anchor=global||menu.querySelector('li');
+   const parent=anchor?.parentNode||menu;
+   parent.insertBefore(make('Envío','Envío','fa-paper-plane'),anchor||null);
+   parent.insertBefore(make('Retiro','Retiro','fa-right-left'),anchor||null);
+   const add=document.getElementById('envio-add-btn');if(add){add.textContent='Agregar';add.onclick=function(){openTransactionEntry()}}
+ };
+ window.openTransactionEntry=function(operation){
+   if(!isAgentUser(currentUser)){openModal('envioModal');return}
+   const modal=document.getElementById('agentEnvioModal');if(!modal)return;
+   document.getElementById('agent-current').value=(currentUser.staffId||currentUser.id||'')+' ('+(currentUser.name||'Agente')+')';
+   document.getElementById('agent-operation').value=operation||'Envío';
+   document.getElementById('agent-tipo-trans').value='HAITI A HAITI NatCash';
+   document.getElementById('agent-beneficiario-input').value='';document.getElementById('agent-beneficiario-select').value='';document.getElementById('agent-monto').value='';
+   calcularAgentEnvio();openModal('agentEnvioModal');
+ };
+ setTimeout(()=>{try{window.applyRoleVisibility()}catch(e){}},0);
+})();
+</script></body>
 </html>
