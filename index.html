@@ -1879,7 +1879,7 @@ function updateEnvioSuggestions(kind){
 function updateDepositSuggestions(){
  const input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions'),sel=document.getElementById('dep-remitente');if(!input||!box||!sel)return;
  const q=input.value.trim(),nq=normalizeSearchText(q),qd=phoneDigits(q);
- const list=Object.values(state.users||{}).filter(u=>u&&u.role==='Remitente'&&u.active!==false).filter(u=>personMatchesQuery(u,q)||normalizeSearchText(u.staffId).includes(nq)).sort((a,b)=>{
+ const list=Object.values(state.users||{}).filter(u=>u&&isManagedUser(u)&&u.active!==false).filter(u=>personMatchesQuery(u,q)||normalizeSearchText(u.staffId).includes(nq)).sort((a,b)=>{
    const ae=nq&&(normalizeSearchText(personName(a))===nq||normalizeSearchText(a.username)===nq||normalizeSearchText(a.staffId)===nq||(qd&&phoneDigits(personPhone(a))===qd));
    const be=nq&&(normalizeSearchText(personName(b))===nq||normalizeSearchText(b.username)===nq||normalizeSearchText(b.staffId)===nq||(qd&&phoneDigits(personPhone(b))===qd));
    return Number(be)-Number(ae)||personName(a).localeCompare(personName(b));
@@ -1968,7 +1968,7 @@ function guardarCuenta(){if(!isAdmin())return toast('Solo el Administrador puede
 async function creditDepositToRemitente(depositId,remitenteId,amount){ if(!isAdmin())throw new Error('ADMIN_REQUIRED');
  const n=Number(amount);if(!depositId||!remitenteId||!Number.isFinite(n)||n<=0)throw new Error('DEPÓSITO_INVÁLIDO');if(!firebaseReady||!firebase.auth().currentUser)throw new Error('FIREBASE_NO_AUTORIZADO');
  const ref=firebase.database().ref(DB_PATH+'/users/'+remitenteId);let result={creditRepaid:0,balanceAdded:0};
- const tx=await ref.transaction(u=>{if(!u||u.role!=='Remitente')return undefined;const deposits={...(u.depositCredits||{})};
+ const tx=await ref.transaction(u=>{if(!u||!isManagedUser(u))return undefined;const deposits={...(u.depositCredits||{})};
   if(deposits[depositId]!==undefined){if(Math.abs(Number(deposits[depositId])-n)<0.000001){result={creditRepaid:Number(u.creditRepayments?.[depositId]||0),balanceAdded:Number(u.depositBalanceAdded?.[depositId]||0)};return u}return undefined}
   const balanceAdded=n;result={creditRepaid:0,balanceAdded};
   return {...u,balance:Number(u.balance||0)+balanceAdded,depositCredits:{...deposits,[depositId]:n},creditRepayments:{...(u.creditRepayments||{}),[depositId]:0},depositBalanceAdded:{...(u.depositBalanceAdded||{}),[depositId]:balanceAdded}};
@@ -1985,12 +1985,12 @@ async function guardarDeposito(){
  const targetId=isAdmin()?(document.getElementById('dep-remitente')?.value||''):currentUser.id;
  if(!targetId)return toast('Seleccione el remitente al que se acreditará el depósito.','warn');
  const target=state.users?.[targetId];
- if(!target||target.role!=='Remitente')return toast('El remitente seleccionado no es válido.','warn');
+ if(!target||!isManagedUser(target))return toast('La cuenta seleccionada no es válida.','warn');
  if(!firebaseReady||!firebase.auth().currentUser)return toast('La sesión de Firebase no está activa.','error');
  const file=document.getElementById('dep-voucher')?.files?.[0],voucher=file?file.name:'Sin archivo';
  const id=uid('dep'),directAdmin=isAdmin(),createdAt=now();
  if(!beginFormSubmit('depositoModal'))return;
- const record={id,userId:target.id,username:target.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId,amount,voucher,status:directAdmin?'Aprobado':'Pendiente',createdAt,accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:directAdmin,balanceCredited:false,balanceRefunded:false,targetType:'REMITENTE'};
+ const record={id,userId:target.id,username:target.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId,amount,voucher,status:directAdmin?'Aprobado':'Pendiente',createdAt,accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:directAdmin,balanceCredited:false,balanceRefunded:false,targetType:isAgentUser(target)?'AGENTE':'REMITENTE'};
  try{
    // Remitente: guarda el depósito como PENDIENTE y NO toca el balance.
    // Administrador: guarda y acredita inmediatamente al balance del Remitente.
@@ -3278,12 +3278,12 @@ function sendwayoFinancialPolicy(){return {depositRate:0,internationalRate:0.10,
 </script>
 <div class="modal" id="adminDepositModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('adminDepositModal')">×</button><h3 style="color:#0f2c59;margin-bottom:12px">Asignar depósito directo al Remitente</h3><div class="info-box" style="margin-bottom:12px">Este depósito se acredita directamente al balance/capital del Remitente. <b>No genera comisión</b> y no aumenta el balance administrativo.</div><div class="form-group"><label>Remitente</label><div class="search-select-wrap"><input id="admin-dep-remitente-search" class="form-control" placeholder="Buscar por nombre, usuario o número..." autocomplete="off" oninput="updateAdminDepositSuggestions()" onfocus="updateAdminDepositSuggestions()"><button type="button" class="plus-btn" title="Buscar remitente" onclick="updateAdminDepositSuggestions()">⌕</button></div><div id="admin-dep-remitente-suggestions" class="env-suggestions"></div><select id="admin-dep-remitente" class="form-control" style="display:none"></select></div><div class="form-grid"><div class="form-group"><label>Monto RD$</label><input id="admin-dep-monto" type="number" min="0" step="0.01" class="form-control"></div><div class="form-group"><label>Referencia / nota</label><input id="admin-dep-nota" class="form-control" placeholder="Opcional"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('adminDepositModal')">Cerrar</button><button class="btn btn-warning" onclick="guardarDepositoAdministrativo()">Acreditar al balance</button></div></div></div>
 <script>
-function openAdminDepositModal(){if(!isAdmin())return toast('Solo el Administrador puede asignar depósitos directos.','warn');const sel=document.getElementById('admin-dep-remitente');if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>u.role==='Remitente'&&u.active!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.staffId||u.username)+'</option>').join('');const si=document.getElementById('admin-dep-remitente-search');if(si)si.value='';const sb=document.getElementById('admin-dep-remitente-suggestions');if(sb)sb.style.display='none';document.getElementById('admin-dep-monto').value='';document.getElementById('admin-dep-nota').value='';openModal('adminDepositModal');setTimeout(()=>{updateAdminDepositSuggestions();document.getElementById('admin-dep-remitente-search')?.focus()},80)}
+function openAdminDepositModal(){if(!isAdmin())return toast('Solo el Administrador puede asignar depósitos directos.','warn');const sel=document.getElementById('admin-dep-remitente');if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.staffId||u.username)+'</option>').join('');const si=document.getElementById('admin-dep-remitente-search');if(si)si.value='';const sb=document.getElementById('admin-dep-remitente-suggestions');if(sb)sb.style.display='none';document.getElementById('admin-dep-monto').value='';document.getElementById('admin-dep-nota').value='';openModal('adminDepositModal');setTimeout(()=>{updateAdminDepositSuggestions();document.getElementById('admin-dep-remitente-search')?.focus()},80)}
 async function guardarDepositoAdministrativo(){
  if(!isAdmin())return;
  if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se acreditará dinero offline.','error');
  const targetId=document.getElementById('admin-dep-remitente')?.value,amount=Number(document.getElementById('admin-dep-monto')?.value||0),note=document.getElementById('admin-dep-nota')?.value?.trim()||'',u=state.users?.[targetId];
- if(!u||u.role!=='Remitente')return toast('Seleccione un Remitente válido.','warn');
+ if(!u||!isManagedUser(u))return toast('Seleccione una cuenta válida.','warn');
  if(!amount||amount<=0)return toast('Ingrese un monto válido.','warn');
  const id=uid('dep'),deposit={id,userId:u.id,username:u.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId:'ADMIN_DIRECT',amount,voucher:note||'Depósito asignado por Administración',status:'Aprobado',createdAt:now(),accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:true,balanceCredited:false,targetType:'REMITENTE'};
  try{
