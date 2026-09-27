@@ -5366,5 +5366,205 @@ img[data-current-brand-logo="true"]{
 }
 </style>
 
+<script id="sendwayo-agent-htg-patch">
+(function(){
+  /* SENDWAYO EXPRESS — AGENTE HTG / RETIRO / FRANCÉS — 2026-09-27 */
+  function swAgent(u){return typeof isAgentUser==='function'&&isAgentUser(u)}
+  function swBalanceCurrency(u){return swAgent(u)?'HTG':'RD
+</html>
+}
+  function swFormat(v,c){
+    const n=Number(v||0);
+    if(String(c||'RD
+</html>
+).toUpperCase()==='HTG'){
+      const lang=localStorage.getItem('sendwayo_language')==='fr'?'fr-FR':'es-DO';
+      return 'HTG '+n.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    return money(n);
+  }
+  window.balanceCurrencyForUser=function(u){return swBalanceCurrency(typeof u==='string'?(state.users?.[u]||{}):u||{})};
+  window.accountMoney=function(v,u){return swFormat(v,swBalanceCurrency(typeof u==='string'?(state.users?.[u]||{}):u||{}))};
+  window.formatCurrency=swFormat;
+  window.recordMoney=function(r,v){return swFormat(v,r?.currency||swBalanceCurrency(state.users?.[r?.userId]))};
+
+  window.ensureUniqueAgentIdentity=async function(){
+    if(!isAdmin())return;
+    const match=Object.values(state.users||{}).find(u=>normalizeSearchText(u?.name||'')==='betina lindor');
+    if(!match)return;
+    const patch={role:'Agente',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,balanceCurrency:'HTG',preferredLanguage:'fr',agentType:null,uniqueAgent:null};
+    try{
+      await firebase.database().ref(DB_PATH+'/users/'+match.id).update(patch);
+      state.users[match.id]={...match,...patch};
+      if(lastSyncedState?.users)lastSyncedState.users[match.id]=cloneState(state.users[match.id]);
+      if(currentUser?.id===match.id)currentUser=state.users[match.id];
+    }catch(e){console.warn('Agente Betina:',e)}
+  };
+
+  window.guardBalance=async function(amount){
+    if(isAdmin())return true;
+    const needed=Number(amount||0);
+    if(needed<=0)return true;
+    if(!firebaseReady||!firebase.auth().currentUser){toast('Firebase no está conectado. No se puede reservar dinero offline.','error');return false}
+    const agent=swAgent(currentUser);
+    try{
+      const ref=firebase.database().ref(DB_PATH+'/users/'+currentUser.id);
+      let creditUsed=0;
+      const tx=await ref.transaction(u=>{
+        if(!u||!isManagedUser(u))return undefined;
+        const balance=Number(u.balance||0);
+        if(agent){
+          if(balance+0.000001<needed)return undefined;
+          return {...u,balance:Number((balance-needed).toFixed(2)),balanceCurrency:'HTG',preferredLanguage:u.preferredLanguage||'fr'};
+        }
+        const limit=Number(u.creditLimit||0),out=Math.max(0,Number(u.creditOutstanding||0)),available=Math.max(0,limit-out);
+        const fromBalance=Math.min(balance,needed),creditNeeded=needed-fromBalance;
+        if(creditNeeded>available)return undefined;
+        creditUsed=creditNeeded;
+        return {...u,balance:Number((balance-fromBalance).toFixed(2)),creditOutstanding:out+creditNeeded};
+      });
+      if(!tx.committed){toast(agent?'Balance HTG insuficiente para esta operación.':'Balance insuficiente y el crédito disponible no cubre esta operación.','warn');return false}
+      const updated=tx.snapshot.val();
+      currentUser={...updated,__creditUsedForOperation:creditUsed};
+      state.users[currentUser.id]=updated;
+      if(lastSyncedState?.users?.[currentUser.id])lastSyncedState.users[currentUser.id]=cloneState(updated);
+      localSave();return true;
+    }catch(e){console.warn('Balance Agente:',e);toast('No se pudo actualizar el balance en Firebase.','error');return false}
+  };
+
+  const __createTransaction=window.createTransaction;
+  window.createTransaction=async function(collection,fields,amount){
+    const f={...(fields||{})};
+    if(swAgent(currentUser)){f.currency='HTG';f.balanceCurrency='HTG'}
+    return __createTransaction(collection,f,amount);
+  };
+
+  const __guardarEnvio=window.guardarEnvio;
+  window.guardarEnvio=async function(){
+    if(swAgent(currentUser)){
+      const typ=document.getElementById('env-tipo-trans');if(typ)typ.value='HTI a HTI';
+      const lab=document.getElementById('env-monto')?.closest('.form-group')?.querySelector('label');if(lab)lab.textContent='Montant en HTG';
+    }
+    return __guardarEnvio();
+  };
+
+  window.guardarRetiroCuenta=async function(){
+    if(!currentUser)return;
+    if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. El retiro no se guardará.','error');
+    const agent=swAgent(currentUser),currency=agent?'HTG':'RD
+</html>
+,amount=Number(document.getElementById('cuenta-retiro-monto')?.value||0),available=Number(currentUser.balance||0);
+    const pending=Object.values(state.accountWithdrawals||{}).filter(r=>r.userId===currentUser.id&&r.status==='Pendiente').reduce((s,r)=>s+Number(r.amount||0),0);
+    if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto válido.','warn');
+    if(amount+pending>available+0.000001)return toast(agent?'El retiro supera el balance HTG disponible.':'El total de retiros pendientes supera el saldo disponible.','warn');
+    const id=uid('awr'),rec={id,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount,currency,balanceCurrency:currency,note:document.getElementById('cuenta-retiro-nota')?.value.trim()||'',status:'Pendiente',createdAt:now()};
+    try{
+      await firebase.database().ref(DB_PATH+'/accountWithdrawals/'+id).set(rec);
+      state.accountWithdrawals=state.accountWithdrawals||{};state.accountWithdrawals[id]=rec;markSynced(['accountWithdrawals',id],rec);
+      try{await addNotification('Administrador','Solicitud de retiro de '+currentUser.name+' por '+swFormat(amount,currency),'accountWithdrawals',id)}catch(_){}
+      await addAudit('Solicitar retiro de cuenta',id);
+      localSave();closeModal('retiroCuentaModal');renderAll();
+      toast(agent?'Solicitud de retiro HTG enviada al Administrador.':'Solicitud de retiro enviada al Administrador.','success');
+    }catch(e){console.warn('Retiro Agente:',e);toast('No se pudo guardar la solicitud de retiro en Firebase.','error')}
+  };
+
+  const __generateReceipt=window.generateReceipt;
+  window.generateReceipt=function(collection,id){
+    const out=__generateReceipt(collection,id);
+    const r=state[collection]?.[id];
+    if(r&&swAgent(r.userId)){r.currency='HTG';r.balanceCurrency='HTG';if(r.receipt)r.receipt.currency='HTG'}
+    else if(r?.currency&&r.receipt)r.receipt.currency=r.currency;
+    return out;
+  };
+
+  const __openModal=window.openModal;
+  window.openModal=function(id){
+    __openModal(id);
+    if(id==='retiroCuentaModal'&&currentUser){
+      const agent=swAgent(currentUser),labels=document.querySelectorAll('#retiroCuentaModal label');
+      if(labels[0])labels[0].textContent=agent?'Solde disponible':'Saldo disponible';
+      if(labels[1])labels[1].textContent=agent?'Montant à retirer':'Monto a retirar';
+      const title=document.querySelector('#retiroCuentaModal h3');if(title)title.textContent=agent?'Demander un retrait':'Solicitar Retiro de Mi Cuenta';
+      const disp=document.getElementById('cuenta-disp');if(disp)disp.value=accountMoney(currentUser.balance,currentUser);
+      const hint=document.querySelector('#retiroCuentaModal .info-box');if(hint&&agent)hint.textContent='Le retrait reste EN ATTENTE et sera appliqué au solde HTG seulement après approbation de l’Administrateur.';
+    }
+    if(id==='envioModal'&&currentUser&&swAgent(currentUser)){
+      const typ=document.getElementById('env-tipo-trans');if(typ)typ.value='HTI a HTI';
+      const lab=document.getElementById('env-monto')?.closest('.form-group')?.querySelector('label');if(lab)lab.textContent='Montant en HTG';
+    }
+    if(id==='depositoModal'&&currentUser&&swAgent(currentUser)){
+      const lab=[...document.querySelectorAll('#depositoModal label')].find(x=>/Cantidad/i.test(x.textContent||''));if(lab)lab.textContent='Montant HTG';
+    }
+  };
+
+  const __showApp=window.showAppForUser;
+  window.showAppForUser=function(found){
+    if(swAgent(found))found={...found,role:'Agente',balanceCurrency:'HTG',preferredLanguage:'fr',agentScope:'OPERACIONES',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1};
+    __showApp(found);
+    if(swAgent(found))try{setLanguage(found.preferredLanguage||'fr')}catch(e){}
+  };
+
+  const __renderDashboard=window.renderDashboard;
+  window.renderDashboard=function(){
+    __renderDashboard();
+    if(!currentUser)return;
+    const bal=accountMoney(currentUser.balance,currentUser);
+    const k=document.getElementById('kpi-balance');if(k)k.textContent=bal;
+    const h=document.getElementById('header-balance');if(h)h.textContent=bal;
+    if(swAgent(currentUser)){const box=document.querySelector('.header-balance-box span');if(box)box.textContent='Balance disponible HTG'}
+  };
+
+  const __renderMiCuenta=window.renderMiCuenta;
+  window.renderMiCuenta=function(){
+    __renderMiCuenta();
+    if(!currentUser)return;
+    const bal=document.getElementById('my-account-balance');if(bal)bal.textContent=accountMoney(currentUser.balance,currentUser);
+    const th=document.querySelector('#accountMoveTable thead th:nth-child(4)');if(th)th.textContent=swAgent(currentUser)?'Monto HTG':'Monto RD
+</html>
+;
+  };
+
+  const __renderSecrets=window.renderSecrets;
+  window.renderSecrets=function(){
+    __renderSecrets();
+    document.querySelectorAll('#secTable tbody tr').forEach(tr=>{
+      if(String(tr.cells?.[1]?.textContent||'').includes('AGENTE ÚNICO'))tr.cells[1].textContent='AGENTE';
+    });
+  };
+
+  const __openAdminBalance=window.openAdminBalanceModal;
+  window.openAdminBalanceModal=function(targetId='admin',mode='set'){
+    __openAdminBalance(targetId,mode);
+    const sel=document.getElementById('admin-balance-target');if(!sel)return;
+    const users=[state.users?.admin,...Object.values(state.users||{}).filter(u=>u&&isManagedUser(u))].filter(Boolean);
+    sel.innerHTML=users.map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.id==='admin'?'Administración':(u.name||u.username||u.id))+' — '+escapeHtml(u.username||'admin')+'</option>').join('');
+    sel.value=state.users?.[targetId]?targetId:'admin';refreshAdminBalanceModal();
+  };
+
+  const __refreshAdminBalance=window.refreshAdminBalanceModal;
+  window.refreshAdminBalanceModal=function(){
+    __refreshAdminBalance();
+    const id=document.getElementById('admin-balance-target')?.value,u=state.users?.[id];
+    if(u&&swAgent(u)){const mode=document.getElementById('admin-balance-mode')?.value,lab=document.getElementById('admin-balance-amount-label'),cur=document.getElementById('admin-balance-current');if(lab)lab.textContent=mode==='set'?'Nuevo saldo exacto (HTG)':mode==='add'?'Monto a agregar (HTG)':'Monto a quitar (HTG)';if(cur)cur.textContent=accountMoney(u.balance,u)}
+  };
+
+  const __refreshAdminCredit=window.refreshAdminCreditModal;
+  window.refreshAdminCreditModal=function(){
+    __refreshAdminCredit();
+    const id=document.getElementById('admin-credit-target')?.value,u=state.users?.[id];
+    if(u&&swAgent(u)){const g=document.getElementById('admin-credit-amount')?.closest('.form-group')?.querySelector('label'),cur=document.getElementById('admin-credit-current');if(g)g.textContent='Monto a acreditar (HTG)';if(cur)cur.textContent=accountMoney(u.balance,u)}
+  };
+
+  const __renderEnvios=window.renderEnvios;
+  window.renderEnvios=function(){__renderEnvios();const head=document.querySelector('#enviosTable thead th:nth-child(4)');if(head)head.textContent=swAgent(currentUser)?'Monto HTG':'Cantidad RD
+</html>
+};
+
+  const __renderDeposits=window.renderDeposits;
+  window.renderDeposits=function(){__renderDeposits()};
+
+  if(window.UI_TRANSLATIONS)UI_TRANSLATIONS.fr={...UI_TRANSLATIONS.fr,'Solicitar Retiro':'Demander un retrait','Solicitar Retiro de Mi Cuenta':'Demander un retrait de mon compte','Monto a retirar':'Montant à retirer','Retiro de cuenta':'Retrait du compte','Envíos (Transacciones Globales)':'Envois (transactions globales)','Agente':'Agent','AGENTE':'AGENT'};
+})();
+</script>
 </body>
 </html>
