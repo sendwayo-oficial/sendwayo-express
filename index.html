@@ -6417,9 +6417,10 @@ img[data-current-brand-logo="true"]{
    recargas:'recargaModal',
    paqueticos:'paquetikoModal',
    pagos:'pagoModal',
-   cuentas_depositos:'depositoModal',
+   cuentas_depositos:'cuentaModal',
    mi_cuenta:'depositoModal',
-   comisiones:'comisionModal'
+   comisiones:'comisionModal',
+   secretas:'secretaModal'
  };
  function visible(id){const m=document.getElementById(id);return !!m&&getComputedStyle(m).display!=='none';}
  function force(id){
@@ -6452,6 +6453,9 @@ img[data-current-brand-logo="true"]{
      let ok=false;
      if(viewId==='envios')ok=openEnvios();
      else if(viewId==='cuentas_depositos'&&label==='agregar nuevo')ok=open('cuentaModal');
+     else if(viewId==='credito')ok=typeof window.openCreditGrantModal==='function'?!!window.openCreditGrantModal():false;
+     else if(viewId==='bonos')ok=typeof window.openAdminCreditModal==='function'?!!window.openAdminCreditModal('bonus'):false;
+     else if(viewId==='capital')ok=typeof window.openCapitalModal==='function'?!!window.openCapitalModal():false;
      else ok=open(map[viewId]||'');
      if(!ok)console.warn('SENDWAYO: no se pudo abrir '+viewId);
    },0);
