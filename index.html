@@ -1066,20 +1066,30 @@ function ensureSeedData(){
   ensureStaffDirectory();
 }
 async function loadScript(src,timeout=8000){return new Promise((resolve,reject)=>{if(document.querySelector('script[data-src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=true;s.dataset.src=src;let done=false;const finish=(err)=>{if(done)return;done=true;clearTimeout(timer);s.onload=s.onerror=null;err?reject(err):resolve()};const timer=setTimeout(()=>finish(new Error('SCRIPT_TIMEOUT: '+src)),timeout);s.onload=()=>finish();s.onerror=()=>finish(new Error('SCRIPT_LOAD_ERROR: '+src));document.head.appendChild(s)})}
-async function initFirebase(){try{
-  if(typeof firebase==='undefined'||!firebase.initializeApp){
-    const base='https://www.gstatic.com/firebasejs/9.23.0/';
-    await loadScript(base+'firebase-app-compat.js',7000);
-    await loadScript(base+'firebase-auth-compat.js',7000);
-    await loadScript(base+'firebase-database-compat.js',7000);
-    // Firebase Functions no es necesaria para el acceso ni para RTDB.
-    // No debe bloquear Authentication si ese CDN no responde.
-  }
-  if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
-  if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-  try{firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn('Persistencia Firebase:',e))}catch(e){console.warn('Persistencia Firebase:',e)}
-  firebaseReady=true;return true
-}catch(e){firebaseReady=false;console.warn('Firebase no disponible.',e);return false}}
+async function initFirebase(){
+  if(window.__sendwayoFirebaseInitPromise)return window.__sendwayoFirebaseInitPromise;
+  window.__sendwayoFirebaseInitPromise=(async()=>{
+    try{
+      if(typeof firebase==='undefined'||!firebase.initializeApp){
+        const base='https://www.gstatic.com/firebasejs/9.23.0/';
+        await loadScript(base+'firebase-app-compat.js',7000);
+        await loadScript(base+'firebase-auth-compat.js',7000);
+        await loadScript(base+'firebase-database-compat.js',7000);
+      }
+      if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
+      if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+      try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Persistencia Firebase:',e)}
+      firebaseReady=true;
+      return true;
+    }catch(e){
+      firebaseReady=false;
+      window.__sendwayoFirebaseInitPromise=null;
+      console.warn('Firebase no disponible.',e);
+      return false;
+    }
+  })();
+  return window.__sendwayoFirebaseInitPromise;
+}
 async function loadExportLibraries(){try{const base='https://cdnjs.cloudflare.com/ajax/libs/';await Promise.all([loadScript(base+'xlsx/0.18.5/xlsx.full.min.js',8000),loadScript(base+'jspdf/2.5.1/jspdf.umd.min.js',8000)]);return true}catch(e){console.warn('Librerías de exportación:',e);return false}}
 async function createFirebaseAccountForUser(user){
   if(!user||user.id==='admin')return {status:'skip'};
