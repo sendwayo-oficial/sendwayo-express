@@ -5446,7 +5446,7 @@ img[data-current-brand-logo="true"]{
   function swHtiRouteType(v){return String(v||'').toLowerCase().includes('moncash')?'MonCash':'Natcash'}
   function swGdes(v){return 'GDES '+Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})}
   function swRenderHtiTariffPanel(){
-    if(!swAgent(currentUser))return;
+    return;
     const modal=document.getElementById('envioModal');if(!modal)return;
     let panel=document.getElementById('sw-agent-hti-tariffs');
     if(!panel){panel=document.createElement('div');panel.id='sw-agent-hti-tariffs';modal.querySelectorAll('.table-wrap').forEach(x=>x.style.display='none');const actionBtn=[...modal.querySelectorAll('button')].find(b=>String(b.getAttribute('onclick')||'').includes('guardarEnvio()'));const actionWrap=actionBtn?.parentElement;const anchor=actionWrap||modal.querySelector('.info-box')||modal.querySelector('.account-card');if(anchor)anchor.insertAdjacentElement('afterend',panel)}
@@ -5741,10 +5741,15 @@ img[data-current-brand-logo="true"]{
       const anchor=document.getElementById('env-actions')||document.getElementById('env-official-tariff-hint');
       if(anchor)anchor.insertAdjacentElement('afterend',panel);
     }
-    const finalAnchor=document.getElementById('env-actions')||document.getElementById('env-official-tariff-hint');
+    const finalAnchor=document.getElementById('env-actions');
     if(finalAnchor)finalAnchor.insertAdjacentElement('afterend',panel);
-    const rows=HTI_TRANSFER.map(r=>'<tr><td>'+r[0].toLocaleString('fr-FR')+' – '+r[1].toLocaleString('fr-FR')+' GDES</td><td>'+gdes(r[2])+'</td></tr>').join('');
-    panel.innerHTML='<div class="card" style="margin-top:10px;border:1px solid #dbe4ef"><h4 style="margin:0 0 8px;color:#0f2c59">HTI → HTI — '+htiLabel(document.getElementById('env-tipo-trans')?.value)+' — TARIFS EN GDES</h4><div class="muted">Dépôt: 20 GDES minimum · 20 à 99,999 GDES: GRATUIT.</div><div class="table-wrap" style="display:block!important;margin-top:8px"><table><thead><tr><th>Montant en GDES</th><th>Coût en GDES</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="info-box" style="margin-top:10px"><b>Règle:</b> transfert = débit du montant + frais depuis la balance GDES. Aucune valeur RD$ n\'intervient dans HTI → HTI.</div></div>';
+    const type=document.getElementById('env-tipo-trans')?.value||'';
+        const withdrawal=isHtiWithdrawal(type);
+        const tariff=withdrawal?HTI_WITHDRAWAL:HTI_TRANSFER;
+        const rows=tariff.map(r=>'<tr><td>'+r[0].toLocaleString('fr-FR')+' – '+r[1].toLocaleString('fr-FR')+' GDES</td><td>'+gdes(r[2])+'</td></tr>').join('');
+        const operation=withdrawal?'Retiro':'Envío';
+        const method=htiLabel(type);
+        panel.innerHTML='<div class="card" style="margin-top:10px;border:1px solid #dbe4ef"><h4 style="margin:0 0 8px;color:#0f2c59">Haití a Haití — '+operation+' — '+method+'</h4><div class="muted">Tarifa oficial en GDES para '+operation.toLowerCase()+' por '+method+'.</div><div class="table-wrap" style="display:block!important;margin-top:8px"><table><thead><tr><th>Rango de monto (GDES)</th><th>Comisión / tarifa (GDES)</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
 
   const originalOpenModal=window.openModal;
@@ -5817,7 +5822,8 @@ img[data-current-brand-logo="true"]{
     if(!benId)return toast('Sélectionnez le bénéficiaire.','warn');
     if(agent()&&remId!==currentUser.id)return toast('L’Agent ne peut enregistrer que ses propres opérations.','warn');
 
-    const fee=htiFee(amount);
+    const withdrawal=isHtiWithdrawal(type);
+    const fee=htiFee(amount,type);
     if(fee===null)return toast('Montant hors de la grille tarifaire HTI → HTI.','warn');
     const totalDebit=Number((amount+fee).toFixed(2));
 
