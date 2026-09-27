@@ -10,48 +10,47 @@ on:
 jobs:
   close:
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v4
       - name: Check Firebase credentials
-        id: creds
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        id: guard
+        shell: bash
         run: |
-          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT no está configurado; cierre omitido sin marcar el workflow como fallido."
           else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "FIREBASE_SERVICE_ACCOUNT no está configurado; el cierre automático se omite de forma segura."
+            echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/setup-node@v4
-        if: steps.creds.outputs.available == 'true'
+        if: steps.guard.outputs.ready == 'true'
         with:
           node-version: 20
       - name: Install Firebase CLI
-        if: steps.creds.outputs.available == 'true'
+        if: steps.guard.outputs.ready == 'true'
         run: npm install -g firebase-tools
       - name: Prepare service account
-        if: steps.creds.outputs.available == 'true'
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        if: steps.guard.outputs.ready == 'true'
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
       - name: Read Firebase snapshot
-        if: steps.creds.outputs.available == 'true'
+        if: steps.guard.outputs.ready == 'true'
         run: firebase database:get / --project sendwayo-express --json > sendwayo-rtdb.json
       - name: Build daily close
-        if: steps.creds.outputs.available == 'true'
+        if: steps.guard.outputs.ready == 'true'
         env:
           CLOSE_DATE: ${{ inputs.close_date }}
         run: node scripts/sendwayo-daily-close.mjs < sendwayo-rtdb.json > daily-close.json
       - name: Store daily close report
-        if: steps.creds.outputs.available == 'true'
+        if: steps.guard.outputs.ready == 'true'
         run: |
           CLOSE_DATE=$(node -e "const r=require('./daily-close.json');process.stdout.write(r.closeDate)")
           firebase database:set "sendwayo_express_v2/dailyReports/$CLOSE_DATE" daily-close.json --project sendwayo-express --confirm
       - name: Upload close artifact
-        if: steps.creds.outputs.available == 'true'
+        if: steps.guard.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: sendwayo-daily-close-${{ github.run_number }}
