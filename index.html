@@ -1230,8 +1230,9 @@ function showNonBlockingNotification(n){
 function attachRealtimeListeners(){
  if(!firebaseReady||!firebase.auth().currentUser)return;
  const root=firebase.database().ref(DB_PATH);
+ root.off('value');
  const bind=(ref,key,mode='merge')=>{
-   ref.on('value',snap=>{
+   ref.off('value');ref.on('value',snap=>{
      if(!snap.exists())return;
      const value=snap.val()||{};
      if(mode==='replace')state[key]=value;
