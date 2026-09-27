@@ -1349,8 +1349,9 @@ function showLogin(){
  document.getElementById('welcome-screen').classList.add('hidden');
  document.getElementById('login-screen').classList.remove('hidden');
  setTimeout(()=>document.getElementById('login-user').focus(),100);
- // Firebase se inicializa solamente al pulsar «Ingresar».
- // Evita dos inicializaciones simultáneas y reduce trabajo innecesario en móviles.
+ // Pre-carga Authentication en segundo plano para que el primer intento de acceso
+ // no dependa de que el navegador termine de cargar Firebase justo al pulsar el botón.
+ try{if(typeof initFirebase==='function'&&!firebaseReady)initFirebase().catch(e=>console.warn('Pre-carga Firebase:',e))}catch(e){}
 }
 function openRequest(type){
  const modal=document.getElementById('requestModal');
