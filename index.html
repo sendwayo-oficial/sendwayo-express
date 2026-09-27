@@ -1229,154 +1229,58 @@ function showNonBlockingNotification(n){
 
 function attachRealtimeListeners(){
  if(!firebaseReady||!firebase.auth().currentUser)return;
- // PRODUCCIÓN / ANTI-CONGELAMIENTO:
- // Administrador escucha todo porque necesita consolidación global.
- // Remitente escucha únicamente sus propios registros para no cargar toda
- // la base en cada tablet/celular. Esto reduce memoria, renders y eventos.
  const root=firebase.database().ref(DB_PATH);
- root.off();
- if(window.__sendwayoRealtimeRefs)window.__sendwayoRealtimeRefs.forEach(r=>{try{r.off()}catch(_){}}); 
- window.__sendwayoRealtimeRefs=[];
- let renderTimer=null;
- let renderQueued=false;
- const syncRealtimeSnapshot=(key,id,value,removed=false)=>{
-   try{
-     if(!lastSyncedState)lastSyncedState={};
-     if(id==null){lastSyncedState[key]=cloneState(value||{});return;}
-     lastSyncedState[key]=lastSyncedState[key]||{};
-     if(removed)delete lastSyncedState[key][id];
-     else lastSyncedState[key][id]=cloneState(value);
-   }catch(e){console.warn('SENDWAYO snapshot:',e)}
- };
- const scheduleRender=(key,id,value,removed=false)=>{
-   syncRealtimeSnapshot(key,id,value,removed);
-   if(renderQueued)return;
-   renderQueued=true;
-   clearTimeout(renderTimer);
-   renderTimer=setTimeout(()=>{
-     renderTimer=null;renderQueued=false;
-     try{
-       if(currentUser){
-         const fresh=state.users?.[currentUser.id];
-         if(fresh&&fresh.active!==false)currentUser=fresh;
-       }
-       renderRealtimeView();
-       // Actualización de ganancias solo cuando el tablero está visible:
-       // evita escanear toda la contabilidad continuamente en segundo plano.
-       if(document.querySelector('.view-section.active#view-dashboard') && typeof swRenderGanancias==='function'){
-         try{swRenderGanancias()}catch(_){}
-       }
-       try{translateInterface()}catch(_){}
-     }catch(e){console.warn('SENDWAYO render realtime:',e)}
-   },220);
- };
- const bindCollection=(key,queryUser=true)=>{
-   let ref=root.child(key);
-   const ownOnly=!isAdmin()&&queryUser;
-   if(ownOnly)ref=ref.orderByChild('userId').equalTo(currentUser.id);
-   ref.off();
-   // child_added se dispara para todos los registros existentes al conectar.
-   // Durante esa hidratación no clonamos cada registro individualmente: el
-   // snapshot final establece lastSyncedState una sola vez y evita picos de CPU/RAM.
-   let hydrating=true;
-   const onAdded=s=>{
-     if(s.key==null)return;
-     state[key]=state[key]||{};
-     state[key][s.key]=s.val();
-     if(!hydrating)scheduleRender(key,s.key,state[key][s.key]);
-   };
-   const onChanged=s=>{
-     if(s.key==null)return;
-     state[key]=state[key]||{};
-     state[key][s.key]=s.val();
-     if(!hydrating)scheduleRender(key,s.key,state[key][s.key]);
-   };
-   const onRemoved=s=>{
-     if(state[key])delete state[key][s.key];
-     if(!hydrating)scheduleRender(key,s.key,null,true);
-   };
-   ref.on('child_added',onAdded);
-   ref.on('child_changed',onChanged);
-   ref.on('child_removed',onRemoved);
-   // loadAuthorizedState ya obtuvo este mismo conjunto de datos antes de
-   // conectar los listeners. No hacemos una segunda lectura completa aquí.
-   setTimeout(()=>{
-     if(lastSyncedState)lastSyncedState[key]=cloneState(state[key]||{});
-     hydrating=false;
-   },0);
-   window.__sendwayoRealtimeRefs.push(ref);
- };
- // Colecciones financieras: el Remitente recibe solamente sus operaciones.
- ['envios','recargas','paqueticos','pagos','paquetes','transacciones','deposits','accountWithdrawals','commissions'].forEach(k=>bindCollection(k,true));
- // Datos generales necesarios para operar.
- if(isAdmin()){
-   ['users','beneficiaries','accounts','requests','audit','dailyReports','credits','ledger','capital'].forEach(k=>bindCollection(k,false));
-   const capitalRef=root.child('capital');
-   capitalRef.off();
-   capitalRef.on('value',snap=>{state.capital=snap.val()||{balance:0,totalAcreditado:0,movements:{}};scheduleRender('capital',null,state.capital);if(typeof swRenderCapital==='function')swRenderCapital()});
-   window.__sendwayoRealtimeRefs.push(capitalRef);
- }else{
-   // Su propio usuario se mantiene sincronizado sin escuchar los demás.
-   const userRef=root.child('users').child(currentUser.id);
-   userRef.off();
-   userRef.on('value',snap=>{
-     if(snap.exists()){
-       state.users=state.users||{};
-       state.users[currentUser.id]=snap.val();
-       scheduleRender('users',currentUser.id,state.users[currentUser.id]);
-     }
+ const bind=(ref,key,mode='merge')=>{
+   ref.on('value',snap=>{
+     if(!snap.exists())return;
+     const value=snap.val()||{};
+     if(mode==='replace')state[key]=value;
+     else if(mode==='user')state.users={...(state.users||{}),[currentUser.id]:value};
+     else state[key]={...(state[key]||{}),...value};
+     lastSyncedState=cloneState(state);
+     const fresh=currentUser&&state.users?.[currentUser.id];
+     if(fresh&&fresh.active!==false)currentUser=fresh;
+     renderAll();
    });
-   window.__sendwayoRealtimeRefs.push(userRef);
-   // Beneficiarios propios; cuentas bancarias oficiales son pequeñas y se leen completas.
-   bindCollection('beneficiaries',true);
-   root.child('accounts').off();
-   root.child('accounts').on('value',s=>{state.accounts=s.val()||{};scheduleRender('accounts',null,state.accounts)});
-   window.__sendwayoRealtimeRefs.push(root.child('accounts'));
+ };
+ if(isAdmin()){
+   root.on('value',snap=>{
+     if(!snap.exists())return;
+     const remote=snap.val()||{};
+     state={...remote,users:remote.users||{},beneficiaries:remote.beneficiaries||{},accounts:remote.accounts||{},settings:remote.settings||{}};
+     lastSyncedState=cloneState(state);
+     const fresh=currentUser&&state.users?.[currentUser.id];
+     if(fresh&&fresh.active!==false)currentUser=fresh;
+     renderAll();
+   });
+ }else if(currentUser?.id){
+   const uidv=currentUser.id;
+   bind(root.child('users').child(uidv),'users','user');
+   [['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['deposits','deposits'],['accountWithdrawals','accountWithdrawals'],['commissions','commissions']].forEach(([p,k])=>{
+     bind(root.child(p).orderByChild('userId').equalTo(uidv),k);
+   });
+   bind(root.child('notifications').orderByChild('targetUserId').equalTo(uidv),'notifications');
+   bind(root.child('settings'),'settings','replace');
+   bind(root.child('accounts'),'accounts','replace');
  }
- ['settings'].forEach(key=>{
-   const ref=root.child(key);
-   ref.off();
-   ref.on('value',s=>{if(s.exists()){state[key]=s.val()||{};scheduleRender(key,null,state[key])}});
-   window.__sendwayoRealtimeRefs.push(ref);
- });
  const connRef=firebase.database().ref('.info/connected');
  connRef.off();
  connRef.on('value',snap=>{
-   const connected=snap.val()===true;
-   const btn=document.querySelector('.refresh-btn');
-   if(btn){
-     btn.title=connected?'Firebase conectado · Actualizar ahora':'Firebase sin conexión · Reintentando';
-     btn.style.opacity=connected?'1':'.55';
-   }
+   const connected=snap.val()===true,b=document.querySelector('.refresh-btn');
+   if(b){b.title=connected?'Firebase conectado · Actualizar ahora':'Firebase sin conexión · Reintentando';b.style.opacity=connected?'1':'.55'}
  });
  startAutoFirebaseRefresh();
- let nref=root.child('notifications');
+ const nref=firebase.database().ref(DB_PATH+'/notifications');
  nref.off();
- if(!isAdmin())nref=nref.orderByChild('targetUserId').equalTo(currentUser.id);
  nref.on('child_added',snap=>{
-   const n=snap.val();if(!n)return;
-   state.notifications=state.notifications||{};
-   const existed=!!state.notifications[n.id];
-   state.notifications[n.id]=n;
-   if(notificationHydrated&&!existed&&(n.targetUserId===currentUser?.id||(isAdmin()&&n.target==='Administrador'))){
-     showNonBlockingNotification(n);
-     if(n.collection&&n.recordId&&state[n.collection]?.[n.recordId]?.status==='Aprobado'&&state[n.collection]?.[n.recordId]?.receipt)
-       setTimeout(()=>showReceipt(n.collection,n.recordId),180);
-   }
+   const n=snap.val();if(!n||(!isAdmin()&&n.targetUserId!==currentUser?.id))return;
+   state.notifications=state.notifications||{};const existed=!!state.notifications[n.id];state.notifications[n.id]=n;knownNotificationIds.add(n.id);
+   if(notificationHydrated&&!existed){playBell();if(n.collection&&n.recordId&&state[n.collection]?.[n.recordId]?.status==='Aprobado'&&state[n.collection]?.[n.recordId]?.receipt)setTimeout(()=>showReceipt(n.collection,n.recordId),180)}
    renderNotifications();
-   try{translateInterface()}catch(_){};
  });
- nref.on('child_changed',snap=>{
-   const n=snap.val();if(n){state.notifications=state.notifications||{};state.notifications[n.id]=n;renderNotifications()}
- });
- nref.on('child_removed',snap=>{
-   const id=snap.key;if(state.notifications)delete state.notifications[id];renderNotifications()
- });
+ nref.on('child_changed',snap=>{const n=snap.val();if(n&&(isAdmin()||n.targetUserId===currentUser?.id)){state.notifications=state.notifications||{};state.notifications[n.id]=n;renderNotifications()}});
  nref.once('value').then(()=>notificationHydrated=true).catch(()=>notificationHydrated=true);
- window.__sendwayoRealtimeRefs.push(nref);
 }
-
-function isAdmin(){const authEmail=String(firebase?.auth?.().currentUser?.email||'').toLowerCase();return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').toLowerCase()==='administrador' || String(currentUser.username||'').toLowerCase()==='admin' || String(currentUser.authEmail||'').toLowerCase()==='sendwayoexpress@gmail.com' || authEmail==='sendwayoexpress@gmail.com');}
 function applyBrandLogo(){document.querySelectorAll('img.brand-logo, .sidebar-brand img, #login-screen img, #header-avatar, #profile-preview').forEach(img=>{if(!img.dataset.userAvatar)img.src=LOGO_DATA});}
 function openBrandSite(){window.location.href='https://sendwayo-oficial.github.io/sendwayo-express/';}
 async function boot(){
