@@ -6011,15 +6011,48 @@ img[data-current-brand-logo="true"]{
 })();
 </script>
 
-<script id="sendwayo-agent-eight-exclusive-final-v1">
+<script id="sendwayo-agent-eight-exclusive-final-v2">
 (function(){
-  if(window.__sendwayo_agent_eight_exclusive_final_v1)return;
-  window.__sendwayo_agent_eight_exclusive_final_v1=true;
-  function onlyEight(u){u=u||{};const staff=String(u.staffId||'').trim().toUpperCase(),number=String(u.agentNumber||u.staffNumber||u.numero||'').trim(),name=normalizeSearchText(u.name||u.nombre||u.fullName||'');return u.id==='8'||staff==='8'||staff==='ID00000008'||number==='8'||name==='betina lindor'}
-  window.isAgentUser=onlyEight;
-  const baseRole=window.applyRoleVisibility;
-  window.applyRoleVisibility=function(){if(typeof baseRole==='function')baseRole.apply(this,arguments);const agent=onlyEight(window.currentUser||currentUser),menu=document.getElementById('sidebar-menu');if(!menu)return;[...menu.querySelectorAll('li')].forEach(li=>{const a=li.querySelector('a'),txt=String(a?.textContent||'').toLowerCase();if(txt.includes('envíos (transacciones globales)')||txt.includes('envois (transactions globales)'))li.style.setProperty('display',agent?'none':'','important')})};
-  setTimeout(()=>{try{window.applyRoleVisibility()}catch(e){}},30);
+  if(window.__sendwayo_agent_eight_exclusive_final_v2)return;
+  window.__sendwayo_agent_eight_exclusive_final_v2=true;
+  function onlyEight(u){
+    u=u||{};
+    const staff=String(u.staffId||'').trim().toUpperCase();
+    const number=String(u.agentNumber||u.staffNumber||u.numero||'').trim();
+    const name=normalizeSearchText(u.name||u.nombre||u.fullName||'');
+    return u.id==='8'||staff==='8'||staff==='ID00000008'||number==='8'||name==='betina lindor';
+  }
+  window.isAgentEight=onlyEight;
+  const oldApply=window.applyRoleVisibility;
+  window.applyRoleVisibility=function(){
+    if(typeof oldApply==='function')oldApply.apply(this,arguments);
+    const u=window.currentUser||currentUser,agent=onlyEight(u),admin=isAdmin();
+    if(agent){
+      const role=document.getElementById('sidebar-role-label'); if(role)role.textContent='AGENTE';
+      document.querySelectorAll('.remitente-only').forEach(e=>e.style.display='none');
+      const link=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));
+      if(link)link.innerHTML='<i class="fa-solid fa-right-left"></i> Envío / Retiro';
+      const li=Array.from(document.querySelectorAll('#sidebar-menu li')).find(li=>String(li.innerText||'').toLowerCase().includes('remitentes'));
+      if(li)li.style.display='none';
+      const globalLi=Array.from(document.querySelectorAll('#sidebar-menu li')).find(li=>/envíos \(transacciones globales\)|envois \(transactions globales\)/i.test(String(li.innerText||'')));
+      if(globalLi)globalLi.style.display='none';
+    }
+    if(admin){
+      Object.entries(state.users||{}).forEach(([id,x])=>{
+        if(x && String(x.role||'').trim().toLowerCase()==='agente' && !onlyEight(x)){
+          state.users[id]={...x,role:'Remitente',agentPolicy:null,agentNumber:null,agentType:null,uniqueAgent:null,commissionMode:null,commissionShare:null,platformCommissionShare:null};
+        }
+      });
+      const eight=Object.values(state.users||{}).find(onlyEight);
+      if(eight && String(eight.role||'').trim().toLowerCase()!=='agente'){
+        const fixed={...eight,role:'Agente',agentNumber:'8',staffId:eight.staffId||'ID00000008',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,balanceCurrency:'HTG'};
+        state.users[eight.id]=fixed;
+        if(firebaseReady)firebase.database().ref(DB_PATH+'/users/'+eight.id).update(fixed).catch(()=>{});
+      }
+    }
+  };
+  setTimeout(()=>{try{window.applyRoleVisibility()}catch(e){}},100);
+  setTimeout(()=>{try{window.applyRoleVisibility()}catch(e){}},1200);
 })();
 </script>
 </body>
