@@ -1403,7 +1403,7 @@ async function realizarLoginOriginal(){
    const users=Object.values(state.users||{});
    const normalizedIdentifier=normalizeUsername(identifier);
    const identifierDigits=String(identifier||'').replace(/\\D/g,'');
-   const isAgentEightIdentifier=normalizedIdentifier==='8'||normalizedIdentifier==='id00000008'||identifierDigits==='8';
+   const isAgentFourIdentifier=normalizedIdentifier==='4'||normalizedIdentifier==='id00000004'||identifierDigits==='4';
    const isAdminLogin=identifier.toLowerCase()===ADMIN_EMAIL||identifier.toLowerCase()==='admin';
    let found=isAdminLogin?users.find(u=>u.id==='admin'):users.find(u=>
      u.username===identifier||
@@ -1415,10 +1415,10 @@ async function realizarLoginOriginal(){
      String(u.staffId||'').replace(/\\D/g,'')===identifierDigits||
      String(u.agentNumber||u.staffNumber||u.numero||'')===identifier||
      String(u.id||'')===identifier||
-     (isAgentEightIdentifier && (
-       String(u.staffId||'').replace(/\\D/g,'')==='8'||
-       String(u.agentNumber||u.staffNumber||u.numero||'')==='8'||
-       String(u.id||'')==='8'
+     (isAgentFourIdentifier && (
+       String(u.staffId||'').replace(/\\D/g,'')==='4'||
+       String(u.agentNumber||u.staffNumber||u.numero||'')==='4'||
+       String(u.id||'')==='4'
      ))
    );
    let email=isAdminLogin?ADMIN_EMAIL:(found?(found.authEmail||authEmailFor(found)):(identifier.includes('@')?identifier.toLowerCase():normalizeUsername(identifier)+'@sendwayoexpress.com'));
@@ -1509,7 +1509,7 @@ async function realizarLoginOriginal(){
            found=Object.values(vals).find(u=>u&&isOperationalUser(u)&&u.active!==false)||null;
          }
          if(!found && isAgentEightIdentifier){
-           for(const key of ['8','ID00000008']){
+           for(const key of ['4','ID00000004']){
              snap=await usersRef.child(key).once('value');
              const one=snap.val();
              if(one&&isOperationalUser(one)&&one.active!==false){found=one;break}
@@ -1529,11 +1529,11 @@ async function realizarLoginOriginal(){
          console.warn('SENDWAYO perfil por identidad:',profileLookupError);
        }
      }
-     // Recuperación segura para el Agente #8: si Firebase Authentication valida
+     // Recuperación segura para el Agente #4: si Firebase Authentication valida
      // las credenciales pero la lectura del perfil quedó temporalmente bloqueada,
      // no se debe impedir el acceso por un fallo de sincronización del perfil.
-     if(!found && (isAgentEightIdentifier || normalizedIdentifier==='betinalindor' || normalizedIdentifier==='betinalindor8')){
-       found={id:'8',role:'Agente',name:'Betina Lindor',username:'betinalindor',staffId:'ID00000008',agentNumber:'8',active:true,balance:0,commission:0,authEmail:String(authUser.email||'').toLowerCase(),authUid:authUser.uid,accountSchemaV3:1,agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG'};
+     if(!found && isAgentFourIdentifier){
+       found={id:'4',role:'Agente',name:'Agente 4',username:'4',staffId:'ID00000004',agentNumber:'4',active:true,balance:0,commission:0,authEmail:String(authUser.email||'').toLowerCase(),authUid:authUser.uid,accountSchemaV3:1,agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG'};
        state.users[found.id]=found;
      }
      if(!found)throw new Error('PROFILE_NOT_FOUND');
@@ -1543,7 +1543,7 @@ async function realizarLoginOriginal(){
      state.users[found.id]=found;
    }
 
-   if(isAgentUser(found)||String(found.staffId||'').replace(/\\D/g,'')==='8'||String(found.agentNumber||found.staffNumber||found.numero||'')==='8'||String(found.id||'')==='8'||normalizeSearchText(found?.name||'')==='betina lindor'){found={...found,role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG'};state.users[found.id]=found;}
+   if(isAgentUser(found)||String(found.staffId||'').replace(/\\D/g,'')==='4'||String(found.agentNumber||found.staffNumber||found.numero||'')==='4'||String(found.id||'')==='4'){found={...found,role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG'};state.users[found.id]=found;}
    currentUser=found;
    lastActivity=Date.now();
    sessionStartedAt=Date.now();
@@ -1831,10 +1831,10 @@ function owner(){return currentUser}
 function userById(id){return state.users[id]||{}}
 function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').trim().toLowerCase()==='administrador' || String(currentUser.role||'').trim().toLowerCase()==='admin' || String(currentUser.username||'').trim().toLowerCase()==='admin' || String(currentUser.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com')}
 function isAdminUser(user){const u=user||{};return u.id==='admin'||String(u.role||'').trim().toLowerCase()==='administrador'||String(u.username||'').trim().toLowerCase()==='admin'||String(u.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com'}
-function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const staff=String(u.staffId||'').trim().toUpperCase();const number=String(u.agentNumber||u.staffNumber||u.numero||'').trim();const name=normalizeSearchText(u.name||u.nombre||u.fullName||'');return u.id==='8'||staff==='8'||staff==='ID00000008'||number==='8'||name==='betina lindor'}
+function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const staff=String(u.staffId||'').trim().toUpperCase();const number=String(u.agentNumber||u.staffNumber||u.numero||'').trim();const name=normalizeSearchText(u.name||u.nombre||u.fullName||'');return u.id==='4'||staff==='4'||staff==='ID00000004'||number==='4'}
 function isManagedUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});return !!u&&(String(u.role||'').trim().toLowerCase()==='remitente'||isAgentUser(u))}
 function isOperationalUser(userOrId){return isAdminUser(userOrId)||isManagedUser(userOrId)}
-async function ensureUniqueAgentIdentity(){if(!isAdmin())return;const users=Object.values(state.users||{});const match=users.find(u=>String(u.staffId||'').replace(/\\D/g,'')==='8')||users.find(u=>String(u.agentNumber||u.staffNumber||u.numero||'')==='8')||users.find(u=>String(u.id||'')==='8')||users.find(u=>normalizeSearchText(u?.name||'')==='betina lindor');if(!match)return;const changed=match.role!=='Agente'||match.agentType!=='AGENTE_UNICO'||match.commissionMode!=='PLATFORM_100'||match.uniqueAgent!==true;if(!changed)return;const patch={role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true};try{await firebase.database().ref(DB_PATH+'/users/'+match.id).update(patch);state.users[match.id]={...match,...patch};if(lastSyncedState?.users)lastSyncedState.users[match.id]=cloneState(state.users[match.id]);if(currentUser?.id===match.id)currentUser=state.users[match.id]}catch(e){console.warn('No se pudo configurar el Agente único Betina Lindor:',e)}}
+async function ensureUniqueAgentIdentity(){if(!isAdmin())return;const users=Object.values(state.users||{});const match=users.find(u=>String(u.staffId||'').replace(/\\D/g,'')==='4')||users.find(u=>String(u.agentNumber||u.staffNumber||u.numero||'')==='4')||users.find(u=>String(u.id||'')==='4');if(!match)return;const changed=match.role!=='Agente'||match.agentType!=='AGENTE_UNICO'||match.commissionMode!=='PLATFORM_100'||match.uniqueAgent!==true;if(!changed)return;const patch={role:'Agente',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true};try{await firebase.database().ref(DB_PATH+'/users/'+match.id).update(patch);state.users[match.id]={...match,...patch};if(lastSyncedState?.users)lastSyncedState.users[match.id]=cloneState(state.users[match.id]);if(currentUser?.id===match.id)currentUser=state.users[match.id]}catch(e){console.warn('No se pudo configurar el Agente único #4:',e)}}
 async function createTransaction(collection,fields,amount){
  if(!canTransact()){toast('Su cuenta no tiene permiso para realizar operaciones.','error');return null}
  if(!firebaseReady||!firebase.auth().currentUser){toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');return null}
@@ -5550,9 +5550,9 @@ img[data-current-brand-logo="true"]{
 
   window.ensureUniqueAgentIdentity=async function(){
     if(!isAdmin())return;
-    const match=Object.values(state.users||{}).find(u=>normalizeSearchText(u?.name||'')==='betina lindor');
+    const match=Object.values(state.users||{}).find(u=>String(u.id||'')==='4'||String(u.staffId||'').replace(/\\D/g,'')==='4'||String(u.agentNumber||u.staffNumber||u.numero||'')==='4');
     if(!match)return;
-    const patch={role:'Agente',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,balanceCurrency:'HTG',preferredLanguage:'fr',agentType:null,uniqueAgent:null};
+    const patch={role:'Agente',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,balanceCurrency:'HTG',agentType:'AGENTE_UNICO',uniqueAgent:true};
     try{
       await firebase.database().ref(DB_PATH+'/users/'+match.id).update(patch);
       state.users[match.id]={...match,...patch};
@@ -6011,22 +6011,21 @@ img[data-current-brand-logo="true"]{
 })();
 </script>
 
-<script id="sendwayo-agent-eight-exclusive-final-v2">
+<script id="sendwayo-agent-four-exclusive-final-v3">
 (function(){
-  if(window.__sendwayo_agent_eight_exclusive_final_v2)return;
-  window.__sendwayo_agent_eight_exclusive_final_v2=true;
-  function onlyEight(u){
+  if(window.__sendwayo_agent_four_exclusive_final_v3)return;
+  window.__sendwayo_agent_four_exclusive_final_v3=true;
+  function onlyFour(u){
     u=u||{};
     const staff=String(u.staffId||'').trim().toUpperCase();
     const number=String(u.agentNumber||u.staffNumber||u.numero||'').trim();
-    const name=normalizeSearchText(u.name||u.nombre||u.fullName||'');
-    return u.id==='8'||staff==='8'||staff==='ID00000008'||number==='8'||name==='betina lindor';
+    return u.id==='4'||staff==='4'||staff==='ID00000004'||number==='4';
   }
-  window.isAgentEight=onlyEight;
+  window.isAgentFour=onlyFour;
   const oldApply=window.applyRoleVisibility;
   window.applyRoleVisibility=function(){
     if(typeof oldApply==='function')oldApply.apply(this,arguments);
-    const u=window.currentUser||currentUser,agent=onlyEight(u),admin=isAdmin();
+    const u=window.currentUser||currentUser,agent=onlyFour(u),admin=isAdmin();
     if(agent){
       const role=document.getElementById('sidebar-role-label'); if(role)role.textContent='AGENTE';
       document.querySelectorAll('.remitente-only').forEach(e=>e.style.display='none');
@@ -6039,15 +6038,15 @@ img[data-current-brand-logo="true"]{
     }
     if(admin){
       Object.entries(state.users||{}).forEach(([id,x])=>{
-        if(x && String(x.role||'').trim().toLowerCase()==='agente' && !onlyEight(x)){
+        if(x && String(x.role||'').trim().toLowerCase()==='agente' && !onlyFour(x)){
           state.users[id]={...x,role:'Remitente',agentPolicy:null,agentNumber:null,agentType:null,uniqueAgent:null,commissionMode:null,commissionShare:null,platformCommissionShare:null};
         }
       });
-      const eight=Object.values(state.users||{}).find(onlyEight);
-      if(eight && String(eight.role||'').trim().toLowerCase()!=='agente'){
-        const fixed={...eight,role:'Agente',agentNumber:'8',staffId:eight.staffId||'ID00000008',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,balanceCurrency:'HTG'};
-        state.users[eight.id]=fixed;
-        if(firebaseReady)firebase.database().ref(DB_PATH+'/users/'+eight.id).update(fixed).catch(()=>{});
+      const four=Object.values(state.users||{}).find(onlyFour);
+      if(four && String(four.role||'').trim().toLowerCase()!=='agente'){
+        const fixed={...four,role:'Agente',agentNumber:'4',staffId:four.staffId||'ID00000004',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,balanceCurrency:'HTG'};
+        state.users[four.id]=fixed;
+        if(firebaseReady)firebase.database().ref(DB_PATH+'/users/'+four.id).update(fixed).catch(()=>{});
       }
     }
   };
