@@ -6221,21 +6221,27 @@ img[data-current-brand-logo="true"]{
     if(m){delete m.dataset.submitting;b.disabled=false;b.removeAttribute('disabled');}
   },true);
 
-  // Nunca dejar un modal visible con sus controles de entrada bloqueados por un intento anterior.
-  setInterval(function(){
-    document.querySelectorAll('.modal').forEach(function(m){
-      const s=getComputedStyle(m);
-      if(s.display==='none'||s.visibility==='hidden')return;
-      delete m.dataset.submitting;
-      m.querySelectorAll('input,select,textarea').forEach(function(el){
-        if(!el.readOnly&&!el.hasAttribute('data-hard-disabled')){
-          el.disabled=false;
-          el.removeAttribute('disabled');
-          el.style.pointerEvents='auto';
-        }
+  // Recuperación segura de interacción: no toca permisos, estados ni botones de aprobación.
+  // Evita que un overlay móvil residual o un estilo heredado bloquee toda la aplicación.
+  function recoverInteraction(){
+    try{
+      const ov=document.getElementById('sidebar-overlay');
+      if(ov && window.innerWidth>800){
+        ov.classList.remove('active');
+        ov.style.pointerEvents='none';
+      }
+      document.querySelectorAll('.content-body,.content-body .view-section.active,.content-body .view-section.active input,.content-body .view-section.active select,.content-body .view-section.active textarea,.content-body .view-section.active button').forEach(el=>{
+        if(el)el.style.pointerEvents='auto';
       });
-    });
-  },800);
+      document.querySelectorAll('.sidebar-menu a,header button,header input,header select,header textarea').forEach(el=>{
+        if(el)el.style.pointerEvents='auto';
+      });
+    }catch(_){}
+  }
+  recoverInteraction();
+  window.addEventListener('resize',recoverInteraction,{passive:true});
+  document.addEventListener('visibilitychange',recoverInteraction,{passive:true});
+  document.addEventListener('click',recoverInteraction,true);
 })();
 </script>
 </body>
