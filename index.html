@@ -4754,9 +4754,15 @@ ht:{
 }
 };
 
+/* SENDWAYO — LOCALIZACIÓN COMPLETA DE OPERACIONES */
+const SW_FORCE_I18N={
+fr:{'Envío':'Envoi','Envíos':'Envois','Retiro':'Retrait','Retiros':'Retraits','Envío / Retiro':'Envoi / Retrait','Retiro / Envío':'Retrait / Envoi','Retiro / Pago de Comisiones':'Retrait / Paiement des commissions','Enviar':'Envoyer','Retirar':'Retirer','Destino':'Destination','Origen':'Origine','Monto a enviar':'Montant à envoyer','Monto recibido':'Montant reçu','Cantidad a enviar':'Montant à envoyer','Cantidad a retirar':'Montant à retirer','Monto':'Montant','Cantidad':'Montant','Beneficiario':'Bénéficiaire','Datos del envío':'Données de l’envoi','Datos del retiro':'Données du retrait','Tipo de operación':'Type d’opération','Operación':'Opération','Seleccione una opción':'Sélectionnez une option','Confirmar envío':'Confirmer l’envoi','Confirmar retiro':'Confirmer le retrait','Guardar operación':'Enregistrer l’opération','Nueva operación':'Nouvelle opération','Agregar envío':'Ajouter un envoi','Agregar retiro':'Ajouter un retrait'},
+en:{'Envío':'Sending','Envíos':'Sendings','Retiro':'Withdrawal','Retiros':'Withdrawals','Envío / Retiro':'Sending / Withdrawal','Retiro / Envío':'Withdrawal / Sending','Retiro / Pago de Comisiones':'Withdrawal / Commission Payment','Enviar':'Send','Retirar':'Withdraw','Destino':'Destination','Origen':'Origin','Monto a enviar':'Amount to send','Monto recibido':'Amount received','Cantidad a enviar':'Amount to send','Cantidad a retirar':'Amount to withdraw','Monto':'Amount','Cantidad':'Amount','Beneficiario':'Beneficiary','Datos del envío':'Sending details','Datos del retiro':'Withdrawal details','Tipo de operación':'Operation type','Operación':'Operation','Seleccione una opción':'Select an option','Confirmar envío':'Confirm sending','Confirmar retiro':'Confirm withdrawal','Guardar operación':'Save operation','Nueva operación':'New operation','Agregar envío':'Add sending','Agregar retiro':'Add withdrawal'},
+ht:{'Envío':'Voye','Envíos':'Voye lajan','Retiro':'Retire','Retiros':'Retrè','Envío / Retiro':'Voye / Retire','Retiro / Envío':'Retire / Voye','Retiro / Pago de Comisiones':'Retire / Peman komisyon','Enviar':'Voye','Retirar':'Retire','Destino':'Destinasyon','Origen':'Orijin','Monto a enviar':'Kantite pou voye','Monto recibido':'Kantite resevwa','Cantidad a enviar':'Kantite pou voye','Cantidad a retirar':'Kantite pou retire','Monto':'Montan','Cantidad':'Kantite','Beneficiario':'Benefisyè','Datos del envío':'Detay voye a','Datos del retiro':'Detay retire a','Tipo de operación':'Kalite operasyon','Operación':'Operasyon','Seleccione una opción':'Chwazi yon opsyon','Confirmar envío':'Konfime voye a','Confirmar retiro':'Konfime retrè a','Guardar operación':'Anrejistre operasyon an','Nueva operación':'Nouvo operasyon','Agregar envío':'Ajoute voye','Agregar retiro':'Ajoute retrè'}
+};
 function swTranslateFinal(){
   const lang=localStorage.getItem('sendwayo_language')||'es';
-  const map=SW_I18N[lang]||{};
+  const map={...(SW_I18N[lang]||{}),...(SW_FORCE_I18N[lang]||{})};
   const entries=Object.entries(map).sort((a,b)=>b[0].length-a[0].length);
   const tx=(v)=>{
     let out=String(v??'');
