@@ -4570,7 +4570,7 @@ function swEnsureHealthCard(){
 }
 function swAdminPanel(){setTimeout(swEnsureHealthCard,80)}
 // La tarjeta de salud no necesita comprobarse cada 3 segundos.
-setInterval(swAdminPanel,15000);
+setTimeout(swAdminPanel,100);
 window.addEventListener('load',swAdminPanel);
 
 /* Errores globales: informa sin bloquear el negocio. */
