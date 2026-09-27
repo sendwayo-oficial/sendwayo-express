@@ -1764,9 +1764,26 @@ function beginFormSubmit(modalId){
  if(!modal)return true;
  if(modal.dataset.submitting==='1')return false;
  modal.dataset.submitting='1';
- modal.querySelectorAll('button').forEach(b=>{b.disabled=true;b.style.pointerEvents='none'});
- closeModal(modalId);
+ modal.querySelectorAll('button').forEach(b=>{
+   if(!b.hasAttribute('data-hard-disabled')){
+     b.disabled=true;
+     b.style.pointerEvents='none';
+   }
+ });
  return true;
+}
+function resetFormSubmitState(modalId){
+ const modal=document.getElementById(modalId);
+ if(!modal)return;
+ delete modal.dataset.submitting;
+ modal.querySelectorAll('button').forEach(b=>{
+   if(!b.hasAttribute('data-hard-disabled')){
+     b.disabled=false;
+     b.removeAttribute('disabled');
+     b.style.pointerEvents='auto';
+     b.style.opacity='';
+   }
+ });
 }
 function closeModal(id){
  const el=document.getElementById(id); if(!el)return;
@@ -1870,6 +1887,7 @@ async function createTransaction(collection,fields,amount){
    const code=e?.code||'';
    const msg=code==='PERMISSION_DENIED'?'Firebase rechazó esta operación por permisos. Hay que actualizar las reglas de Firebase.':code==='SAVE_TIMEOUT'?'Firebase tardó demasiado en guardar. La operación no fue confirmada y no se cerrará el formulario.':'No se pudo guardar la operación en Firebase'+(code?' ('+code+')':'')+'.';
    toast(msg,'error');
+   ['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);
    if(record.balanceDebited){
      const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.amount||0)-used);
      if(firebaseReady)await firebase.database().ref(DB_PATH+'/users/'+currentUser.id).transaction(u=>u?{...u,balance:Number(u.balance||0)+balanceUsed,creditOutstanding:Math.max(0,Number(u.creditOutstanding||0)-used)}:undefined);
@@ -2137,7 +2155,7 @@ async function guardarPersona(){
   state.users[id]=u;markSynced(['users',id],u);
   const auditId=uid('usr');try{await firebase.database().ref(DB_PATH+'/audit/'+auditId).set({id:auditId,action:'Crear Remitente',targetUserId:id,processedBy:currentUser.username,createdAt:now()})}catch(_){}
   localSave();closeModal('personaModal');renderAll();toast('Remitente creado por Administración. ID: '+staffId+'.','success');sendWhatsAppCredentials(u,INITIAL_PASSWORD);
- }catch(e){console.warn('guardarPersona:',e);delete state.users[id];renderAll();toast('No se creó el remitente porque Firebase no confirmó el registro.','error')}
+ }catch(e){console.warn('guardarPersona:',e);delete state.users[id];resetFormSubmitState('personaModal');renderAll();toast('No se creó el remitente porque Firebase no confirmó el registro.','error')}
 }
 function guardarCuenta(){if(!isAdmin())return toast('Solo el Administrador puede agregar cuentas bancarias.','warn');const bank=document.getElementById('cta-banco')?.value.trim(),holder=document.getElementById('cta-titular')?.value.trim(),number=document.getElementById('cta-numero')?.value.trim();if(!bank||!holder||!number)return toast('Complete banco, titular y número de cuenta.','warn');if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');const id=uid('cta'),record={id,bank,holder,number,active:true,createdAt:now(),createdBy:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid};return firebase.database().ref(DB_PATH+'/accounts/'+id).set(record).then(()=>{state.accounts[id]=record;markSynced(['accounts',id],record);localSave();closeModal('cuentaModal');renderAll();toast('Cuenta bancaria agregada por Administración.','success')}).catch(e=>{console.warn('guardarCuenta:',e);toast('No se pudo guardar la cuenta bancaria en Firebase.','error')})}
 async function creditDepositToRemitente(depositId,remitenteId,amount){ if(!isAdmin())throw new Error('ADMIN_REQUIRED');
@@ -2227,25 +2245,25 @@ async function guardarRecarga(){
  const _modal=document.getElementById('recargaModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  let amount=Number(document.getElementById('rec-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('recargaModal'))return;
- const id=await createTransaction('recargas',{company:document.getElementById('rec-comp').value,phone:document.getElementById('rec-num').value},amount);if(!id)return;toast('Recarga guardada y notificada.')
+ const id=await createTransaction('recargas',{company:document.getElementById('rec-comp').value,phone:document.getElementById('rec-num').value},amount);if(!id)return;closeModal('recargaModal');toast('Recarga guardada y notificada.')
 }
 async function guardarPaquetico(){
  const _modal=document.getElementById('paquetikoModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const amount=Number(document.getElementById('pkt-monto').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paquetikoModal'))return;
- const id=await createTransaction('paqueticos',{company:document.getElementById('pkt-comp').value,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id)return;toast('Paquetico guardado y notificado.');
+ const id=await createTransaction('paqueticos',{company:document.getElementById('pkt-comp').value,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id)return;closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
 }
 async function guardarPago(){
  const _modal=document.getElementById('pagoModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  let amount=Number(document.getElementById('pag-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('pagoModal'))return;
- const id=await createTransaction('pagos',{company:document.getElementById('pag-empresa').value,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id)return;toast('Pago guardado y notificado.')
+ const id=await createTransaction('pagos',{company:document.getElementById('pag-empresa').value,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id)return;closeModal('pagoModal');toast('Pago guardado y notificado.')
 }
 async function guardarPaquete(){
  const _modal=document.getElementById('paqueteModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
  const amount=Number(document.getElementById('paq-costo').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paqueteModal'))return;
- const id=await createTransaction('paquetes',{type:document.getElementById('paq-tipo').value,weight:document.getElementById('paq-peso').value,description:document.getElementById('paq-desc').value,cost:amount},amount);if(!id)return;toast('Paquete guardado y notificado.');
+ const id=await createTransaction('paquetes',{type:document.getElementById('paq-tipo').value,weight:document.getElementById('paq-peso').value,description:document.getElementById('paq-desc').value,cost:amount},amount);if(!id)return;closeModal('paqueteModal');toast('Paquete guardado y notificado.');
 }
 function calculateCommissionAvailable(userId){
  const u=state.users?.[userId];if(!u)return 0;
