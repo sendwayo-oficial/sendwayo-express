@@ -6277,5 +6277,109 @@ img[data-current-brand-logo="true"]{
   }
   setTimeout(()=>{try{if(isAgentUser(currentUser))calcularAgentEnvio()}catch(_){}},100);
 })();
+</script>
+<script id="sendwayo-agent-single-menu-final-v1">
+(function(){
+  if(window.__sendwayo_agent_single_menu_final_v1)return;
+  window.__sendwayo_agent_single_menu_final_v1=true;
+
+  function isAgent(){return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser);}
+  function normalizeAgentMenu(){
+    const menu=document.getElementById('sidebar-menu');
+    if(!menu||!isAgent())return;
+    const links=[...menu.querySelectorAll('a')];
+    const global=links.find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));
+    if(global){
+      global.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
+      global.closest('li').style.display='';
+      global.onclick=function(e){e.preventDefault();switchView('envios');return false;};
+    }
+    menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
+    [...menu.querySelectorAll('li')].forEach(li=>{
+      const txt=String(li.textContent||'').trim().toLowerCase().replace(/\s+/g,' ');
+      if((txt==='envío'||txt==='retiro'||txt==='envios'||txt==='retiros') && !li.querySelector('a[onclick*="switchView(\'envios\')"]'))li.remove();
+    });
+  }
+
+  function activateAgentFields(){
+    if(!isAgent())return;
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    modal.querySelectorAll('select,input,textarea,button').forEach(el=>{
+      if(el.id==='agent-current')return;
+      el.disabled=false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents='';
+      el.style.opacity='';
+    });
+    const current=document.getElementById('agent-current');
+    if(current){current.readOnly=true;current.disabled=false;}
+    const op=document.getElementById('agent-operation');
+    if(op){
+      op.disabled=false;
+      op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';
+    }
+  }
+
+  function openAgentForm(operation){
+    if(!isAgent()){if(typeof openModal==='function')openModal('envioModal');return;}
+    const modal=document.getElementById('agentEnvioModal');if(!modal)return;
+    const u=window.currentUser||currentUser||{};
+    const current=document.getElementById('agent-current');
+    if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
+    const service=document.getElementById('agent-tipo-trans');
+    if(service){service.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';service.value=service.value||'HAITI A HAITI NatCash';service.disabled=false;}
+    const op=document.getElementById('agent-operation');
+    if(op)op.value=operation==='Retiro'?'Retiro':'Envío';
+    const ben=document.getElementById('agent-beneficiario-input');if(ben){ben.value='';ben.disabled=false;ben.readOnly=false;}
+    const hidden=document.getElementById('agent-beneficiario-select');if(hidden)hidden.value='';
+    const amount=document.getElementById('agent-monto');if(amount){amount.value='';amount.disabled=false;amount.readOnly=false;}
+    activateAgentFields();
+    if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();
+    openModal('agentEnvioModal');
+  }
+
+  const originalApply=window.applyRoleVisibility;
+  window.applyRoleVisibility=function(){
+    if(typeof originalApply==='function')originalApply.apply(this,arguments);
+    setTimeout(function(){normalizeAgentMenu();activateAgentFields();},0);
+  };
+
+  window.openTransactionEntry=function(){
+    openAgentForm();
+  };
+
+  const add=document.getElementById('envio-add-btn');
+  if(add){
+    add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
+    add.onclick=function(e){e.preventDefault();openAgentForm();return false;};
+    add.removeAttribute('disabled');
+    add.style.pointerEvents='';
+  }
+
+  const originalOpenModal=window.openModal;
+  window.openModal=function(id){
+    if(id==='envioModal'&&isAgent()){
+      openAgentForm();
+      return;
+    }
+    return originalOpenModal.apply(this,arguments);
+  };
+
+  document.addEventListener('click',function(e){
+    const a=e.target?.closest?.('#sidebar-menu a');
+    if(!a||!isAgent())return;
+    const txt=String(a.textContent||'').trim().toLowerCase();
+    if(txt.includes('envíos y retiros')||txt.includes('envíos y retiros')||txt==='envios y retiros'){
+      e.preventDefault();
+      switchView('envios');
+      return false;
+    }
+  },true);
+
+  setTimeout(function(){normalizeAgentMenu();activateAgentFields();},100);
+  setTimeout(function(){normalizeAgentMenu();activateAgentFields();},700);
+  setTimeout(function(){normalizeAgentMenu();activateAgentFields();},1600);
+})();
 </script>\n</body>
 </html>
