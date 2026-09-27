@@ -5696,5 +5696,176 @@ img[data-current-brand-logo="true"]{
   try{window.applyRoleVisibility()}catch(_){}
 })();
 </script>
+
+<script id="sendwayo-hti-haiti-unified-v1">
+(function(){
+  if(window.__sendwayo_hti_haiti_unified_v1)return;
+  window.__sendwayo_hti_haiti_unified_v1=true;
+
+  const HTI_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
+
+  function isHtiHti(type){
+    const t=String(type||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[→]/g,' A ').replace(/\s+/g,' ').trim();
+    return /\bHTI\s*A\s*HTI\b/.test(t);
+  }
+  function htiFee(amount){
+    const n=Math.floor(Number(amount||0));
+    if(!Number.isFinite(n)||n<20||n>99999)return null;
+    const row=HTI_TRANSFER.find(x=>n>=x[0]&&n<=x[1]);
+    return row?row[2]:null;
+  }
+  function agent(){try{return typeof isAgentUser==='function'&&isAgentUser(currentUser)}catch(_){return false}}
+  function htiLabel(type){
+    return /MONCASH/i.test(String(type||''))?'MonCash':'Natcash';
+  }
+  function gdes(v){
+    return 'GDES '+Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function renderUnifiedHtiTariff(){
+    const modal=document.getElementById('envioModal'); if(!modal||!isHtiHti(document.getElementById('env-tipo-trans')?.value))return;
+    document.querySelectorAll('#envioModal .table-wrap').forEach((el,i)=>{if(i===0)el.style.display='none';});
+    let panel=document.getElementById('sendwayo-hti-haiti-table');
+    if(!panel){
+      panel=document.createElement('div');
+      panel.id='sendwayo-hti-haiti-table';
+      const anchor=document.getElementById('env-official-tariff-hint')||modal.querySelector('.info-box');
+      if(anchor)anchor.insertAdjacentElement('afterend',panel);
+    }
+    const rows=HTI_TRANSFER.map(r=>'<tr><td>'+r[0].toLocaleString('fr-FR')+' – '+r[1].toLocaleString('fr-FR')+' GDES</td><td>'+gdes(r[2])+'</td></tr>').join('');
+    panel.innerHTML='<div class="card" style="margin-top:10px;border:1px solid #dbe4ef"><h4 style="margin:0 0 8px;color:#0f2c59">HTI → HTI — '+htiLabel(document.getElementById('env-tipo-trans')?.value)+' — TARIFS EN GDES</h4><div class="muted">Dépôt: 20 GDES minimum · 20 à 99,999 GDES: GRATUIT.</div><div class="table-wrap" style="display:block!important;margin-top:8px"><table><thead><tr><th>Montant en GDES</th><th>Coût en GDES</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="info-box" style="margin-top:10px"><b>Règle:</b> transfert = débit du montant + frais depuis la balance GDES. Aucune valeur RD$ n'intervient dans HTI → HTI.</div></div>';
+  }
+
+  const originalOpenModal=window.openModal;
+  window.openModal=function(id){
+    originalOpenModal.apply(this,arguments);
+    if(id!=='envioModal'||!currentUser)return;
+    const typ=document.getElementById('env-tipo-trans');
+    if(!typ)return;
+
+    if(agent()){
+      typ.innerHTML='<option value="HTI a HTI Natcash">Natcash — HTI à HTI</option><option value="HTI a HTI MonCash">MonCash — HTI à HTI</option>';
+      typ.value='HTI a HTI Natcash';
+    }else{
+      const opts=[...typ.options];
+      const hasNat=opts.some(o=>isHtiHti(o.value)&&/NATCASH/i.test(o.value));
+      const hasMon=opts.some(o=>isHtiHti(o.value)&&/MONCASH/i.test(o.value));
+      const plain=opts.find(o=>String(o.value).trim().toUpperCase()==='HTI A HTI');
+      if(plain)plain.remove();
+      if(!hasMon){
+        const o=document.createElement('option');o.value='HTI a HTI MonCash';o.textContent='MonCash — HTI à HTI';typ.appendChild(o);
+      }
+      if(!hasNat){
+        const o=document.createElement('option');o.value='HTI a HTI Natcash';o.textContent='Natcash — HTI à HTI';
+        const mon=[...typ.options].find(o=>/HTI a HTI MONCASH/i.test(o.value));mon?typ.insertBefore(o,mon):typ.appendChild(o);
+      }
+    }
+    const refresh=()=>{
+      const h=isHtiHti(typ.value);
+      const lab=document.getElementById('env-monto')?.closest('.form-group')?.querySelector('label');
+      const hint=document.getElementById('env-official-tariff-hint');
+      const n=document.getElementById('calc-neto'),c=document.getElementById('calc-comision'),t=document.getElementById('calc-total');
+      if(h){
+        if(lab)lab.textContent='Montant en GDES';
+        if(hint)hint.textContent='HTI → HTI: Gourdes (GDES) exclusivement. Natcash et MonCash utilisent la même grille.';
+        if(n)n.previousSibling&&(n.previousSibling.textContent='MONTO ENVIADO:');
+        if(c)c.previousSibling&&(c.previousSibling.textContent='FRAIS:');
+        if(t)t.previousSibling&&(t.previousSibling.textContent='DÉBIT TOTAL:');
+        renderUnifiedHtiTariff();
+      }else{
+        if(lab)lab.textContent='Monto en RD$';
+        if(hint)hint.textContent='Las tarifas por rango solo aplican a RD→Haití vía MonCash y RD→Haití vía NatCash. Las demás rutas mantienen sus reglas existentes.';
+        document.getElementById('sendwayo-hti-haiti-table')?.remove();
+      }
+      calcularEnvioModal();
+    };
+    typ.onchange=refresh;
+    refresh();
+  };
+
+  const previousCalc=window.calcularEnvioModal;
+  window.calcularEnvioModal=function(){
+    const type=document.getElementById('env-tipo-trans')?.value;
+    if(!isHtiHti(type))return previousCalc.apply(this,arguments);
+    const amount=Number(document.getElementById('env-monto')?.value||0);
+    const fee=htiFee(amount);
+    const n=document.getElementById('calc-neto'),c=document.getElementById('calc-comision'),t=document.getElementById('calc-total');
+    if(n)n.textContent=amount>=20&&amount<=99999?gdes(amount):'—';
+    if(c)c.textContent=fee!==null?gdes(fee):'—';
+    if(t)t.textContent=fee!==null?gdes(amount+fee):'—';
+    const hint=document.getElementById('env-official-tariff-hint');
+    if(hint)hint.textContent=fee!==null?'HTI → HTI: frais '+gdes(fee)+' · débit total '+gdes(amount+fee)+' depuis la balance GDES.':'HTI → HTI: montant entre 20 et 99,999 GDES.';
+    renderUnifiedHtiTariff();
+  };
+
+  const previousGuardar=window.guardarEnvio;
+  window.guardarEnvio=async function(){
+    const type=document.getElementById('env-tipo-trans')?.value;
+    if(!isHtiHti(type))return previousGuardar.apply(this,arguments);
+
+    if(!currentUser)return;
+    if(!agent() && !isAdmin())return toast('HTI → HTI est réservé aux opérations en Haïti de l’Agent.','warn');
+
+    resolveEnvioPerson('remitente');resolveEnvioPerson('beneficiario');
+    const amount=Number(document.getElementById('env-monto')?.value||0);
+    const remId=document.getElementById('env-remitente-select')?.value||currentUser.id;
+    const benId=document.getElementById('env-beneficiario-select')?.value||'';
+    if(amount<20)return toast('Le montant minimum est de 20 GDES.','warn');
+    if(amount>99999)return toast('Le montant maximum est de 99,999 GDES.','warn');
+    if(!benId)return toast('Sélectionnez le bénéficiaire.','warn');
+    if(agent()&&remId!==currentUser.id)return toast('L’Agent ne peut enregistrer que ses propres opérations.','warn');
+
+    const fee=htiFee(amount);
+    if(fee===null)return toast('Montant hors de la grille tarifaire HTI → HTI.','warn');
+    const totalDebit=Number((amount+fee).toFixed(2));
+
+    if(agent() && !await guardBalance(totalDebit))return;
+    if(!beginFormSubmit('envioModal'))return;
+
+    const ben=state.beneficiaries?.[benId]||{},rem=currentUser;
+    const benName=personName(ben),benPhone=personPhone(ben);
+    const fields={
+      type,
+      route:type,
+      currency:'HTG',
+      balanceCurrency:'HTG',
+      remitenteId:rem.id,
+      remitente:personName(rem),
+      remitenteNombre:personName(rem),
+      remitentePhone:personPhone(rem),
+      remitenteDoc:rem.doc||rem.document||'',
+      beneficiarioId:benId,
+      beneficiario:benName,
+      beneficiarioNombre:benName,
+      beneficiarioPhone:benPhone,
+      net:amount,
+      commission:fee,
+      commissionTotal:fee,
+      destination:amount,
+      fee,
+      balanceDebit:agent()?totalDebit:0,
+      feeType:'TRANSFERT_'+htiLabel(type).toUpperCase(),
+      balanceDebited:agent()
+    };
+
+    const id=await createTransaction('envios',fields,amount);
+    if(!id){
+      if(agent()&&fee>0){
+        try{await firebase.database().ref(DB_PATH+'/users/'+currentUser.id).transaction(u=>u?{...u,balance:Number(u.balance||0)+fee}:undefined)}catch(_){}
+      }
+      return;
+    }
+    state.envios[id]={...(state.envios[id]||{}),...fields};
+    try{await firebase.database().ref(DB_PATH+'/envios/'+id).update(fields)}catch(_){}
+    closeModal('envioModal');
+    toast('Transfert HTI → HTI enregistré. Débit total: '+gdes(totalDebit),'success');
+  };
+
+  // El cálculo debe ser HTI/GDES incluso si el selector estaba ya abierto antes del parche.
+  document.getElementById('env-tipo-trans')?.addEventListener('change',function(){
+    if(isHtiHti(this.value))window.calcularEnvioModal();
+  });
+})();
+</script>
 </body>
 </html>
