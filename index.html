@@ -1988,7 +1988,7 @@ async function guardarAgentEnvio(){
  if(!id)return;
  closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE.','success');
 }
-function guardarEnvio(){
+async function guardarEnvio(){
  const _modal=document.getElementById('envioModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return;
  resolveEnvioPerson('remitente');resolveEnvioPerson('beneficiario');
