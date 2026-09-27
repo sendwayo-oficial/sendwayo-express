@@ -1323,7 +1323,7 @@ function attachRealtimeListeners(){
  window.__sendwayoRealtimeRefs.push(nref);
 }
 
-function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').toLowerCase()==='administrador' || String(currentUser.username||'').toLowerCase()==='admin' || String(currentUser.authEmail||'').toLowerCase()==='sendwayoexpress@gmail.com');}
+function isAdmin(){const authEmail=String(firebase?.auth?.().currentUser?.email||'').toLowerCase();return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').toLowerCase()==='administrador' || String(currentUser.username||'').toLowerCase()==='admin' || String(currentUser.authEmail||'').toLowerCase()==='sendwayoexpress@gmail.com' || authEmail==='sendwayoexpress@gmail.com');}
 function applyBrandLogo(){document.querySelectorAll('img.brand-logo, .sidebar-brand img, #login-screen img, #header-avatar, #profile-preview').forEach(img=>{if(!img.dataset.userAvatar)img.src=LOGO_DATA});}
 function openBrandSite(){window.location.href='https://sendwayo-oficial.github.io/sendwayo-express/';}
 async function boot(){
