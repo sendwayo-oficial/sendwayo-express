@@ -253,6 +253,11 @@ aside{height:100vh;min-height:0;overflow:hidden}
     display:none!important;
   }
 }
+<style id="sendwayo-service-suggestions">
+.service-suggestion{display:block;width:100%;border:0;background:#fff;padding:9px 12px;text-align:left;cursor:pointer;font:inherit;color:#123;touch-action:manipulation}
+.service-suggestion:hover,.service-suggestion:focus{background:#eef6ff;outline:none}
+.service-suggestion-free{border-top:1px solid #e2e8f0;font-weight:700}
+</style>
 <style id="sendwayo-mobile-form-stability">
 @media(max-width:800px){
   .form-grid{grid-template-columns:minmax(0,1fr)!important}
@@ -821,7 +826,7 @@ function normalizeUsername(name){return String(name||'').toLowerCase().normalize
 function authEmailFor(user){
   if(!user)return '';
   if(user.id==='admin')return 'sendwayoexpress@gmail.com';
-  if(user.agentKey==='BETINA_LINDOR'||user.id==='agent-betina-lindor'||String(user.name||'').trim().toLowerCase()==='betina lindor')return 'betinalindor@gmail.com';
+  if(user.agentKey==='BETINA_LINDOR'||user.id==='agent-betina-lindor'||String(user.name||'').trim().toLowerCase()==='betina lindor')return 'betinalindor@gmail.com';\n  if(user.agentKey==='HERACE_FLEURANVIL'||user.id==='agent-herace-fleuranvil'||String(user.name||'').trim().toLowerCase()==='herace fleuranvil')return 'heracefleuranvil@gmail.com';
   const base=String(user.name||user.username||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
   return (base||String(user.staffId||'').toLowerCase())+'@sendwayoexpress.com';
 }
@@ -1070,6 +1075,10 @@ async function firebaseRemove(path){
  try{await firebase.database().ref(DB_PATH+'/'+path).remove();return true}catch(e){console.warn('Firebase remove:',e);return false}
 }
 let notificationHydrated=false;let knownAdminNotifications=new Set();
+const OFFICIAL_AGENTS=[
+ {id:'agent-betina-lindor',role:'Agente',name:'Betina Lindor',phone:'',username:'betinalindor@gmail.com',authEmail:'betinalindor@gmail.com',agentKey:'BETINA_LINDOR',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,commissionWithdrawAllowed:false,approvalRequired:true,active:true,balance:0,commission:0},
+ {id:'agent-herace-fleuranvil',role:'Agente',name:'Herace Fleuranvil',phone:'',username:'heracefleuranvil@gmail.com',authEmail:'heracefleuranvil@gmail.com',agentKey:'HERACE_FLEURANVIL',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,commissionWithdrawAllowed:false,approvalRequired:true,active:true,balance:0,commission:0}
+];
 const RESTORED_SECRET_ACCOUNTS=[
  {id:'rm1',role:'Remitente',name:'Ana Maria Santos',phone:'8295552001',doc:'DEMO-RM-01',username:'ana.santos'},
  {id:'rm2',role:'Remitente',name:'Pedro Antonio Diaz',phone:'8295552002',doc:'DEMO-RM-02',username:'pedro.diaz'},
@@ -1097,6 +1106,10 @@ function ensureSeedData(){
   productionResetState();
   state.users=state.users||{}; if(!state.users.admin)state.users.admin={id:'admin',role:'Administrador',name:'Administrador SENDWAYO EXPRESS',phone:'',username:'admin',active:true,balance:0,commission:0,referrals:0};
   RESTORED_SECRET_ACCOUNTS.forEach(x=>{if(!state.users[x.id])state.users[x.id]={...x,staffId:x.staffId||('ID'+String(10000000+Number(x.id.replace('rm',''))).padStart(8,'0')),active:true,balance:Number(x.balance||0),commission:Number(x.commission||0),referrals:0,accountStatus:'Activo',accountSchemaV3:1,authEmail:authEmailFor(x)};});
+  OFFICIAL_AGENTS.forEach(x=>{
+    if(!state.users[x.id])state.users[x.id]={...x,staffId:x.staffId||makePermanentId(),accountStatus:'Activo',accountSchemaV3:1};
+    else Object.assign(state.users[x.id],x,{staffId:state.users[x.id].staffId||makePermanentId()});
+  });
   // Producción: no sembrar remitentes automáticamente.
  state.users.admin.authEmail=authEmailFor(state.users.admin); state.beneficiaries=state.beneficiaries||{}; state.accounts=state.accounts||{}; OFFICIAL_BANK_ACCOUNTS.forEach(a=>{if(!state.accounts[a.id])state.accounts[a.id]={...a,active:true,official:true};});
   ['envios','recargas','paqueticos','pagos','paquetes','deposits','accountWithdrawals','commissions','requests','notifications','audit','ledger','capital'].forEach(k=>state[k]=state[k]||{});
