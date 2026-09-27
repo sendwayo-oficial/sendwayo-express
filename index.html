@@ -5867,5 +5867,102 @@ img[data-current-brand-logo="true"]{
   });
 })();
 </script>
+<script id="sendwayo-hti-haiti-final-guard-v2">
+(function(){
+  if(window.__sendwayo_hti_haiti_final_guard_v2)return;
+  window.__sendwayo_hti_haiti_final_guard_v2=true;
+
+  const HTI_GDES_TRANSFER_TARIFF=[
+    [20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],
+    [2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],
+    [20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]
+  ];
+
+  function isHtiHtiRoute(v){
+    const t=String(v||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[→]/g,' A ').replace(/\s+/g,' ').trim();
+    return /\bHTI\s*A\s*HTI\b/.test(t);
+  }
+  function htiGdesFee(amount){
+    const n=Math.floor(Number(amount||0));
+    if(!Number.isFinite(n)||n<20||n>99999)return null;
+    const row=HTI_GDES_TRANSFER_TARIFF.find(r=>n>=r[0]&&n<=r[1]);
+    return row?row[2]:null;
+  }
+  function moneyGdes(v){
+    return 'GDES '+Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function normalizeHtiSelector(){
+    const typ=document.getElementById('env-tipo-trans');
+    if(!typ)return;
+    const current=typ.value;
+    if(!isHtiHtiRoute(current))return;
+    const opts=[...typ.options];
+    const nonHti=opts.filter(o=>!isHtiHtiRoute(o.value));
+    const nat=document.createElement('option');
+    nat.value='HTI a HTI Natcash';nat.textContent='Natcash — HTI à HTI';
+    const mon=document.createElement('option');
+    mon.value='HTI a HTI MonCash';mon.textContent='MonCash — HTI à HTI';
+    typ.innerHTML='';
+    nonHti.forEach(o=>typ.appendChild(o));
+    typ.appendChild(nat);typ.appendChild(mon);
+    const wantsMon=/MONCASH/i.test(current);
+    typ.value=wantsMon?mon.value:nat.value;
+  }
+  function applyHtiUi(){
+    const typ=document.getElementById('env-tipo-trans');
+    if(!typ||!isHtiHtiRoute(typ.value))return false;
+    const lab=document.getElementById('env-monto')?.closest('.form-group')?.querySelector('label');
+    if(lab)lab.textContent='Montant en GDES';
+    const n=document.getElementById('calc-neto'),c=document.getElementById('calc-comision'),t=document.getElementById('calc-total');
+    const amount=Number(document.getElementById('env-monto')?.value||0);
+    const fee=htiGdesFee(amount);
+    if(n)n.textContent=fee!==null?moneyGdes(amount):'—';
+    if(c)c.textContent=fee!==null?moneyGdes(fee):'—';
+    if(t)t.textContent=fee!==null?moneyGdes(amount+fee):'—';
+    const hint=document.getElementById('env-official-tariff-hint');
+    if(hint)hint.textContent=fee!==null
+      ?'HTI → HTI: '+(/MONCASH/i.test(typ.value)?'MonCash':'Natcash')+' · tarifa '+moneyGdes(fee)+' · débito total '+moneyGdes(amount+fee)+' desde la balance GDES.'
+      :'HTI → HTI: monto entre 20 y 99,999 GDES.';
+    return true;
+  }
+
+  const originalOpenModal=window.openModal;
+  window.openModal=function(id){
+    const out=originalOpenModal.apply(this,arguments);
+    if(id==='envioModal'){
+      setTimeout(()=>{
+        const typ=document.getElementById('env-tipo-trans');
+        if(!typ)return;
+        const current=typ.value;
+        if(isHtiHtiRoute(current)){
+          normalizeHtiSelector();
+          typ.onchange=function(){
+            if(isHtiHtiRoute(this.value))applyHtiUi();
+            else if(typeof window.calcularEnvioModal==='function')window.calcularEnvioModal();
+          };
+          const amt=document.getElementById('env-monto');
+          if(amt)amt.oninput=function(){if(isHtiHtiRoute(typ.value))applyHtiUi();};
+          applyHtiUi();
+        }
+      },0);
+    }
+    return out;
+  };
+
+  const originalCalc=window.calcularEnvioModal;
+  window.calcularEnvioModal=function(){
+    const typ=document.getElementById('env-tipo-trans');
+    if(typ&&isHtiHtiRoute(typ.value))return applyHtiUi();
+    return originalCalc?originalCalc.apply(this,arguments):undefined;
+  };
+
+  document.addEventListener('input',function(e){
+    if(e.target?.id==='env-monto')applyHtiUi();
+  });
+  document.addEventListener('change',function(e){
+    if(e.target?.id==='env-tipo-trans')applyHtiUi();
+  });
+})();
+</script>
 </body>
 </html>
