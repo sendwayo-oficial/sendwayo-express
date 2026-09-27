@@ -5494,7 +5494,7 @@ img[data-current-brand-logo="true"]{
 
   const originalShowApp=window.showAppForUser;
   window.showAppForUser=function(found){
-    if(swAgent(found))found={...found,role:'Agente',balanceCurrency:'HTG',preferredLanguage:'fr',agentScope:'OPERACIONES',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1};
+    if(swAgent(found))found={...found,role:'Agente',balanceCurrency:'HTG',preferredLanguage:'fr',agentScope:'OPERACIONES',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,agentType:null,uniqueAgent:null};
     originalShowApp(found);
     if(swAgent(found))try{setLanguage(found.preferredLanguage||'fr')}catch(e){}
   };
@@ -5514,7 +5514,7 @@ img[data-current-brand-logo="true"]{
     originalRenderMiCuenta();
     if(!currentUser)return;
     const bal=document.getElementById('my-account-balance');if(bal)bal.textContent=accountMoney(currentUser.balance,currentUser);
-    const th=document.querySelector('#accountMoveTable thead th:nth-child(4)');if(th)th.textContent=swAgent(currentUser)?'Monto HTG':'Monto RD';
+    const th=document.querySelector('#accountMoveTable thead th:nth-child(4)');if(th)th.textContent=swAgent(currentUser)?'Monto HTG':'Monto RD';if(swAgent(currentUser)){const rows=Object.values(state.deposits||{}).filter(r=>r.userId===currentUser.id).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).concat(Object.values(state.accountWithdrawals||{}).filter(r=>r.userId===currentUser.id).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))));document.querySelectorAll('#accountMoveTable tbody tr').forEach((tr,k)=>{const rec=rows[k];if(rec&&tr.cells[3])tr.cells[3].textContent=recordMoney(rec,rec.amount)})}
   };
 
   const originalRenderSecrets=window.renderSecrets;
@@ -5549,7 +5549,7 @@ img[data-current-brand-logo="true"]{
   const originalRenderEnvios=window.renderEnvios;
   window.renderEnvios=function(){
     originalRenderEnvios();
-    const head=document.querySelector('#enviosTable thead th:nth-child(4)');if(head)head.textContent=swAgent(currentUser)?'Monto HTG':'Cantidad RD';
+    const head=document.querySelector('#enviosTable thead th:nth-child(4)');if(head)head.textContent=swAgent(currentUser)?'Monto HTG':'Cantidad RD';document.querySelectorAll('#enviosTable tbody tr').forEach(tr=>{const recId=tr.querySelector('[data-record-id]')?.getAttribute('data-record-id'),r=recId&&state.envios?.[recId];if(r&&swAgent(r.userId)){if(tr.cells[3])tr.cells[3].textContent=recordMoney(r,r.amount);if(tr.cells[5])tr.cells[5].textContent=recordMoney(r,r.net);if(tr.cells[6])tr.cells[6].textContent=recordMoney(r,r.commission)}});
   };
 
   if(window.UI_TRANSLATIONS)UI_TRANSLATIONS.fr={...UI_TRANSLATIONS.fr,'Solicitar Retiro':'Demander un retrait','Solicitar Retiro de Mi Cuenta':'Demander un retrait de mon compte','Monto a retirar':'Montant à retirer','Retiro de cuenta':'Retrait du compte','Envíos (Transacciones Globales)':'Envois (transactions globales)','Agente':'Agent','AGENTE':'AGENT'};
