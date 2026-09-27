@@ -5192,99 +5192,216 @@ img[data-current-brand-logo="true"]{
 }
 </style>
 
-<style id="sendwayo-receipt-mobile-final-pass">
-<style id="sendwayo-receipt-mobile-exact-header">
+
+<style id="sendwayo-final-layout-stability">
+/* Estabilidad final de la interfaz: no modifica Firebase ni la lógica financiera. */
+
+/* COMPUTADORA: menú lateral y marca siempre dentro de su panel. */
+@media(min-width:801px){
+  #app-sidebar{
+    width:280px!important;
+    min-width:280px!important;
+    max-width:280px!important;
+    position:relative!important;
+    left:auto!important;
+    height:100vh!important;
+    flex:0 0 280px!important;
+    overflow:hidden!important;
+  }
+  #app-sidebar .sidebar-brand{
+    width:280px!important;
+    height:72px!important;
+    min-height:72px!important;
+    max-height:72px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+    padding:4px 8px!important;
+    overflow:hidden!important;
+  }
+  #app-sidebar .sidebar-brand>a{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    flex:0 0 72px!important;
+    width:72px!important;
+    min-width:72px!important;
+    max-width:72px!important;
+    height:64px!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  #app-sidebar .sidebar-brand>a img{
+    display:block!important;
+    width:72px!important;
+    height:64px!important;
+    max-width:72px!important;
+    max-height:64px!important;
+    object-fit:contain!important;
+    object-position:center!important;
+    transform:none!important;
+    margin:0!important;
+  }
+  #app-sidebar .sidebar-brand .sidebar-business-name{
+    display:flex!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    height:64px!important;
+    align-items:center!important;
+    margin:0!important;
+    padding:0!important;
+    transform:none!important;
+    overflow:visible!important;
+    white-space:normal!important;
+    color:#f3b51b!important;
+    font-size:1.08rem!important;
+    line-height:.98!important;
+    letter-spacing:-.3px!important;
+  }
+  #app-sidebar .mobile-toggle-btn{display:none!important}
+  #app-shell{min-width:0!important;flex:1 1 auto!important;width:auto!important}
+}
+
+/* CELULAR: conserva el menú flotante y el logo trabajado. */
+@media(max-width:800px){
+  #app-sidebar{
+    width:min(280px,86vw)!important;
+    min-width:0!important;
+    left:calc(-1 * min(280px,86vw))!important;
+    overflow:hidden!important;
+  }
+  #app-sidebar.active{left:0!important}
+  #app-sidebar .sidebar-brand{
+    width:100%!important;
+    height:68px!important;
+    min-height:68px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:4px!important;
+    padding:3px 8px!important;
+    overflow:hidden!important;
+  }
+  #app-sidebar .sidebar-brand>a{
+    display:block!important;
+    flex:0 0 108px!important;
+    width:108px!important;
+    min-width:108px!important;
+    height:60px!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  #app-sidebar .sidebar-brand>a img{
+    display:block!important;
+    width:108px!important;
+    height:60px!important;
+    max-width:108px!important;
+    max-height:60px!important;
+    object-fit:contain!important;
+    object-position:center!important;
+    transform:none!important;
+    margin:0!important;
+  }
+  #app-sidebar .sidebar-brand .sidebar-business-name{
+    display:flex!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    height:60px!important;
+    align-items:center!important;
+    margin:0!important;
+    padding:0!important;
+    transform:none!important;
+    color:#f3b51b!important;
+    font-size:.92rem!important;
+    line-height:1!important;
+    white-space:normal!important;
+  }
+}
+
+/* Comprobante móvil: encabezado compacto y completo. */
 @media(max-width:800px){
   .modal#detailModal .modal-content{
-    width:calc(100vw - 4px)!important;max-width:calc(100vw - 4px)!important;
-    padding:2px!important;overflow-x:hidden!important;
+    width:calc(100vw - 10px)!important;
+    max-width:calc(100vw - 10px)!important;
+    padding:7px!important;
+    overflow-x:hidden!important;
   }
   .receipt-shell.receipt-final.receipt-brand-wide{
-    width:100%!important;max-width:100%!important;margin:0!important;
-    padding:5px 2px!important;overflow:visible!important;
-  }
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-head{
-    width:100%!important;margin:0!important;padding:0!important;overflow:visible!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:8px 5px!important;
+    overflow:hidden!important;
   }
   .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row{
-    display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;
-    align-items:center!important;gap:0!important;width:100%!important;max-width:100%!important;
-    margin:0!important;padding:0!important;overflow:visible!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    gap:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
   }
   .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row .receipt-logo{
-    flex:0 0 46px!important;width:46px!important;height:38px!important;
-    max-width:46px!important;max-height:38px!important;margin:0!important;
-    object-fit:contain!important;object-position:left center!important;
+    flex:0 0 50px!important;
+    width:50px!important;
+    height:42px!important;
+    max-width:50px!important;
+    max-height:42px!important;
+    margin:0!important;
+    object-fit:contain!important;
+    object-position:left center!important;
   }
   .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name{
-    flex:1 1 auto!important;min-width:0!important;width:auto!important;
-    margin:0!important;padding:0!important;overflow:visible!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
   }
   .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name h2{
-    display:block!important;width:max-content!important;max-width:none!important;
-    margin:0!important;padding:0!important;
-    font-size:.62rem!important;line-height:1!important;letter-spacing:-.06em!important;
-    font-weight:900!important;white-space:nowrap!important;overflow:visible!important;
+    display:block!important;
+    width:max-content!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:.68rem!important;
+    line-height:1!important;
+    letter-spacing:-.055em!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    font-weight:900!important;
   }
   .receipt-shell.receipt-final.receipt-brand-wide .receipt-slogan{
-    display:block!important;width:100%!important;max-width:100%!important;
-    margin:-1px 0 0!important;padding:0!important;text-align:center!important;
-    font-size:.47rem!important;line-height:1.08!important;white-space:normal!important;
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:3px 0 0!important;
+    font-size:.48rem!important;
+    line-height:1.12!important;
+    text-align:center!important;
+    white-space:normal!important;
   }
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-original{
-    display:block!important;width:max-content!important;max-width:100%!important;
-    margin:3px auto 4px!important;padding:3px 8px!important;
-    box-sizing:border-box!important;font-size:.55rem!important;line-height:1!important;
-    white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;
-    border:2px solid #0f2c59!important;border-radius:999px!important;
+  #sendwayo-pull-refresh-indicator{
+    position:fixed!important;
+    top:7px!important;
+    left:50%!important;
+    transform:translate(-50%,-16px)!important;
+    z-index:20000!important;
   }
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-capture{display:none!important}
+  #sendwayo-pull-refresh-indicator.show{
+    transform:translate(-50%,0)!important;
+  }
 }
-</style><style id="sendwayo-receipt-mobile-precision-and-pull">
-@media(max-width:800px){
-  /* Encabezado móvil: todo el nombre visible, logo pegado a la izquierda. */
-  .modal#detailModal .modal-content{width:calc(100vw - 10px)!important;max-width:calc(100vw - 10px)!important;padding:7px!important;overflow-x:hidden!important}
-  .receipt-shell.receipt-final.receipt-brand-wide{width:100%!important;max-width:100%!important;margin:0!important;padding:8px 5px!important;overflow:hidden!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-head{width:100%!important;max-width:100%!important;overflow:visible!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;align-items:center!important;gap:0!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;overflow:visible!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-row .receipt-logo{flex:0 0 50px!important;width:50px!important;height:42px!important;max-width:50px!important;max-height:42px!important;margin:0!important;object-fit:contain!important;object-position:left center!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name{flex:1 1 auto!important;min-width:0!important;width:auto!important;margin:0!important;padding:0!important;overflow:visible!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-brand-name h2{display:block!important;width:max-content!important;max-width:none!important;margin:0!important;padding:0!important;font-size:.68rem!important;line-height:1!important;letter-spacing:-.055em!important;font-weight:900!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-slogan{font-size:.48rem!important;line-height:1.12!important;margin:3px 0 0!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-original{font-size:.56rem!important;margin:6px auto 4px!important}
-  .receipt-shell.receipt-final.receipt-brand-wide .receipt-capture{display:none!important}
-  #sendwayo-pull-refresh-indicator{position:fixed;top:7px;left:50%;transform:translate(-50%,-16px);z-index:20000;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0f2c59;color:#fff;font-size:11px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s;box-shadow:0 4px 14px rgba(0,0,0,.2)}
-  #sendwayo-pull-refresh-indicator.show{opacity:1;transform:translate(-50%,0)}
-  #sendwayo-pull-refresh-indicator .sw-pull-icon{font-size:16px;line-height:1;display:inline-block}
-}
-@media(min-width:801px){#sendwayo-pull-refresh-indicator{display:none!important}}
-</style>
-@media (max-width:800px){
-  .receipt-final .receipt-head>div:first-child,
-  .receipt-final .receipt-brand-row,
-  .receipt-brand-wide .receipt-head .receipt-brand-row{
-    width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;
-    justify-content:flex-start!important;gap:1px!important;overflow:visible!important;box-sizing:border-box!important;
-  }
-  .receipt-final .receipt-head .receipt-logo,
-  .receipt-brand-wide .receipt-head .receipt-brand-row .receipt-logo{
-    flex:0 0 68px!important;width:68px!important;height:52px!important;max-width:68px!important;max-height:52px!important;
-    margin:0!important;object-position:left center!important;
-  }
-  .receipt-final .receipt-head .receipt-brand-name,
-  .receipt-brand-wide .receipt-head .receipt-brand-name{
-    flex:1 1 auto!important;min-width:0!important;width:auto!important;overflow:visible!important;
-  }
-  .receipt-final .receipt-head h2,
-  .receipt-brand-wide .receipt-head .receipt-brand-name h2{
-    width:auto!important;max-width:none!important;margin:0!important;padding:0!important;
-    font-size:.82rem!important;line-height:1!important;letter-spacing:-.045em!important;
-    white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;
-  }
-  .receipt-final .receipt-capture,
-  .receipt-brand-wide .receipt-capture{display:none!important}
-  .receipt-final .receipt-shell,
-  .receipt-brand-wide .receipt-shell{padding-left:6px!important;padding-right:6px!important}
+@media(min-width:801px){
+  #sendwayo-pull-refresh-indicator{display:none!important}
 }
 </style>
 
