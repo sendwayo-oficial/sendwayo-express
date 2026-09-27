@@ -6804,3 +6804,118 @@ function fix(){document.querySelectorAll('.modal').forEach(function(m){if(m.styl
 window.swEnableAllFormFields=fix;document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(fix,0)},true);document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.modal'))setTimeout(fix,0)},true);new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['disabled','readonly','style','class']});setInterval(fix,300);setTimeout(fix,100);
 })();
 </script>
+
+<script id="sendwayo-final-receipt-agent-unfreeze-v1">
+(function(){
+  if(window.__sendwayoFinalReceiptAgentUnfreezeV1)return;
+  window.__sendwayoFinalReceiptAgentUnfreezeV1=true;
+
+  function forceDetailOpen(){
+    const m=document.getElementById('detailModal');
+    if(!m)return false;
+    m.style.display='flex';
+    m.classList.add('show');
+    m.style.visibility='visible';
+    m.style.opacity='1';
+    m.style.pointerEvents='auto';
+    m.style.zIndex='50000';
+    const c=m.querySelector('.modal-content');
+    if(c){c.style.pointerEvents='auto';c.style.visibility='visible';c.style.opacity='1';}
+    document.body.style.overflow='hidden';
+    return true;
+  }
+
+  const oldShowReceipt=window.showReceipt;
+  if(typeof oldShowReceipt==='function'){
+    window.showReceipt=function(collection,id){
+      try{
+        const r=state?.[collection]?.[id];
+        if(!r||String(r.status||'').trim().toLowerCase()!=='aprobado'){
+          return toast('El recibo solo aparece después de la aprobación del Administrador.','warn');
+        }
+        const result=oldShowReceipt.apply(this,arguments);
+        setTimeout(forceDetailOpen,0);
+        setTimeout(forceDetailOpen,80);
+        setTimeout(forceDetailOpen,250);
+        return result;
+      }catch(e){
+        console.error('SENDWAYO comprobante:',e);
+        return toast('No se pudo abrir el comprobante.','error');
+      }
+    };
+  }
+
+  document.addEventListener('click',function(e){
+    const b=e.target?.closest?.('button');
+    if(!b)return;
+    const onclick=String(b.getAttribute('onclick')||'');
+    if(/showReceipt\s*\(/.test(onclick)){
+      setTimeout(forceDetailOpen,0);
+      setTimeout(forceDetailOpen,100);
+    }
+  },true);
+
+  function isAgent(){
+    try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser)}catch(_){return false}
+  }
+  function unlockAgentFields(){
+    if(!isAgent())return;
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    m.style.pointerEvents='auto';
+    m.style.visibility='visible';
+    m.querySelectorAll('input,select,textarea,button').forEach(el=>{
+      if(el.id==='agent-current'){el.disabled=false;el.readOnly=true;el.style.pointerEvents='auto';return;}
+      if(el.hasAttribute('data-hard-disabled')||el.hasAttribute('data-system-disabled'))return;
+      el.disabled=false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents='auto';
+      el.style.opacity='1';
+      el.style.visibility='visible';
+    });
+    const u=window.currentUser||currentUser||{};
+    const a=document.getElementById('agent-current');
+    if(a){
+      const p=typeof personPhone==='function'?personPhone(u):(u.phone||'');
+      const n=typeof personName==='function'?personName(u):(u.name||u.username||'Agente');
+      a.value=(p||'Sin número')+' ('+(n||'Sin nombre')+')';
+    }
+    const ben=document.getElementById('agent-beneficiario-input');
+    if(ben){ben.disabled=false;ben.readOnly=false;ben.style.pointerEvents='auto';}
+    const amount=document.getElementById('agent-monto');
+    if(amount){amount.disabled=false;amount.readOnly=false;amount.style.pointerEvents='auto';}
+    const type=document.getElementById('agent-tipo-trans');
+    const op=document.getElementById('agent-operation');
+    if(type){type.disabled=false;type.style.pointerEvents='auto';}
+    if(op){op.disabled=false;op.style.pointerEvents='auto';}
+  }
+
+  function ensurePlusButtons(){
+    if(!isAgent())return;
+    const m=document.getElementById('agentEnvioModal');if(!m)return;
+    const agentInput=document.getElementById('agent-current');
+    const agentPlus=agentInput?.parentElement?.querySelector('.sw-person-plus,.plus-btn');
+    if(agentPlus){
+      agentPlus.disabled=false;agentPlus.style.pointerEvents='auto';
+      agentPlus.onclick=function(e){e.preventDefault();e.stopPropagation();if(typeof openAgentCreate==='function')openAgentCreate();else if(typeof toast==='function')toast('Use el Administrador para agregar un Agente.','info');};
+    }
+    const benInput=document.getElementById('agent-beneficiario-input');
+    const benPlus=benInput?.parentElement?.querySelector('.sw-person-plus,.plus-btn');
+    if(benPlus){
+      benPlus.disabled=false;benPlus.style.pointerEvents='auto';
+      benPlus.onclick=function(e){e.preventDefault();e.stopPropagation();if(typeof openModal==='function')openModal('beneficiarioModal');};
+    }
+  }
+
+  document.addEventListener('focusin',e=>{
+    if(isAgent()&&e.target?.closest?.('#agentEnvioModal'))setTimeout(unlockAgentFields,0);
+  },true);
+  document.addEventListener('click',e=>{
+    if(isAgent()&&e.target?.closest?.('#agentEnvioModal'))setTimeout(()=>{unlockAgentFields();ensurePlusButtons()},0);
+  },true);
+  setInterval(()=>{if(isAgent()){unlockAgentFields();ensurePlusButtons()}},500);
+
+  window.SENDWAYO_FORCE_RECEIPT_OPEN=forceDetailOpen;
+  window.SENDWAYO_UNLOCK_AGENT_FIELDS=unlockAgentFields;
+})();
+</script>
