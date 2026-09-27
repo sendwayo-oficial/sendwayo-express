@@ -5995,511 +5995,40 @@ img[data-current-brand-logo="true"]{
   document.addEventListener('input',e=>{if(e.target?.id==='env-monto')apply();});
 })();
 </script>
-<script id="sendwayo-agent-menu-v3">
-(function(){
- if(window.__sendwayo_agent_menu_v3)return;window.__sendwayo_agent_menu_v3=true;
- const base=window.applyRoleVisibility;
- window.applyRoleVisibility=function(){
-   if(typeof base==='function')base.apply(this,arguments);
-   const agent=typeof isAgentUser==='function'&&isAgentUser(currentUser),menu=document.getElementById('sidebar-menu');
-   if(!menu)return;
-   const global=Array.from(menu.querySelectorAll('a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"))?.closest('li');
-   if(!agent){if(global)global.style.display='';menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());return}
-   if(global)global.style.display='none';
-   menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
-   const make=(label,op,icon)=>{const li=document.createElement('li');li.dataset.agentOnlyMenu='1';const a=document.createElement('a');a.href='#';a.innerHTML='<i class="fa-solid '+icon+'"></i> '+label;a.onclick=function(e){e.preventDefault();openTransactionEntry(op)};li.appendChild(a);return li};
-   const anchor=global||menu.querySelector('li');
-   const parent=anchor?.parentNode||menu;
-   parent.insertBefore(make('Envío','Envío','fa-paper-plane'),anchor||null);
-   parent.insertBefore(make('Retiro','Retiro','fa-right-left'),anchor||null);
-   const add=document.getElementById('envio-add-btn');if(add){add.textContent='Agregar';add.onclick=function(){openTransactionEntry()}}
- };
- window.openTransactionEntry=function(operation){
-   if(!isAgentUser(currentUser)){openModal('envioModal');return}
-   const modal=document.getElementById('agentEnvioModal');if(!modal)return;
-   document.getElementById('agent-current').value=(currentUser.staffId||currentUser.id||'')+' ('+(currentUser.name||'Agente')+')';
-   document.getElementById('agent-operation').value=operation||'Envío';
-   document.getElementById('agent-tipo-trans').value='HAITI A HAITI NatCash';
-   document.getElementById('agent-beneficiario-input').value='';document.getElementById('agent-beneficiario-select').value='';document.getElementById('agent-monto').value='';
-   calcularAgentEnvio();openModal('agentEnvioModal');
- };
- setTimeout(()=>{try{window.applyRoleVisibility()}catch(e){}},0);
-})();
-</script><script id="sendwayo-hti-haiti-agent-balance-final-v1">
-(function(){
-  if(window.__sendwayo_hti_haiti_agent_balance_final_v1)return;
-  window.__sendwayo_hti_haiti_agent_balance_final_v1=true;
-  const TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
-  const WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
-  function fee(amount,operation){const n=Math.floor(Number(amount||0));if(!Number.isFinite(n)||n<20||n>99999)return null;const row=(operation==='Retiro'?WITHDRAWAL:TRANSFER).find(r=>n>=r[0]&&n<=r[1]);return row?row[2]:null}
-  function money(v){return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES'}
-  window.calcularAgentEnvio=function(){const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',f=fee(amount,operation),safe=f===null?0:f,total=amount+safe;const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total'),rr=document.getElementById('agent-calc-recibir');if(a)a.textContent=money(amount);if(b)b.textContent=money(safe);if(t)t.textContent=money(total);if(rr)rr.textContent=money(amount)}
-  window.guardarAgentEnvio=async function(){const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Envío',amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'',f=fee(amount,operation);if(f===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');if(!benId)return toast('Seleccione el beneficiario.','warn');const ben=state.beneficiaries?.[benId];if(!ben)return toast('Seleccione un beneficiario válido.','warn');const total=Number((amount+f).toFixed(2));if(!beginFormSubmit('agentEnvioModal'))return;const id=await createTransaction('envios',{type,route:type,operation,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:f,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net:amount,commission:f,commissionTotal:f,total,destination:amount,fee:f,balanceDebit:total,tariffProvider:/MONCASH/i.test(type)?'MonCash':'NatCash',tariffCurrency:'GDES'},amount);if(!id)return;closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE.','success')}
-  const oldStatus=window.setTransactionStatus;
-  window.setTransactionStatus=async function(collection,id,status){const rec=state[collection]?.[id],u=rec&&state.users?.[rec.userId];if(!rec||collection!=='envios'||!isAgentUser(u)||status!=='Aprobado')return oldStatus.apply(this,arguments);if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');if(!isAdmin())return toast('Solo el Administrador puede aprobar operaciones del Agente.','error');if(String(rec.status||'').toLowerCase()!=='pendiente')return toast('Esta operación ya fue procesada.','warn');const amount=Number(rec.amount||rec.amountHTG||0),operation=rec.operation||'Envío',f=Number((rec.fee ?? rec.commission ?? fee(amount,operation) ?? 0)),total=Number((amount+f).toFixed(2)),userRef=firebase.database().ref(DB_PATH+'/users/'+u.id);let tx;try{tx=await userRef.transaction(user=>{if(!user)return undefined;const debits={...(user.agentBalanceDebits||{})};if(debits[id])return user;const bal=Number(user.balance||0);if(bal+0.000001<total)return undefined;return {...user,balance:Number((bal-total).toFixed(2)),balanceCurrency:'HTG',agentBalanceDebits:{...debits,[id]:{id,amount:total,currency:'HTG',debitedAt:now(),operation}}}})}catch(e){return toast('No se pudo actualizar el balance GDES del Agente.','error')}if(!tx?.committed)return toast('Balance GDES insuficiente para el monto y la tarifa.','warn');
-    const commission=Number(f||0),base=DB_PATH+'/'+collection+'/'+id,updates={[base+'/status']:'Aprobado',[base+'/estado']:'aprobado',[base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/approvedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:'',[base+'/commissionUser']:0,[base+'/commissionAdmin']:commission,[base+'/commissionTotal']:commission,[base+'/commissionAccount']:'100% PLATAFORMA / 0% AGENTE',[base+'/commissionBeneficiary']:'PLATAFORMA',[base+'/agentOperation']:true,[base+'/balanceDebited']:true,[base+'/balanceDebit']:total,[base+'/balanceCurrency']:'HTG',[base+'/currency']:'HTG',[base+'/fee']:f,[base+'/totalHTG']:total,[base+'/net']:amount,[base+'/destination']:amount,[base+'/balanceSettledAt']:firebase.database.ServerValue.TIMESTAMP};
-    if(commission>0){updates[DB_PATH+'/users/admin/commissionAccrued']=firebase.database.ServerValue.increment(commission);updates[DB_PATH+'/users/admin/commission']=firebase.database.ServerValue.increment(commission);updates[DB_PATH+'/users/admin/balance']=firebase.database.ServerValue.increment(commission);updates[DB_PATH+'/users/admin/transactionCommissionCredits/'+id]={id,amount:commission,creditedAt:firebase.database.ServerValue.TIMESTAMP,type:'HTI_A_HTI_AGENT_TARIFA'}}
-    try{await firebase.database().ref(DB_PATH).update(updates)}catch(e){await userRef.transaction(user=>{if(!user)return undefined;const debits={...(user.agentBalanceDebits||{})};if(!debits[id])return user;const next={...debits};delete next[id];return {...user,balance:Number(user.balance||0)+total,agentBalanceDebits:next}}).catch(()=>{});return toast('Firebase rechazó la aprobación. No se modificó la operación.','error')}
-    const approved={...rec,status:'Aprobado',estado:'aprobado',reviewedAt:now(),approvedAt:Date.now(),reviewedBy:currentUser.username,manualReview:true,reviewReason:'',commissionUser:0,commissionAdmin:commission,commissionTotal:commission,commissionAccount:'100% PLATAFORMA / 0% AGENTE',commissionBeneficiary:'PLATAFORMA',agentOperation:true,balanceDebited:true,balanceDebit:total,balanceCurrency:'HTG',currency:'HTG',fee:f,totalHTG:total,net:amount,destination:amount,balanceSettledAt:now()};state[collection][id]=approved;state.users[u.id]=tx.snapshot.val();state.users.admin={...state.users.admin,commissionAccrued:Number(state.users.admin?.commissionAccrued||0)+commission,balance:Number(state.users.admin?.balance||0)+commission};try{generateReceipt(collection,id);const rr=state[collection][id];if(rr?.receipt)await persistGeneratedReceipt(collection,id,rr)}catch(e){console.warn('Recibo Agente:',e)}try{await addNotification(u.id,'Su operación Haití a Haití fue APROBADA. Débito: '+money(total),collection,id)}catch(_){}renderAll();setTimeout(()=>showReceipt(collection,id),180);toast('Operación aprobada. Balance debitado: '+money(total),'success')};
-  const oldRole=window.applyRoleVisibility;window.applyRoleVisibility=function(){if(typeof oldRole==='function')oldRole.apply(this,arguments);if(!isAgentUser(currentUser))return;const menu=document.getElementById('sidebar-menu');if(!menu)return;[...menu.querySelectorAll('li')].forEach(li=>{const a=li.querySelector('a'),txt=String(a?.textContent||'').toLowerCase();if(txt.includes('envíos (transacciones globales)')||txt.includes('envíos (transacciones globales)'))li.style.setProperty('display','none','important')})};
-  setTimeout(()=>{try{calcularAgentEnvio()}catch(_){}},50);
-})();
-</script>
 
-<script id="sendwayo-agent-four-exclusive-final-v4">
-(function(){
-  if(window.__sendwayo_agent_four_exclusive_final_v4)return;
-  window.__sendwayo_agent_four_exclusive_final_v4=true;
-  function four(u){
-    u=u||{};
-    const id=String(u.id||'').trim().toLowerCase();
-    const staff=String(u.staffId||'').trim().toUpperCase();
-    const n=String(u.agentNumber||u.staffNumber||u.numero||'').trim();
-    return id==='4'||id==='id00000004'||staff==='4'||staff==='ID00000004'||n==='4';
-  }
-  function eight(u){
-    u=u||{};
-    const id=String(u.id||'').trim().toLowerCase();
-    const staff=String(u.staffId||'').trim().toUpperCase();
-    const n=String(u.agentNumber||u.staffNumber||u.numero||'').trim();
-    return id==='8'||id==='id00000008'||staff==='8'||staff==='ID00000008'||n==='8';
-  }
-  window.isAgentFour=four;
-  async function enforce(){
-    const admin=typeof isAdmin==='function'&&isAdmin();
-    const users=state.users||{};
-    let fourUser=null;
-    Object.entries(users).forEach(([id,u])=>{
-      if(four(u)) fourUser={...u,id:u.id||id};
-      if(eight(u) && !four(u) && String(u.role||'').toLowerCase()==='agente'){
-        state.users[id]={...u,role:'Remitente',agentNumber:null,agentType:null,agentPolicy:null,agentScope:null,uniqueAgent:null,commissionMode:null,commissionShare:null,platformCommissionShare:null};
-      }
-    });
-    if(fourUser){
-      const fixed={...fourUser,role:'Agente',agentNumber:'4',staffId:fourUser.staffId||'ID00000004',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG',approvalRequired:true};
-      state.users[fixed.id]=fixed;
-      if(admin&&firebaseReady){
-        try{await firebase.database().ref(DB_PATH+'/users/'+fixed.id).update({
-          role:'Agente',agentNumber:'4',staffId:fixed.staffId,agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',
-          commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,balanceCurrency:'HTG',approvalRequired:true
-        });}catch(e){console.warn('No se pudo persistir Agente #4:',e)}
-      }
-    }
-    const u=window.currentUser||currentUser;
-    if(four(u)){
-      u.role='Agente'; u.agentNumber='4'; u.agentType='AGENTE_UNICO'; u.agentScope='OPERACIONES'; u.agentPolicy='HTI_A_HTI';
-      u.commissionMode='PLATFORM_100'; u.commissionShare=0; u.platformCommissionShare=1; u.uniqueAgent=true; u.balanceCurrency='HTG'; u.approvalRequired=true;
-      const role=document.getElementById('sidebar-role-label'); if(role)role.textContent='AGENTE';
-      document.querySelectorAll('.remitente-only').forEach(e=>e.style.display='none');
-      const links=Array.from(document.querySelectorAll('#sidebar-menu a'));
-      links.forEach(a=>{
-        const onclick=String(a.getAttribute('onclick')||'');
-        if(onclick.includes("switchView('envios')"))a.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
-      });
-      document.querySelectorAll('#sidebar-menu li').forEach(li=>{
-        const t=String(li.innerText||'').toLowerCase();
-        if(t.includes('remitentes')||t.includes('envíos (transacciones globales)')||t.includes('envios (transacciones globales)'))li.style.display='none';
-      });
-      const title=document.querySelector('#page-title'); if(title)title.textContent='Envíos y Retiros';
-    }
-  }
-  const old=window.applyRoleVisibility;
-  window.applyRoleVisibility=function(){if(typeof old==='function')old.apply(this,arguments);setTimeout(enforce,0);};
-  setTimeout(enforce,150);
-  setTimeout(enforce,1200);
-  setTimeout(enforce,2500);
-})();
-</script>
+
+
 
 <!-- SENDWAYO AGENT FOUR UI FINAL V5 -->
-<script id="sendwayo-agent-four-ui-final-v5">
+
+
+
+
+
+
+<script id="sendwayo-agent-clean-v1">
 (function(){
-  if(window.__sendwayo_agent_four_ui_final_v5)return;
-  window.__sendwayo_agent_four_ui_final_v5=true;
-  function isFour(u){
-    u=u||window.currentUser||{};
-    const id=String(u.id||'').trim().toLowerCase();
-    const staff=String(u.staffId||'').trim().toUpperCase();
-    const n=String(u.agentNumber||u.staffNumber||u.numero||'').trim();
-    return id==='4'||id==='id00000004'||staff==='4'||staff==='ID00000004'||n==='4';
+  if(window.__sendwayo_agent_clean_v1)return;
+  window.__sendwayo_agent_clean_v1=true;
+
+  function isAgent(){
+    try{return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser);}catch(_){return false}
   }
-  function forceAgentUI(){
-    const u=window.currentUser;
-    if(!isFour(u))return;
-    try{
-      u.role='Agente';u.agentNumber='4';u.agentType='AGENTE_UNICO';u.agentPolicy='HTI_A_HTI';
-      u.agentScope='OPERACIONES';u.commissionMode='PLATFORM_100';u.commissionShare=0;u.platformCommissionShare=1;
-      u.uniqueAgent=true;u.balanceCurrency='HTG';u.approvalRequired=true;
-    }catch(_){}
-    const role=document.getElementById('sidebar-role-label');
-    if(role)role.textContent='AGENTE';
-    const menu=document.getElementById('sidebar-menu');
-    if(menu){
-      menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
-      menu.querySelectorAll('li').forEach(li=>{
-        const a=li.querySelector('a');
-        const text=String(li.textContent||'').toLowerCase().replace(/\s+/g,' ').trim();
-        const oc=String(a?.getAttribute('onclick')||'');
-        if(text.includes('remitentes')||text.includes('envíos (transacciones globales)')||text.includes('envios (transacciones globales)')){
-          if(oc.includes("switchView('envios')")){
-            li.style.display='';
-            if(a){
-              a.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
-              a.onclick=function(e){e.preventDefault();if(typeof switchView==='function')switchView('envios');};
-            }
-          }else li.style.display='none';
-        }
-        if(a && /switchView\('envios'\)/.test(oc)){
-          a.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
-          a.onclick=function(e){e.preventDefault();if(typeof switchView==='function')switchView('envios');};
-          li.style.display='';
-        }
-      });
-      // Remove any old separate agent links created by previous patches.
-      menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
-      [...menu.querySelectorAll('li')].forEach(li=>{
-        const a=li.querySelector('a');
-        const t=String(li.textContent||'').trim().toLowerCase();
-        if((t==='envío'||t==='retiro') && a && !/switchView\('envios'\)/.test(String(a.getAttribute('onclick')||''))) li.remove();
-      });
-    }
-    document.querySelectorAll('.remitente-only').forEach(e=>e.style.display='none');
-    const title=document.getElementById('page-title');if(title)title.textContent='Envíos y Retiros';
-    const add=document.getElementById('envio-add-btn');
-    if(add){
-      add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
-      add.onclick=function(e){e.preventDefault();openTransactionEntry();};
-    }
-  }
-  window.openTransactionEntry=function(operation){
-    if(!isFour(window.currentUser)){
-      if(typeof openModal==='function')return openModal('envioModal');
-      return;
-    }
+
+  function detachModal(){
     const modal=document.getElementById('agentEnvioModal');
-    if(!modal)return;
-    const u=window.currentUser||{};
-    const label=document.querySelector('#agentEnvioModal .form-group:nth-child(2) label');
-    if(label)label.textContent='Agente';
-    const current=document.getElementById('agent-current');
-    if(current)current.value=(u.name||'Agente 4')+' ('+(u.staffId||u.phone||u.username||'ID00000004')+')';
-    const typ=document.getElementById('agent-tipo-trans');
-    if(typ){
-      typ.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';
-      typ.value='HAITI A HAITI NatCash';
-    }
-    const op=document.getElementById('agent-operation');if(op)op.value=operation==='Retiro'?'Retiro':'Envío';
-    const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';
-    const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';
-    const amount=document.getElementById('agent-monto');if(amount)amount.value='';
-    if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();
-    openModal('agentEnvioModal');
-  };
-  function hook(){
-    forceAgentUI();
-    if(isFour(window.currentUser)){
-      const modal=document.getElementById('agentEnvioModal');
-      if(modal){
-        const h=modal.querySelector('h3');if(h)h.textContent='Haití a Haití — Envíos y Retiros';
-        const labels=modal.querySelectorAll('.form-group label');
-        if(labels[0])labels[0].textContent='Servicio';
-        if(labels[1])labels[1].textContent='Agente';
-        if(labels[2])labels[2].textContent='Envío / Retiro';
-        if(labels[3])labels[3].textContent='Beneficiario';
-        if(labels[4])labels[4].textContent='Monto en GDES';
-        const btn=modal.querySelector('button[onclick*="guardarAgentEnvio"]');
-        if(btn)btn.textContent='Enviar esta transacción';
-      }
-    }
-  }
-  const oldApply=window.applyRoleVisibility;
-  window.applyRoleVisibility=function(){if(typeof oldApply==='function')oldApply.apply(this,arguments);setTimeout(hook,0);};
-  setTimeout(hook,50);setTimeout(hook,500);setTimeout(hook,1500);setTimeout(hook,3000);
-})();
-</script>
-
-<script id="sendwayo-betina-final-hti-rules-v1">
-(function(){
-  if(window.__sendwayo_betina_final_hti_rules_v1)return;
-  window.__sendwayo_betina_final_hti_rules_v1=true;
-
-  const TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
-  const WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
-  function opKey(v){return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').startsWith('retiro')?'RETIRO':'ENVIO'}
-  function fee(amount,operation){const n=Math.floor(Number(amount||0));if(!Number.isFinite(n)||n<20||n>99999)return null;const table=opKey(operation)==='RETIRO'?WITHDRAWAL:TRANSFER;const row=table.find(r=>n>=r[0]&&n<=r[1]);return row?row[2]:null}
-  function gdes(v){return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES'}
-  window.__sendwayoBetinaFee=fee;
-
-  window.calcularAgentEnvio=function(){
-    const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',f=fee(amount,operation),safe=f===null?0:f,total=amount+safe;
-    const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total'),rr=document.getElementById('agent-calc-recibir');
-    if(a)a.textContent=gdes(amount);if(b)b.textContent=gdes(safe);if(t)t.textContent=gdes(total);if(rr)rr.textContent=gdes(amount);
-    const hint=document.getElementById('agent-hti-fee-hint');if(hint)hint.textContent=opKey(operation)==='RETIRO'?'Tarifa de RETIRO aplicada automáticamente según el rango en GDES.':'Tarifa de ENVÍO aplicada automáticamente según el rango en GDES.';
-  };
-
-  window.guardarAgentEnvio=async function(){
-    const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;
-    if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');
-    const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Envío',operationKey=opKey(operation),amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'',f=fee(amount,operation);
-    if(f===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
-    if(!benId)return toast('Seleccione el beneficiario.','warn');
-    const ben=state.beneficiaries?.[benId];if(!ben)return toast('Seleccione un beneficiario válido.','warn');
-    const total=Number((amount+f).toFixed(2));if(!beginFormSubmit('agentEnvioModal'))return;
-    const id=await createTransaction('envios',{type,route:type,operation,operationKey,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:f,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net:amount,commission:f,commissionTotal:f,total,destination:amount,fee:f,balanceDebit:total,totalDebit:total,feeType:(operationKey==='RETIRO'?'RETIRO':'TRANSFERT')+'_'+swHtiRouteType(type).toUpperCase(),tariffCurrency:'GDES',tariffProvider:/MONCASH/i.test(type)?'MonCash':'NatCash'},amount);
-    if(!id)return;closeModal('agentEnvioModal');toast((operationKey==='RETIRO'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE.','success');
-  };
-
-  const baseOpen=window.openTransactionEntry;
-  window.openTransactionEntry=function(operation){
-    if(!isAgentUser(currentUser))return baseOpen?baseOpen.apply(this,arguments):openModal('envioModal');
-    const modal=document.getElementById('agentEnvioModal');if(!modal)return;
-    const u=currentUser||{},current=document.getElementById('agent-current');
-    if(current)current.value=(u.name||'Agente')+(u.phone?' ('+u.phone+')':' (Cuenta de Agente)');
-    const typ=document.getElementById('agent-tipo-trans');if(typ){typ.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';typ.value='HAITI A HAITI NatCash';}
-    const op=document.getElementById('agent-operation');if(op)op.value=operation==='Retiro'?'Retiro':'Envío';
-    const labels=modal.querySelectorAll('.form-group label');if(labels[0])labels[0].textContent='Servicio';if(labels[1])labels[1].textContent='Agente';if(labels[2])labels[2].textContent='Envío / Retiro';if(labels[3])labels[3].textContent='Beneficiario';if(labels[4])labels[4].textContent='Monto en GDES';
-    const bi=document.getElementById('agent-beneficiario-input');if(bi){bi.value='';bi.dataset.personId='';}
-    const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';
-    const amount=document.getElementById('agent-monto');if(amount)amount.value='';
-    calcularAgentEnvio();openModal('agentEnvioModal');
-  };
-
-  const baseOpenModal=window.openModal;
-  window.openModal=function(id){if(id==='envioModal'&&isAgentUser(currentUser)){window.openTransactionEntry();return;}return baseOpenModal.apply(this,arguments);};
-
-  const add=document.getElementById('envio-add-btn');
-  if(add){add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';add.onclick=function(e){e.preventDefault();window.openTransactionEntry();};}
-
-  const modal=document.getElementById('agentEnvioModal');
-  if(modal&&!document.getElementById('agent-hti-fee-hint')){
-    const box=document.createElement('div');box.id='agent-hti-fee-hint';box.className='info-box';box.style.margin='8px 0 12px';
-    const summary=modal.querySelector('#agent-calc-monto')?.closest('div');if(summary)summary.insertAdjacentElement('beforebegin',box);
-  }
-  setTimeout(()=>{try{if(isAgentUser(currentUser))calcularAgentEnvio()}catch(_){}},100);
-})();
-</script>
-<script id="sendwayo-agent-single-menu-final-v1">
-(function(){
-  if(window.__sendwayo_agent_single_menu_final_v1)return;
-  window.__sendwayo_agent_single_menu_final_v1=true;
-
-  function isAgent(){return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser);}
-  function normalizeAgentMenu(){
-    const menu=document.getElementById('sidebar-menu');
-    if(!menu||!isAgent())return;
-    const links=[...menu.querySelectorAll('a')];
-    const global=links.find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));
-    if(global){
-      global.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
-      global.closest('li').style.display='';
-      global.onclick=function(e){e.preventDefault();switchView('envios');return false;};
-    }
-    menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
-    [...menu.querySelectorAll('li')].forEach(li=>{
-      const txt=String(li.textContent||'').trim().toLowerCase().replace(/\s+/g,' ');
-      if((txt==='envío'||txt==='retiro'||txt==='envios'||txt==='retiros') && !li.querySelector('a[onclick*="switchView(\'envios\')"]'))li.remove();
-    });
+    if(!modal)return null;
+    if(modal.parentElement!==document.body)document.body.appendChild(modal);
+    modal.style.position='fixed';
+    modal.style.inset='0';
+    modal.style.zIndex='20000';
+    modal.style.pointerEvents='auto';
+    return modal;
   }
 
-  function activateAgentFields(){
-    if(!isAgent())return;
-    const modal=document.getElementById('agentEnvioModal');
-    if(!modal)return;
-    modal.querySelectorAll('select,input,textarea,button').forEach(el=>{
-      if(el.id==='agent-current')return;
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='';
-      el.style.opacity='';
-    });
-    const current=document.getElementById('agent-current');
-    if(current){current.readOnly=true;current.disabled=false;}
-    const op=document.getElementById('agent-operation');
-    if(op){
-      op.disabled=false;
-      op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';
-    }
-  }
-
-  function openAgentForm(operation){
-    if(!isAgent()){if(typeof openModal==='function')openModal('envioModal');return;}
-    const modal=document.getElementById('agentEnvioModal');if(!modal)return;
-    const u=window.currentUser||currentUser||{};
-    const current=document.getElementById('agent-current');
-    if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
-    const service=document.getElementById('agent-tipo-trans');
-    if(service){service.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';service.value=service.value||'HAITI A HAITI NatCash';service.disabled=false;}
-    const op=document.getElementById('agent-operation');
-    if(op)op.value=operation==='Retiro'?'Retiro':'Envío';
-    const ben=document.getElementById('agent-beneficiario-input');if(ben){ben.value='';ben.disabled=false;ben.readOnly=false;}
-    const hidden=document.getElementById('agent-beneficiario-select');if(hidden)hidden.value='';
-    const amount=document.getElementById('agent-monto');if(amount){amount.value='';amount.disabled=false;amount.readOnly=false;}
-    activateAgentFields();
-    if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();
-    openModal('agentEnvioModal');
-  }
-
-  const originalApply=window.applyRoleVisibility;
-  window.applyRoleVisibility=function(){
-    if(typeof originalApply==='function')originalApply.apply(this,arguments);
-    setTimeout(function(){normalizeAgentMenu();activateAgentFields();},0);
-  };
-
-  window.openTransactionEntry=function(){
-    openAgentForm();
-  };
-
-  const add=document.getElementById('envio-add-btn');
-  if(add){
-    add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
-    add.onclick=function(e){e.preventDefault();openAgentForm();return false;};
-    add.removeAttribute('disabled');
-    add.style.pointerEvents='';
-  }
-
-  const originalOpenModal=window.openModal;
-  window.openModal=function(id){
-    if(id==='envioModal'&&isAgent()){
-      openAgentForm();
-      return;
-    }
-    return originalOpenModal.apply(this,arguments);
-  };
-
-  document.addEventListener('click',function(e){
-    const a=e.target?.closest?.('#sidebar-menu a');
-    if(!a||!isAgent())return;
-    const txt=String(a.textContent||'').trim().toLowerCase();
-    if(txt.includes('envíos y retiros')||txt.includes('envíos y retiros')||txt==='envios y retiros'){
-      e.preventDefault();
-      switchView('envios');
-      return false;
-    }
-  },true);
-
-  setTimeout(function(){normalizeAgentMenu();activateAgentFields();},100);
-  setTimeout(function(){normalizeAgentMenu();activateAgentFields();},700);
-  setTimeout(function(){normalizeAgentMenu();activateAgentFields();},1600);
-})();
-</script>
-<script id="sendwayo-agent-modal-unfreeze-v2">
-(function(){
-  if(window.__sendwayo_agent_modal_unfreeze_v2)return;
-  window.__sendwayo_agent_modal_unfreeze_v2=true;
-
-  function agent(){return typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser);}
-  function unlock(modal){
+  function unlockModal(modal){
     if(!modal)return;
     delete modal.dataset.submitting;
-    modal.style.display='flex';
-    modal.classList.add('show');
-    modal.style.pointerEvents='auto';
-    modal.style.zIndex='20000';
-    const content=modal.querySelector('.modal-content');
-    if(content){content.style.pointerEvents='auto';content.style.opacity='1';}
-    modal.querySelectorAll('input,select,textarea,button').forEach(el=>{
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='auto';
-      el.style.opacity='1';
-    });
-    const current=document.getElementById('agent-current');
-    if(current){current.readOnly=true;current.disabled=false;}
-    document.body.style.overflow='hidden';
-  }
-
-  function showAgent(operation){
-    if(!agent())return;
-    const modal=document.getElementById('agentEnvioModal');
-    if(!modal)return;
-    const u=window.currentUser||currentUser||{};
-    const current=document.getElementById('agent-current');
-    if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
-    const service=document.getElementById('agent-tipo-trans');
-    if(service){
-      service.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';
-      service.value='HAITI A HAITI NatCash';
-    }
-    const op=document.getElementById('agent-operation');
-    if(op){op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';op.value=operation==='Retiro'?'Retiro':'Envío';}
-    const ben=document.getElementById('agent-beneficiario-input');if(ben){ben.value='';ben.readOnly=false;ben.disabled=false;}
-    const benId=document.getElementById('agent-beneficiario-select');if(benId)benId.value='';
-    const amount=document.getElementById('agent-monto');if(amount){amount.value='';amount.readOnly=false;amount.disabled=false;}
-    unlock(modal);
-    try{if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}catch(e){console.warn('Betina cálculo:',e)}
-  }
-
-  window.openTransactionEntry=function(operation){showAgent(operation);};
-
-  const add=document.getElementById('envio-add-btn');
-  if(add){
-    add.removeAttribute('disabled');
-    add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
-    add.style.pointerEvents='auto';
-    add.style.opacity='1';
-    add.onclick=function(e){e.preventDefault();e.stopPropagation();showAgent();return false;};
-  }
-
-  const originalClose=window.closeModal;
-  window.closeModal=function(id){
-    if(id==='agentEnvioModal'){
-      const m=document.getElementById('agentEnvioModal');
-      if(m)m.style.display='none';
-      document.body.style.overflow='';
-      return;
-    }
-    return originalClose.apply(this,arguments);
-  };
-
-  document.addEventListener('click',function(e){
-    const a=e.target?.closest?.('#sidebar-menu a');
-    if(a&&agent()&&String(a.textContent||'').toLowerCase().includes('envíos y retiros')){
-      e.preventDefault();e.stopPropagation();
-      switchView('envios');
-      setTimeout(()=>{unlock(document.getElementById('agentEnvioModal'));},0);
-    }
-  },true);
-
-  document.addEventListener('pointerdown',function(e){
-    const b=e.target?.closest?.('#envio-add-btn');
-    if(b&&agent()){
-      e.preventDefault();e.stopPropagation();
-      showAgent();
-    }
-  },true);
-
-  setTimeout(()=>{if(agent()){const b=document.getElementById('envio-add-btn');if(b){b.disabled=false;b.style.pointerEvents='auto';b.style.opacity='1';}}},100);
-})();
-</script>
-<script id="sendwayo-agent-modal-parent-fix-v3">
-(function(){
-  if(window.__sendwayo_agent_modal_parent_fix_v3)return;
-  window.__sendwayo_agent_modal_parent_fix_v3=true;
-
-  function detachAgentModal(){
-    const modal=document.getElementById('agentEnvioModal');
-    if(!modal)return;
-    if(modal.parentElement && modal.parentElement.id!=='agent-modal-root'){
-      let root=document.getElementById('agent-modal-root');
-      if(!root){
-        root=document.createElement('div');
-        root.id='agent-modal-root';
-        root.style.position='fixed';
-        root.style.inset='0';
-        root.style.zIndex='19999';
-        root.style.pointerEvents='none';
-        document.body.appendChild(root);
-      }
-      root.appendChild(modal);
-    }
-    modal.style.zIndex='20000';
-    modal.style.pointerEvents='auto';
-  }
-
-  function unlock(){
-    const modal=document.getElementById('agentEnvioModal');
-    if(!modal)return;
-    detachAgentModal();
     modal.querySelectorAll('input,select,textarea,button').forEach(el=>{
       el.disabled=false;
       el.removeAttribute('disabled');
@@ -6510,47 +6039,98 @@ img[data-current-brand-logo="true"]{
     if(current){current.disabled=false;current.readOnly=true;}
   }
 
-  const originalOpenTransactionEntry=window.openTransactionEntry;
-  window.openTransactionEntry=function(){
-    if(!(typeof isAgentUser==='function'&&isAgentUser(window.currentUser||currentUser))){
-      if(originalOpenTransactionEntry)return originalOpenTransactionEntry.apply(this,arguments);
-      return;
+  function prepareMenu(){
+    if(!isAgent())return;
+    const menu=document.getElementById('sidebar-menu');
+    if(!menu)return;
+    const link=[...menu.querySelectorAll('a')].find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));
+    if(link){
+      link.innerHTML='<i class="fa-solid fa-right-left"></i> Envíos y Retiros';
+      const li=link.closest('li');if(li)li.style.display='';
+      link.onclick=function(e){e.preventDefault();switchView('envios');return false;};
     }
-    detachAgentModal();
-    unlock();
-    const modal=document.getElementById('agentEnvioModal');
+    menu.querySelectorAll('[data-agent-only-menu]').forEach(x=>x.remove());
+    [...menu.querySelectorAll('li')].forEach(li=>{
+      const txt=String(li.textContent||'').trim().toLowerCase();
+      if((txt==='envío'||txt==='retiro'||txt==='envios'||txt==='retiros')&&!li.querySelector('a[onclick*="switchView(\'envios\')"]'))li.remove();
+    });
+  }
+
+  function openAgent(operation){
+    if(!isAgent())return;
+    const modal=detachModal();
     if(!modal)return;
     const u=window.currentUser||currentUser||{};
     const current=document.getElementById('agent-current');
     if(current)current.value=(u.name||'Betina Lindor')+(u.phone?' ('+u.phone+')':'');
+    const service=document.getElementById('agent-tipo-trans');
+    if(service){
+      service.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';
+      service.value='HAITI A HAITI NatCash';
+    }
     const op=document.getElementById('agent-operation');
-    if(op){op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';op.value='Envío';}
+    if(op){
+      op.innerHTML='<option value="Envío">Envío</option><option value="Retiro">Retiro</option>';
+      op.value=operation==='Retiro'?'Retiro':'Envío';
+    }
+    const ben=document.getElementById('agent-beneficiario-input');if(ben){ben.value='';ben.disabled=false;ben.readOnly=false;}
+    const benId=document.getElementById('agent-beneficiario-select');if(benId)benId.value='';
+    const amount=document.getElementById('agent-monto');if(amount){amount.value='';amount.disabled=false;amount.readOnly=false;}
+    const labels=modal.querySelectorAll('.form-group label');
+    if(labels[0])labels[0].textContent='Servicio';
+    if(labels[1])labels[1].textContent='Agente';
+    if(labels[2])labels[2].textContent='Envío / Retiro';
+    if(labels[3])labels[3].textContent='Beneficiario';
+    if(labels[4])labels[4].textContent='Monto en GDES';
+    unlockModal(modal);
     modal.style.display='flex';
     modal.classList.add('show');
-    modal.style.pointerEvents='auto';
     document.body.style.overflow='hidden';
-    try{calcularAgentEnvio()}catch(e){}
+    try{if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}catch(_){}
+  }
+
+  const baseApply=window.applyRoleVisibility;
+  window.applyRoleVisibility=function(){
+    if(typeof baseApply==='function')baseApply.apply(this,arguments);
+    if(isAgent())setTimeout(prepareMenu,0);
+  };
+
+  const baseShow=window.showAppForUser;
+  window.showAppForUser=function(found){
+    if(typeof baseShow==='function')baseShow.apply(this,arguments);
+    if(found&&typeof isAgentUser==='function'&&isAgentUser(found))setTimeout(prepareMenu,0);
+  };
+
+  const baseOpenEntry=window.openTransactionEntry;
+  window.openTransactionEntry=function(operation){
+    if(isAgent())return openAgent(operation);
+    if(typeof baseOpenEntry==='function')return baseOpenEntry.apply(this,arguments);
+  };
+
+  const baseOpenModal=window.openModal;
+  window.openModal=function(id){
+    if(id==='envioModal'&&isAgent())return openAgent();
+    return typeof baseOpenModal==='function'?baseOpenModal.apply(this,arguments):undefined;
   };
 
   const add=document.getElementById('envio-add-btn');
   if(add){
+    add.onclick=function(e){e.preventDefault();e.stopPropagation();if(isAgent())openAgent();else if(typeof baseOpenEntry==='function')baseOpenEntry();return false;};
     add.disabled=false;
     add.removeAttribute('disabled');
     add.style.pointerEvents='auto';
     add.style.opacity='1';
-    add.onclick=function(e){
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      window.openTransactionEntry();
-      return false;
-    };
   }
 
-  detachAgentModal();
-  unlock();
-  setTimeout(detachAgentModal,0);
-  setTimeout(detachAgentModal,250);
-  setTimeout(detachAgentModal,1000);
+  document.addEventListener('click',function(e){
+    const a=e.target?.closest?.('#sidebar-menu a');
+    if(a&&isAgent()&&/envi[oó]s\s+y\s+retiros/i.test(String(a.textContent||''))){
+      e.preventDefault();
+      switchView('envios');
+    }
+  },true);
+
+  setTimeout(function(){if(isAgent())prepareMenu();},50);
 })();
 </script>\n</body>
 </html>
