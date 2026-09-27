@@ -1651,7 +1651,21 @@ function toggleMobileMenu(){
  sidebar.classList.toggle('active',willOpen);
  if(overlay)overlay.classList.toggle('active',willOpen);
 }
-function renderConciliacion(){const r=window.SENDWAYO_HARDENING?.reconciliation?window.SENDWAYO_HARDENING.reconciliation():null;if(!r)return;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};set('rec-approved',r.approved);set('rec-gross',swMoney(r.gross));set('rec-user-share',swMoney(r.userShare));set('rec-admin-share',swMoney(r.adminShare));set('rec-diff',swMoney(r.adminDifference));const status=document.getElementById('reconciliation-status');if(status)status.innerHTML=(r.missingLedger.length||r.orphanLedger.length||Math.abs(r.adminDifference)>0.02)?'<b>Revisión requerida:</b> existen diferencias que deben ser revisadas por Administración.':'<b>Conciliación cuadrada:</b> no se detectan diferencias en los controles disponibles.';const body=document.querySelector('#reconciliationTable tbody');if(body)body.innerHTML=[['Capital de Administración',swMoney(r.capital),'SEPARADO'],['Operaciones aprobadas',r.approved,'OK'],['Operaciones sin asiento en libro mayor',r.missingLedger.length,r.missingLedger.length?'REVISAR':'OK'],['Asientos sin operación correspondiente',r.orphanLedger.length,r.orphanLedger.length?'REVISAR':'OK'],['Comisión total derivada',swMoney(r.gross),'OK'],['Parte Remitentes',swMoney(r.userShare),'OK'],['Parte Administración derivada',swMoney(r.adminShare),'OK'],['Comisión Administración almacenada',swMoney(r.storedAdmin),Math.abs(r.adminDifference)>0.02?'REVISAR':'OK'],['Diferencia Administración',swMoney(r.adminDifference),Math.abs(r.adminDifference)>0.02?'REVISAR':'OK']].map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x[0])+'</td><td>'+escapeHtml(String(x[1]))+'</td><td>'+escapeHtml(x[2])+'</td></tr>').join('');}
+function renderConciliacion(){
+  const h=window.SENDWAYO_HARDENING?.reconciliation;
+  const r=typeof h==='function'?h():null;
+  if(!r)return;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('rec-approved',r.approved??0);
+  set('rec-gross',typeof swMoney==='function'?swMoney(r.gross):String(r.gross??0));
+  set('rec-user-share',typeof swMoney==='function'?swMoney(r.userShare):String(r.userShare??0));
+  set('rec-admin-share',typeof swMoney==='function'?swMoney(r.adminShare):String(r.adminShare??0));
+  set('rec-diff',typeof swMoney==='function'?swMoney(r.adminDifference):String(r.adminDifference??0));
+  const status=document.getElementById('reconciliation-status');
+  if(status)status.textContent=(Number(r.adminDifference||0)!==0||r.missingLedger?.length||r.orphanLedger?.length)?'Revisión requerida: existen diferencias para revisión administrativa.':'Conciliación cuadrada: no se detectan diferencias.';
+  const body=document.querySelector('#reconciliationTable tbody');
+  if(body)body.innerHTML='<tr><td>1</td><td>Capital de Administración</td><td>'+String(r.capital??0)+'</td><td>SEPARADO</td></tr><tr><td>2</td><td>Operaciones aprobadas</td><td>'+String(r.approved??0)+'</td><td>OK</td></tr><tr><td>3</td><td>Operaciones sin asiento</td><td>'+String(r.missingLedger?.length??0)+'</td><td>REVISAR</td></tr><tr><td>4</td><td>Asientos sin operación</td><td>'+String(r.orphanLedger?.length??0)+'</td><td>REVISAR</td></tr>';
+}
 function switchView(id){
  document.querySelectorAll('.view-section').forEach(x=>x.classList.remove('active'));
  let el=document.getElementById('view-'+id);if(el)el.classList.add('active');
