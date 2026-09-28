@@ -2288,13 +2288,32 @@ async function guardarDeposito(){
  }
 }
 async function guardarRecarga(){
- const _modal=document.getElementById('recargaModal');if(_modal?.dataset.submitting==='1')return;
- if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
- const company=String(document.getElementById('rec-comp')?.value||'').trim();
- const allowed=['Claro','Altice','Viva','Digicel','Moun','Natcom','Activa'];
- if(!allowed.some(x=>x.toLowerCase()===company.toLowerCase()))return toast('Seleccione una compañía oficial de Recargas.','warn');
- let amount=Number(document.getElementById('rec-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('recargaModal'))return;
- const id=await createTransaction('recargas',{company,phone:document.getElementById('rec-num').value},amount);if(!id){resetFormSubmitState('recargaModal');return;}closeModal('recargaModal');toast('Recarga guardada y notificada.')
+ const modal=document.getElementById('recargaModal');
+ if(modal?.dataset.submitting==='1')return;
+ if(!currentUser||currentUser.active===false)return toast('La sesión no está activa. Vuelva a iniciar sesión.','error');
+ if(!canTransact())return toast('Su cuenta no tiene permiso para realizar recargas.','error');
+ const companyRaw=String(document.getElementById('rec-comp')?.value||'').trim();
+ const companyMap={claro:'Claro',altice:'Altice','viva':'Viva',digicel:'Digicel',moun:'Moun',natcom:'Natcom',activa:'Activa'};
+ const company=companyMap[companyRaw.toLowerCase()];
+ if(!company)return toast('Seleccione una compañía oficial de Recargas.','warn');
+ const phone=String(document.getElementById('rec-num')?.value||'').trim();
+ const phoneDigits=phone.replace(/\D/g,'');
+ if(phoneDigits.length<7||phoneDigits.length>15)return toast('Escriba un número de teléfono válido para la recarga.','warn');
+ const amount=Number(document.getElementById('rec-monto')?.value||0);
+ if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto de recarga válido.','warn');
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');
+ if(!await guardBalance(amount))return;
+ if(!beginFormSubmit('recargaModal'))return;
+ try{
+   const id=await createTransaction('recargas',{company,phone},amount);
+   if(!id){resetFormSubmitState('recargaModal');return;}
+   closeModal('recargaModal');
+   toast('Recarga guardada y enviada al Administrador para aprobación.','success');
+ }catch(e){
+   console.warn('guardarRecarga:',e);
+   resetFormSubmitState('recargaModal');
+   toast('No se pudo guardar la recarga. Inténtelo nuevamente.','error');
+ }
 }
 async function guardarPaquetico(){
  const _modal=document.getElementById('paquetikoModal');if(_modal?.dataset.submitting==='1')return;
