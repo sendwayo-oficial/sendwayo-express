@@ -5,6 +5,9 @@
 <meta charset="utf-8">
 <link rel="icon" href="assets/sendwayo-logo-real.jpg?v=20260925">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <title>SENDWAYO EXPRESS - Empresa Integral de Servicios y Envíos</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -464,7 +467,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
   </section>
 
   <section id="view-beneficiarios" class="view-section">
-    <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button id="beneficiario-add-btn" type="button" class="btn btn-primary" onclick="window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN(event)">Agregar Nuevo</button></div>
+    <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button id="beneficiario-add-btn" type="button" class="btn btn-primary" onclick="return window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'gestion')">Agregar Nuevo</button></div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','benefTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','benefTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','benefTable')">CSV</button></div><input class="search-box" placeholder="Buscar por nombre o celular..." oninput="filterTable(this,'benefTable')"></div>
     <div class="table-wrap"><table id="benefTable"><thead><tr><th>N°</th><th>Nombre completo</th><th>Número de celular</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
@@ -553,7 +556,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
     <div class="card admin-only" style="margin-bottom:12px"><div class="card-header"><h3>Acreditar Administración</h3><button class="btn btn-primary btn-sm" onclick="openAdminBalanceModal('admin','set')">Acreditar Administración</button></div><p class="muted">Acredita la administración para ir ajustando los precios según lo conveniente. El monto indicado establece exactamente el balance de la Administración.</p><div style="margin-top:8px"><b>Balance actual:</b> <span id="secret-admin-balance">RD$ 0.00</span></div></div>
     <div class="card admin-only" style="margin-bottom:12px;border-top:5px solid var(--secondary);background:linear-gradient(135deg,#fff,#fffdf3)"><div class="card-header"><div><h3 style="color:#0f2c59">Ajustes de Administración</h3><p class="muted" style="margin-top:4px">Funciones exclusivas del Administrador. Desde aquí puede ajustar el balance y gestionar las comisiones de los Remitentes. Ningún Remitente puede usar estas funciones.</p></div></div><div class="actions" style="gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="openAdminCreditModal('balance')">Acreditar Balance</button><button class="btn btn-success btn-sm" onclick="openAdminCreditModal('bonus')">Acreditar Bono</button><button class="btn btn-warning btn-sm" onclick="openAdminCreditModal('commission')">Ajustar / Acreditar Comisiones</button><button class="btn btn-warning btn-sm" onclick="openAdminCreditModal('commission');setTimeout(()=>acreditarTodaComisionDisponible(),80)">Acreditar Toda la Comisión</button></div></div>
     <div class="card"><div class="card-header"><h3>Información Secreta - Usuarios y Accesos</h3><div class="actions"><button class="btn btn-success btn-sm" onclick="crearAccesosIniciales()">Crear accesos iniciales</button><button class="btn btn-primary btn-sm" onclick="openModal('secretaModal')">Agregar Nuevo</button></div></div>
-    <div class="info-box"><strong>Contraseña inicial:</strong> 12345678. El usuario puede cambiarla desde Mi Perfil. No se guarda en la base de datos.</div><div class="info-box">Visible solamente para el administrador. Las credenciales de acceso se validan mediante Firebase Authentication. La contraseña no debe utilizarse como autorización de Firebase por sí sola. Cada usuario debe existir en Firebase Authentication antes de entrar al sistema.</div><div class="info-box" style="margin-top:10px"><strong>Seguridad Firebase:</strong> UID de autenticación de esta sesión: <code id="firebase-auth-uid">No disponible</code>. Este UID se utiliza para preparar las reglas del administrador.</div><div class="info-box" style="margin-top:10px"><strong>Seguridad Firebase:</strong> esta sesión utiliza autenticación Firebase y este navegador tiene el UID temporal <code id="firebase-auth-uid">No disponible</code>. El UID del administrador debe quedar configurado en Firebase Security Rules. Sin esa autorización, el usuario Administrador no puede operar.</div>
+    <div class="info-box"><strong>Contraseña inicial:</strong> 12345678. El usuario puede cambiarla desde Mi Perfil. No se guarda en la base de datos.</div><div class="info-box">Visible solamente para el administrador. Las credenciales de acceso se validan mediante Firebase Authentication. La contraseña no debe utilizarse como autorización de Firebase por sí sola. Cada usuario debe existir en Firebase Authentication antes de entrar al sistema.</div><div class="info-box" style="margin-top:10px"><strong>Seguridad Firebase:</strong> UID de autenticación de esta sesión: <code id="firebase-auth-uid">No disponible</code>. Este UID se utiliza para preparar las reglas del administrador.</div><div class="info-box" style="margin-top:10px"><strong>Seguridad Firebase:</strong> esta sesión utiliza autenticación Firebase y este navegador tiene el UID temporal <code id="firebase-auth-uid-session">No disponible</code>. El UID del administrador debe quedar configurado en Firebase Security Rules. Sin esa autorización, el usuario Administrador no puede operar.</div>
     <div class="secret-divider" role="separator" aria-label="Separador de Información Secreta"></div><div class="table-toolbar" style="margin-top:12px"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','secTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','secTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','secTable')">CSV</button></div><input class="search-box" placeholder="Buscar usuario, nombre o WhatsApp..." oninput="filterTable(this,'secTable')"></div>
     <div class="table-wrap"><table id="secTable"><thead><tr><th>N°</th><th>Rol</th><th>ID</th><th>Nombre y Apellido</th><th>WhatsApp</th><th>Usuario</th><th>Correo Auth</th><th>Contraseña inicial</th><th>Estado</th><th>Acceso</th><th>Balance</th><th>Comisión disponible</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
@@ -592,7 +595,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div class="form-group"><label>Tipo de Transacción</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option></select></div>
 <div class="form-group"><label>Agente</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="openAgentCreate()" title="Agregar Agente">+</button></div></div>
 <div class="form-group"><label>Envío / Retiro</label><select id="agent-operation" class="form-control" onchange="calcularAgentEnvio()"><option value="Envío">Envío</option><option value="Retiro">Retiro</option></select></div>
-<div class="form-group"><label>Beneficiario</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Escriba nombre o número..." autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="openBeneficiarioModal('agente')" title="Agregar beneficiario">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
+<div class="form-group"><label>Beneficiario</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Escriba nombre o número..." autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="return window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'agente')" title="Agregar beneficiario">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
 <div class="form-group"><label>Monto en Gourdes haitianos (GDES)</label><input id="agent-monto" type="number" min="0" step="1" class="form-control" oninput="calcularAgentEnvio()" placeholder="0"></div>
 </div>
 <div style="background:#f1f5f9;padding:12px;border-radius:7px;margin:12px 0">
@@ -637,9 +640,9 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div class="form-group" style="grid-column:1/-1"><label>Nota / referencia</label><textarea id="cap-note" class="form-control" rows="3" placeholder="Detalle o referencia del movimiento"></textarea></div>
 </div><div class="info-box" style="margin-top:10px">Los movimientos quedan bajo control del Administrador y pueden ser consultados o eliminados desde este módulo.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" onclick="closeModal('capitalModal')">Cerrar</button><button class="btn btn-primary" onclick="saveCapitalMovement()">Guardar movimiento</button></div></div></div><div class="modal" id="detailModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('detailModal')">×</button><div id="detail-content"></div></div></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 window.sendwayoOpenLogin=function(){var w=document.getElementById('welcome-screen'),l=document.getElementById('login-screen');if(w)w.classList.add('hidden');if(l)l.classList.remove('hidden');var u=document.getElementById('login-user');if(u)setTimeout(function(){u.focus()},50)};
 window.sendwayoOpenRequest=function(type){
@@ -651,6 +654,8 @@ window.sendwayoOpenRequest=function(type){
   run();
 };
 window.sendwayoOpenWelcome=function(){var w=document.getElementById('welcome-screen'),l=document.getElementById('login-screen');if(l)l.classList.add('hidden');if(w)w.classList.remove('hidden')};
+window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=function(ev,origen){try{if(ev){ev.preventDefault();ev.stopImmediatePropagation()}var m=document.getElementById('beneficiarioModal');if(!m)return false;m.dataset.origen=origen||'gestion';if(origen==='agente'){var a=document.getElementById('agentEnvioModal');if(a)a.style.zIndex='1100'}m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='12000';document.body.style.overflow='hidden';var n=document.getElementById('ben-nombre'),c=document.getElementById('ben-cel');if(n)n.value='';if(c)c.value='';setTimeout(function(){if(n){n.focus();try{n.select()}catch(_){}}},25)}catch(e){console.warn('SENDWAYO beneficiary open:',e)}return false};
+document.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest?ev.target.closest('#beneficiario-add-btn'):null;if(b){window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(ev,'gestion');return}var p=ev.target&&ev.target.closest?ev.target.closest('#agentEnvioModal .plus-btn'):null;if(p&&/openBeneficiarioModal/.test(p.getAttribute('onclick')||''))window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(ev,'agente')},true);
 window.sendwayoResetAdminPassword=async function(){var status=document.getElementById('login-status');var set=function(m,c){if(status){status.textContent=m;status.className='login-status '+(c||'')}};try{set('Enviando enlace de recuperación…');if(typeof firebase==='undefined'||!firebase.auth)throw new Error('FIREBASE_UNAVAILABLE');var ready=typeof initFirebase==='function'?await initFirebase():false;if(!ready)throw new Error('FIREBASE_UNAVAILABLE');await firebase.auth().sendPasswordResetEmail('sendwayoexpress@gmail.com');set('Enlace enviado al correo sendwayoexpress@gmail.com. Revise también Spam o Correo no deseado.','ok');toast('Se envió el enlace para restablecer la contraseña.','success')}catch(e){console.warn('SENDWAYO password reset:',e);var msg=e.code==='auth/user-not-found'?'La cuenta administrativa no existe en Firebase Authentication.':e.code==='auth/operation-not-allowed'?'El acceso por correo y contraseña no está habilitado en Firebase Authentication.':e.code==='auth/network-request-failed'?'No fue posible comunicarse con Firebase. Revise Internet.':'No se pudo enviar el enlace de recuperación.';set(msg,'error');toast(msg,'error')}};
 window.sendwayoLogin=function(){
   var status=document.getElementById('login-status'),u=document.getElementById('login-user'),p=document.getElementById('login-pass');
@@ -1193,8 +1198,7 @@ function renderRealtimeView(){
    case 'view-perfil':renderProfile();break;
   }
  }catch(e){console.warn('SENDWAYO realtime view:',e)}
- try{if(typeof swRenderGanancias==='function')swRenderGanancias()}catch(_){}
- if(typeof ensureDownloadActions==='function')setTimeout(()=>ensureDownloadActions(),0);
+ try{if(typeof ensureDownloadActions==='function')ensureDownloadActions()}catch(_){}
 }
 /* SENDWAYO NOTIFICATIONS — recepción inmediata y alerta no invasiva */
 function playBell(){
@@ -1699,7 +1703,7 @@ function openBeneficiarioModal(origen='gestion'){
  setTimeout(()=>{ if(nombre)nombre.focus(); },30);
 }
 window.openBeneficiarioModal=openBeneficiarioModal;
-window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=function(ev){
+window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=function(ev){
   try{if(ev){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}}
   catch(_){}
   const modal=document.getElementById('beneficiarioModal');
@@ -2911,18 +2915,21 @@ function renderAccounting(){
 const SENDWAYO_STATUS_CONFIG={beneficiarios:{table:'benefTable',column:4,items:[['Todos',''],['Activos','Activo'],['Inactivos','Inactivo']]},paquetes:{table:'paqTable',column:5,items:[['Todos',''],['Pendiente','Pendiente'],['Aprobado','Aprobado'],['Rechazado','Rechazado'],['No coincide','No coincide']]},remitentes:{table:'remTable',column:5,items:[['Todos',''],['Activos','Activo'],['Inactivos','Inactivo']]},recargas:{table:'recTable',column:4,items:[['Todos',''],['Pendiente','Pendiente'],['Aprobado','Aprobado'],['Rechazado','Rechazado'],['No coincide','No coincide']]},paqueticos:{table:'paqktTable',column:5,items:[['Todos',''],['Pendiente','Pendiente'],['Aprobado','Aprobado'],['Rechazado','Rechazado'],['No coincide','No coincide']]},pagos:{table:'pagoTable',column:4,items:[['Todos',''],['Pendiente','Pendiente'],['Aprobado','Aprobado'],['Rechazado','Rechazado'],['No coincide','No coincide']]},cuentas_depositos:{table:'depTable',column:5,items:[['Todos',''],['Pendiente','Pendiente'],['Aprobado','Aprobado'],['Rechazado','Rechazado'],['No coincide','No coincide']]},mi_cuenta:{table:'accountMoveTable',column:5,items:[['Todos',''],['Pendiente','Pendiente'],['Aprobado','Aprobado'],['Rechazado','Rechazado'],['No coincide','No coincide']]},secretas:{table:'secTable',column:7,items:[['Todos',''],['Activos','Activo'],['Inactivos','Inactivo']]}};const SENDWAYO_STATUS_ACTIVE={};
 function setGenericTableStatus(tableId,column,status,button){SENDWAYO_STATUS_ACTIVE[tableId]=status;const bar=document.querySelector('[data-sendwayo-status-for="'+tableId+'"]');if(bar)bar.querySelectorAll('button').forEach(b=>b.classList.remove('active'));if(button)button.classList.add('active');document.querySelectorAll('#'+tableId+' tbody tr').forEach(tr=>{const value=String(tr.cells[column]?.innerText||'').trim();tr.style.display=!status||value.toLowerCase().includes(status.toLowerCase())?'':'none'})}
 function ensureStandardStatusBars(){Object.entries(SENDWAYO_STATUS_CONFIG).forEach(([view,cfg])=>{const root=document.getElementById('view-'+view),table=document.getElementById(cfg.table);if(!root||!table)return;let bar=root.querySelector('[data-sendwayo-status-for="'+cfg.table+'"]');if(!bar){bar=document.createElement('div');bar.className='status-bar';bar.setAttribute('data-sendwayo-status-for',cfg.table);bar.innerHTML=cfg.items.map((it,i)=>'<button class="btn btn-light btn-sm '+(i===0?'active':'')+'" type="button">'+escapeHtml(it[0])+'</button>').join('');const buttons=[...bar.querySelectorAll('button')];buttons.forEach((b,i)=>b.addEventListener('click',()=>setGenericTableStatus(cfg.table,cfg.column,cfg.items[i][1],b)));const toolbar=root.querySelector('.table-toolbar');if(toolbar)root.querySelector('.card-header')?.after(bar)}const active=SENDWAYO_STATUS_ACTIVE[cfg.table];if(active!==undefined){const idx=Math.max(0,cfg.items.findIndex(it=>it[1]===active));setGenericTableStatus(cfg.table,cfg.column,active,bar.querySelectorAll('button')[idx]||bar.querySelector('button'))}})}
+let __sendwayoRenderQueued=false,__sendwayoRenderFrame=0;
 function renderAll(){
- if(!currentUser)return;
- setTimeout(()=>{
+ if(!currentUser||__sendwayoRenderQueued)return;
+ __sendwayoRenderQueued=true;
+ const run=()=>{
+   __sendwayoRenderQueued=false;__sendwayoRenderFrame=0;
+   if(!currentUser)return;
    try{updateSelectors()}catch(e){}
    try{renderRealtimeView()}catch(e){console.warn('SENDWAYO renderAll:',e)}
-   try{if(typeof swRenderGanancias==='function')swRenderGanancias()}catch(e){console.warn('SENDWAYO Ganancia de hoy:',e)}
-   try{ensureStandardStatusBars()}catch(e){}
+   try{if(!window.__sendwayoStatusBarsReady){ensureStandardStatusBars();window.__sendwayoStatusBarsReady=true}}catch(e){}
    try{renderNotifications()}catch(e){}
-   try{translateInterface()}catch(e){}
    const dt=document.getElementById('header-datetime');if(dt)dt.textContent=new Date().toLocaleString('es-DO');
-   if(typeof ensureDownloadActions==='function')setTimeout(()=>ensureDownloadActions(),0);
- },0);
+ };
+ if(typeof requestAnimationFrame==='function')__sendwayoRenderFrame=requestAnimationFrame(run);
+ else __sendwayoRenderFrame=setTimeout(run,0);
 }
 function renderDashboardNotifications(){
  const box=document.getElementById('dashboard-notifications');if(!box||!currentUser)return;
@@ -3409,8 +3416,7 @@ function updateSelectors(){
  if(currentUser&&!isAdmin()){let inp=document.getElementById('env-remitente-input'),hidden=document.getElementById('env-remitente-select');if(inp){inp.value=(currentUser.phone||'Sin número')+' ('+(currentUser.name||'')+')';inp.disabled=false;inp.placeholder='Escriba nombre o número para buscar'}if(hidden)hidden.value=currentUser.id;const ph=document.getElementById('env-remitente-phone'),doc=document.getElementById('env-remitente-doc');if(ph)ph.value=currentUser.phone||'';if(doc)doc.value=currentUser.doc||''}
  updateEnvioSuggestions('remitente');updateEnvioSuggestions('beneficiario');
 }
-const _renderAll=renderAll;renderAll=function(){updateSelectors();_renderAll()}
-setInterval(()=>{document.getElementById('header-datetime').textContent=new Date().toLocaleString('es-DO');updateSessionUI();if(currentUser&&Date.now()-lastActivity>=SESSION_TTL)cerrarSesion()},1000);
+setInterval(()=>{const dt=document.getElementById('header-datetime');if(dt)dt.textContent=new Date().toLocaleString('es-DO');updateSessionUI();if(currentUser&&Date.now()-lastActivity>=SESSION_TTL)cerrarSesion()},15000);
 let autoFirebaseRefreshTimer=null;
 function startAutoFirebaseRefresh(){if(autoFirebaseRefreshTimer)clearInterval(autoFirebaseRefreshTimer);autoFirebaseRefreshTimer=null;}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&currentUser&&firebaseReady){touch();}});
@@ -5957,33 +5963,3 @@ img[data-current-brand-logo="true"]{
 </body>
 </html>
 
-<script id="sendwayo-beneficiario-button-fallback">
-(function(){
-  function openClean(){
-    var m=document.getElementById('beneficiarioModal');
-    if(!m)return;
-    m.dataset.origen='gestion';
-    m.style.display='flex';
-    m.style.visibility='visible';
-    m.style.opacity='1';
-    m.style.pointerEvents='auto';
-    m.style.zIndex='50000';
-    document.body.style.overflow='hidden';
-    var n=document.getElementById('ben-nombre'),c=document.getElementById('ben-cel');
-    if(n)n.value='';
-    if(c)c.value='';
-    setTimeout(function(){if(n)n.focus()},30);
-  }
-  window.SENDWAYO_OPEN_BENEFICIARIO_FALLBACK=openClean;
-  function handle(ev){
-    var b=ev.target&&ev.target.closest?ev.target.closest('#beneficiario-add-btn'):null;
-    if(!b)return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    openClean();
-  }
-  document.addEventListener('pointerdown',handle,true);
-  document.addEventListener('click',handle,true);
-  document.addEventListener('touchend',handle,{capture:true,passive:false});
-})();
-</script>
