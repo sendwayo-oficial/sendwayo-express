@@ -2100,7 +2100,7 @@ function updateAgentBeneficiarySuggestions(){
  const raw=String(input.value||'').trim();if(!raw){box.innerHTML='';box.style.display='none';return}
  const list=Object.values(state.beneficiaries||{}).filter(x=>x&&x.active!==false&&personMatchesQuery(x,raw)).sort((a,b)=>personName(a).localeCompare(personName(b)));
  if(!list.length){box.innerHTML='';box.style.display='none';return}
- box.innerHTML=list.map(function(b){return '<button type="button" class="env-suggestion env-suggestion-single" onclick="chooseAgentBeneficiary(\\''+escapeHtml(b.id)+"\\')"><b>"+escapeHtml(personPhone(b)||'Sin número')+"</b> <span>("+escapeHtml(personName(b)||'Sin nombre')+")</span></button>"}).join('');
+ box.innerHTML=list.map(function(b){return '<button type="button" class="env-suggestion env-suggestion-single" data-agent-ben-id="'+escapeHtml(b.id)+'" onclick="chooseAgentBeneficiary(this.dataset.agentBenId)"><b>'+escapeHtml(personPhone(b)||'Sin número')+'</b> <span>('+escapeHtml(personName(b)||'Sin nombre')+')</span></button>'}).join('');
  box.style.display='block';
 }
 function chooseAgentBeneficiary(id){
