@@ -6390,6 +6390,144 @@ document.addEventListener('click',function(ev){
   setTimeout(install,1500);
 })();
 </script>
+
+<!-- SENDWAYO AGENT FORM ORDER + BENEFICIARY SUGGESTIONS FINAL V1 -->
+<script id="sendwayo-agent-form-order-beneficiary-final-v1">
+(function(){
+  'use strict';
+  if(window.__sendwayoAgentFormOrderBeneficiaryFinalV1)return;
+  window.__sendwayoAgentFormOrderBeneficiaryFinalV1=true;
+
+  function normText(v){
+    return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  }
+  function digits(v){
+    return String(v||'').replace(/\D/g,'');
+  }
+  function personLabel(b){
+    const phone=typeof personPhone==='function'?personPhone(b):(b?.phone||b?.celular||b?.telefono||'');
+    const name=typeof personName==='function'?personName(b):(b?.name||b?.nombre||'');
+    return {phone:String(phone||''),name:String(name||'')};
+  }
+
+  // Sugerencias robustas: busca por cualquier parte del nombre o del número,
+  // incluso si el usuario escribe el teléfono sin +509, espacios o guiones.
+  window.updateAgentBeneficiarySuggestions=function(){
+    const input=document.getElementById('agent-beneficiario-input');
+    const box=document.getElementById('agent-beneficiario-suggestions');
+    if(!input||!box)return;
+    const q=String(input.value||'').trim();
+    if(!q){box.innerHTML='';box.style.display='none';return;}
+
+    const qText=normText(q);
+    const qDigits=digits(q);
+    const list=Object.values((window.state&&state.beneficiaries)||{})
+      .filter(b=>b&&b.active!==false)
+      .map(b=>({b,...personLabel(b)}))
+      .filter(x=>{
+        const name=normText(x.name);
+        const phone=normText(x.phone);
+        const phoneDigits=digits(x.phone);
+        return (qText && (name.includes(qText)||phone.includes(qText))) ||
+               (qDigits && phoneDigits.includes(qDigits));
+      })
+      .sort((a,b)=>normText(a.name).localeCompare(normText(b.name)))
+      .slice(0,8);
+
+    if(!list.length){
+      box.innerHTML='<div class="env-suggestion">Aucun bénéficiaire correspondant</div>';
+      box.style.display='block';
+      box.style.visibility='visible';
+      box.style.pointerEvents='auto';
+      return;
+    }
+
+    box.innerHTML=list.map(x=>{
+      const id=String(x.b?.id||'').replace(/'/g,"\\'");
+      return '<button type="button" class="env-suggestion" data-agent-ben-id="'+escapeHtml(id)+'"><b>'+
+        escapeHtml(x.phone||'Sans numéro')+'</b> <span>('+escapeHtml(x.name||'Sans nom')+')</span></button>';
+    }).join('');
+    box.style.display='block';
+    box.style.visibility='visible';
+    box.style.pointerEvents='auto';
+  };
+
+  window.chooseAgentBeneficiary=function(id){
+    const b=(window.state&&state.beneficiaries)?state.beneficiaries[id]:null;
+    const input=document.getElementById('agent-beneficiario-input');
+    const sel=document.getElementById('agent-beneficiario-select');
+    const box=document.getElementById('agent-beneficiario-suggestions');
+    if(!b||!input||!sel)return;
+    const x=personLabel(b);
+    sel.value=id;
+    input.value=(x.phone||'Sans numéro')+' ('+(x.name||'Sans nom')+')';
+    input.dataset.personId=id;
+    if(box){box.innerHTML='';box.style.display='none';}
+  };
+
+  document.addEventListener('click',function(ev){
+    const btn=ev.target&&ev.target.closest?ev.target.closest('[data-agent-ben-id]'):null;
+    if(btn){
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.chooseAgentBeneficiary(btn.getAttribute('data-agent-ben-id'));
+    }
+  },true);
+
+  function moveAgentBlocks(){
+    const modal=document.getElementById('agentEnvioModal');
+    if(!modal)return;
+    const content=modal.querySelector('.modal-content');
+    if(!content)return;
+
+    const calcIds=['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'];
+    const calc=calcIds.map(id=>document.getElementById(id)).find(Boolean)?.closest('div[style*="background"]');
+    const saveBtn=document.querySelector('#agentEnvioModal button.btn-primary[onclick*="guardarAgentEnvio"]');
+    const actions=saveBtn?.parentElement;
+    const tariffHost=document.getElementById('agent-hti-gdes-tariffs');
+    const staticTable=document.getElementById('agentHtiNatcashTable')?.closest('.table-wrap');
+
+    // Orden obligatorio:
+    // formulario -> cálculo (neto/comisión/total/recibir) -> Enregistrer -> tablas.
+    if(calc && actions && actions.parentElement===content){
+      content.insertBefore(calc,actions);
+    }
+    if(actions){
+      if(tariffHost) actions.parentNode.insertBefore(tariffHost,actions.nextSibling);
+      if(staticTable){
+        const anchor=tariffHost||actions;
+        anchor.parentNode.insertBefore(staticTable,anchor.nextSibling);
+      }
+    }
+
+    if(calc){
+      calc.style.margin='12px 0';
+      calc.style.order='0';
+    }
+  }
+
+  document.addEventListener('input',function(ev){
+    if(ev.target?.id==='agent-beneficiario-input'){
+      const sel=document.getElementById('agent-beneficiario-select');
+      if(sel)sel.value='';
+      window.updateAgentBeneficiarySuggestions();
+    }
+  },true);
+  document.addEventListener('focusin',function(ev){
+    if(ev.target?.id==='agent-beneficiario-input')window.updateAgentBeneficiarySuggestions();
+  },true);
+  document.addEventListener('change',function(ev){
+    if(ev.target?.id==='agent-operation'||ev.target?.id==='agent-monto')setTimeout(moveAgentBlocks,0);
+  },true);
+  document.addEventListener('click',function(ev){
+    if(ev.target?.closest?.('#agentEnvioModal'))setTimeout(moveAgentBlocks,0);
+  },true);
+
+  setTimeout(moveAgentBlocks,200);
+  setTimeout(moveAgentBlocks,700);
+  setTimeout(moveAgentBlocks,1500);
+})();
+</script>
 </body>
 </html>
 
