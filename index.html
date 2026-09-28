@@ -1672,11 +1672,11 @@ function applyRoleVisibility(){
  document.querySelectorAll('.admin-only').forEach(e=>{if(e.classList.contains('view-section'))return;e.style.setProperty('display',admin?(e.classList.contains('modal')?'flex':'block'):'none','important')});
  document.querySelectorAll('.remitente-only').forEach(e=>e.style.display=admin?'none':'');
  const roleLabel=document.getElementById('sidebar-role-label');if(roleLabel)roleLabel.textContent=agent?'AGENTE':(admin?'ADMINISTRADOR':String(currentUser?.role||'REMITENTE').toUpperCase());
- const envLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));if(envLink)envLink.innerHTML=agent?'<i class="fa-solid fa-right-left"></i> Envíos y Retiros':'<i class="fa-solid fa-paper-plane"></i> Envíos (Transacciones Globales)';
+ const envLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('envios')"));if(envLink)envLink.innerHTML=agent?'<i class="fa-solid fa-right-left"></i> Envois et retraits':'<i class="fa-solid fa-paper-plane"></i> Envíos (Transacciones Globales)';
  const addBtn=document.getElementById('envio-add-btn');if(addBtn){addBtn.setAttribute('onclick',agent?'openTransactionEntry();return false;':'openTransactionEntry()');}
  const remLink=Array.from(document.querySelectorAll('#sidebar-menu a')).find(a=>String(a.getAttribute('onclick')||'').includes("switchView('remitentes')"))?.closest('li');if(remLink)remLink.style.display=agent?'none':(admin?'':'');
- const view=document.getElementById('view-envios'),title=view?.querySelector('.card-header h3'),add=document.getElementById('envio-add-btn');if(title)title.textContent=agent?'Registro de Envío / Retiro':'Gestión de Envíos y Transacciones Globales';if(add)add.innerHTML='<i class="fa-solid fa-plus"></i> Agregar Nuevo';
- if(agent){const table=document.getElementById('enviosTable');if(table){const hs=table.querySelectorAll('thead th');['N°','Tipo','Agente','Envío / Retiro','Beneficiario','Monto HTG','Comisión HTG','Monto Total HTG','Estado','Comprobante','Acciones'].forEach((v,i)=>{if(hs[i])hs[i].textContent=v})}}
+ const view=document.getElementById('view-envios'),title=view?.querySelector('.card-header h3'),add=document.getElementById('envio-add-btn');if(title)title.textContent=agent?'Envois et retraits':'Gestión de Envíos y Transacciones Globales';if(add)add.innerHTML=agent?'<i class="fa-solid fa-plus"></i> Ajouter une opération':'<i class="fa-solid fa-plus"></i> Agregar Nuevo';
+ if(agent){const table=document.getElementById('enviosTable');if(table){const hs=table.querySelectorAll('thead th');['N°','Type','Agent','Opération','Bénéficiaire','Montant GDES','Frais GDES','Total GDES','Statut','Reçu','Actions'].forEach((v,i)=>{if(hs[i])hs[i].textContent=v})}}
 }
 function closeMobileMenu(){
  const sidebar=document.getElementById('app-sidebar'),overlay=document.getElementById('sidebar-overlay');
@@ -3337,12 +3337,19 @@ function renderEnvios(){
  let rows=newestFirst(state.envios).filter(r=>isAdmin()||r.userId===currentUser.id).filter(r=>statusFilter==='Todos'||r.status===statusFilter);
  const body=document.querySelector('#enviosTable tbody');if(!body)return;
  if(isAgentUser(currentUser)){
+   const agentStatus=function(s){const v=String(s||'Pendiente');return v==='Pendiente'?'EN ATTENTE':v==='Aprobado'?'APPROUVÉ':v==='Rechazado'?'REFUSÉ':v==='No coincide'?'NON CONFORME':v};
+   const agentActions=function(r){
+     const id=escapeHtml(r.id||'');
+     let a='<button class="btn btn-light btn-sm" onclick="viewRecord(\'envios\',\''+id+'\')">Voir</button>';
+     if(String(r.status||'').trim().toLowerCase()==='aprobado')a+='<button class="btn btn-success btn-sm" onclick="return window.SENDWAYO_FORCE_RECEIPT(\'envios\',\''+id+'\',event)">REÇU</button>';
+     return '<div class="actions">'+a+'</div>';
+   };
    body.innerHTML=rows.map((r,i)=>{
      const b=state.beneficiaries[r.beneficiarioId],benName=r.beneficiarioNombre||r.beneficiario||b?.name||'',benPhone=r.beneficiarioPhone||b?.phone||'';
      const agentName=r.agentName||currentUser.name||'',agentId=r.agentStaffId||currentUser.staffId||currentUser.id;
-     const amount=Number(r.amountHTG??r.amount??0),commission=Number(r.commissionHTG??r.commission??0),total=Number(r.totalHTG??r.total??(amount+commission));
-     return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r.type||'')+'</td><td><b>'+escapeHtml(agentId)+'</b><br><small>('+escapeHtml(agentName)+')</small></td><td>'+escapeHtml(r.operation||'Envío')+'</td><td><b>'+escapeHtml(benName)+'</b><br><small>'+escapeHtml(benPhone)+'</small></td><td>'+amount.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' HTG</td><td>'+commission.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' HTG</td><td>'+total.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' HTG</td><td><span class="status '+statusClass(r.status||'Pendiente')+'">'+escapeHtml(r.status||'Pendiente')+'</span></td><td data-record-id="'+r.id+'">'+actionButtons('envios',r.id,r.status)+'</td></tr>';
-   }).join('')||'<tr><td colspan="11" class="muted">No hay registros.</td></tr>';
+     const amount=Number(r.amountHTG??r.amount??0),commission=Number(r.feeHTG??r.tariffHTG??r.commissionHTG??r.fee??r.commission??0),total=Number(r.totalDebit??r.totalHTG??r.total??(amount+commission));
+     return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r.type||'')+'</td><td><b>'+escapeHtml(agentId)+'</b><br><small>('+escapeHtml(agentName)+')</small></td><td>'+escapeHtml(r.operation||'Transfert')+'</td><td><b>'+escapeHtml(benName)+'</b><br><small>'+escapeHtml(benPhone)+'</small></td><td>'+amount.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES</td><td>'+commission.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES</td><td>'+total.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES</td><td><span class="status '+statusClass(r.status||'Pendiente')+'">'+escapeHtml(agentStatus(r.status))+'</span></td><td data-record-id="'+r.id+'">'+agentActions(r)+'</td></tr>';
+   }).join('')||'<tr><td colspan="11" class="muted">Aucun enregistrement.</td></tr>';
    return;
  }
  body.innerHTML=rows.map((r,i)=>{
@@ -6343,7 +6350,7 @@ document.addEventListener('click',function(ev){
     const label=amount?.closest('.form-group')?.querySelector('label');
     if(label)label.textContent='Montant en gourdes haïtiennes (GDES) — GDES UNIQUEMENT';
     m.querySelectorAll('*').forEach(el=>{
-      if(el.children.length===0 && /RD\\$/i.test(el.textContent||'')) el.textContent=(el.textContent||'').replace(/RD\\$/gi,'GDES');
+      if(el.children.length===0 && /RD\$/gi/i.test(el.textContent||'')) el.textContent=(el.textContent||'').replace(/RD\$/gi/gi,'GDES');
     });
   }
 
@@ -6432,11 +6439,11 @@ document.addEventListener('click',function(ev){
     if(label)label.textContent='Montant en gourdes haïtiennes (GDES) — GDES UNIQUEMENT';
     ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(function(id){
       const el=document.getElementById(id);
-      if(el && /RD\\$/i.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/RD\\$/gi,'GDES');
+      if(el && /RD\$/gi/i.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/RD\$/gi/gi,'GDES');
     });
     m.querySelectorAll('*').forEach(function(el){
-      if(el.children.length===0 && /RD\\$/i.test(el.textContent||'')){
-        el.textContent=(el.textContent||'').replace(/RD\\$/gi,'GDES');
+      if(el.children.length===0 && /RD\$/gi/i.test(el.textContent||'')){
+        el.textContent=(el.textContent||'').replace(/RD\$/gi/gi,'GDES');
       }
     });
     if(typeof renderBusinessTables==='function')renderBusinessTables();
@@ -6708,6 +6715,62 @@ document.addEventListener('click',function(ev){
 
   setTimeout(bindAgentBeneficiaryButton,300);
   setTimeout(bindAgentBeneficiaryButton,1000);
+})();
+</script>
+
+<script id="sendwayo-agent-french-gdes-lock-final-v3">
+(function(){
+  'use strict';
+  if(window.__sendwayoAgentFrenchGdesLockFinalV3)return;
+  window.__sendwayoAgentFrenchGdesLockFinalV3=true;
+  function agent(){return typeof isAgentUser==='function'&&isAgentUser(currentUser)}
+  function cleanText(root){
+    if(!root)return;
+    root.querySelectorAll('*').forEach(function(el){
+      if(el.children.length===0&&/RD\$/i.test(el.textContent||''))el.textContent=String(el.textContent||'').replace(/RD\$/gi,'GDES');
+    });
+  }
+  function apply(){
+    if(!agent())return;
+    var view=document.getElementById('view-envios'),m=document.getElementById('agentEnvioModal');
+    var link=Array.from(document.querySelectorAll('#sidebar-menu a')).find(function(a){return String(a.getAttribute('onclick')||'').includes("switchView('envios')")});
+    if(link)link.innerHTML='<i class="fa-solid fa-right-left"></i> Envois et retraits';
+    var title=view&&view.querySelector('.card-header h3');if(title)title.textContent='Envois et retraits';
+    var add=document.getElementById('envio-add-btn');if(add){add.innerHTML='<i class="fa-solid fa-plus"></i> Ajouter une opération';add.setAttribute('onclick','openTransactionEntry();return false;')}
+    var table=document.getElementById('enviosTable');
+    if(table){['N°','Type','Agent','Opération','Bénéficiaire','Montant GDES','Frais GDES','Total GDES','Statut','Reçu','Actions'].forEach(function(v,i){var th=table.querySelectorAll('thead th')[i];if(th)th.textContent=v});cleanText(table)}
+    if(m){
+      var h=m.querySelector('h3');if(h)h.textContent='Haïti → Haïti — Dépôt / Transfert / Retrait (GDES)';
+      var labels=m.querySelectorAll('.form-group label');
+      var map=['Type de transaction','Agent','Opération','Bénéficiaire','Montant en gourdes haïtiennes (GDES)'];
+      labels.forEach(function(l,i){if(map[i])l.textContent=map[i]});
+      var op=document.getElementById('agent-operation');
+      if(op){op.innerHTML='<option value="Dépôt">Dépôt</option><option value="Transfert">Transfert</option><option value="Retrait">Retrait</option>';}
+      var type=document.getElementById('agent-tipo-trans');
+      if(type)type.innerHTML='<option value="HAITI A HAITI NatCash">Haïti → Haïti — NatCash</option><option value="HAITI A HAITI MonCash">Haïti → Haïti — MonCash</option>';
+      var bi=document.getElementById('agent-beneficiario-input');if(bi)bi.placeholder='Saisissez le nom ou le numéro…';
+      var save=m.querySelector('button.btn-primary[onclick*="guardarAgentEnvio"]');if(save)save.textContent='Enregistrer l’opération';
+      var close=m.querySelector('button.btn-light');if(close)close.textContent='Fermer';
+      cleanText(m);
+      ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(function(id){var e=document.getElementById(id);if(e&&/RD\$/i.test(e.textContent||''))e.textContent=e.textContent.replace(/RD\$/gi,'GDES')});
+    }
+    var ben=document.getElementById('beneficiarioModal');
+    if(ben&&ben.dataset.origen==='agente'){
+      var bh=ben.querySelector('h3');if(bh)bh.textContent='Ajouter un bénéficiaire';
+      var bl=ben.querySelectorAll('label');bl.forEach(function(l,i){if(i===0)l.textContent='Nom et prénom';if(i===1)l.textContent='Téléphone / WhatsApp'});
+      var bs=ben.querySelector('#ben-save-btn');if(bs)bs.textContent='Enregistrer le bénéficiaire';
+      var bc=ben.querySelector('.btn.btn-light');if(bc)bc.textContent='Fermer';
+      cleanText(ben);
+    }
+  }
+  var oldApply=window.applyRoleVisibility;
+  if(typeof oldApply==='function'&&!oldApply.__agentFrenchGdes){
+    var wrapped=function(){var out=oldApply.apply(this,arguments);setTimeout(apply,0);return out};wrapped.__agentFrenchGdes=true;window.applyRoleVisibility=wrapped;
+  }
+  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#enviosTable,#agentEnvioModal,#beneficiarioModal,#envio-add-btn'))setTimeout(apply,0)},true);
+  document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#beneficiarioModal'))setTimeout(apply,0)},true);
+  document.addEventListener('change',function(e){if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#beneficiarioModal'))setTimeout(apply,0)},true);
+  setTimeout(apply,250);setTimeout(apply,1000);setTimeout(apply,2000);
 })();
 </script>
 </body>
