@@ -6195,6 +6195,179 @@ document.addEventListener('click',function(ev){
   setTimeout(enforce,300); setTimeout(enforce,1200);
 })();
 </script>
+<!-- SENDWAYO AGENT HAITI GDES FINAL BUSINESS RULES V1 -->
+<script id="sendwayo-agent-haiti-gdes-final-business-rules-v1">
+(function(){
+  'use strict';
+  if(window.__sendwayoAgentHaitiGdesFinalV1)return;
+  window.__sendwayoAgentHaitiGdesFinalV1=true;
+
+  const TRANSFER=[
+    [20,99,0],[100,249,0],[250,499,0],[500,999,6],
+    [1000,1999,18],[2000,3999,25],[4000,7999,35],
+    [8000,11999,54],[12000,19999,63],[20000,39999,68],
+    [40000,59999,90],[60000,74999,108],[75000,99999,115]
+  ];
+  const WITHDRAW=[
+    [20,99,6],[100,249,12],[250,499,15],[500,999,28],
+    [1000,1999,46],[2000,3999,81],[4000,7999,130],
+    [8000,11999,248],[12000,19999,342],[20000,39999,576],
+    [40000,59999,945],[60000,74999,1260],[75000,99999,1440]
+  ];
+
+  function key(op){
+    const s=String(op||'').trim().toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+    if(s.startsWith('deposito'))return 'DEPOSITO';
+    if(s.startsWith('retiro'))return 'RETIRO';
+    return 'ENVIO';
+  }
+  function fee(amount,op){
+    const n=Math.floor(Number(amount||0));
+    if(!Number.isFinite(n)||n<20||n>99999)return null;
+    if(key(op)==='DEPOSITO')return 0;
+    const row=(key(op)==='RETIRO'?WITHDRAW:TRANSFER).find(r=>n>=r[0]&&n<=r[1]);
+    return row?row[2]:null;
+  }
+  function isAgentHaiti(){
+    return !!(typeof isAgentUser==='function' && isAgentUser(currentUser));
+  }
+  function isHaitiType(type){
+    return /HAITI\\s*A\\s*HAITI/i.test(String(type||''));
+  }
+  function money(n){
+    return typeof htgMoney==='function' ? htgMoney(Number(n||0)) : (Number(n||0).toLocaleString('fr-FR')+' GDES');
+  }
+
+  // Natcash must be displayed before MonCash and both use the same Haiti tariff.
+  function forceProviderOrder(){
+    const sel=document.getElementById('agent-tipo-trans');
+    if(!sel)return;
+    const opts=[...sel.options];
+    opts.sort((a,b)=>{
+      const an=/natcash/i.test(a.textContent||a.value||'')?0:/moncash/i.test(a.textContent||a.value||'')?1:2;
+      const bn=/natcash/i.test(b.textContent||b.value||'')?0:/moncash/i.test(b.textContent||b.value||'')?1:2;
+      return an-bn;
+    });
+    opts.forEach(o=>sel.appendChild(o));
+  }
+
+  function renderBusinessTables(){
+    const host=document.getElementById('agent-hti-gdes-tariffs');
+    if(!host)return;
+    host.innerHTML=
+      '<div class="info-box" style="margin-top:10px"><b>AGENTE · HAITÍ → HAITÍ · SOLO GDES</b><br>NatCash y MonCash utilizan exactamente esta estructura de tarifas.</div>'+
+      '<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th colspan="3">1. Dépôt (Depósitos) — GDES</th></tr><tr><th>Monto</th><th>Tarifa</th><th>Regla</th></tr></thead><tbody>'+
+      '<tr><td>20 – 99,999 GDES</td><td>0 GDES</td><td>Gratuit (Gratis)</td></tr></tbody></table></div>'+
+      '<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th colspan="2">2. Transfert d’argent — GDES</th></tr><tr><th>Monto en Gourdes</th><th>Coste en Gourdes</th></tr></thead><tbody>'+
+      TRANSFER.map(r=>'<tr><td>'+r[0].toLocaleString()+' – '+r[1].toLocaleString()+' GDES</td><td>'+r[2].toLocaleString()+' GDES</td></tr>').join('')+
+      '</tbody></table></div>'+
+      '<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th colspan="2">3. Retrait — GDES</th></tr><tr><th>Monto en Gourdes</th><th>Coste en Gourdes</th></tr></thead><tbody>'+
+      WITHDRAW.map(r=>'<tr><td>'+r[0].toLocaleString()+' – '+r[1].toLocaleString()+' GDES</td><td>'+r[2].toLocaleString()+' GDES</td></tr>').join('')+
+      '</tbody></table></div>'+
+      '<div class="field-hint" style="margin-top:10px">Le montant des frais et de la TCA seront automatiquement déduits de votre balance.</div>';
+  }
+
+  function enforceVisible(){
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    forceProviderOrder();
+    renderBusinessTables();
+    const title=m.querySelector('h3');
+    if(title)title.textContent='Haití a Haití — Depósito / Envío / Retiro (GDES)';
+    const op=document.getElementById('agent-operation');
+    if(op){
+      if(![...op.options].some(o=>o.value==='Depósito')){
+        const o=document.createElement('option');o.value='Depósito';o.textContent='Depósito';op.insertBefore(o,op.firstChild);
+      }
+      if(op.options[0]?.value!=='Depósito')op.insertBefore([...op.options].find(o=>o.value==='Depósito'),op.firstChild);
+    }
+    const amount=document.getElementById('agent-monto');
+    const label=amount?.closest('.form-group')?.querySelector('label');
+    if(label)label.textContent='Monto en Gourdes haitianos (GDES) — SOLO GDES';
+    m.querySelectorAll('*').forEach(el=>{
+      if(el.children.length===0 && /RD\\$/i.test(el.textContent||'')) el.textContent=(el.textContent||'').replace(/RD\\$/gi,'GDES');
+    });
+  }
+
+  window.calcularAgentEnvio=function(){
+    if(!isAgentHaiti())return;
+    const amount=Number(document.getElementById('agent-monto')?.value||0);
+    const operation=document.getElementById('agent-operation')?.value||'Depósito';
+    const k=key(operation), f=fee(amount,operation);
+    const valid=f!==null;
+    const debit=k==='DEPOSITO'?amount:amount+(valid?f:0);
+    const receive=k==='DEPOSITO'?amount:amount;
+    const A=document.getElementById('agent-calc-monto');
+    const B=document.getElementById('agent-calc-comision');
+    const T=document.getElementById('agent-calc-total');
+    const R=document.getElementById('agent-calc-recibir');
+    const G=document.getElementById('agent-beneficiario-group');
+    if(A)A.textContent=money(amount);
+    if(B)B.textContent=money(valid?f:0);
+    if(T)T.textContent=money(valid?debit:0);
+    if(R)R.textContent=money(valid?receive:0);
+    if(G)G.style.display=k==='DEPOSITO'?'none':'';
+    const btn=document.querySelector('#agentEnvioModal button.btn-primary');
+    if(btn)btn.textContent=k==='DEPOSITO'?'Registrar depósito':'Registrar operación';
+    renderBusinessTables();
+    enforceVisible();
+  };
+
+  window.guardarAgentEnvio=async function(){
+    const modal=document.getElementById('agentEnvioModal');
+    if(modal?.dataset.submitting==='1')return;
+    if(!isAgentHaiti())return toast('Esta pantalla es exclusiva del Agente.','error');
+    const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash';
+    if(!isHaitiType(type))return toast('Esta operación de Agente debe ser Haití a Haití.','warn');
+    const operation=document.getElementById('agent-operation')?.value||'Depósito';
+    const k=key(operation);
+    const amount=Number(document.getElementById('agent-monto')?.value||0);
+    const benId=document.getElementById('agent-beneficiario-select')?.value||'';
+    const f=fee(amount,operation);
+    if(!Number.isFinite(amount)||amount<20||amount>99999||f===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
+    if(k!=='DEPOSITO'&&!benId)return toast('Seleccione un beneficiario válido.','warn');
+    const ben=benId?state.beneficiaries?.[benId]:null;
+    if(k!=='DEPOSITO'&&!ben)return toast('Seleccione un beneficiario válido.','warn');
+    const balanceDelta=k==='DEPOSITO'?amount:-(amount+f);
+    if(!beginFormSubmit('agentEnvioModal'))return;
+    try{
+      const id=await createTransaction('envios',{
+        type,route:type,operation,operationKey:k,currency:'HTG',balanceCurrency:'HTG',
+        amountHTG:amount,commissionHTG:0,totalHTG:amount,feeHTG:f,tariffHTG:f,
+        agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,
+        beneficiarioId:benId,beneficiario:ben?personName(ben):'',beneficiarioNombre:ben?personName(ben):'',
+        beneficiarioPhone:ben?personPhone(ben):'',net:amount,total:amount,totalDebit:k==='DEPOSITO'?amount:amount+f,
+        balanceDebit:Math.abs(balanceDelta),destination:amount,fee:f,commission:0,commissionTotal:0,
+        accountingType:k==='DEPOSITO'?'AGENT_DEPOSITO_GDES':'AGENT_HAITI_GDES',
+        agentOperationKey:k,agentBalanceDelta:balanceDelta,agentTariffOnly:true,
+        agentCurrencyOnly:'GDES',platformFeeDeductedFromBalance:k!=='DEPOSITO'
+      },amount);
+      if(!id)return;
+      closeModal('agentEnvioModal');
+      toast((k==='DEPOSITO'?'Depósito':k==='RETIRO'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE. Todo en GDES; tarifa: '+money(f)+'.','success');
+    }finally{resetFormSubmitState('agentEnvioModal')}
+  };
+
+  function install(){
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    let host=document.getElementById('agent-hti-gdes-tariffs');
+    if(!host){
+      host=document.createElement('div');host.id='agent-hti-gdes-tariffs';
+      const anchor=document.getElementById('agent-beneficiario-group')||document.getElementById('agent-monto')?.closest('.form-group');
+      if(anchor)anchor.parentNode.insertBefore(host,anchor);
+    }
+    enforceVisible();
+    document.getElementById('agent-operation')?.addEventListener('change',window.calcularAgentEnvio);
+    document.getElementById('agent-monto')?.addEventListener('input',window.calcularAgentEnvio);
+  }
+  document.addEventListener('click',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
+  document.addEventListener('change',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
+  document.addEventListener('input',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
+  setTimeout(install,400);
+  setTimeout(install,1500);
+})();
+</script>
 </body>
 </html>
 
