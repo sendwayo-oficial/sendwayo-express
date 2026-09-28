@@ -1594,9 +1594,7 @@ async function loadAuthorizedState(authUser){
    }
    if(Object.keys(officialBankPatch).length)try{await root.update(officialBankPatch);Object.entries(officialBankPatch).forEach(([p,v])=>{const id=p.split('/')[1];state.accounts[id]=v})}catch(e){console.warn('No se pudieron restaurar las cuentas bancarias oficiales:',e)}
    ensureSeedData();
-   await ensureBetinaLindorAgent();
-ensureHeraceFleuranvilAgent();
-   await ensureUniqueAgentIdentity();
+   /* legacy agent seeding disabled */
    mergeFinancialLedgerIntoState();
    lastSyncedState=cloneState(state);
    attachRealtimeListeners();
@@ -1838,7 +1836,7 @@ function owner(){return currentUser}
 function userById(id){return state.users[id]||{}}
 function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').trim().toLowerCase()==='administrador' || String(currentUser.role||'').trim().toLowerCase()==='admin' || String(currentUser.username||'').trim().toLowerCase()==='admin' || String(currentUser.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com')}
 function isAdminUser(user){const u=user||{};return u.id==='admin'||String(u.role||'').trim().toLowerCase()==='administrador'||String(u.username||'').trim().toLowerCase()==='admin'||String(u.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com'}
-function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const staff=String(u.staffId||'').trim().toUpperCase();const number=String(u.agentNumber||u.staffNumber||u.numero||'').trim();const name=normalizeSearchText(u.name||u.nombre||u.fullName||'');return u.agentKey==='BETINA_LINDOR'||u.id==='agent-betina-lindor'||String(u.username||'').toLowerCase()==='betina.lindor'||u.agentKey==='HERACE_FLEURANVIL'||u.id==='agent-herace-fleuranvil'||String(u.username||'').toLowerCase()==='heracefleuranvil@gmail.com'||u.id==='4'||staff==='4'||staff==='ID00000004'||number==='4'}
+function isAgentUser(userOrId){return false}
 function isManagedUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return !!u&&(['remitente','remitentes'].includes(role)||isAgentUser(u))}
 function isOperationalUser(userOrId){return isAdminUser(userOrId)||isManagedUser(userOrId)}
 async function ensureHeraceFleuranvilAgent(){
@@ -2550,7 +2548,15 @@ async function setTransactionStatus(collection,id,status){
  if(!r)return toast('No se encontró la operación.','error');
  if(String(r.status||'').toLowerCase()!=='pendiente')return toast('Esta operación ya fue procesada.','warn');
  let reviewReason='';if(status!=='Aprobado'){reviewReason=prompt('Escriba el motivo obligatorio para '+status+':',r.reviewReason||'')?.trim()||'';if(!reviewReason)return toast('Debe escribir un motivo.','warn')}
- const u=state.users?.[r.userId];if(!u)return toast('No se encontró el usuario de la operación.','error');
+ let u=state.users?.[r.userId];
+  if(!u){
+    try{
+      const us=await firebase.database().ref(DB_PATH+'/users/'+r.userId).once('value');
+      u=us.val();
+      if(u)state.users[r.userId]=u;
+    }catch(e){console.warn('Carga de remitente para aprobación:',e)}
+  }
+  if(!u)return toast('No se encontró el usuario de la operación.','error');
  const logicalCollection=sourceCollection==='transacciones'?swTipoTransaccion(r,collection):sourceCollection,base=DB_PATH+'/'+sourceCollection+'/'+id;
  if(status==='Aprobado'){
    const amount=Number(r.amount??r.monto??0),commission=Number(r.commissionTotal??r.commission??r.comision??(amount*commissionRateFor(logicalCollection,r))),agent=isAgentUser(u);
