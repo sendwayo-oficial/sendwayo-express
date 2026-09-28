@@ -6528,6 +6528,95 @@ document.addEventListener('click',function(ev){
   setTimeout(moveAgentBlocks,1500);
 })();
 </script>
+<script id="sendwayo-agent-single-screen-final-v1">
+(function(){
+  if(window.__sendwayoAgentSingleScreenFinalV1)return;
+  window.__sendwayoAgentSingleScreenFinalV1=true;
+
+  function hideNonAgentScreens(){
+    ['envioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal','requestModal','cuentaModal'].forEach(function(id){
+      var m=document.getElementById(id);
+      if(m && m.id!=='agentEnvioModal' && m.id!=='beneficiarioModal'){
+        m.dataset.swAgentHidden='1';
+        m.style.display='none';
+        m.style.visibility='hidden';
+        m.style.pointerEvents='none';
+      }
+    });
+  }
+
+  function restoreNonAgentScreens(){
+    document.querySelectorAll('.modal[data-sw-agent-hidden="1"]').forEach(function(m){
+      delete m.dataset.swAgentHidden;
+      m.style.display='';
+      m.style.visibility='';
+      m.style.pointerEvents='';
+    });
+  }
+
+  window.SENDWAYO_OPEN_AGENT_BENEFICIARY=function(ev){
+    try{
+      if(ev){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}
+      hideNonAgentScreens();
+      var agent=document.getElementById('agentEnvioModal');
+      var modal=document.getElementById('beneficiarioModal');
+      if(!modal)return false;
+      modal.dataset.origen='agente';
+      modal.dataset.swAgentChild='1';
+      var title=modal.querySelector('h3');
+      if(title)title.textContent='Ajouter un bénéficiaire — Agent';
+      var hint=modal.querySelector('.field-hint');
+      if(hint)hint.textContent='Haïti → Haïti · Bénéficiaire en GDES. Aucun montant en RD$ ne s’affiche dans le module Agent.';
+      var save=document.getElementById('ben-save-btn');
+      if(save)save.textContent='Enregistrer le bénéficiaire';
+      var close=modal.querySelector('.btn.btn-light');
+      if(close)close.textContent='Fermer';
+      if(agent)agent.style.zIndex='1100';
+      modal.style.display='flex';
+      modal.style.visibility='visible';
+      modal.style.opacity='1';
+      modal.style.pointerEvents='auto';
+      modal.style.zIndex='12000';
+      document.body.style.overflow='hidden';
+      var n=document.getElementById('ben-nombre'),p=document.getElementById('ben-cel');
+      if(n)n.value='';
+      if(p)p.value='';
+      setTimeout(function(){if(n){n.focus();try{n.select()}catch(_){}}},25);
+    }catch(e){console.warn('Agent beneficiary screen:',e)}
+    return false;
+  };
+
+  function bindAgentBeneficiaryButton(){
+    var b=document.querySelector('#agentEnvioModal button[onclick*="SENDWAYO_OPEN_BENEFICIARIO_SAFE"]');
+    if(b && b.dataset.swAgentSingle!=='1'){
+      b.dataset.swAgentSingle='1';
+      b.setAttribute('onclick','return window.SENDWAYO_OPEN_AGENT_BENEFICIARY(event)');
+    }
+  }
+
+  document.addEventListener('click',function(ev){
+    if(ev.target&&ev.target.closest&&ev.target.closest('#agentEnvioModal'))setTimeout(bindAgentBeneficiaryButton,0);
+  },true);
+
+  document.addEventListener('click',function(ev){
+    var close=ev.target&&ev.target.closest?ev.target.closest('#beneficiarioModal .modal-close-x,#beneficiarioModal .btn-light'):null;
+    if(close){
+      var m=document.getElementById('beneficiarioModal');
+      if(m&&m.dataset.swAgentChild==='1'){
+        delete m.dataset.swAgentChild;
+        setTimeout(function(){
+          restoreNonAgentScreens();
+          var agent=document.getElementById('agentEnvioModal');
+          if(agent){agent.style.display='flex';agent.style.visibility='visible';agent.style.pointerEvents='auto';agent.style.zIndex='1100';}
+        },0);
+      }
+    }
+  },true);
+
+  setTimeout(bindAgentBeneficiaryButton,300);
+  setTimeout(bindAgentBeneficiaryButton,1000);
+})();
+</script>
 </body>
 </html>
 
