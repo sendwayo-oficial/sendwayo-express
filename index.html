@@ -451,7 +451,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
   </section>
 
   <section id="view-capital" class="view-section admin-only"><div class="card">
-<div class="card-header"><div><h2><i class="fa-solid fa-coins"></i> Capital</h2><p class="muted">Control exclusivo de Administración para registrar, consultar y conciliar los movimientos reales de capital de SENDWAYO EXPRESS.</p></div><div class="actions"><button class="btn btn-success" onclick="openCapitalModal('acreditar')"><i class="fa-solid fa-circle-plus"></i> Acreditar capital</button><button class="btn btn-warning" onclick="openCapitalModal('ajustar')"><i class="fa-solid fa-sliders"></i> Ajustar capital</button></div></div>
+<div class="card-header"><div><h2><i class="fa-solid fa-coins"></i> Capital</h2><p class="muted">Control exclusivo de Administración para registrar, consultar y conciliar los movimientos reales de capital de SENDWAYO EXPRESS.</p></div><div class="actions"><button type="button" class="btn btn-success" onclick="window.SENDWAYO_OPEN_CAPITAL('acreditar')"><i class="fa-solid fa-circle-plus"></i> Acreditar capital</button><button type="button" class="btn btn-warning" onclick="window.SENDWAYO_OPEN_CAPITAL('ajustar')"><i class="fa-solid fa-sliders"></i> Ajustar capital</button></div></div>
 <div class="kpis" style="margin-bottom:14px"><div class="kpi"><b>Capital total</b><h2 id="capital-total">RD$ 0.00</h2></div><div class="kpi"><b>Capital disponible</b><h2 id="capital-disponible">RD$ 0.00</h2></div><div class="kpi"><b>Capital invertido</b><h2 id="capital-invertido">RD$ 0.00</h2></div><div class="kpi"><b>Movimientos</b><h2 id="capital-movimientos">0</h2></div></div>
 <div class="info-box" style="margin-bottom:14px"><b>Control:</b> este módulo no cambia automáticamente el balance de remitentes, las comisiones ni las ganancias. Todo movimiento de capital queda registrado con fecha, responsable, concepto, monto, tipo y estado.</div>
 <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','capitalTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','capitalTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','capitalTable')">CSV</button></div><input id="capital-search" class="search-box" placeholder="Buscar por ID, tipo, concepto o responsable..." oninput="renderCapital()"></div>
@@ -553,6 +553,16 @@ aside{height:100vh;min-height:0;overflow:hidden}
   </section>
 
   <section id="view-secretas" class="view-section">
+    <div class="card admin-only" style="margin-bottom:12px;border-top:5px solid #1f9d55;background:linear-gradient(135deg,#ffffff,#f5fff9)">
+      <div class="card-header">
+        <div><h3><i class="fa-solid fa-coins"></i> Capital de Administración</h3><p class="muted">Acceso directo para acreditar o ajustar el capital. Estas operaciones usan el mismo formulario y registro del módulo Capital.</p></div>
+        <div class="actions">
+          <button type="button" class="btn btn-success btn-sm" onclick="window.SENDWAYO_OPEN_CAPITAL('acreditar')"><i class="fa-solid fa-circle-plus"></i> Acreditar capital</button>
+          <button type="button" class="btn btn-warning btn-sm" onclick="window.SENDWAYO_OPEN_CAPITAL('ajustar')"><i class="fa-solid fa-sliders"></i> Ajustar capital</button>
+        </div>
+      </div>
+      <div style="margin-top:8px"><b>Capital actual:</b> <span id="secret-capital-balance">RD$ 0.00</span></div>
+    </div>
     <div class="card admin-only" style="margin-bottom:12px"><div class="card-header"><h3>Acreditar Administración</h3><button class="btn btn-primary btn-sm" onclick="openAdminBalanceModal('admin','set')">Acreditar Administración</button></div><p class="muted">Acredita la administración para ir ajustando los precios según lo conveniente. El monto indicado establece exactamente el balance de la Administración.</p><div style="margin-top:8px"><b>Balance actual:</b> <span id="secret-admin-balance">RD$ 0.00</span></div></div>
     <div class="card admin-only" style="margin-bottom:12px;border-top:5px solid var(--secondary);background:linear-gradient(135deg,#fff,#fffdf3)"><div class="card-header"><div><h3 style="color:#0f2c59">Ajustes de Administración</h3><p class="muted" style="margin-top:4px">Funciones exclusivas del Administrador. Desde aquí puede ajustar el balance y gestionar las comisiones de los Remitentes. Ningún Remitente puede usar estas funciones.</p></div></div><div class="actions" style="gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="openAdminCreditModal('balance')">Acreditar Balance</button><button class="btn btn-success btn-sm" onclick="openAdminCreditModal('bonus')">Acreditar Bono</button><button class="btn btn-warning btn-sm" onclick="openAdminCreditModal('commission')">Ajustar / Acreditar Comisiones</button><button class="btn btn-warning btn-sm" onclick="openAdminCreditModal('commission');setTimeout(()=>acreditarTodaComisionDisponible(),80)">Acreditar Toda la Comisión</button></div></div>
     <div class="card"><div class="card-header"><h3>Información Secreta - Usuarios y Accesos</h3><div class="actions"><button class="btn btn-success btn-sm" onclick="crearAccesosIniciales()">Crear accesos iniciales</button><button class="btn btn-primary btn-sm" onclick="openModal('secretaModal')">Agregar Nuevo</button></div></div>
@@ -6772,6 +6782,76 @@ document.addEventListener('click',function(ev){
   document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#beneficiarioModal'))setTimeout(apply,0)},true);
   document.addEventListener('change',function(e){if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#beneficiarioModal'))setTimeout(apply,0)},true);
   setTimeout(apply,250);setTimeout(apply,1000);setTimeout(apply,2000);
+})();
+</script>
+<script id="sendwayo-capital-single-entry-final-v1">
+(function(){
+  'use strict';
+  if(window.__sendwayoCapitalSingleEntryFinalV1)return;
+  window.__sendwayoCapitalSingleEntryFinalV1=true;
+
+  function setCapitalForm(mode){
+    const type=document.getElementById('cap-type');
+    const title=document.querySelector('#capitalModal h3');
+    const save=document.querySelector('#capitalModal button[onclick*="saveCapitalMovement"]');
+    if(type)type.value=mode==='ajustar'?'Ajuste positivo':'Aporte de capital';
+    if(title)title.textContent=mode==='ajustar'?'Ajustar capital':'Acreditar capital';
+    if(save){
+      save.innerHTML=mode==='ajustar'
+        ? '<i class="fa-solid fa-sliders"></i> Guardar ajuste'
+        : '<i class="fa-solid fa-circle-plus"></i> Acreditar capital';
+    }
+    const concept=document.getElementById('cap-concept');
+    if(concept)concept.placeholder=mode==='ajustar'?'Ej.: ajuste de capital':'Ej.: aporte inicial de capital';
+  }
+
+  window.SENDWAYO_OPEN_CAPITAL=function(mode){
+    if(typeof isAdmin!=='function'||!isAdmin())return toast('Solo el Administrador puede gestionar el capital.','warn');
+    const modal=document.getElementById('capitalModal');
+    if(!modal)return toast('El formulario de Capital no está disponible.','error');
+    setCapitalForm(mode==='ajustar'?'ajustar':'acreditar');
+    ['cap-amount','cap-concept','cap-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+    const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+    const date=document.getElementById('cap-date');if(date)date.value=now.toISOString().slice(0,16);
+    const resp=document.getElementById('cap-responsible');if(resp)resp.value='Administración';
+    const status=document.getElementById('cap-status');if(status)status.value='Aplicado';
+    modal.style.display='flex';
+    modal.style.visibility='visible';
+    modal.style.opacity='1';
+    modal.style.pointerEvents='auto';
+    modal.style.zIndex='11000';
+    const amount=document.getElementById('cap-amount');if(amount)setTimeout(()=>amount.focus(),30);
+  };
+
+  // Todas las entradas de Capital usan un único formulario.
+  window.openCapitalModal=window.SENDWAYO_OPEN_CAPITAL;
+  window.swOpenCapitalModal=window.SENDWAYO_OPEN_CAPITAL;
+
+  function syncSecretCapital(){
+    try{
+      const c=window.state?.capital||{};
+      const legacy=Object.entries(c).filter(([k,v])=>v&&typeof v==='object'&&v.type);
+      const modern=Object.values(c.movements||{});
+      const rows=modern.length?modern:legacy.map(([id,v])=>({...v,id}));
+      const total=rows.reduce((sum,r)=>{
+        const a=Math.abs(Number(r.amount)||0),t=String(r.type||'');
+        return sum+(['Inversión','Retiro de capital','Ajuste negativo'].includes(t)?-a:a);
+      },0);
+      const el=document.getElementById('secret-capital-balance');
+      if(el)el.textContent=money(total);
+    }catch(_){}
+  }
+  document.addEventListener('click',e=>{
+    if(e.target?.closest?.('#view-secretas,#view-capital'))setTimeout(syncSecretCapital,0);
+  },true);
+  const oldRenderAll=window.renderAll;
+  if(typeof oldRenderAll==='function'&&!oldRenderAll.__capitalSingleEntry){
+    const wrapped=function(){const out=oldRenderAll.apply(this,arguments);setTimeout(syncSecretCapital,0);return out};
+    wrapped.__capitalSingleEntry=true;
+    window.renderAll=wrapped;
+  }
+  setTimeout(syncSecretCapital,300);
+  setTimeout(syncSecretCapital,1200);
 })();
 </script>
 </body>
