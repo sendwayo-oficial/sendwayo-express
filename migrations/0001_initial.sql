@@ -51,7 +51,6 @@ CREATE TABLE IF NOT EXISTS transfers (
   fee_cents INTEGER NOT NULL DEFAULT 0 CHECK(fee_cents >= 0),
   commission_cents INTEGER NOT NULL DEFAULT 0 CHECK(commission_cents >= 0),
   sender_commission_cents INTEGER NOT NULL DEFAULT 0 CHECK(sender_commission_cents >= 0),
-  admin_commission_cents INTEGER NOT NULL DEFAULT 0 CHECK(admin_commission_cents >= 0),
   agent_commission_cents INTEGER NOT NULL DEFAULT 0 CHECK(agent_commission_cents >= 0),
   admin_commission_cents INTEGER NOT NULL DEFAULT 0 CHECK(admin_commission_cents >= 0),
   status TEXT NOT NULL CHECK(status IN ('PENDIENTE','APROBADO','RECHAZADO','NO_COINCIDE')),
