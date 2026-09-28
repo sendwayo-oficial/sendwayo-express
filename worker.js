@@ -198,7 +198,7 @@ async function route(request, env) {
   if (request.method === "GET" && url.pathname === "/api/deposits") {
     const isAdmin = profile.role === "ADMIN";
     const sql = isAdmin
-      ? "SELECT d.*,u.full_name,u.phone FROM deposits d JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 500"
+      ? "SELECT d.*,u.full_name,u.phone,u.role AS user_role FROM deposits d JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 500"
       : "SELECT d.* FROM deposits d WHERE d.user_id=? ORDER BY d.created_at DESC LIMIT 200";
     const r = isAdmin ? await env.DB.prepare(sql).all() : await env.DB.prepare(sql).bind(profile.id).all();
     return json({ok:true,deposits:r.results||[]});
@@ -207,7 +207,7 @@ async function route(request, env) {
   if (request.method === "GET" && url.pathname === "/api/transfers") {
     const isAdmin = profile.role === "ADMIN";
     const sql = isAdmin
-      ? `SELECT t.*,u.full_name AS sender_name,b.full_name AS beneficiary_name,b.phone AS beneficiary_phone
+      ? `SELECT t.*,u.full_name AS sender_name,u.role AS sender_role,b.full_name AS beneficiary_name,b.phone AS beneficiary_phone
          FROM transfers t JOIN users u ON u.id=t.sender_user_id JOIN beneficiaries b ON b.id=t.beneficiary_id
          ORDER BY t.created_at DESC LIMIT 500`
       : `SELECT t.*,b.full_name AS beneficiary_name,b.phone AS beneficiary_phone
@@ -218,7 +218,7 @@ async function route(request, env) {
   }
 
   if (request.method === "POST" && url.pathname === "/api/transfers") {
-    if (profile.role !== "REMITENTE") throw new Error("Solo un remitente puede crear envíos");
+    if (!["REMITENTE","AGENTE"].includes(profile.role)) throw new Error("Solo un remitente o agente puede crear envíos");
     const b = await body(request);
     const beneficiaryId = String(b.beneficiaryId || "").trim();
     const serviceType = String(b.serviceType || "").trim();
