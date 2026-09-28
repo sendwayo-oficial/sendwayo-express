@@ -1198,6 +1198,7 @@ function renderRealtimeView(){
    case 'view-perfil':renderProfile();break;
   }
  }catch(e){console.warn('SENDWAYO realtime view:',e)}
+ try{if(typeof swRenderGanancias==='function')swRenderGanancias()}catch(_){}
  try{if(typeof ensureDownloadActions==='function')ensureDownloadActions()}catch(_){}
 }
 /* SENDWAYO NOTIFICATIONS — recepción inmediata y alerta no invasiva */
