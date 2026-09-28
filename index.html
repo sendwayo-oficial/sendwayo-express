@@ -6548,23 +6548,47 @@ document.addEventListener('click',function(ev){
   window.__sendwayoAgentSingleScreenFinalV1=true;
 
   function hideNonAgentScreens(){
-    ['envioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal','requestModal','cuentaModal'].forEach(function(id){
-      var m=document.getElementById(id);
-      if(m && m.id!=='agentEnvioModal' && m.id!=='beneficiarioModal'){
+    // MODO AGENTE: una sola pantalla. Se oculta toda la interfaz RD$/paquetes
+    // mientras el Agente trabaja, para impedir que aparezcan tablas o formularios
+    // de Remitente, pesos o RD$ detrás del módulo Haití → Haití.
+    document.querySelectorAll('.modal').forEach(function(m){
+      if(m.id!=='agentEnvioModal' && m.id!=='beneficiarioModal'){
         m.dataset.swAgentHidden='1';
         m.style.display='none';
         m.style.visibility='hidden';
         m.style.pointerEvents='none';
       }
     });
+    document.querySelectorAll('.view-section').forEach(function(v){
+      v.dataset.swAgentHidden='1';
+      v.style.display='none';
+      v.style.visibility='hidden';
+      v.style.pointerEvents='none';
+    });
+    ['.sidebar','.content-body','header'].forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){
+        el.dataset.swAgentHidden='1';
+        el.style.display='none';
+        el.style.visibility='hidden';
+        el.style.pointerEvents='none';
+      });
+    });
+    var agent=document.getElementById('agentEnvioModal');
+    if(agent){
+      agent.style.display='flex';
+      agent.style.visibility='visible';
+      agent.style.opacity='1';
+      agent.style.pointerEvents='auto';
+      agent.style.zIndex='11000';
+    }
   }
 
   function restoreNonAgentScreens(){
-    document.querySelectorAll('.modal[data-sw-agent-hidden="1"]').forEach(function(m){
-      delete m.dataset.swAgentHidden;
-      m.style.display='';
-      m.style.visibility='';
-      m.style.pointerEvents='';
+    document.querySelectorAll('[data-sw-agent-hidden="1"]').forEach(function(el){
+      delete el.dataset.swAgentHidden;
+      el.style.display='';
+      el.style.visibility='';
+      el.style.pointerEvents='';
     });
   }
 
