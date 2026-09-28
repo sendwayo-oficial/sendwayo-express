@@ -4959,8 +4959,8 @@ function swScheduleFinal(){
     if(lang!=='es')swTranslateFinal();
   }catch(e){}},180);
 }
-const observer=new MutationObserver(swScheduleFinal);
-if(document.body)observer.observe(document.body,{subtree:true,childList:true});
+/* No MutationObserver global: evita ciclos de render/traducción y bloqueos de interfaz. */
+const observer=null;
 const oldSet=window.setLanguage;
 window.setLanguage=function(lang){
   oldSet(lang);
