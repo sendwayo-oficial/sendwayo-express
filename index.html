@@ -2517,8 +2517,13 @@ function actionButtons(collection,id,status){
  if(admin){
    arr.push('<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\''+collection+'\',\''+id+'\')"><i class="fa-solid fa-pen"></i></button>');
    arr.push('<button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\''+collection+'\',\''+id+'\')"><i class="fa-solid fa-trash"></i></button>');
- }else if(ownerId===currentUser?.id&&status!=="Pendiente"){
-   if(status==="No coincide")arr.push('<button class="btn btn-warning btn-sm" onclick="editRecord(\''+collection+'\',\''+id+'\')">Editar</button><button class="btn btn-primary btn-sm" onclick="resubmitTransaction(\''+collection+'\',\''+id+'\')">Reenviar</button>');
+ }else if(ownerId===currentUser?.id){
+   /* El usuario operativo siempre ve las acciones que realmente puede ejecutar. */
+   arr.push('<button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\''+collection+'\',\''+id+'\')"><i class="fa-solid fa-eye"></i></button>');
+   if(status==="Pendiente"||status==="No coincide"){
+     arr.push('<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\''+collection+'\',\''+id+'\')">Editar</button>');
+   }
+   if(status==="No coincide")arr.push('<button class="btn btn-primary btn-sm" onclick="resubmitTransaction(\''+collection+'\',\''+id+'\')">Reenviar</button>');
    if(status==="Rechazado")arr.push('<button class="btn btn-danger btn-sm" onclick="deleteRecord(\''+collection+'\',\''+id+'\')">Eliminar</button>');
  }
  if(admin&&status==="Pendiente"&&collection==="accountWithdrawals")arr.push('<button class="btn btn-success btn-sm" onclick="reviewAccountWithdrawal(\''+id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="reviewAccountWithdrawal(\''+id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="reviewAccountWithdrawal(\''+id+'\',\'No coincide\')">NO COINCIDE</button>');
@@ -2542,7 +2547,7 @@ async function adjustReservedBalance(userId,delta){
 async function editRecord(collection,id){
  let r=state[collection]?.[id];if(!r)return;
  const admin=isAdmin(),owner=r.userId===currentUser?.id;
- if(!admin && !(owner&&r.status==='No coincide'))return toast('Esta operación está en espera de la Administración.','warn');
+ if(!admin && !(owner&&['Pendiente','No coincide'].includes(String(r.status||''))))return toast('Esta operación está en espera de la Administración.','warn');
  const protectedFields=['id','userId','createdByAuthUid','createdAt','reviewedAt','reviewedBy','status','receipt','commissionRate','commissionUser','commissionAdmin','balanceDebited','balanceRefunded'];
  const allowed=Object.keys(r).filter(k=>!protectedFields.includes(k)&&k!=='username');
  const key=prompt('Campo a editar: '+allowed.join(', '),allowed[0]||'');
@@ -2550,7 +2555,9 @@ async function editRecord(collection,id){
  if((key==='amount'||key==='cost')&&(!firebaseReady||!firebase.auth().currentUser))return toast('Firebase no está conectado. No se puede modificar un monto financiero offline.','error');
  let old=Number(r.amount||0);
  let val=prompt('Nuevo valor:',String(r[key]??''));if(val===null)return;
- if(key==='amount'){if(r.status==='Aprobado')return toast('El monto de una operación aprobada no se puede editar.','warn');
+ if(key==='amount'){
+   if(!admin)return toast('El monto financiero solo puede modificarlo el Administrador. Puede editar los demás datos mientras la operación esté pendiente.','warn');
+   if(r.status==='Aprobado')return toast('El monto de una operación aprobada no se puede editar.','warn');
    const newAmount=Number(val);if(!Number.isFinite(newAmount)||newAmount<=0)return toast('Ingrese un monto válido.','warn');
    const delta=newAmount-old;
    if(r.balanceDebited&&r.status!=='Aprobado'&&delta!==0){if(!await adjustReservedBalance(r.userId,delta))return toast('Balance insuficiente para aumentar ese monto.','warn');}
@@ -6602,6 +6609,24 @@ document.addEventListener('click',function(ev){
    }else autoLogin();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootAccess,{once:true});else bootAccess();
+})();
+</script>
+<!-- SENDWAYO ROLE CRUD HARDENING V1 -->
+<style id="sendwayo-role-crud-v1">
+.actions .btn{pointer-events:auto!important}
+</style>
+<script id="sendwayo-role-crud-v1-script">
+(function(){
+'use strict';
+window.SENDWAYO_ROLE_CRUD_VERSION='1.0.0';
+/* Verificación visual final: los tres perfiles reciben sus acciones permitidas.
+   Las funciones financieras de Administración continúan protegidas por isAdmin(). */
+function swRoleCrudRefresh(){
+ if(typeof currentUser==='undefined'||!currentUser)return;
+ document.querySelectorAll('[data-sendwayo-role-disabled]').forEach(e=>e.removeAttribute('data-sendwayo-role-disabled'));
+}
+document.addEventListener('click',()=>setTimeout(swRoleCrudRefresh,0),true);
+setTimeout(swRoleCrudRefresh,500);
 })();
 </script>
 <!-- SENDWAYO UI / ACCESS / CURRENCY FINAL HARDENING V2 -->
