@@ -6299,7 +6299,7 @@ document.addEventListener('click',function(ev){
     const op=document.getElementById('agent-operation');
     if(op){
       if(![...op.options].some(o=>o.value==='Depósito')){
-        const o=document.createElement('option');o.value='Depósito';o.textContent='Depósito';op.insertBefore(o,op.firstChild);
+        const o=document.createElement('option');o.value='Depósito';o.textContent='Dépôt';op.insertBefore(o,op.firstChild);
       }
       if(op.options[0]?.value!=='Depósito')op.insertBefore([...op.options].find(o=>o.value==='Depósito'),op.firstChild);
     }
@@ -6366,7 +6366,7 @@ document.addEventListener('click',function(ev){
       },amount);
       if(!id)return;
       closeModal('agentEnvioModal');
-      toast((k==='DEPOSITO'?'Depósito':k==='RETIRO'?'Retiro':'Envío')+' Haïti → Haïti enregistré comme EN ATTENTE. Tout en GDES ; frais : '+money(f)+'.','success');
+      toast((k==='DEPOSITO'?'Dépôt':k==='RETIRO'?'Retrait':'Transfert')+' Haïti → Haïti enregistré comme EN ATTENTE. Tout en GDES ; frais : '+money(f)+'.','success');
     }finally{resetFormSubmitState('agentEnvioModal')}
   };
 
