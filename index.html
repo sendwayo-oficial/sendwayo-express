@@ -1349,10 +1349,13 @@ function openBrandSite(){window.location.href='https://sendwayo-oficial.github.i
 async function boot(){
   if(window.__sendwayoBootStarted)return;
   window.__sendwayoBootStarted=true;
-  try{showWelcome()}catch(e){console.error('SENDWAYO welcome:',e)}
-  // Si existe una sesión válida (<30 min de inactividad), la restauramos
-  // automáticamente al recargar. No se solicitan usuario/contraseña otra vez.
-  // No bloquear la bienvenida intentando restaurar Firebase al abrir la página. El acceso se inicializa al pulsar Entrar.
+  try{
+    const restored=await restoreSession();
+    if(!restored)showWelcome();
+  }catch(e){
+    console.error('SENDWAYO boot/restore:',e);
+    showWelcome();
+  }
 }
 // Arranque seguro: esperar a que todo el HTML exista antes de inicializar la aplicación.
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});else setTimeout(()=>boot(),0);
@@ -4471,9 +4474,9 @@ function swDaily(uid,admin){
     let amount=0,vol=0,n=0;
     for(const [id,r] of swRecords(col)){
       if(!swApproved(r))continue;
-      // Si existe una fecha válida, limitar a hoy; si no existe, conservar la operación aprobada para no ocultar ganancias.
-      const recordDay=swRecordDay(r);
-      if(recordDay && recordDay!==today)continue;
+      // Ganancia de hoy = únicamente operaciones aprobadas cuya fecha de operación/aprobación
+      // corresponde realmente al día actual. Nunca incorporar registros históricos sin fecha de hoy.
+      if(!recordIsToday(r))continue;
 
       const opAmount=swAmount(r);
       const share=swCommission(r,admin,uid,col);
