@@ -24,16 +24,20 @@ let certCache = { expires: 0, keys: null };
 async function firebaseKeys() {
   const now = Date.now();
   if (certCache.keys && certCache.expires > now) return certCache.keys;
-  const r = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com", {
+  const r = await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com", {
     cf: { cacheTtl: 300 }
   });
   if (!r.ok) throw new Error("Firebase public keys unavailable");
-  const certs = await r.json();
+  const jwks = await r.json();
   const keys = {};
-  for (const [kid, pem] of Object.entries(certs)) {
-    const body = pem.replace(/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\\s/g, "");
-    const der = Uint8Array.from(atob(body), c => c.charCodeAt(0));
-    keys[kid] = await crypto.subtle.importKey("spki", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]).catch(() => null);
+  for (const jwk of (jwks.keys || [])) {
+    keys[jwk.kid] = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
   }
   certCache = { keys, expires: now + 300000 };
   return keys;
