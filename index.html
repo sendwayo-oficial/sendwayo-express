@@ -1393,7 +1393,8 @@ async function realizarLoginOriginal(){
    const identifierDigits=String(identifier||'').replace(/\\D/g,'');
    const isAgentFourIdentifier=normalizedIdentifier==='4'||normalizedIdentifier==='id00000004'||identifierDigits==='4';
    const isAdminLogin=identifier.toLowerCase()===ADMIN_EMAIL||identifier.toLowerCase()==='admin';
-   let found=isAdminLogin?users.find(u=>u.id==='admin'):users.find(u=>
+   const adminProfile=users.find(u=>u&&u.id==='admin')||{};
+   let found=isAdminLogin?adminProfile:users.find(u=>
      u.username===identifier||
      u.authEmail===identifier||
      u.legacyAuthEmail===identifier||
@@ -1409,7 +1410,7 @@ async function realizarLoginOriginal(){
        String(u.id||'')==='4'
      ))
    );
-   let email=isAdminLogin?ADMIN_EMAIL:(found?(found.authEmail||authEmailFor(found)):(identifier.includes('@')?identifier.toLowerCase():normalizeUsername(identifier)+'@sendwayoexpress.com'));
+   let email=isAdminLogin?(found.authEmail||ADMIN_EMAIL):(found?(found.authEmail||authEmailFor(found)):(identifier.includes('@')?identifier.toLowerCase():normalizeUsername(identifier)+'@sendwayoexpress.com'));
 
    setStatus('Verificando credenciales…');
    let cred;
@@ -1421,6 +1422,12 @@ async function realizarLoginOriginal(){
    }catch(firstError){
      const candidates=[];
      const addCandidate=e=>{if(e&& !candidates.some(x=>x.toLowerCase()===String(e).toLowerCase()))candidates.push(String(e).toLowerCase())};
+     if(isAdminLogin){
+       addCandidate(ADMIN_EMAIL);
+       addCandidate(adminProfile.authEmail);
+       addCandidate(adminProfile.legacyAuthEmail);
+       addCandidate('admin@sendwayoexpress.com');
+     }
      addCandidate(found?.legacyAuthEmail);
      addCandidate(found?legacyAuthEmailFor(found):'');
      if(!identifier.includes('@')){
@@ -1452,7 +1459,7 @@ async function realizarLoginOriginal(){
    }
 
    const authUser=cred.user;
-   const authenticatedAdmin=String(authUser.email||'').toLowerCase()===ADMIN_EMAIL;
+   const authenticatedAdmin=isAdminLogin || String(authUser.email||'').toLowerCase()===ADMIN_EMAIL || String(authUser.email||'').toLowerCase()===String(adminProfile.authEmail||'').toLowerCase();
    if(authenticatedAdmin){
      found=Object.values(state.users||{}).find(u=>u.id==='admin')||{
        id:'admin',role:'Administrador',name:'Administración SENDWAYO EXPRESS',username:'admin',
@@ -5612,20 +5619,9 @@ img[data-current-brand-logo="true"]{
   }
 
   function renderTariff(){
-    const typ=document.getElementById('env-tipo-trans'); if(!hti(typ?.value))return;
-    let panel=document.getElementById('sendwayo-hti-haiti-table');
-    if(!panel){
-      panel=document.createElement('div');
-      panel.id='sendwayo-hti-haiti-table';
-      const actions=document.getElementById('env-actions');
-      if(actions)actions.insertAdjacentElement('afterend',panel);
-    }
-    const rows=(retiro(typ.value)?WITHDRAWAL:TRANSFER).map(r=>
-      '<tr><td>'+r[0].toLocaleString('fr-FR')+' – '+r[1].toLocaleString('fr-FR')+' GDES</td><td>'+money(r[2])+'</td></tr>'
-    ).join('');
-    panel.innerHTML='<div class="card" style="margin-top:10px;border:1px solid #dbe4ef"><h4 style="margin:0 0 8px;color:#0f2c59">Haití a Haití — '+(retiro(typ.value)?'Retiro':'Envío')+' — '+(/MONCASH/i.test(typ.value)?'MonCash':'Natcash')+'</h4><div class="muted">Tarifa oficial en GDES.</div><div class="table-wrap" style="display:block!important;margin-top:8px"><table><thead><tr><th>Rango de monto (GDES)</th><th>Comisión / tarifa (GDES)</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
-    const actions=document.getElementById('env-actions');
-    if(actions)actions.insertAdjacentElement('afterend',panel);
+    // Las tarifas son reglas internas de cálculo; no se muestran durante la operación.
+    const panel=document.getElementById('sendwayo-hti-haiti-table');
+    if(panel)panel.remove();
   }
 
   function apply(){
@@ -6559,7 +6555,7 @@ document.addEventListener('click',function(ev){
 
 
 <!-- SENDWAYO FINAL SAFETY / MOBILE FORM / HIDDEN TARIFF TABLES V1 -->
-<style id="sendwayo-final-safety-v1">#envioModal .table-wrap,#agentEnvioModal .table-wrap,#agent-hti-gdes-tariffs,#agentHtiNatcashTable,#agentHtiMoncashTable{display:none!important}@media(max-width:800px){#envioModal .form-grid,#agentEnvioModal .form-grid{grid-template-columns:1fr!important}}</style>
+<style id="sendwayo-final-safety-v1">#envioModal .table-wrap,#agentEnvioModal .table-wrap,#agent-hti-gdes-tariffs,#agentHtiNatcashTable,#agentHtiMoncashTable,#sendwayo-hti-haiti-table{display:none!important}@media(max-width:800px){#envioModal .form-grid,#agentEnvioModal .form-grid{grid-template-columns:1fr!important}}</style>
 <script id="sendwayo-final-safety-v1">(function(){'use strict';if(window.__sendwayoFinalSafetyV1)return;window.__sendwayoFinalSafetyV1=true;function unlock(){document.querySelectorAll('.modal').forEach(function(m){if(getComputedStyle(m).display==='none')return;m.style.pointerEvents='auto';var c=m.querySelector('.modal-content');if(c){c.style.pointerEvents='auto';c.style.position='relative';c.style.zIndex='1'}m.querySelectorAll('input,select,textarea,button').forEach(function(e){if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;e.style.pointerEvents='auto';e.style.touchAction='manipulation'})})}function hideTables(){['#envioModal .table-wrap','#agentEnvioModal .table-wrap','#agent-hti-gdes-tariffs','#agentHtiNatcashTable','#agentHtiMoncashTable'].forEach(function(s){document.querySelectorAll(s).forEach(function(e){e.style.setProperty('display','none','important')})})}document.addEventListener('click',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('focusin',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('input',function(e){if(e.target?.closest?.('.modal'))hideTables()},true);setTimeout(function(){unlock();hideTables()},300);setInterval(function(){unlock();hideTables()},1200)})();</script>
 
 <!-- SENDWAYO ACCESS RECOVERY FINAL V1 -->
