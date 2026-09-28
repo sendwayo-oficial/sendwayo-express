@@ -1818,7 +1818,7 @@ function owner(){return currentUser}
 function userById(id){return state.users[id]||{}}
 function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(currentUser.role||'').trim().toLowerCase()==='administrador' || String(currentUser.role||'').trim().toLowerCase()==='admin' || String(currentUser.username||'').trim().toLowerCase()==='admin' || String(currentUser.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com')}
 function isAdminUser(user){const u=user||{};return u.id==='admin'||String(u.role||'').trim().toLowerCase()==='administrador'||String(u.username||'').trim().toLowerCase()==='admin'||String(u.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com'}
-function isAgentUser(userOrId){return false}
+function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return ['agente','agent','agentes'].includes(role)||String(u.agentType||'').trim().toUpperCase()==='AGENTE'||String(u.agentScope||'').trim().toUpperCase()==='OPERACIONES'&&String(u.agentPolicy||'').trim().toUpperCase()==='HTI_A_HTI'||!!u.agentKey;}
 function isManagedUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return !!u&&(['remitente','remitentes'].includes(role)||isAgentUser(u))}
 function isOperationalUser(userOrId){return isAdminUser(userOrId)||isManagedUser(userOrId)}
 async function ensureHeraceFleuranvilAgent(){
