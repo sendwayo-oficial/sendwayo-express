@@ -594,7 +594,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div class="form-grid">
 <div class="form-group"><label>Tipo de Transacción</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option></select></div>
 <div class="form-group"><label>Agente</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="openAgentCreate()" title="Agregar Agente">+</button></div></div>
-<div class="form-group"><label>Envío / Retiro</label><select id="agent-operation" class="form-control" onchange="calcularAgentEnvio()"><option value="Envío">Envío</option><option value="Retiro">Retiro</option></select></div>
+<div class="form-group"><label>Operación</label><select id="agent-operation" class="form-control" onchange="calcularAgentEnvio()"><option value="Depósito">Depósito</option><option value="Envío">Envío</option><option value="Retiro">Retiro</option></select></div>
 <div class="form-group"><label>Beneficiario</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Escriba nombre o número..." autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="return window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'agente')" title="Agregar beneficiario">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
 <div class="form-group"><label>Monto en Gourdes haitianos (GDES)</label><input id="agent-monto" type="number" min="0" step="1" class="form-control" oninput="calcularAgentEnvio()" placeholder="0"></div>
 </div>
@@ -2092,24 +2092,13 @@ function chooseAgentBeneficiary(id){
 }
 async function aprobarEnvioAgente(id,decision='Aprobado',nota=''){if(!isAdmin())return toast('Solo el administrador puede aprobar operaciones del Agente.','error');const r=state.envios?.[id];if(!r)return toast('Transacción no encontrada.','error');return typeof updateTransactionStatus==='function'?updateTransactionStatus('envios',id,decision,nota):false}
 function canAgentWithdrawCommission(){return false}
-async function guardarAgentEnvio(){
- const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;
- if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');
- const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Envío',operationKey=agentOperationKey(operation),amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'';
- const fee=agentHtiFee(amount,operation);
- if(fee===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
- if(!benId)return toast('Escriba el nombre o número del beneficiario y seleccione la sugerencia.','warn');
- const ben=state.beneficiaries?.[benId];if(!ben)return toast('Seleccione un beneficiario válido.','warn');
- const net=Math.max(0,amount-fee),total=amount;
- if(!beginFormSubmit('agentEnvioModal'))return;
- try{
-   const id=await createTransaction('envios',{type,route:type,operation,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:fee,totalHTG:total,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:personName(ben),beneficiarioNombre:personName(ben),beneficiarioPhone:personPhone(ben),net,commission:fee,commissionTotal:fee,total,destination:net,fee,balanceDebit:amount,totalDebit:amount,feeType:(operationKey==='RETIRO'?'RETIRO':'TRANSFERT')+'_'+swHtiRouteType(type).toUpperCase(),agentOperationKey:operationKey},amount);
-   if(!id)return;
-   closeModal('agentEnvioModal');toast((operation==='Retiro'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE. Total entregado: '+htgMoney(total)+'; tarifa incluida: '+htgMoney(fee)+'.','success');
- }finally{
-   resetFormSubmitState('agentEnvioModal');
- }
-}
+async async function guardarAgentEnvio(){
+ const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');
+ const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Depósito',operationKey=agentOperationKey(operation),amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'';
+ const fee=operationKey==='DEPOSITO'?0:agentHtiFee(amount,operation);if(!Number.isFinite(amount)||amount<20||amount>99999||fee===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
+ if(operationKey!=='DEPOSITO'&&!benId)return toast('Seleccione un beneficiario válido.','warn');const ben=benId?state.beneficiaries?.[benId]:null;if(operationKey!=='DEPOSITO'&&!ben)return toast('Seleccione un beneficiario válido.','warn');
+ const net=operationKey==='DEPOSITO'?amount:Math.max(0,amount-fee),balanceDelta=operationKey==='DEPOSITO'?amount:-(amount+fee);if(!beginFormSubmit('agentEnvioModal'))return;
+ try{const id=await createTransaction('envios',{type,route:type,operation,operationKey,currency:'HTG',balanceCurrency:'HTG',amountHTG:amount,commissionHTG:0,totalHTG:amount,feeHTG:fee,tariffHTG:fee,agentId:currentUser.id,agentStaffId:currentUser.staffId||currentUser.id,agentName:currentUser.name,beneficiarioId:benId,beneficiario:ben?personName(ben):'',beneficiarioNombre:ben?personName(ben):'',beneficiarioPhone:ben?personPhone(ben):'',net,total:amount,totalDebit:amount+fee,balanceDebit:Math.abs(balanceDelta),destination:net,fee,commission:0,commissionTotal:0,accountingType:operationKey==='DEPOSITO'?'AGENT_DEPOSITO_GDES':'AGENT_HAITI_GDES',agentOperationKey:operationKey,agentBalanceDelta:balanceDelta,agentTariffOnly:true},amount);if(!id)return;closeModal('agentEnvioModal');toast((operationKey==='DEPOSITO'?'Depósito':operationKey==='RETIRO'?'Retiro':'Envío')+' Haití a Haití guardado como PENDIENTE. Todo en GDES; tarifa: '+htgMoney(fee)+'.','success')}finally{resetFormSubmitState('agentEnvioModal')}}
 async function guardarEnvio(){
  const _modal=document.getElementById('envioModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return;
