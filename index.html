@@ -4092,7 +4092,7 @@ window.editRecord=function(collection,id){const r=state[collection]?.[id];if(!r)
 window.actionButtons=function(collection,id,status){
   const admin=isAdmin(),rec=state[collection]?.[id],owner=rec?.userId===currentUser?.id||rec?.createdUserId===currentUser?.id;
   let a='<button class="btn btn-light btn-sm" type="button" title="Ver" onclick="event.preventDefault();event.stopPropagation();viewRecord(\''+collection+'\',\''+id+'\');return false">Ver</button>';
-  if(String(status||'').trim().toLowerCase()==='aprobado')a+='<button class="btn btn-primary btn-sm" title="Recibo" type="button" onclick="event.preventDefault();event.stopImmediatePropagation();showReceipt(\''+collection+'\',\''+id+'\');return false">COMPROBANTE</button>';
+  if(String(status||'').trim().toLowerCase()==='aprobado')a+='<button class="btn btn-primary btn-sm sw-receipt-btn" title="Recibo" type="button" data-sendwayo-receipt="1" data-receipt-collection="'+collection+'" data-receipt-id="'+id+'" onclick="return window.SENDWAYO_FORCE_RECEIPT(\\''+collection+'\\',\\''+id+'\\',event)" onpointerup="if(event.pointerType===\\'touch\\'){event.preventDefault();return window.SENDWAYO_FORCE_RECEIPT(\\''+collection+'\\',\\''+id+'\\',event)}">COMPROBANTE</button>';
   if(admin){
     a+='<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\''+collection+'\',\''+id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\''+collection+'\',\''+id+'\')">Eliminar</button>';
     if(status==='Pendiente'&&collection!=='accountWithdrawals')a+='<button class="btn btn-success btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="setTransactionStatus(\''+collection+'\',\''+id+'\',\'No coincide\')">NO COINCIDE</button>';
@@ -6006,6 +6006,19 @@ img[data-current-brand-logo="true"]{
  };
 })();
 </script>
-</body>
+<script id="sendwayo-receipt-click-capture-v2">
+(function(){
+ if(window.__sendwayoReceiptClickCaptureV2)return;
+ window.__sendwayoReceiptClickCaptureV2=true;
+ document.addEventListener('click',function(e){
+   var b=e.target&&e.target.closest?e.target.closest('.sw-receipt-btn,[data-sendwayo-receipt="1"]'):null;
+   if(!b)return;
+   var col=b.getAttribute('data-receipt-collection'),rid=b.getAttribute('data-receipt-id');
+   if(!col||!rid)return;
+   e.preventDefault();e.stopImmediatePropagation();
+   if(typeof window.SENDWAYO_FORCE_RECEIPT==='function')window.SENDWAYO_FORCE_RECEIPT(col,rid,e);
+ },true);
+})();
+</script></body>
 </html>
 
