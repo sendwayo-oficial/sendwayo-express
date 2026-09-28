@@ -235,25 +235,26 @@ async function route(request, env) {
     const rate = rateFor(serviceType,origin,destination);
     const fee = feeInsideTotal(total,rate);
     const commission = fee;
-    const senderCommission = Math.floor(commission / 2);
-    const adminCommission = commission - senderCommission;
+    const senderCommission = profile.role === "AGENTE" ? 0 : Math.floor(commission / 2);
+    const agentCommission = profile.role === "AGENTE" ? Math.floor(commission / 2) : 0;
+    const adminCommission = commission - senderCommission - agentCommission;
     const transferId = id("tr");
     const ticketNo = ticket();
 
     await env.DB.prepare(
       `INSERT INTO transfers(
         id,ticket,sender_user_id,beneficiary_id,service_type,origin_country,destination_country,
-        amount_cents,fee_cents,commission_cents,sender_commission_cents,admin_commission_cents,status
-      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?, 'PENDIENTE')`
+        amount_cents,fee_cents,commission_cents,sender_commission_cents,agent_commission_cents,admin_commission_cents,status
+      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?, 'PENDIENTE')`
     ).bind(
       transferId,ticketNo,profile.id,beneficiaryId,serviceType,origin,destination,
-      total,fee,commission,senderCommission,adminCommission
+      total,fee,commission,senderCommission,agentCommission,adminCommission
     ).run();
 
     return json({
       ok:true,id:transferId,ticket:ticketNo,status:"PENDIENTE",
       amount_cents:total,fee_cents:fee,commission_cents:commission,
-      sender_commission_cents:senderCommission,admin_commission_cents:adminCommission
+      sender_commission_cents:senderCommission,agent_commission_cents:agentCommission,admin_commission_cents:adminCommission
     },201);
   }
 
@@ -316,7 +317,7 @@ async function route(request, env) {
     }
 
     const sender = await env.DB.prepare(
-      "SELECT id,balance_cents,active FROM users WHERE id=? AND role='REMITENTE'"
+      "SELECT id,role,balance_cents,active FROM users WHERE id=? AND role IN ('REMITENTE','AGENTE')"
     ).bind(transfer.sender_user_id).first();
     if (!sender || !sender.active) throw new Error("Remitente no válido");
     if (Number(sender.balance_cents) < Number(transfer.amount_cents)) {
@@ -325,6 +326,7 @@ async function route(request, env) {
 
     const ledgerSender = id("led");
     const ledgerSenderCommission = id("led");
+    const ledgerAgentCommission = transfer.agent_commission_cents > 0 ? id("led") : null;
     const ledgerAdminCommission = id("led");
     const stamp = nowIso();
 
@@ -336,14 +338,20 @@ async function route(request, env) {
         "UPDATE users SET balance_cents=balance_cents-?,commission_cents=commission_cents+?,updated_at=? WHERE id=? AND balance_cents>=? AND active=1"
       ).bind(transfer.amount_cents,transfer.sender_commission_cents,stamp,transfer.sender_user_id,transfer.amount_cents),
       env.DB.prepare(
-        "UPDATE users SET balance_cents=balance_cents+?,updated_at=? WHERE id=? AND role='ADMIN' AND active=1"
-      ).bind(transfer.admin_commission_cents,stamp,profile.id),
+        "UPDATE users SET balance_cents=balance_cents+?,updated_at=? WHERE role='ADMIN' AND active=1"
+      ).bind(transfer.admin_commission_cents,stamp),
       env.DB.prepare(
         "INSERT INTO ledger(id,user_id,kind,amount_cents,reference_type,reference_id) VALUES(?,?,?,?,?,?)"
       ).bind(ledgerSender,transfer.sender_user_id,"ENVIO_DEBITO", -Number(transfer.amount_cents),"transfer",transferId),
       env.DB.prepare(
         "INSERT INTO ledger(id,user_id,kind,amount_cents,reference_type,reference_id) VALUES(?,?,?,?,?,?)"
       ).bind(ledgerSenderCommission,transfer.sender_user_id,"COMISION_REMITENTE", transfer.sender_commission_cents,"transfer",transferId),
+      ...(transfer.agent_commission_cents > 0 ? [env.DB.prepare(
+        "UPDATE users SET commission_cents=commission_cents+?,updated_at=? WHERE id=? AND role='AGENTE' AND active=1"
+      ).bind(transfer.agent_commission_cents,stamp,transfer.sender_user_id)] : []),
+      ...(transfer.agent_commission_cents > 0 ? [env.DB.prepare(
+        "INSERT INTO ledger(id,user_id,kind,amount_cents,reference_type,reference_id) VALUES(?,?,?,?,?,?)"
+      ).bind(ledgerAgentCommission,transfer.sender_user_id,"COMISION_AGENTE",transfer.agent_commission_cents,"transfer",transferId)] : []),
       env.DB.prepare(
         "INSERT INTO ledger(id,user_id,kind,amount_cents,reference_type,reference_id) VALUES(?,?,?,?,?,?)"
       ).bind(ledgerAdminCommission,profile.id,"COMISION_ADMIN", transfer.admin_commission_cents,"transfer",transferId)
@@ -354,7 +362,7 @@ async function route(request, env) {
       ok:true,status:"APROBADO",
       debited_cents:transfer.amount_cents,
       sender_commission_cents:transfer.sender_commission_cents,
-      admin_commission_cents:transfer.admin_commission_cents
+      agent_commission_cents:transfer.agent_commission_cents,admin_commission_cents:transfer.admin_commission_cents
     });
   }
 
