@@ -5960,14 +5960,14 @@ img[data-current-brand-logo="true"]{
     const agents=Object.values(state.users||{}).filter(isAgentUser);
     const rows=agents.flatMap(a=>getAgentRows(agentId?agentId:a.id,start,end).map(r=>({...r,_agent:a})));
     const amount=rows.reduce((s,r)=>s+Number(r.amount||0),0),commission=rows.reduce((s,r)=>s+Number(r.commissionTotal??r.commission??0),0);
-    host.querySelector('[data-ar-summary]').textContent=(mode==='15'?'15 días':'Día')+' · '+start+' → '+end+' · Operaciones: '+rows.length+' · Monto: '+htgMoney(amount)+' · Comisión: '+htgMoney(commission)+' · Capital compartido: '+htgMoney(Number(state.agentCapital?.balance||0));
-    host.querySelector('tbody').innerHTML=rows.sort((a,b)=>Number(b.approvedAt||0)-Number(a.approvedAt||0)).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r._agent.name||'')+'</td><td>'+escapeHtml(r.agentOperationKey||r.operation||'Envío')+'</td><td>'+escapeHtml(r.id||'')+'</td><td>'+escapeHtml(r.beneficiarioNombre||r.beneficiario||'')+'</td><td>'+htgMoney(r.amount||0)+'</td><td>'+htgMoney(r.commissionTotal??r.commission??0)+'</td></tr>').join('')||'<tr><td colspan="7">No hay operaciones aprobadas en este período.</td></tr>';
+    host.querySelector('[data-ar-summary]').textContent=(mode==='15'?'15 días':'Día')+' · '+start+' → '+end+' · Operaciones: '+rows.length+' · Monto: '+htgMoney(amount)+' · Frais: '+htgMoney(commission)+' · Capital compartido: '+htgMoney(Number(state.agentCapital?.balance||0));
+    host.querySelector('tbody').innerHTML=rows.sort((a,b)=>Number(b.approvedAt||0)-Number(a.approvedAt||0)).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r._agent.name||'')+'</td><td>'+escapeHtml(r.agentOperationKey||r.operation||'Transfert')+'</td><td>'+escapeHtml(r.id||'')+'</td><td>'+escapeHtml(r.beneficiarioNombre||r.beneficiario||'')+'</td><td>'+htgMoney(r.amount||0)+'</td><td>'+htgMoney(r.commissionTotal??r.commission??0)+'</td></tr>').join('')||'<tr><td colspan="7">No hay operaciones aprobadas en este período.</td></tr>';
   }
   function install(){
     const view=document.getElementById('view-informes');if(!view||document.getElementById('agent-period-report'))return;
     const card=document.createElement('div');card.id='agent-period-report';card.className='card';card.style.marginTop='16px';
     const opts=Object.values(state.users||{}).filter(isAgentUser).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.name||a.id)+'</option>').join('');
-    card.innerHTML='<div class="card-header"><div><h3>Informes de Agentes</h3><p class="muted">Cada agente conserva su producción individual, pero ambos comparten un único capital y una única comisión de plataforma.</p></div><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData(\'Excel\',\'agentPeriodReportTable\')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData(\'PDF\',\'agentPeriodReportTable\')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData(\'CSV\',\'agentPeriodReportTable\')">CSV</button></div></div><div class="report-controls"><div class="form-group"><label>Período</label><select id="agent-report-period" class="form-control" onchange="renderAgentPeriodReport()"><option value="day">Informe diario</option><option value="15">Informe cada 15 días</option></select></div><div class="form-group"><label>Fecha final</label><input id="agent-report-end" type="date" class="form-control" value="'+todayDateKey()+'" onchange="renderAgentPeriodReport()"></div><div class="form-group"><label>Agent</label><select id="agent-report-agent" class="form-control" onchange="renderAgentPeriodReport()"><option value="">Los dos agentes</option>'+opts+'</select></div></div><div class="info-box" data-ar-summary></div><div class="table-wrap"><table id="agentPeriodReportTable"><thead><tr><th>N°</th><th>Agente</th><th>Operación</th><th>ID</th><th>Beneficiario</th><th>Monto</th><th>Comisión</th></tr></thead><tbody></tbody></table></div>';
+    card.innerHTML='<div class="card-header"><div><h3>Informes de Agentes</h3><p class="muted">Cada agente conserva su producción individual, pero ambos comparten un único capital y una única comisión de plataforma.</p></div><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData(\'Excel\',\'agentPeriodReportTable\')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData(\'PDF\',\'agentPeriodReportTable\')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData(\'CSV\',\'agentPeriodReportTable\')">CSV</button></div></div><div class="report-controls"><div class="form-group"><label>Período</label><select id="agent-report-period" class="form-control" onchange="renderAgentPeriodReport()"><option value="day">Informe diario</option><option value="15">Informe cada 15 días</option></select></div><div class="form-group"><label>Fecha final</label><input id="agent-report-end" type="date" class="form-control" value="'+todayDateKey()+'" onchange="renderAgentPeriodReport()"></div><div class="form-group"><label>Agent</label><select id="agent-report-agent" class="form-control" onchange="renderAgentPeriodReport()"><option value="">Los dos agentes</option>'+opts+'</select></div></div><div class="info-box" data-ar-summary></div><div class="table-wrap"><table id="agentPeriodReportTable"><thead><tr><th>N°</th><th>Agente</th><th>Operación</th><th>ID</th><th>Beneficiario</th><th>Monto</th><th>Frais</th></tr></thead><tbody></tbody></table></div>';
     view.appendChild(card);renderAgentPeriodReport();
   }
   window.renderAgentPeriodReport=renderAgentPeriodReport;
@@ -6330,10 +6330,10 @@ document.addEventListener('click',function(ev){
     if(title)title.textContent='Haïti → Haïti — Dépôt / Transfert / Retrait (GDES)';
     const op=document.getElementById('agent-operation');
     if(op){
-      if(![...op.options].some(o=>o.value==='Depósito')){
-        const o=document.createElement('option');o.value='Depósito';o.textContent='Dépôt';op.insertBefore(o,op.firstChild);
+      if(![...op.options].some(o=>o.value==='Dépôt')){
+        const o=document.createElement('option');o.value='Dépôt';o.textContent='Dépôt';op.insertBefore(o,op.firstChild);
       }
-      if(op.options[0]?.value!=='Depósito')op.insertBefore([...op.options].find(o=>o.value==='Depósito'),op.firstChild);
+      if(op.options[0]?.value!=='Dépôt')op.insertBefore([...op.options].find(o=>o.value==='Dépôt'),op.firstChild);
     }
     const amount=document.getElementById('agent-monto');
     const label=amount?.closest('.form-group')?.querySelector('label');
@@ -6346,7 +6346,7 @@ document.addEventListener('click',function(ev){
   window.calcularAgentEnvio=function(){
     if(!isAgentHaiti())return;
     const amount=Number(document.getElementById('agent-monto')?.value||0);
-    const operation=document.getElementById('agent-operation')?.value||'Depósito';
+    const operation=document.getElementById('agent-operation')?.value||'Dépôt';
     const k=key(operation), f=fee(amount,operation);
     const valid=f!==null;
     const debit=k==='DEPOSITO'?amount:amount+(valid?f:0);
@@ -6373,7 +6373,7 @@ document.addEventListener('click',function(ev){
     if(!isAgentHaiti())return toast('Cet écran est réservé à l’agent.','error');
     const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash';
     if(!isHaitiType(type))return toast('Cette opération de l’agent doit être Haïti → Haïti.','warn');
-    const operation=document.getElementById('agent-operation')?.value||'Depósito';
+    const operation=document.getElementById('agent-operation')?.value||'Dépôt';
     const k=key(operation);
     const amount=Number(document.getElementById('agent-monto')?.value||0);
     const benId=document.getElementById('agent-beneficiario-select')?.value||'';
@@ -6419,7 +6419,7 @@ document.addEventListener('click',function(ev){
   document.addEventListener('change',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
   document.addEventListener('input',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
   // BLOQUEO FINAL DE MONEDA DEL AGENTE: cualquier actualización del monto
-  // conserva GDES; ningún render genérico puede cambiar el módulo a RD$.
+  // conserva GDES; ningún render genérico puede cambiar el módulo a GDES.
   const gdesLock=function(){
     const m=document.getElementById('agentEnvioModal');
     if(!m)return;
@@ -6592,9 +6592,9 @@ document.addEventListener('click',function(ev){
   window.__sendwayoAgentSingleScreenFinalV1=true;
 
   function hideNonAgentScreens(){
-    // MODO AGENTE: una sola pantalla. Se oculta toda la interfaz RD$/paquetes
+    // MODO AGENTE: una sola pantalla. Se oculta toda la interfaz GDES/paquetes
     // mientras el Agente trabaja, para impedir que aparezcan tablas o formularios
-    // de Remitente, pesos o RD$ detrás del módulo Haití → Haití.
+    // de Remitente, pesos o GDES detrás del módulo Haití → Haití.
     document.querySelectorAll('.modal').forEach(function(m){
       if(m.id!=='agentEnvioModal' && m.id!=='beneficiarioModal'){
         m.dataset.swAgentHidden='1';
@@ -6650,7 +6650,7 @@ document.addEventListener('click',function(ev){
       var title=modal.querySelector('h3');
       if(title)title.textContent='Ajouter un bénéficiaire — Agent';
       var hint=modal.querySelector('.field-hint');
-      if(hint)hint.textContent='Haïti → Haïti · Bénéficiaire en GDES. Aucun montant en RD$ ne s’affiche dans le module Agent.';
+      if(hint)hint.textContent='Haïti → Haïti · Bénéficiaire en GDES. Aucun montant en GDES ne s’affiche dans le module Agent.';
       var save=document.getElementById('ben-save-btn');
       if(save)save.textContent='Enregistrer le bénéficiaire';
       var close=modal.querySelector('.btn.btn-light');
