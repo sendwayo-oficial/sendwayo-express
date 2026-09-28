@@ -5956,3 +5956,34 @@ img[data-current-brand-logo="true"]{
 <!-- SENDWAYO AGENT INPUT FINAL GUARD v2 -->
 </body>
 </html>
+
+<script id="sendwayo-beneficiario-button-fallback">
+(function(){
+  function openClean(){
+    var m=document.getElementById('beneficiarioModal');
+    if(!m)return;
+    m.dataset.origen='gestion';
+    m.style.display='flex';
+    m.style.visibility='visible';
+    m.style.opacity='1';
+    m.style.pointerEvents='auto';
+    m.style.zIndex='50000';
+    document.body.style.overflow='hidden';
+    var n=document.getElementById('ben-nombre'),c=document.getElementById('ben-cel');
+    if(n)n.value='';
+    if(c)c.value='';
+    setTimeout(function(){if(n)n.focus()},30);
+  }
+  window.SENDWAYO_OPEN_BENEFICIARIO_FALLBACK=openClean;
+  function handle(ev){
+    var b=ev.target&&ev.target.closest?ev.target.closest('#beneficiario-add-btn'):null;
+    if(!b)return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    openClean();
+  }
+  document.addEventListener('pointerdown',handle,true);
+  document.addEventListener('click',handle,true);
+  document.addEventListener('touchend',handle,{capture:true,passive:false});
+})();
+</script>
