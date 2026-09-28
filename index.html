@@ -1325,23 +1325,6 @@ function showLogin(){
  // no dependa de que el navegador termine de cargar Firebase justo al pulsar el botón.
  try{if(typeof initFirebase==='function'&&!firebaseReady)initFirebase().catch(e=>console.warn('Pre-carga Firebase:',e))}catch(e){}
 }
-function openRequest(type){
- const modal=document.getElementById('requestModal');
- if(!modal){toast('No se pudo abrir el formulario.','error');return}
- const typeEl=document.getElementById('req-type'); if(typeEl)typeEl.value=type;
- modal.style.display='flex'; modal.classList.add('show');
- document.body.style.overflow='hidden';
- ['req-first-name','req-last-name','req-phone','req-doc','req-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
- setTimeout(()=>document.getElementById('req-first-name')?.focus(),80);
- document.getElementById('welcome-screen').classList.add('hidden');
-}
-async function submitRequest(){
- let firstName=document.getElementById('req-first-name').value.trim(),lastName=document.getElementById('req-last-name').value.trim(),name=(firstName+' '+lastName).trim(),phone=fullPhone('req-country',document.getElementById('req-phone').value.trim()),doc=document.getElementById('req-doc').value.trim(),type=document.getElementById('req-type').value;
- if(!firstName||!lastName||!phone||!doc)return toast('Complete nombre, apellido, número de celular y cédula o pasaporte.','warn');
- let id=uid('req');state.requests[id]={id,name,phone,doc,type,note:document.getElementById('req-note').value.trim(),status:'Pendiente',createdAt:now(),requesterUserId:currentUser?.id||null,requesterAuthUid:firebase.auth().currentUser?.uid||null};
- await addNotification('Administrador','Nueva solicitud: '+type+' de '+name,'requests',id);
- await persist();closeModal('requestModal');toast('Solicitud enviada al Administrador.');showWelcome()
-}
 async function realizarLoginOriginal(){
  const status=document.getElementById('login-status');
  const setStatus=(msg,kind='')=>{if(status){status.textContent=msg;status.className='login-status '+kind}};
