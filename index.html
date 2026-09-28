@@ -605,7 +605,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 
 </div>
 
-<div id="env-actions" style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 14px;position:sticky;top:0;z-index:5;background:#fff;padding:8px 0;border-bottom:1px solid #e5eaf0"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
+<div id="env-actions" style="display:flex;justify-content:flex-end;gap:8px;margin:16px 0 0;position:static;z-index:auto;background:#fff;padding:10px 0 0;border-top:1px solid #e5eaf0"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
 <div class="table-wrap" style="margin:10px 0"><table style="font-size:.72rem"><thead><tr><th colspan="2">TABLA OFICIAL MONCASH / NATCASH</th></tr><tr><th>Monto enviado RD$</th><th>Comisión RD$</th></tr></thead><tbody><tr><td>RD$ 50 – RD$ 500</td><td>RD$ 50</td></tr><tr><td>RD$ 501 – RD$ 1,000</td><td>RD$ 100</td></tr><tr><td>RD$ 1,001 – RD$ 2,000</td><td>RD$ 150</td></tr><tr><td>RD$ 2,001 – RD$ 3,000</td><td>RD$ 200</td></tr><tr><td>RD$ 3,001 – RD$ 4,000</td><td>RD$ 250</td></tr><tr><td>RD$ 4,001 – RD$ 5,000</td><td>RD$ 300</td></tr><tr><td>RD$ 5,001 – RD$ 6,000</td><td>RD$ 350</td></tr><tr><td>RD$ 6,001 – RD$ 7,000</td><td>RD$ 400</td></tr><tr><td>RD$ 7,001 – RD$ 8,000</td><td>RD$ 450</td></tr><tr><td>RD$ 8,001 – RD$ 9,000</td><td>RD$ 500</td></tr><tr><td>RD$ 9,001 – RD$ 10,000</td><td>RD$ 550</td></tr><tr><td>RD$ 10,001 – RD$ 11,000</td><td>RD$ 600</td></tr><tr><td>RD$ 11,001 – RD$ 12,000</td><td>RD$ 650</td></tr><tr><td>RD$ 12,001 – RD$ 13,000</td><td>RD$ 700</td></tr><tr><td>RD$ 13,001 – RD$ 14,000</td><td>RD$ 750</td></tr><tr><td>RD$ 14,001 – RD$ 15,000</td><td>RD$ 800</td></tr><tr><td>RD$ 15,001 – RD$ 16,000</td><td>RD$ 850</td></tr><tr><td>RD$ 16,001 – RD$ 17,000</td><td>RD$ 900</td></tr><tr><td>RD$ 17,001 – RD$ 18,000</td><td>RD$ 950</td></tr><tr><td>RD$ 18,001 – RD$ 19,000</td><td>RD$ 1,000</td></tr><tr><td>RD$ 19,001 – RD$ 20,000</td><td>RD$ 1,050</td></tr><tr><td>RD$ 20,001 – RD$ 21,000</td><td>RD$ 1,100</td></tr><tr><td>RD$ 21,001 – RD$ 22,000</td><td>RD$ 1,150</td></tr><tr><td>RD$ 22,001 – RD$ 23,000</td><td>RD$ 1,200</td></tr><tr><td>RD$ 23,001 – RD$ 24,000</td><td>RD$ 1,250</td></tr><tr><td>RD$ 24,001 – RD$ 25,000</td><td>RD$ 1,300</td></tr><tr><td>RD$ 25,001 – RD$ 26,000</td><td>RD$ 1,350</td></tr><tr><td>RD$ 26,001 – RD$ 27,000</td><td>RD$ 1,400</td></tr><tr><td>RD$ 27,001 – RD$ 28,000</td><td>RD$ 1,500</td></tr><tr><td>RD$ 28,001 – RD$ 29,000</td><td>RD$ 1,550</td></tr><tr><td>RD$ 29,001 – RD$ 30,000</td><td>RD$ 1,600</td></tr><tr><td>RD$ 30,001 – RD$ 31,000</td><td>RD$ 1,650</td></tr><tr><td>RD$ 31,001 – RD$ 32,000</td><td>RD$ 1,700</td></tr><tr><td>RD$ 32,001 – RD$ 33,000</td><td>RD$ 1,750</td></tr><tr><td>RD$ 33,001 – RD$ 34,000</td><td>RD$ 1,800</td></tr><tr><td>RD$ 34,001 – RD$ 35,000</td><td>RD$ 1,850</td></tr><tr><td>RD$ 35,001 – RD$ 36,000</td><td>RD$ 1,900</td></tr></tbody></table></div><div class="modal" id="agentEnvioModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()">
 <button class="modal-close-x" onclick="closeModal('agentEnvioModal')">×</button>
 <h3>Haïti → Haïti — Envoi / Retrait (GDES)</h3><div id="agent-hti-gdes-only-banner" style="margin:10px 0 14px;padding:12px 14px;border:2px solid #c0392b;border-radius:9px;background:#fff5f5;color:#8a1c1c;font-weight:900;text-align:center">AGENT · HAÏTI → HAÏTI · GDES UNIQUEMENT (GOURDES HAÏTIENS)</div>
@@ -6733,7 +6733,7 @@ function hideTariffs(){
     document.querySelectorAll(sel).forEach(function(e){e.style.setProperty('display','none','important')});
   });
   document.querySelectorAll('#envioModal p,#agentEnvioModal p').forEach(function(p){
-    if(/COMIS[IÓO]N|FRAIS HA[ÏI]TI|TARIF|TABLEAU OFFICIEL|TABLA OFICIAL/i.test(p.textContent||'')){
+    if(/TARIF|TABLEAU OFFICIEL|TABLA OFICIAL/i.test(p.textContent||'')){
       p.style.setProperty('display','none','important');
     }
   });
@@ -6752,57 +6752,6 @@ setTimeout(apply,150);
 setTimeout(apply,700);
 setTimeout(apply,1800);
 setInterval(apply,2500);
-})();
-</script>
-
-<!-- SENDWAYO TRANSACTION DISPLAY FINAL V2 -->
-<style id="sendwayo-transaction-display-final-v2">
-/* Tarifas, frais y comisiones son datos contables internos: nunca se muestran en una transacción. */
-#envioModal [data-tariff],#envioModal [data-commission],#agentEnvioModal [data-tariff],#agentEnvioModal [data-commission],
-#envioModal .tariff,#envioModal .commission,#agentEnvioModal .tariff,#agentEnvioModal .commission{display:none!important}
-#enviosTable th.sendwayo-hidden-financial,#enviosTable td.sendwayo-hidden-financial{display:none!important}
-</style>
-<script id="sendwayo-transaction-display-final-v2">
-(function(){
-'use strict';
-if(window.__sendwayoTransactionDisplayFinalV2)return;
-window.__sendwayoTransactionDisplayFinalV2=true;
-
-var financial=/\b(comisi[oó]n|commission|frais|tarifa|tarif|taux|fee|fees|tableau officiel|tabla oficial)\b/i;
-
-function hideFinancialText(root){
-  if(!root)return;
-  root.querySelectorAll('#envioModal .form-group,#agentEnvioModal .form-group,#envioModal p,#agentEnvioModal p,#envioModal .field-hint,#agentEnvioModal .field-hint,#envioModal .info-box,#agentEnvioModal .info-box').forEach(function(el){
-    if(financial.test(String(el.textContent||''))){
-      el.style.setProperty('display','none','important');
-    }
-  });
-  root.querySelectorAll('#enviosTable thead th').forEach(function(th,i){
-    if(financial.test(String(th.textContent||''))){
-      th.classList.add('sendwayo-hidden-financial');
-      root.querySelectorAll('#enviosTable tbody tr').forEach(function(tr){
-        if(tr.children[i])tr.children[i].classList.add('sendwayo-hidden-financial');
-      });
-    }
-  });
-  root.querySelectorAll('#envioModal,#agentEnvioModal').forEach(function(m){
-    m.querySelectorAll('*').forEach(function(el){
-      if(el.children.length===0 && financial.test(String(el.textContent||''))){
-        var target=el.closest('.form-group,.field-hint,p,.info-box,[class*="calc"],[class*="tariff"],[class*="commission"]')||el;
-        if(target && target!==m)target.style.setProperty('display','none','important');
-      }
-    });
-  });
-}
-function apply(){hideFinancialText(document);}
-document.addEventListener('click',function(){setTimeout(apply,0)},true);
-document.addEventListener('input',function(){setTimeout(apply,0)},true);
-document.addEventListener('change',function(){setTimeout(apply,0)},true);
-document.addEventListener('focusin',function(){setTimeout(apply,0)},true);
-setTimeout(apply,100);
-setTimeout(apply,600);
-setTimeout(apply,1500);
-setInterval(apply,3000);
 })();
 </script>
 
