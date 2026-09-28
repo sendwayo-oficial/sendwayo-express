@@ -4715,34 +4715,7 @@ window.translateInterface=function(){
 };
 const swOrigSetLanguage=window.setLanguage;
 window.setLanguage=function(lang){swOrigSetLanguage(lang);setTimeout(()=>window.translateInterface(),0);};
-function swSyncStaticCapital(){
- const c=window.state?.capital||{},bal=Number(c.balance||0),tot=Number(c.totalAcreditado||0);
- ['kpi-capital-static','capital-view-balance-static','kpi-capital'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=money(bal)});
- ['capital-total-acreditado-static','capital-total-acreditado-view-static','capital-total-acreditado'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=money(tot)});
- const body=document.querySelector('#capitalTableStatic tbody');if(body){
-   const rows=Object.values(c.movements||{}).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-   body.innerHTML=rows.map(r=>'<tr><td>'+escapeHtml(r.createdAt||'—')+'</td><td>'+escapeHtml(r.period||'—')+'</td><td>'+escapeHtml(r.type||'ACREDITACIÓN DE CAPITAL')+'</td><td><b>'+money(r.amount)+'</b></td><td>'+escapeHtml(r.by||'Administrador')+'</td><td>'+escapeHtml(r.note||'')+'</td></tr>').join('')||'<tr><td colspan="6" class="muted">No hay movimientos de capital registrados.</td></tr>';
- }
- const sec=document.getElementById('view-capital-static');if(sec&&window.isAdmin)sec.style.display=isAdmin()?'':'none';
- const card=document.getElementById('admin-capital-card-static');if(card&&window.isAdmin)card.style.display=isAdmin()?'':'none';
- const menu=document.querySelector('[data-sw-static-capital-menu]');if(menu&&window.isAdmin)menu.style.display=isAdmin()?'':'none';
-}
-const swOldSwitch=window.switchView;
-window.switchView=function(id){
- if(id==='capital'){
-   document.querySelectorAll('.view-section').forEach(x=>x.classList.remove('active'));
-   const sec=document.getElementById('view-capital-static');if(sec)sec.classList.add('active');
-   document.querySelectorAll('.sidebar-menu a').forEach(a=>a.classList.remove('active'));
-   const a=document.querySelector('[data-sw-static-capital-menu] a');if(a)a.classList.add('active');
-   const title=document.getElementById('page-title');if(title)title.textContent='Capital de Administración';
-   if(window.innerWidth<=800)toggleMobileMenu();
-   renderAll();swSyncStaticCapital();return;
- }
- return swOldSwitch.apply(this,arguments);
-};
-const swOldRenderAll=window.renderAll;
-window.renderAll=function(){swOldRenderAll.apply(this,arguments);setTimeout(swSyncStaticCapital,0);setTimeout(()=>window.translateInterface(),0)};
-})();
+function swSyncStaticCapital(){} })();
 </script>
 <script>
 /* SENDWAYO EXPRESS — VISIBILIDAD ADMINISTRATIVA Y LOCALIZACIÓN ROBUSTA */
