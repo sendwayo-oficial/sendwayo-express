@@ -652,7 +652,25 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-window.sendwayoOpenLogin=function(){var w=document.getElementById('welcome-screen'),l=document.getElementById('login-screen');if(w)w.classList.add('hidden');if(l)l.classList.remove('hidden');var u=document.getElementById('login-user');if(u)setTimeout(function(){u.focus()},50)};
+window.sendwayoOpenLogin=function(){
+  var w=document.getElementById('welcome-screen'),l=document.getElementById('login-screen');
+  if(w)w.classList.add('hidden');
+  if(l)l.classList.remove('hidden');
+  var u=document.getElementById('login-user');
+  if(u)setTimeout(function(){u.focus()},50);
+  // Prepara Firebase inmediatamente, sin bloquear la pantalla de acceso.
+  try{if(typeof initFirebase==='function')initFirebase().catch(function(e){console.warn('SENDWAYO Firebase preload:',e)})}catch(e){}
+};
+window.addEventListener('keydown',function(ev){
+  if(ev.key!=='Enter')return;
+  var l=document.getElementById('login-screen');
+  if(!l||l.classList.contains('hidden'))return;
+  var a=document.activeElement;
+  if(a&&a.tagName==='TEXTAREA')return;
+  ev.preventDefault();
+  var b=l.querySelector('button[onclick*="sendwayoLogin"]');
+  if(b&&!b.disabled)b.click();
+});
 window.sendwayoOpenRequest=function(type){
   var tries=0;
   function run(){
@@ -689,12 +707,16 @@ window.sendwayoLogin=function(){
   var user=(u&&u.value||'').trim(),pass=(p&&p.value||'');
   if(!user||!pass){set('Escriba usuario y contraseña.','warn');return}
   set('Iniciando acceso…');
-  setTimeout(function(){
+  var attempts=0;
+  function launch(){
     try{
       if(typeof realizarLogin==='function'){set('Verificando credenciales…');realizarLogin();return}
-      set('El módulo de acceso todavía no terminó de cargar. Recargue la página.','error');
+      attempts++;
+      if(attempts<80){set('Preparando el módulo de acceso…');setTimeout(launch,100);return}
+      set('El módulo de acceso no terminó de cargar. Cierre y abra nuevamente la página.','error');
     }catch(e){set('Error al iniciar el acceso: '+(e.message||e),'error');}
-  },0);
+  }
+  setTimeout(launch,0);
 };
 </script>
 <script>
