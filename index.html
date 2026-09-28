@@ -2732,15 +2732,18 @@ async function persistGeneratedReceipt(collection,id,r){
  localSave();return true;
 }
 function generateReceipt(collection,id){
- let r=state[collection]?.[id];
+ const bucket=state[collection]||(state[collection]={});
+ let r=bucket[id];
  if(!r||String(r.status||'').trim().toLowerCase()!=='aprobado')return null;
- let u=state.users[r.userId]||state.users.admin||{};
- let benName=collection==='deposits'||collection==='accountWithdrawals'?(u.name||r.username||'Titular'):(r.beneficiario||r.beneficiary||'Según operación');
- let benPhone=collection==='deposits'||collection==='accountWithdrawals'?(u.phone||''):(r.beneficiarioPhone||r.beneficiaryPhone||'');
- let d=new Date(),receiptId=r.receipt?.id||('SW-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0'));
- r.receipt={id:receiptId,date:d.toLocaleDateString('es-DO'),time:d.toLocaleTimeString('es-DO'),business:'SENDWAYO EXPRESS',user:u.name||'',username:u.username||'',staffId:u.staffId||'',role:u.role||'Remitente',concept:transactionConcept(collection,r),type:r.type||transactionConcept(collection,r),route:r.route||r.type||'Según operación',amount:Number(r.amount||r.monto||0),net:Number(r.net||r.amount||r.monto||0),remitente:r.remitenteNombre||r.remitente||u.name||'',remitentePhone:r.remitentePhone||u.phone||'',beneficiario:benName,beneficiarioPhone:benPhone,collection,status:'Aprobado',original:true,contactPhone:'8297676665',contactEmail:'sendwayoexpress@gmail.com'};
- state[collection]=state[collection]||{};
- state[collection][id]=r;
+ const users=state.users||{};
+ const u=users[r.userId]||users[r.remitenteId]||users.admin||{};
+ const concept=typeof transactionConcept==='function'?transactionConcept(collection,r):(r.type||'Operación SENDWAYO EXPRESS');
+ const benName=collection==='deposits'||collection==='accountWithdrawals'?(u.name||r.username||'Titular'):(r.beneficiarioNombre||r.beneficiario||r.beneficiary||'Según operación');
+ const benPhone=collection==='deposits'||collection==='accountWithdrawals'?(u.phone||''):(r.beneficiarioPhone||r.beneficiaryPhone||'');
+ const d=new Date();
+ const receiptId=r.receipt?.id||('SW-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0'));
+ r.receipt={id:receiptId,date:d.toLocaleDateString('es-DO'),time:d.toLocaleTimeString('es-DO'),business:'SENDWAYO EXPRESS',user:u.name||'',username:u.username||'',staffId:u.staffId||'',role:u.role||'Remitente',concept,type:r.type||concept,route:r.route||r.type||'Según operación',amount:Number(r.amount||r.monto||0),net:Number(r.net||r.amount||r.monto||0),remitente:r.remitenteNombre||r.remitente||u.name||'',remitentePhone:r.remitentePhone||u.phone||'',beneficiario:benName,beneficiarioPhone:benPhone,collection,status:'Aprobado',original:true,contactPhone:'8297676665',contactEmail:'sendwayoexpress@gmail.com'};
+ bucket[id]=r;
  return r.receipt;
 }
 function downloadReceipt(collection,id){
