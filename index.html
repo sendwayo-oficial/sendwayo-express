@@ -595,7 +595,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div class="form-group"><label>Type de transaction</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">Haïti → Haïti — NatCash</option><option value="HAITI A HAITI MonCash">Haïti → Haïti — MonCash</option></select></div>
 <div class="form-group"><label>Agent</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="openAgentCreate()" title="Ajouter un agent">+</button></div></div>
 <div class="form-group"><label>Opération</label><select id="agent-operation" class="form-control" onchange="calcularAgentEnvio()"><option value="Depósito">Dépôt</option><option value="Envío">Transfert</option><option value="Retiro">Retrait</option></select></div>
-<div class="form-group"><label>Bénéficiaire</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Saisissez le nom ou le numéro…" autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="return window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'agente')" title="Ajouter un bénéficiaire">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
+<div class="form-group"><label>Bénéficiaire</label><div class="search-select-wrap"><input id="agent-beneficiario-input" class="form-control" placeholder="Saisissez le nom ou le numéro…" autocomplete="off" oninput="document.getElementById('agent-beneficiario-select').value='';updateAgentBeneficiarySuggestions()" onfocus="updateAgentBeneficiarySuggestions()"><button type="button" class="plus-btn" onclick="return window.SENDWAYO_OPEN_AGENT_BENEFICIARY(event)" title="Ajouter un bénéficiaire">+</button></div><div id="agent-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div><input id="agent-beneficiario-select" type="hidden"></div>
 <div class="form-group"><label>Montant en gourdes haïtiennes (GDES)</label><input id="agent-monto" type="number" min="0" step="1" class="form-control" oninput="calcularAgentEnvio()" placeholder="0"></div>
 </div>
 <div style="background:#f1f5f9;padding:12px;border-radius:7px;margin:12px 0">
@@ -2097,8 +2097,13 @@ function calcularAgentEnvio(){
 }
 function updateAgentBeneficiarySuggestions(){
  const input=document.getElementById('agent-beneficiario-input'),box=document.getElementById('agent-beneficiario-suggestions');if(!input||!box)return;
- const raw=String(input.value||'').trim();if(!raw){box.innerHTML='';box.style.display='none';return}
- const list=Object.values(state.beneficiaries||{}).filter(x=>x&&x.active!==false&&personMatchesQuery(x,raw)).sort((a,b)=>personName(a).localeCompare(personName(b)));
+ const raw=String(input.value||'').trim();
+ const qText=normalizeSearchText(raw),qDigits=phoneDigits(raw);
+ const list=Object.values(state.beneficiaries||{}).filter(function(x){
+   if(!x||x.active===false)return false;
+   const n=normalizeSearchText(personName(x)||''),p=phoneDigits(personPhone(x)||'');
+   return !raw || (qText && n.includes(qText)) || (qDigits && p.includes(qDigits));
+ }).sort(function(a,b){return personName(a).localeCompare(personName(b),'es')});
  if(!list.length){box.innerHTML='';box.style.display='none';return}
  box.innerHTML=list.map(function(b){return '<button type="button" class="env-suggestion env-suggestion-single" data-agent-ben-id="'+escapeHtml(b.id)+'" onclick="chooseAgentBeneficiary(this.dataset.agentBenId)"><b>'+escapeHtml(personPhone(b)||'Sin número')+'</b> <span>('+escapeHtml(personName(b)||'Sin nombre')+')</span></button>'}).join('');
  box.style.display='block';
@@ -2153,7 +2158,15 @@ async function guardarBeneficiario(){
      localSave();
      return toast('No se pudo guardar el beneficiario en Firebase.','error');
    }
+   const wasAgentBeneficiary=document.getElementById('beneficiarioModal')?.dataset.origen==='agente';
    closeModal('beneficiarioModal');
+   if(wasAgentBeneficiary){
+     const bm=document.getElementById('beneficiarioModal');if(bm){delete bm.dataset.origen;delete bm.dataset.swAgentChild;}
+     const am=document.getElementById('agentEnvioModal');if(am){am.style.display='flex';am.style.visibility='visible';am.style.opacity='1';am.style.pointerEvents='auto';am.style.zIndex='1100';}
+     const ai=document.getElementById('agent-beneficiario-input');if(ai){ai.value=name+' ('+phone+')';ai.dataset.personId=id;}
+     const ah=document.getElementById('agent-beneficiario-select');if(ah)ah.value=id;
+     if(typeof updateAgentBeneficiarySuggestions==='function')updateAgentBeneficiarySuggestions();
+   }
    renderAll();
    toast('Beneficiario guardado y sincronizado con Firebase.','success');
  }catch(e){
