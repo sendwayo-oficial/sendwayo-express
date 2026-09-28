@@ -1928,7 +1928,7 @@ async function createTransaction(collection,fields,amount){
    toast(msg,'error');
    ['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);
    if(record.balanceDebited){
-     const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.balanceDebitOverride??record.amount||0)-used);
+     const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.balanceDebitOverride ?? (record.amount || 0))-used);
      if(firebaseReady)await firebase.database().ref(DB_PATH+'/users/'+currentUser.id).transaction(u=>u?{...u,balance:Number(u.balance||0)+balanceUsed,creditOutstanding:Math.max(0,Number(u.creditOutstanding||0)-used)}:undefined);
      else{currentUser.balance=Number(currentUser.balance||0)+balanceUsed;currentUser.creditOutstanding=Math.max(0,Number(currentUser.creditOutstanding||0)-used);state.users[currentUser.id]=currentUser}
    }
