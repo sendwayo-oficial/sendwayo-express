@@ -464,7 +464,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
   </section>
 
   <section id="view-beneficiarios" class="view-section">
-    <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button id="beneficiario-add-btn" type="button" class="btn btn-primary">Agregar Nuevo</button></div>
+    <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button id="beneficiario-add-btn" type="button" class="btn btn-primary" onclick="window.openBeneficiarioModal('gestion')">Agregar Nuevo</button></div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','benefTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','benefTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','benefTable')">CSV</button></div><input class="search-box" placeholder="Buscar por nombre o celular..." oninput="filterTable(this,'benefTable')"></div>
     <div class="table-wrap"><table id="benefTable"><thead><tr><th>N°</th><th>Nombre completo</th><th>Número de celular</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
@@ -1699,13 +1699,6 @@ function openBeneficiarioModal(origen='gestion'){
  setTimeout(()=>{ if(nombre)nombre.focus(); },30);
 }
 window.openBeneficiarioModal=openBeneficiarioModal;
-document.addEventListener('DOMContentLoaded',function(){
- const btn=document.getElementById('beneficiario-add-btn');
- if(btn)btn.addEventListener('click',function(ev){
-   ev.preventDefault();ev.stopPropagation();
-   openBeneficiarioModal('gestion');
- },{once:true});
-});
 function openModal(id){const modal=document.getElementById(id);if(modal){delete modal.dataset.submitting;modal.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='';b.style.opacity=''}});modal.querySelectorAll('select,input,textarea').forEach(el=>{if(!el.hasAttribute('data-hard-disabled')&&!el.hasAttribute('data-system-disabled')){el.disabled=false;el.removeAttribute('disabled');if(!el.hasAttribute('data-readonly'))el.readOnly=false;el.style.pointerEvents='auto';el.style.opacity='1'}});modal.style.pointerEvents='auto';modal.style.display='flex';}if(id==='depositoModal'&&currentUser){let rw=document.getElementById('dep-remitente-wrap'),sel=document.getElementById('dep-remitente');if(rw)rw.style.display=isAdmin()?'block':'none';if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.username||'')+'</option>').join('');const ds=document.getElementById('dep-remitente-search');if(ds)ds.value='';const db=document.getElementById('dep-remitente-suggestions');if(db)db.style.display='none';setTimeout(()=>{if(isAdmin()&&typeof updateDepositSuggestions==='function')updateDepositSuggestions()},80);let ac=document.getElementById('dep-cuenta');if(ac){let accounts=Object.values(state.accounts||{});if(!accounts.length)accounts=[];ac.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+accounts.filter(a=>a.active!==false).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.bank||'')+' — '+escapeHtml(a.number||'')+'</option>').join('')}}if(id==='agentEnvioModal'&&isAgentUser(currentUser)){const a=document.getElementById('agent-current');if(a)a.value=(currentUser.staffId||currentUser.id)+' ('+(currentUser.name||'')+')';const i=document.getElementById('agent-beneficiario-input'),s=document.getElementById('agent-beneficiario-select');if(i)i.value='';if(s)s.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}if(id==='comisionModal'&&currentUser){let wrap=document.getElementById('com-target-wrap');if(wrap)wrap.style.display=isAdmin()?'block':'none';updateCommissionTarget();document.getElementById('com-disp').value=money(currentUser.commission)}if(id==='retiroCuentaModal'&&currentUser)document.getElementById('cuenta-disp').value=money(currentUser.balance)}
 document.addEventListener('click',function(ev){
  const m=ev.target?.closest?.('.modal');
