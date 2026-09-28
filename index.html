@@ -590,7 +590,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div id="env-actions" style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 14px;position:sticky;top:0;z-index:5;background:#fff;padding:8px 0;border-bottom:1px solid #e5eaf0"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
 <div class="table-wrap" style="margin:10px 0"><table style="font-size:.72rem"><thead><tr><th colspan="2">TABLA OFICIAL MONCASH / NATCASH</th></tr><tr><th>Monto enviado RD$</th><th>Comisión RD$</th></tr></thead><tbody><tr><td>RD$ 50 – RD$ 500</td><td>RD$ 50</td></tr><tr><td>RD$ 501 – RD$ 1,000</td><td>RD$ 100</td></tr><tr><td>RD$ 1,001 – RD$ 2,000</td><td>RD$ 150</td></tr><tr><td>RD$ 2,001 – RD$ 3,000</td><td>RD$ 200</td></tr><tr><td>RD$ 3,001 – RD$ 4,000</td><td>RD$ 250</td></tr><tr><td>RD$ 4,001 – RD$ 5,000</td><td>RD$ 300</td></tr><tr><td>RD$ 5,001 – RD$ 6,000</td><td>RD$ 350</td></tr><tr><td>RD$ 6,001 – RD$ 7,000</td><td>RD$ 400</td></tr><tr><td>RD$ 7,001 – RD$ 8,000</td><td>RD$ 450</td></tr><tr><td>RD$ 8,001 – RD$ 9,000</td><td>RD$ 500</td></tr><tr><td>RD$ 9,001 – RD$ 10,000</td><td>RD$ 550</td></tr><tr><td>RD$ 10,001 – RD$ 11,000</td><td>RD$ 600</td></tr><tr><td>RD$ 11,001 – RD$ 12,000</td><td>RD$ 650</td></tr><tr><td>RD$ 12,001 – RD$ 13,000</td><td>RD$ 700</td></tr><tr><td>RD$ 13,001 – RD$ 14,000</td><td>RD$ 750</td></tr><tr><td>RD$ 14,001 – RD$ 15,000</td><td>RD$ 800</td></tr><tr><td>RD$ 15,001 – RD$ 16,000</td><td>RD$ 850</td></tr><tr><td>RD$ 16,001 – RD$ 17,000</td><td>RD$ 900</td></tr><tr><td>RD$ 17,001 – RD$ 18,000</td><td>RD$ 950</td></tr><tr><td>RD$ 18,001 – RD$ 19,000</td><td>RD$ 1,000</td></tr><tr><td>RD$ 19,001 – RD$ 20,000</td><td>RD$ 1,050</td></tr><tr><td>RD$ 20,001 – RD$ 21,000</td><td>RD$ 1,100</td></tr><tr><td>RD$ 21,001 – RD$ 22,000</td><td>RD$ 1,150</td></tr><tr><td>RD$ 22,001 – RD$ 23,000</td><td>RD$ 1,200</td></tr><tr><td>RD$ 23,001 – RD$ 24,000</td><td>RD$ 1,250</td></tr><tr><td>RD$ 24,001 – RD$ 25,000</td><td>RD$ 1,300</td></tr><tr><td>RD$ 25,001 – RD$ 26,000</td><td>RD$ 1,350</td></tr><tr><td>RD$ 26,001 – RD$ 27,000</td><td>RD$ 1,400</td></tr><tr><td>RD$ 27,001 – RD$ 28,000</td><td>RD$ 1,500</td></tr><tr><td>RD$ 28,001 – RD$ 29,000</td><td>RD$ 1,550</td></tr><tr><td>RD$ 29,001 – RD$ 30,000</td><td>RD$ 1,600</td></tr><tr><td>RD$ 30,001 – RD$ 31,000</td><td>RD$ 1,650</td></tr><tr><td>RD$ 31,001 – RD$ 32,000</td><td>RD$ 1,700</td></tr><tr><td>RD$ 32,001 – RD$ 33,000</td><td>RD$ 1,750</td></tr><tr><td>RD$ 33,001 – RD$ 34,000</td><td>RD$ 1,800</td></tr><tr><td>RD$ 34,001 – RD$ 35,000</td><td>RD$ 1,850</td></tr><tr><td>RD$ 35,001 – RD$ 36,000</td><td>RD$ 1,900</td></tr></tbody></table></div><div class="modal" id="agentEnvioModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()">
 <button class="modal-close-x" onclick="closeModal('agentEnvioModal')">×</button>
-<h3>Haití a Haití — Envío / Retiro (GDES)</h3>
+<h3>Haití a Haití — Envío / Retiro (GDES)</h3><div id="agent-hti-gdes-only-banner" style="margin:10px 0 14px;padding:12px 14px;border:2px solid #c0392b;border-radius:9px;background:#fff5f5;color:#8a1c1c;font-weight:900;text-align:center">AGENTE · HAITÍ → HAITÍ · SOLO GDES (GOURDES HAITIANOS) · NO RD$</div>
 <div class="form-grid">
 <div class="form-group"><label>Tipo de Transacción</label><select id="agent-tipo-trans" class="form-control" onchange="calcularAgentEnvio()"><option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option></select></div>
 <div class="form-group"><label>Agente</label><div class="search-select-wrap"><input id="agent-current" class="form-control" readonly><button type="button" class="plus-btn" onclick="openAgentCreate()" title="Agregar Agente">+</button></div></div>
@@ -600,9 +600,9 @@ aside{height:100vh;min-height:0;overflow:hidden}
 </div>
 <div style="background:#f1f5f9;padding:12px;border-radius:7px;margin:12px 0">
 <p><strong>MONTO NETO:</strong> <b id="agent-calc-monto">0.00 GDES</b></p>
-<p><strong>COMISIÓN / TARIFA:</strong> <b id="agent-calc-comision">0.00 GDES</b></p>
-<p><strong>MONTO TOTAL:</strong> <b id="agent-calc-total">0.00 GDES</b></p>
-<p><strong>MONTO A RECIBIR:</strong> <b id="agent-calc-recibir">0.00 GDES</b></p>
+<p><strong>TARIFA HAITÍ — GDES:</strong> <b id="agent-calc-comision">0.00 GDES</b></p>
+<p><strong>TOTAL EN GDES:</strong> <b id="agent-calc-total">0.00 GDES</b></p>
+<p><strong>RECIBE EN GDES:</strong> <b id="agent-calc-recibir">0.00 GDES</b></p>
 </div>
 <div style="display:flex;justify-content:flex-end;gap:8px;margin:10px 0 0"><button class="btn btn-light" onclick="closeModal('agentEnvioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarAgentEnvio()">Enviar esta transacción</button></div><div class="table-wrap" style="margin:12px 0 0"><table id="agentHtiNatcashTable" style="font-size:.72rem"><thead><tr><th colspan="2">TABLA OFICIAL NATCASH — HAITÍ A HAITÍ (GDES)</th></tr><tr><th>Operación / Rango</th><th>Tarifa GDES</th></tr></thead><tbody>
 <tr><td>Dépôt — 20 a 99,999 GDES</td><td>0 (Gratuit)</td></tr>
@@ -6180,6 +6180,33 @@ document.addEventListener('click',function(ev){
  if(b)openNewBeneficiary(ev,b.id==='beneficiario-add-btn'?'gestion':'agente');
 },true);
 
+})();
+</script>
+<script id="sendwayo-agent-gdes-only-final-v1">
+(function(){
+  if(window.__sendwayoAgentGdesOnlyFinalV1)return;
+  window.__sendwayoAgentGdesOnlyFinalV1=true;
+  function enforce(){
+    const m=document.getElementById("agentEnvioModal");
+    if(!m)return;
+    const banner=document.getElementById("agent-hti-gdes-only-banner");
+    if(banner)banner.textContent="AGENTE · HAITÍ → HAITÍ · SOLO GDES (GOURDES HAITIANOS) · NO RD$";
+    m.querySelectorAll("*").forEach(function(el){
+      if(el.children.length===0 && /RD\$/i.test(el.textContent||"")) el.textContent=(el.textContent||"").replace(/RD\$/gi,"GDES");
+    });
+    const amount=document.getElementById("agent-monto");
+    const label=amount && amount.closest(".form-group") ? amount.closest(".form-group").querySelector("label") : null;
+    if(label)label.textContent="Monto en Gourdes haitianos (GDES) — SOLO GDES";
+  }
+  const oldOpen=window.openModal;
+  if(typeof oldOpen==="function" && !oldOpen.__gdesWrapped){
+    const wrapped=function(id){const out=oldOpen.apply(this,arguments);if(id==="agentEnvioModal")setTimeout(enforce,0);return out;};
+    wrapped.__gdesWrapped=true; window.openModal=wrapped;
+  }
+  document.addEventListener("click",function(e){if(e.target && e.target.closest && e.target.closest("#agentEnvioModal"))setTimeout(enforce,0);},true);
+  document.addEventListener("input",function(e){if(e.target && e.target.closest && e.target.closest("#agentEnvioModal"))setTimeout(enforce,0);},true);
+  document.addEventListener("change",function(e){if(e.target && e.target.closest && e.target.closest("#agentEnvioModal"))setTimeout(enforce,0);},true);
+  setTimeout(enforce,300); setTimeout(enforce,1200);
 })();
 </script>
 </body>
