@@ -6706,8 +6706,13 @@ function activateVisibleForms(){
     m.querySelectorAll('input,select,textarea,button').forEach(function(e){
       if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;
       if(e.dataset.sendwayoIntentionalDisabled==='1')return;
+      /* Los formularios visibles no deben quedar congelados por disabled heredado
+         o por una renderización anterior. La seguridad real permanece en Firebase. */
+      e.disabled=false;
+      e.removeAttribute('disabled');
       e.style.pointerEvents='auto';
-      if(e.tagName==='BUTTON')e.style.touchAction='manipulation';
+      e.style.touchAction='manipulation';
+      e.style.opacity='1';
     });
   });
 }
