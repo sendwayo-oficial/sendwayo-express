@@ -1564,7 +1564,7 @@ async function realizarLoginOriginal(){
    else if(e.code==='auth/operation-not-allowed')msg='El método Correo/Contraseña no está habilitado en Firebase Authentication.';
    else if(e.code==='auth/invalid-api-key')msg='La configuración de Firebase contiene una clave API inválida.';
    else if(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'||e.code==='auth/user-not-found')msg='El correo de administración o la contraseña de Firebase no son correctos.';
-   else if(e.code==='auth/network-request-failed')msg='No fue posible comunicarse con Firebase Authentication.';
+   else if(e.code==='auth/network-request-failed')msg='No fue posible comunicarse con Firebase Authentication.';else if(e.code==='auth/unauthorized-domain')msg='El dominio sendwayo-oficial.github.io no está autorizado en Firebase Authentication. Agregue este dominio en Authentication > Settings > Authorized domains.';else if(e.code==='auth/app-not-authorized')msg='La aplicación web no está autorizada para este proyecto de Firebase.';
    else if(e.message==='PROFILE_NOT_FOUND')msg='La cuenta de Firebase existe, pero no tiene un perfil SENDWAYO asociado.';
    else if(e.message==='INACTIVE')msg='Esta cuenta está inactiva. Solo el Administrador puede reactivarla.';
    else msg='No se pudo iniciar sesión'+(e.code?' ('+e.code+')':e.message?' ('+e.message+')':'')+'.';
@@ -3463,7 +3463,7 @@ function startAutoFirebaseRefresh(){if(autoFirebaseRefreshTimer)clearInterval(au
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&currentUser&&firebaseReady){touch();}});
 
 window.addEventListener('load',()=>{let access=new URLSearchParams(location.search).get('access');if(access&&!currentUser){showLogin();document.getElementById('login-user').value=access}updateSessionUI()});
-window.addEventListener('error',e=>{console.error('SENDWAYO JS ERROR',e.error||e.message);const el=document.getElementById('login-status');if(el&&!currentUser){el.textContent='Error del sistema: '+(e.message||'Error JavaScript');el.className='login-status error'}});window.addEventListener('unhandledrejection',e=>{console.error('SENDWAYO PROMISE ERROR',e.reason);const el=document.getElementById('login-status');if(el&&!currentUser){el.textContent='Error de conexión: '+(e.reason?.message||e.reason||'Error desconocido');el.className='login-status error'}});window.addEventListener('beforeunload',()=>{if(currentUser)saveSession()});
+function sendwayoErrorReference(prefix){return String(prefix||'SW')+'-'+Date.now().toString(36).toUpperCase().slice(-8)}window.addEventListener('error',e=>{console.error('SENDWAYO JS ERROR',e.error||e.message);const el=document.getElementById('login-status');if(el&&!currentUser){const ref=sendwayoErrorReference('SWJS');el.textContent='Error del sistema · Referencia '+ref+' · '+(e.message||'Error JavaScript');el.className='login-status error'}});window.addEventListener('unhandledrejection',e=>{console.error('SENDWAYO PROMISE ERROR',e.reason);const el=document.getElementById('login-status');if(el&&!currentUser){const ref=sendwayoErrorReference('SWPR');el.textContent='Error de conexión · Referencia '+ref+' · '+(e.reason?.message||e.reason||'Error desconocido');el.className='login-status error'}});window.addEventListener('beforeunload',()=>{if(currentUser)saveSession()});
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(document.activeElement?.id==='login-user'||document.activeElement?.id==='login-pass'))realizarLogin()});
 
