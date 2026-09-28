@@ -2108,7 +2108,7 @@ function chooseAgentBeneficiary(id){
 }
 async function aprobarEnvioAgente(id,decision='Aprobado',nota=''){if(!isAdmin())return toast('Solo el administrador puede aprobar operaciones del Agente.','error');const r=state.envios?.[id];if(!r)return toast('Transacción no encontrada.','error');return typeof updateTransactionStatus==='function'?updateTransactionStatus('envios',id,decision,nota):false}
 function canAgentWithdrawCommission(){return false}
-async async function guardarAgentEnvio(){
+async function guardarAgentEnvio(){
  const modal=document.getElementById('agentEnvioModal');if(modal?.dataset.submitting==='1')return;if(!isAgentUser(currentUser))return toast('Esta pantalla es exclusiva del Agente.','error');
  const type=document.getElementById('agent-tipo-trans')?.value||'HAITI A HAITI NatCash',operation=document.getElementById('agent-operation')?.value||'Depósito',operationKey=agentOperationKey(operation),amount=Number(document.getElementById('agent-monto')?.value||0),benId=document.getElementById('agent-beneficiario-select')?.value||'';
  const fee=operationKey==='DEPOSITO'?0:agentHtiFee(amount,operation);if(!Number.isFinite(amount)||amount<20||amount>99999||fee===null)return toast('El monto debe estar entre 20 y 99,999 GDES.','warn');
