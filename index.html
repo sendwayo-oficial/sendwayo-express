@@ -899,7 +899,7 @@ function ensureStaffDirectory(){}
 function nextStaffId(role){return makePermanentId()}
 
 const BANKS=[{id:'b1',bank:'Banco Popular',holder:'Herace Fleuranvil',number:'831434592',active:true},{id:'b2',bank:'Banreservas',holder:'Herace Fleuranvil',number:'9601783620',active:true},{id:'b3',bank:'BHD',holder:'Herace Fleuranvil',number:'36818900013',active:true}];
-let state={settings:{contact:{phone:'8297676665',email:'sendwayoexpress@gmail.com'}},users:{admin:{id:'admin',role:'Administrador',name:'Administrador SENDWAYO EXPRESS',phone:'',username:'admin',active:true,balance:0,commission:0,referrals:0,commissionAccrued:0,bonusAccrued:0}},beneficiaries:{},accounts:{},envios:{},recargas:{},paqueticos:{},pagos:{},paquetes:{},deposits:{},accountWithdrawals:{},commissions:{},requests:{},notifications:{},audit:{},dailyReports:{},capital:{balance:0,totalAcreditado:0,movements:{}}};
+let state={settings:{contact:{phone:'8297676665',email:'sendwayoexpress@gmail.com'}},users:{admin:{id:'admin',role:'Administrador',name:'Administrador SENDWAYO EXPRESS',phone:'',username:'admin',active:true,balance:0,commission:0,referrals:0,commissionAccrued:0,bonusAccrued:0}},beneficiaries:{},accounts:{},envios:{},recargas:{},paqueticos:{},pagos:{},paquetes:{},deposits:{},accountWithdrawals:{},commissions:{},requests:{},notifications:{},audit:{},dailyReports:{},capital:{}};
 // Producción: no crear transacciones demo; las cuentas bancarias oficiales sí deben conservarse.
 
 const SESSION_KEY='sendwayo_express_session_v4'; const SESSION_TTL=30*60*1000;
@@ -2090,7 +2090,7 @@ function resolveEnvioPerson(kind){
 async function openTransactionEntry(){if(isAgentUser(currentUser)){if(typeof window.SENDWAYO_AGENT_ISOLATE==='function')window.SENDWAYO_AGENT_ISOLATE();['envioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal','requestModal','cuentaModal'].forEach(function(id){var x=document.getElementById(id);if(x){x.style.display='none';x.style.visibility='hidden';x.style.pointerEvents='none';}});var m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.phone||'Sin número')+' ('+(u.name||'Agente')+')';const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haïti → Haïti — NatCash</option><option value="HAITI A HAITI MonCash">Haïti → Haïti — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(typeof renderAgentHtiTariffTable==='function')renderAgentHtiTariffTable();if(m){m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='1100';}return}openModal('envioModal')}
 const HTI_AGENT_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
 const HTI_AGENT_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
-function agentOperationKey(operation){const s=String(operation||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(s.startsWith('deposito'))return 'DEPOSITO';if(s.startsWith('retiro'))return 'RETIRO';return 'ENVIO'}
+function agentOperationKey(operation){const s=String(operation||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(s.startsWith('deposito')||s.startsWith('depot'))return 'DEPOSITO';if(s.startsWith('retiro')||s.startsWith('retrait'))return 'RETIRO';if(s.startsWith('transfert')||s.startsWith('transfer'))return 'ENVIO';return 'ENVIO'}
 function agentHtiFee(amount,operation){
  const n=Math.floor(Number(amount||0));
  if(!Number.isFinite(n)||n<20||n>99999)return null;
@@ -4689,217 +4689,7 @@ window.SENDWAYO_HARDENING.exportLocalBackup=function(){
 </style>
 
 
-<script>
-/* SENDWAYO EXPRESS — CAPITAL ADMINISTRATIVO + COPIA DE COMPROBANTE COMO IMAGEN */
-(function(){
-'use strict';
 
-const swCapitalDefaults={
-  balance:0,
-  totalAcreditado:0,
-  updatedAt:'',
-  updatedBy:'',
-  movements:{}
-};
-
-function swEnsureCapitalState(){
-  state.capital=state.capital||{};
-  state.capital.balance=Number(state.capital.balance||0);
-  state.capital.totalAcreditado=Number(state.capital.totalAcreditado||0);
-  state.capital.movements=state.capital.movements||{};
-  return state.capital;
-}
-function swCapitalIsAdmin(){
-  return typeof isAdmin==='function' && isAdmin();
-}
-function swRenderCapital(){
-  const c=swEnsureCapitalState(),bal=Math.max(0,Number(c.balance||0));
-  document.querySelectorAll('[data-capital-balance]').forEach(el=>el.textContent=money(bal));
-  const k=document.getElementById('kpi-capital');if(k)k.textContent=money(bal);
-  const v=document.getElementById('capital-view-balance');if(v)v.textContent=money(bal);
-  const t=document.getElementById('capital-total-acreditado');if(t)t.textContent=money(c.totalAcreditado||0);const tv=document.getElementById('capital-total-acreditado-view');if(tv)tv.textContent=money(c.totalAcreditado||0);
-  const body=document.querySelector('#capitalTable tbody');
-  if(body){
-    const rows=Object.values(c.movements||{}).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-    body.innerHTML=rows.map((r,i)=>'<tr><td>'+escapeHtml(r.createdAt||'—')+'</td><td>'+escapeHtml(r.period||'—')+'</td><td>'+escapeHtml(r.type||'ACREDITACIÓN DE CAPITAL')+'</td><td><b>'+money(r.amount)+'</b></td><td>'+escapeHtml(r.by||'Administrador')+'</td><td>'+escapeHtml(r.note||'')+'</td></tr>').join('')||'<tr><td colspan="6" class="muted">No hay movimientos de capital registrados.</td></tr>';
-  }
-}
-function swOpenCapitalModal(){
-  if(!swCapitalIsAdmin())return toast('Solo el Administrador puede acreditar capital.','warn');
-  let modal=document.getElementById('swCapitalModal');
-  if(!modal){
-    modal=document.createElement('div');
-    modal.className='modal admin-only';
-    modal.id='swCapitalModal';
-    modal.setAttribute('onclick','handleModalBackdropClick(event)');
-    modal.innerHTML='<div class="modal-content" onclick="event.stopPropagation()"><button class="modal-close-x" onclick="closeModal(\'swCapitalModal\')">×</button><h3 style="color:#0f2c59">Acreditar Capital</h3><div class="info-box" style="margin-bottom:12px"><b>Capital exclusivo de Administración.</b><br>Esta partida queda separada del balance operativo, depósitos y comisiones. No recibe dinero automáticamente y no modifica el balance administrativo.</div><div class="form-group"><label>Monto de capital (RD$)</label><input id="sw-capital-amount" type="number" min="0.01" step="0.01" class="form-control" placeholder="0.00"></div><div class="form-group"><label>Mes / período</label><input id="sw-capital-period" type="month" class="form-control"></div><div class="form-group"><label>Nota</label><textarea id="sw-capital-note" class="form-control" rows="3" placeholder="Descripción de la entrada de capital"></textarea></div><div class="info-box">Capital actual: <b data-capital-balance>RD$ 0.00</b></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" onclick="closeModal(\'swCapitalModal\')">Cancelar</button><button class="btn btn-primary" onclick="swSaveCapital()">Acreditar capital</button></div></div>';
-    document.body.appendChild(modal);
-  }
-  const d=new Date(),period=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-  document.getElementById('sw-capital-amount').value='';
-  document.getElementById('sw-capital-period').value=period;
-  document.getElementById('sw-capital-note').value='';
-  swRenderCapital();
-  modal.style.display='flex';
-}
-async function swSaveCapital(){
-  if(!swCapitalIsAdmin())return toast('Solo el Administrador puede acreditar capital.','warn');
-  const amount=Number(document.getElementById('sw-capital-amount')?.value||0);
-  const period=String(document.getElementById('sw-capital-period')?.value||'').trim();
-  const note=String(document.getElementById('sw-capital-note')?.value||'').trim();
-  if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto de capital mayor que cero.','warn');
-  if(!period)return toast('Seleccione el mes o período del capital.','warn');
-  if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');
-  const root=firebase.database().ref(DB_PATH);
-  try{
-    const tx=await root.child('capital').transaction(v=>{
-      const cur=v&&typeof v==='object'?v:{};
-      const balance=Number(cur.balance||0),total=Number(cur.totalAcreditado||0);
-      const id=uid('cap');
-      return {
-        ...cur,
-        balance:Number((balance+amount).toFixed(2)),
-        totalAcreditado:Number((total+amount).toFixed(2)),
-        updatedAt:now(),
-        updatedBy:currentUser?.username||'admin',
-        movements:{
-          ...(cur.movements||{}),
-          [id]:{
-            id,
-            type:'ACREDITACIÓN DE CAPITAL',
-            amount:Number(amount.toFixed(2)),
-            period,
-            note,
-            by:currentUser?.username||'admin',
-            createdAt:now(),
-            createdAtMs:Date.now()
-          }
-        }
-      };
-    });
-    if(!tx.committed)return toast('No se pudo guardar el capital.','error');
-    state.capital=tx.snapshot.val()||swCapitalDefaults;
-    localSave();
-    swRenderCapital();
-    closeModal('swCapitalModal');
-    renderAll();
-    toast('Capital acreditado correctamente. No se mezcló con el balance operativo.','success');
-  }catch(e){
-    console.warn('Acreditar capital:',e);
-    toast('No se pudo guardar el capital de forma segura.','error');
-  }
-}
-window.swSaveCapital=swSaveCapital;
-window.swOpenCapitalModal=swOpenCapitalModal;
-
-function swInstallCapitalUI(){
-  swEnsureCapitalState();
-  const side=document.getElementById('sidebar-menu');
-  if(side&&!side.querySelector('[data-sw-capital],[data-sw-static-capital-menu]')){
-    const li=document.createElement('li');li.className='admin-only';li.dataset.swCapital='1';
-    li.innerHTML='<a href="#" onclick="switchView(\'capital\');return false"><i class="fa-solid fa-coins"></i> Capital</a>';
-    side.appendChild(li);
-  }
-  applyRoleVisibility();
-  swRenderCapital();
-}
-const swOriginalSwitchView=window.switchView;
-window.switchView=function(id){
-  swOriginalSwitchView(id);
-  if(id==='capital')document.getElementById('page-title').textContent='Capital de Administración';
-  swRenderCapital();
-};
-const swOriginalRenderAll=window.renderAll;
-window.renderAll=function(){
-  try{swInstallCapitalUI()}catch(e){console.warn('Capital UI:',e)}
-  swOriginalRenderAll.apply(this,arguments);
-  try{swRenderCapital()}catch(_){}
-};
-
-async function swLoadCapitalAfterAuth(authUser){
-  swEnsureCapitalState();
-  if(!swCapitalIsAdmin())return;
-  const snap=await firebase.database().ref(DB_PATH+'/capital').once('value');
-  state.capital=snap.val()||swCapitalDefaults;
-}
-if(typeof loadAuthorizedState==='function'){
-  const swOriginalLoadAuthorizedState=loadAuthorizedState;
-  loadAuthorizedState=async function(authUser){
-    await swOriginalLoadAuthorizedState(authUser);
-    await swLoadCapitalAfterAuth(authUser);
-  };
-}
-if(typeof attachRealtimeListeners==='function'){
-  const swOriginalAttachRealtimeListeners=attachRealtimeListeners;
-  attachRealtimeListeners=function(){
-    swOriginalAttachRealtimeListeners();
-    try{
-      if(window.__sendwayoCapitalRef)window.__sendwayoCapitalRef.off();
-      if(!swCapitalIsAdmin())return;
-      const ref=firebase.database().ref(DB_PATH+'/capital');
-      ref.on('value',snap=>{
-        if(snap.exists()){
-          state.capital=snap.val()||swCapitalDefaults;
-          swRenderCapital();
-        }
-      });
-      window.__sendwayoCapitalRef=ref;
-    }catch(e){console.warn('Capital realtime:',e)}
-  };
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',swInstallCapitalUI,{once:true});else setTimeout(swInstallCapitalUI,0);setTimeout(()=>{swEnsureHtml2Canvas().catch(()=>{})},3000);
-
-async function swEnsureHtml2Canvas(){
-  if(window.html2canvas)return true;
-  return await new Promise(resolve=>{
-    const existing=document.querySelector('script[data-sendwayo-html2canvas]');
-    if(existing){existing.addEventListener('load',()=>resolve(!!window.html2canvas),{once:true});existing.addEventListener('error',()=>resolve(false),{once:true});return}
-    const sc=document.createElement('script');
-    sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    sc.async=true;sc.dataset.sendwayoHtml2canvas='1';
-    sc.onload=()=>resolve(!!window.html2canvas);sc.onerror=()=>resolve(false);
-    document.head.appendChild(sc);
-  });
-}
-async function swCopyReceiptImage(){
-  const host=document.getElementById('detail-content');
-  const target=host?.querySelector('.receipt-shell');
-  if(!target)return toast('No se encontró la imagen del comprobante.','warn');
-  if(!navigator.clipboard?.write||!window.ClipboardItem)return toast('Este navegador no permite copiar imágenes directamente al portapapeles. Puede usar Imprimir/Guardar.','warn');
-  const ok=await swEnsureHtml2Canvas();
-  if(!ok)return toast('No se pudo preparar la copia de imagen del comprobante.','error');
-  const clone=target.cloneNode(true);
-  clone.querySelectorAll('.receipt-capture').forEach(e=>e.remove());
-  const rect=target.getBoundingClientRect();
-  clone.style.width=Math.max(320,Math.round(rect.width))+'px';
-  clone.style.maxWidth='none';
-  clone.style.position='fixed';
-  clone.style.left='-100000px';
-  clone.style.top='0';
-  clone.style.margin='0';
-  clone.style.background='#fff';
-  clone.style.boxShadow='none';
-  document.body.appendChild(clone);
-  try{
-    const canvas=await html2canvas(clone,{backgroundColor:'#ffffff',scale:2,useCORS:true,allowTaint:false});
-    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-    if(!blob)throw new Error('PNG_BLOB_FAILED');
-    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-    toast('Comprobante copiado como imagen. Ahora puede pegarlo directamente.','success');
-  }catch(e){
-    console.warn('Copiar comprobante como imagen:',e);
-    const canvas=clone.__sendwayoCanvas;
-    toast('No se pudo copiar la imagen automáticamente en este navegador.','error');
-  }finally{
-    clone.remove();
-  }
-}
-window.swCopyReceiptText=swCopyReceiptText;
-window.swCopyReceiptImage=swCopyReceiptImage;
-
-
-})();
-</script>
 
 <script>
 /* SENDWAYO EXPRESS — LOCALIZACIÓN COMPLETA */
@@ -5155,7 +4945,7 @@ document.addEventListener('touchstart',swCloseFloatingSurfacesOutside,{capture:t
 
 // SENDWAYO CAPITAL — módulo administrativo
 function capitalNum(v){const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0}
-function capitalRows(){return Object.entries(state.capital||{}).filter(([id,r])=>r&&typeof r==='object').map(([id,r])=>({id,r}))}
+function capitalRows(){const c=state.capital||{},rows=[];Object.entries(c).forEach(([id,r])=>{if(r&&typeof r==='object'&&r.type)rows.push({id,r})});Object.entries(c.movements||{}).forEach(([id,r])=>{if(r&&typeof r==='object'&&r.type&&!rows.some(x=>x.id===id))rows.push({id,r})});return rows}
 function capitalImpact(r){if(!r||r.status==='Anulado')return 0;const a=Math.abs(capitalNum(r.amount));return ['Inversión','Retiro de capital','Ajuste negativo'].includes(r.type)?-a:a}
 function renderCapital(){if(!isAdmin())return;const rows=capitalRows();let total=0,invertido=0;rows.forEach(({r})=>{total+=capitalImpact(r);if(r.status!=='Anulado'&&r.type==='Inversión')invertido+=Math.abs(capitalNum(r.amount))});const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=money(v)};set('capital-total',total);set('capital-disponible',total);set('capital-invertido',invertido);const mc=document.getElementById('capital-movimientos');if(mc)mc.textContent=rows.length;const q=String(document.getElementById('capital-search')?.value||'').trim().toLowerCase();const body=document.querySelector('#capitalTable tbody');if(!body)return;const filtered=rows.filter(({id,r})=>!q||[id,r.type,r.concept,r.responsible,r.status,r.note].some(v=>String(v??'').toLowerCase().includes(q))).sort((a,b)=>capitalNum(b.r.dateMs||b.r.date||0)-capitalNum(a.r.dateMs||a.r.date||0));body.innerHTML=filtered.map(({id,r},i)=>{const amount=Math.abs(capitalNum(r.amount)),impact=capitalImpact(r),effect=impact>=0?'Aumenta capital':'Reduce capital';return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(id)+'</td><td>'+escapeHtml(formatDate(r.dateMs||r.date))+'</td><td>'+escapeHtml(r.type||'')+'</td><td>'+escapeHtml(r.concept||'')+'</td><td>'+escapeHtml(r.responsible||'Administración')+'</td><td>'+money(amount)+'</td><td>'+effect+'</td><td>'+escapeHtml(r.status||'Aplicado')+'</td><td><div class="actions"><button class="btn btn-light btn-sm" onclick="viewCapitalMovement(\''+id+'\')"><i class="fa-solid fa-eye"></i></button><button class="btn btn-danger btn-sm" onclick="deleteCapitalMovement(\''+id+'\')"><i class="fa-solid fa-trash"></i></button></div></td></tr>'}).join('')||'<tr><td colspan="10" class="muted">No hay movimientos de capital registrados.</td></tr>'}
 function openCapitalModal(mode){if(!isAdmin())return toast('Solo el Administrador puede registrar capital.','warn');const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());const d=document.getElementById('cap-date');if(d)d.value=now.toISOString().slice(0,16);['cap-amount','cap-concept','cap-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});const resp=document.getElementById('cap-responsible');if(resp)resp.value='Administración';const st=document.getElementById('cap-status');if(st)st.value='Aplicado';const type=document.getElementById('cap-type'),title=document.querySelector('#capitalModal h3'),save=document.querySelector('#capitalModal button[onclick*="saveCapitalMovement"]');if(type){type.value=mode==='ajustar'?'Ajuste positivo':'Aporte de capital'}if(title)title.textContent=mode==='ajustar'?'Ajustar capital':'Acreditar capital';if(save)save.innerHTML=mode==='ajustar'?'<i class="fa-solid fa-sliders"></i> Guardar ajuste':'<i class="fa-solid fa-circle-plus"></i> Acreditar capital';openModal('capitalModal')}
@@ -6787,76 +6577,7 @@ document.addEventListener('click',function(ev){
   setTimeout(apply,250);setTimeout(apply,1000);setTimeout(apply,2000);
 })();
 </script>
-<script id="sendwayo-capital-single-entry-final-v1">
-(function(){
-  'use strict';
-  if(window.__sendwayoCapitalSingleEntryFinalV1)return;
-  window.__sendwayoCapitalSingleEntryFinalV1=true;
 
-  function setCapitalForm(mode){
-    const type=document.getElementById('cap-type');
-    const title=document.querySelector('#capitalModal h3');
-    const save=document.querySelector('#capitalModal button[onclick*="saveCapitalMovement"]');
-    if(type)type.value=mode==='ajustar'?'Ajuste positivo':'Aporte de capital';
-    if(title)title.textContent=mode==='ajustar'?'Ajustar capital':'Acreditar capital';
-    if(save){
-      save.innerHTML=mode==='ajustar'
-        ? '<i class="fa-solid fa-sliders"></i> Guardar ajuste'
-        : '<i class="fa-solid fa-circle-plus"></i> Acreditar capital';
-    }
-    const concept=document.getElementById('cap-concept');
-    if(concept)concept.placeholder=mode==='ajustar'?'Ej.: ajuste de capital':'Ej.: aporte inicial de capital';
-  }
-
-  window.SENDWAYO_OPEN_CAPITAL=function(mode){
-    if(typeof isAdmin!=='function'||!isAdmin())return toast('Solo el Administrador puede gestionar el capital.','warn');
-    const modal=document.getElementById('capitalModal');
-    if(!modal)return toast('El formulario de Capital no está disponible.','error');
-    setCapitalForm(mode==='ajustar'?'ajustar':'acreditar');
-    ['cap-amount','cap-concept','cap-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
-    const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
-    const date=document.getElementById('cap-date');if(date)date.value=now.toISOString().slice(0,16);
-    const resp=document.getElementById('cap-responsible');if(resp)resp.value='Administración';
-    const status=document.getElementById('cap-status');if(status)status.value='Aplicado';
-    modal.style.display='flex';
-    modal.style.visibility='visible';
-    modal.style.opacity='1';
-    modal.style.pointerEvents='auto';
-    modal.style.zIndex='11000';
-    const amount=document.getElementById('cap-amount');if(amount)setTimeout(()=>amount.focus(),30);
-  };
-
-  // Todas las entradas de Capital usan un único formulario.
-  window.openCapitalModal=window.SENDWAYO_OPEN_CAPITAL;
-  window.swOpenCapitalModal=window.SENDWAYO_OPEN_CAPITAL;
-
-  function syncSecretCapital(){
-    try{
-      const c=window.state?.capital||{};
-      const legacy=Object.entries(c).filter(([k,v])=>v&&typeof v==='object'&&v.type);
-      const modern=Object.values(c.movements||{});
-      const rows=modern.length?modern:legacy.map(([id,v])=>({...v,id}));
-      const total=rows.reduce((sum,r)=>{
-        const a=Math.abs(Number(r.amount)||0),t=String(r.type||'');
-        return sum+(['Inversión','Retiro de capital','Ajuste negativo'].includes(t)?-a:a);
-      },0);
-      const el=document.getElementById('secret-capital-balance');
-      if(el)el.textContent=money(total);
-    }catch(_){}
-  }
-  document.addEventListener('click',e=>{
-    if(e.target?.closest?.('#view-secretas,#view-capital'))setTimeout(syncSecretCapital,0);
-  },true);
-  const oldRenderAll=window.renderAll;
-  if(typeof oldRenderAll==='function'&&!oldRenderAll.__capitalSingleEntry){
-    const wrapped=function(){const out=oldRenderAll.apply(this,arguments);setTimeout(syncSecretCapital,0);return out};
-    wrapped.__capitalSingleEntry=true;
-    window.renderAll=wrapped;
-  }
-  setTimeout(syncSecretCapital,300);
-  setTimeout(syncSecretCapital,1200);
-})();
-</script>
 </body>
 </html>
 
