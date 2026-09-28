@@ -6421,7 +6421,7 @@ document.addEventListener('click',function(ev){
 
     const qText=normText(q);
     const qDigits=digits(q);
-    const list=Object.values((window.state&&state.beneficiaries)||{})
+    const list=Object.values((typeof state!=='undefined'&&state&&state.beneficiaries)||{})
       .filter(b=>b&&b.active!==false)
       .map(b=>({b,...personLabel(b)}))
       .filter(x=>{
@@ -6453,7 +6453,7 @@ document.addEventListener('click',function(ev){
   };
 
   window.chooseAgentBeneficiary=function(id){
-    const b=(window.state&&state.beneficiaries)?state.beneficiaries[id]:null;
+    const b=(typeof state!=='undefined'&&state&&state.beneficiaries)?state.beneficiaries[id]:null;
     const input=document.getElementById('agent-beneficiario-input');
     const sel=document.getElementById('agent-beneficiario-select');
     const box=document.getElementById('agent-beneficiario-suggestions');
@@ -6489,8 +6489,8 @@ document.addEventListener('click',function(ev){
 
     // Orden obligatorio:
     // formulario -> cálculo (neto/comisión/total/recibir) -> Enregistrer -> tablas.
-    if(calc && actions && actions.parentElement===content){
-      content.insertBefore(calc,actions);
+    if(calc && actions){
+      actions.parentNode.insertBefore(calc,actions);
     }
     if(actions){
       if(tariffHost) actions.parentNode.insertBefore(tariffHost,actions.nextSibling);
