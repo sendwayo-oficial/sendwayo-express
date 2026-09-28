@@ -2572,7 +2572,7 @@ async function setTransactionStatus(collection,id,status){
    try{
      // La aprobación financiera debe ser UNA sola operación atómica.
      // Si Firebase la rechaza, no se cambia el estado ni se acredita ninguna comisión.
-     await firebase.database().ref(DB_PATH).update(updates);
+     await firebase.database().ref().update(updates);
    }catch(e){
      console.warn('Aprobación atómica rechazada:',e);
      if(agentCapitalReserved)try{await firebase.database().ref(DB_PATH+'/agentCapital').transaction(v=>v?{...v,balance:Number((Number(v.balance||0)+amount).toFixed(2)),totalUtilizado:Math.max(0,Number(v.totalUtilizado||0)-amount),operationsApproved:Math.max(0,Number(v.operationsApproved||0)-1),updatedAt:now(),updatedBy:'ROLLBACK_APROBACION'}:v)}catch(_){}
