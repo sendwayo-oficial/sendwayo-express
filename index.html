@@ -1378,8 +1378,12 @@ async function realizarLoginOriginal(){
  const identifier=document.getElementById('login-user').value.trim();
  const password=document.getElementById('login-pass').value;
  const ADMIN_EMAIL='sendwayoexpress@gmail.com';
+ if(!identifier||!password){
+   window.__sendwayoLoginInProgress=false;
+   setStatus('Escriba su correo de administración y su contraseña.','warn');
+   return toast('Escriba sus credenciales de acceso.','warn');
+ }
  window.__sendwayoLoginInProgress=true;
- if(!identifier||!password){setStatus('Escriba su correo de administración y su contraseña.','warn');return toast('Escriba sus credenciales de acceso.','warn')}
  const btn=document.querySelector('#login-screen button[onclick*="sendwayoLogin"]');
  if(btn){btn.disabled=true;btn.dataset.originalText=btn.textContent;btn.textContent='Conectando…'}
  try{
@@ -6598,6 +6602,118 @@ document.addEventListener('click',function(ev){
    }else autoLogin();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootAccess,{once:true});else bootAccess();
+})();
+</script>
+<!-- SENDWAYO UI / ACCESS / CURRENCY FINAL HARDENING V2 -->
+<style id="sendwayo-ui-hardening-v2">
+/* Tarifas y desglose de comisiones: se calculan internamente, pero no se muestran al usuario. */
+#envioModal .table-wrap,
+#agentEnvioModal .table-wrap,
+#agent-hti-gdes-tariffs,
+#agentHtiNatcashTable,
+#agentHtiMoncashTable,
+#sendwayo-hti-haiti-table,
+#env-official-tariff-hint,
+#envioModal #calc-comision,
+#agentEnvioModal #agent-calc-comision{
+  display:none!important;
+}
+#envioModal p:has(#calc-comision),
+#agentEnvioModal p:has(#agent-calc-comision){
+  display:none!important;
+}
+/* El módulo de comisiones no aparece como pantalla lateral del menú; el cálculo contable sigue activo. */
+#sidebar-menu a[onclick*="switchView('comisiones')"]{display:none!important}
+/* Ningún formulario visible debe quedar inutilizable por una capa visual anterior. */
+.modal:not([data-submitting="1"]) input:not([data-hard-disabled]):not([data-system-disabled]),
+.modal:not([data-submitting="1"]) select:not([data-hard-disabled]):not([data-system-disabled]),
+.modal:not([data-submitting="1"]) textarea:not([data-hard-disabled]):not([data-system-disabled]),
+.modal:not([data-submitting="1"]) button:not([data-hard-disabled]):not([data-system-disabled]){
+  pointer-events:auto!important;
+}
+</style>
+<script id="sendwayo-ui-hardening-v2-script">
+(function(){
+'use strict';
+if(window.__sendwayoUiHardeningV2)return;
+window.__sendwayoUiHardeningV2=true;
+
+function agent(){
+  return typeof isAgentUser==='function' && isAgentUser(window.currentUser||currentUser);
+}
+function gdes(v){
+  return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES';
+}
+function fixAgentCurrency(){
+  if(!agent())return;
+  const modal=document.getElementById('agentEnvioModal');
+  const table=document.getElementById('enviosTable');
+  if(table){
+    const heads=table.querySelectorAll('thead th');
+    ['N°','Type','Agent','Opération','Bénéficiaire','Montant GDES','Frais GDES','Total GDES','Statut','Reçu','Actions']
+      .forEach((v,i)=>{if(heads[i])heads[i].textContent=v});
+    table.querySelectorAll('tbody tr').forEach(function(tr){
+      tr.querySelectorAll('td').forEach(function(td){
+        const t=String(td.textContent||'');
+        if(/RD\$/i.test(t))td.textContent=t.replace(/RD\$/gi,'GDES');
+      });
+    });
+  }
+  if(modal){
+    modal.querySelectorAll('*').forEach(function(el){
+      if(el.children.length===0){
+        const t=String(el.textContent||'');
+        if(/RD\$/i.test(t))el.textContent=t.replace(/RD\$/gi,'GDES');
+      }
+    });
+    ['agent-calc-monto','agent-calc-total','agent-calc-recibir'].forEach(function(id){
+      const e=document.getElementById(id);
+      if(e && !/GDES/i.test(e.textContent||'')){
+        const n=parseFloat(String(e.textContent||'').replace(/[^0-9,.-]/g,'').replace(',','.'))||0;
+        e.textContent=gdes(n);
+      }
+    });
+  }
+}
+function activateVisibleForms(){
+  document.querySelectorAll('.modal').forEach(function(m){
+    if(getComputedStyle(m).display==='none' || m.dataset.submitting==='1')return;
+    m.querySelectorAll('input,select,textarea,button').forEach(function(e){
+      if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;
+      if(e.dataset.sendwayoIntentionalDisabled==='1')return;
+      e.style.pointerEvents='auto';
+      if(e.tagName==='BUTTON')e.style.touchAction='manipulation';
+    });
+  });
+}
+function hideTariffs(){
+  [
+    '#envioModal .table-wrap','#agentEnvioModal .table-wrap',
+    '#agent-hti-gdes-tariffs','#agentHtiNatcashTable','#agentHtiMoncashTable',
+    '#sendwayo-hti-haiti-table','#env-official-tariff-hint'
+  ].forEach(function(sel){
+    document.querySelectorAll(sel).forEach(function(e){e.style.setProperty('display','none','important')});
+  });
+  document.querySelectorAll('#envioModal p,#agentEnvioModal p').forEach(function(p){
+    if(/COMIS[IÓO]N|FRAIS HA[ÏI]TI|TARIF|TABLEAU OFFICIEL|TABLA OFICIAL/i.test(p.textContent||'')){
+      p.style.setProperty('display','none','important');
+    }
+  });
+}
+function apply(){
+  fixAgentCurrency();
+  activateVisibleForms();
+  hideTariffs();
+}
+window.SENDWAYO_REACTIVATE_FIELDS=apply;
+document.addEventListener('click',function(){setTimeout(apply,0)},true);
+document.addEventListener('focusin',function(){setTimeout(apply,0)},true);
+document.addEventListener('input',function(){setTimeout(apply,0)},true);
+document.addEventListener('change',function(){setTimeout(apply,0)},true);
+setTimeout(apply,150);
+setTimeout(apply,700);
+setTimeout(apply,1800);
+setInterval(apply,2500);
 })();
 </script>
 </body>
