@@ -2074,7 +2074,7 @@ function resolveEnvioPerson(kind){
  if(kind==='remitente'&&!isAdmin()&&currentUser){const me=state.users?.[currentUser.id];if(me)return setEnvioPersonFields(kind,me,me.id)}
  hidden.value='';
 }
-async function openTransactionEntry(){if(isAgentUser(currentUser)){['envioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal','requestModal','cuentaModal'].forEach(function(id){var x=document.getElementById(id);if(x){x.style.display='none';x.style.visibility='hidden';x.style.pointerEvents='none';}});var m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.phone||'Sin número')+' ('+(u.name||'Agente')+')';const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haïti → Haïti — NatCash</option><option value="HAITI A HAITI MonCash">Haïti → Haïti — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(typeof renderAgentHtiTariffTable==='function')renderAgentHtiTariffTable();if(m){m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='1100';}return}openModal('envioModal')}
+async function openTransactionEntry(){if(isAgentUser(currentUser)){if(typeof window.SENDWAYO_AGENT_ISOLATE==='function')window.SENDWAYO_AGENT_ISOLATE();['envioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal','requestModal','cuentaModal'].forEach(function(id){var x=document.getElementById(id);if(x){x.style.display='none';x.style.visibility='hidden';x.style.pointerEvents='none';}});var m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.phone||'Sin número')+' ('+(u.name||'Agente')+')';const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haïti → Haïti — NatCash</option><option value="HAITI A HAITI MonCash">Haïti → Haïti — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(typeof renderAgentHtiTariffTable==='function')renderAgentHtiTariffTable();if(m){m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='1100';}return}openModal('envioModal')}
 const HTI_AGENT_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
 const HTI_AGENT_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
 function agentOperationKey(operation){const s=String(operation||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(s.startsWith('deposito'))return 'DEPOSITO';if(s.startsWith('retiro'))return 'RETIRO';return 'ENVIO'}
@@ -6592,6 +6592,8 @@ document.addEventListener('click',function(ev){
     });
   }
 
+  window.SENDWAYO_AGENT_ISOLATE=function(){hideNonAgentScreens();};
+
   window.SENDWAYO_OPEN_AGENT_BENEFICIARY=function(ev){
     try{
       if(ev){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}
@@ -6634,6 +6636,11 @@ document.addEventListener('click',function(ev){
 
   document.addEventListener('click',function(ev){
     if(ev.target&&ev.target.closest&&ev.target.closest('#agentEnvioModal'))setTimeout(bindAgentBeneficiaryButton,0);
+  },true);
+
+  document.addEventListener('click',function(ev){
+    var agentClose=ev.target&&ev.target.closest?ev.target.closest('#agentEnvioModal .modal-close-x,#agentEnvioModal .btn-light'):null;
+    if(agentClose)setTimeout(function(){restoreNonAgentScreens();},0);
   },true);
 
   document.addEventListener('click',function(ev){
