@@ -3,7 +3,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   firebase_uid TEXT UNIQUE,
-  role TEXT NOT NULL CHECK (role IN ('ADMIN','REMITENTE')),
+  role TEXT NOT NULL CHECK (role IN ('ADMIN','REMITENTE','AGENTE')),
   full_name TEXT NOT NULL,
   phone TEXT,
   active INTEGER NOT NULL DEFAULT 1,
