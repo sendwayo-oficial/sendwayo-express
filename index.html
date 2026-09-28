@@ -303,7 +303,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
         <p class="muted">Elige lo que deseas hacer. Si aún no tienes cuenta, completa la solicitud y el administrador la revisará.</p>
         <div class="welcome-actions">
           <button class="choice" onclick="window.sendwayoOpenRequest('Remitente')"><strong>Quiero ser remitente</strong><span class="muted">Solicitar registro como remitente</span></button>
-          <button class="choice" onclick="window.sendwayoOpenLogin()"><strong>Ya tengo una cuenta / Ingresar</strong><span class="muted">Entrar con usuario y contraseña</span></button>
+          <button class="choice" type="button" onclick="document.getElementById('welcome-screen').classList.add('hidden');document.getElementById('login-screen').classList.remove('hidden');setTimeout(function(){var u=document.getElementById('login-user');if(u)u.focus()},50);return false;"><strong>Ya tengo una cuenta / Ingresar</strong><span class="muted">Entrar con usuario y contraseña</span></button>
           <button class="choice" onclick="window.sendwayoOpenRequest('Enviar dinero')"><strong>Quiero enviar dinero</strong><span class="muted">Solicitar asistencia para un envío</span></button>
           <button class="choice" onclick="window.sendwayoOpenRequest('Enviar paquete')"><strong>Quiero enviar paquete</strong><span class="muted">Solicitar servicio de paquete</span></button>
           <button class="choice" onclick="window.sendwayoOpenRequest('Recibir paquete')"><strong>Quiero recibir paquete</strong><span class="muted">Solicitar recepción</span></button>
@@ -658,8 +658,7 @@ window.sendwayoOpenLogin=function(){
   if(l)l.classList.remove('hidden');
   var u=document.getElementById('login-user');
   if(u)setTimeout(function(){u.focus()},50);
-  // Prepara Firebase inmediatamente, sin bloquear la pantalla de acceso.
-  try{if(typeof initFirebase==='function')initFirebase().catch(function(e){console.warn('SENDWAYO Firebase preload:',e)})}catch(e){}
+  // Firebase se inicializa únicamente al pulsar "Ingresar al Sistema".
 };
 window.addEventListener('keydown',function(ev){
   if(ev.key!=='Enter')return;
