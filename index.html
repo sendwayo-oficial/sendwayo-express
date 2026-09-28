@@ -6400,8 +6400,34 @@ document.addEventListener('click',function(ev){
   document.addEventListener('click',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
   document.addEventListener('change',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
   document.addEventListener('input',e=>{if(e.target?.closest?.('#agentEnvioModal'))setTimeout(install,0)},true);
-  setTimeout(install,400);
-  setTimeout(install,1500);
+  // BLOQUEO FINAL DE MONEDA DEL AGENTE: cualquier actualización del monto
+  // conserva GDES; ningún render genérico puede cambiar el módulo a RD$.
+  const gdesLock=function(){
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    const amount=document.getElementById('agent-monto');
+    const label=amount?.closest('.form-group')?.querySelector('label');
+    if(label)label.textContent='Montant en gourdes haïtiennes (GDES) — GDES UNIQUEMENT';
+    ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(function(id){
+      const el=document.getElementById(id);
+      if(el && /RD\\$/i.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/RD\\$/gi,'GDES');
+    });
+    m.querySelectorAll('*').forEach(function(el){
+      if(el.children.length===0 && /RD\\$/i.test(el.textContent||'')){
+        el.textContent=(el.textContent||'').replace(/RD\\$/gi,'GDES');
+      }
+    });
+    if(typeof renderBusinessTables==='function')renderBusinessTables();
+  };
+  window.__sendwayoAgentCurrencyLockFinalV2=true;
+  document.addEventListener('input',function(e){
+    if(e.target?.id==='agent-monto'){setTimeout(gdesLock,0);setTimeout(gdesLock,25);}
+  },true);
+  document.addEventListener('change',function(e){
+    if(e.target?.id==='agent-operation'||e.target?.id==='agent-tipo-trans'){setTimeout(gdesLock,0);setTimeout(gdesLock,25);}
+  },true);
+  setTimeout(gdesLock,500);
+  setTimeout(gdesLock,1600);
 })();
 </script>
 
