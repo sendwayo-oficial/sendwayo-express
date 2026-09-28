@@ -6741,5 +6741,57 @@ setTimeout(apply,1800);
 setInterval(apply,2500);
 })();
 </script>
+
+<!-- SENDWAYO TRANSACTION DISPLAY FINAL V2 -->
+<style id="sendwayo-transaction-display-final-v2">
+/* Tarifas, frais y comisiones son datos contables internos: nunca se muestran en una transacción. */
+#envioModal [data-tariff],#envioModal [data-commission],#agentEnvioModal [data-tariff],#agentEnvioModal [data-commission],
+#envioModal .tariff,#envioModal .commission,#agentEnvioModal .tariff,#agentEnvioModal .commission{display:none!important}
+#enviosTable th.sendwayo-hidden-financial,#enviosTable td.sendwayo-hidden-financial{display:none!important}
+</style>
+<script id="sendwayo-transaction-display-final-v2">
+(function(){
+'use strict';
+if(window.__sendwayoTransactionDisplayFinalV2)return;
+window.__sendwayoTransactionDisplayFinalV2=true;
+
+var financial=/\b(comisi[oó]n|commission|frais|tarifa|tarif|taux|fee|fees|tableau officiel|tabla oficial)\b/i;
+
+function hideFinancialText(root){
+  if(!root)return;
+  root.querySelectorAll('#envioModal .form-group,#agentEnvioModal .form-group,#envioModal p,#agentEnvioModal p,#envioModal .field-hint,#agentEnvioModal .field-hint,#envioModal .info-box,#agentEnvioModal .info-box').forEach(function(el){
+    if(financial.test(String(el.textContent||''))){
+      el.style.setProperty('display','none','important');
+    }
+  });
+  root.querySelectorAll('#enviosTable thead th').forEach(function(th,i){
+    if(financial.test(String(th.textContent||''))){
+      th.classList.add('sendwayo-hidden-financial');
+      root.querySelectorAll('#enviosTable tbody tr').forEach(function(tr){
+        if(tr.children[i])tr.children[i].classList.add('sendwayo-hidden-financial');
+      });
+    }
+  });
+  root.querySelectorAll('#envioModal,#agentEnvioModal').forEach(function(m){
+    m.querySelectorAll('*').forEach(function(el){
+      if(el.children.length===0 && financial.test(String(el.textContent||''))){
+        var target=el.closest('.form-group,.field-hint,p,.info-box,[class*="calc"],[class*="tariff"],[class*="commission"]')||el;
+        if(target && target!==m)target.style.setProperty('display','none','important');
+      }
+    });
+  });
+}
+function apply(){hideFinancialText(document);}
+document.addEventListener('click',function(){setTimeout(apply,0)},true);
+document.addEventListener('input',function(){setTimeout(apply,0)},true);
+document.addEventListener('change',function(){setTimeout(apply,0)},true);
+document.addEventListener('focusin',function(){setTimeout(apply,0)},true);
+setTimeout(apply,100);
+setTimeout(apply,600);
+setTimeout(apply,1500);
+setInterval(apply,3000);
+})();
+</script>
+
 </body>
 </html>
