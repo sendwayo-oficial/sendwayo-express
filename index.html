@@ -2055,7 +2055,7 @@ function resolveEnvioPerson(kind){
 async function openTransactionEntry(){if(isAgentUser(currentUser)){const m=document.getElementById('agentEnvioModal');const u=currentUser||{};const a=document.getElementById('agent-current');if(a)a.value=(u.phone||'Sin número')+' ('+(u.name||'Agente')+')';const t=document.getElementById('agent-tipo-trans');if(t){t.innerHTML='<option value="HAITI A HAITI NatCash">Haití a Haití — NatCash</option><option value="HAITI A HAITI MonCash">Haití a Haití — MonCash</option>';t.value='HAITI A HAITI NatCash';}const bi=document.getElementById('agent-beneficiario-input');if(bi)bi.value='';const bs=document.getElementById('agent-beneficiario-select');if(bs)bs.value='';const am=document.getElementById('agent-monto');if(am)am.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();if(typeof renderAgentHtiTariffTable==='function')renderAgentHtiTariffTable();if(m)openModal('agentEnvioModal');return}openModal('envioModal')}
 const HTI_AGENT_TRANSFER=[[20,99,0],[100,249,0],[250,499,0],[500,999,6],[1000,1999,18],[2000,3999,25],[4000,7999,35],[8000,11999,54],[12000,19999,63],[20000,39999,68],[40000,59999,90],[60000,74999,108],[75000,99999,115]];
 const HTI_AGENT_WITHDRAWAL=[[20,99,6],[100,249,12],[250,499,15],[500,999,28],[1000,1999,46],[2000,3999,81],[4000,7999,130],[8000,11999,248],[12000,19999,342],[20000,39999,576],[40000,59999,945],[60000,74999,1260],[75000,99999,1440]];
-function agentOperationKey(operation){return String(operation||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').startsWith('retiro')?'RETIRO':'ENVIO'}
+function agentOperationKey(operation){const s=String(operation||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(s.startsWith('deposito'))return 'DEPOSITO';if(s.startsWith('retiro'))return 'RETIRO';return 'ENVIO'}
 function agentHtiFee(amount,operation){
  const n=Math.floor(Number(amount||0));
  if(!Number.isFinite(n)||n<20||n>99999)return null;
@@ -2066,18 +2066,12 @@ function agentHtiFee(amount,operation){
 function renderAgentHtiTariffTable(){return true;}
 function htgMoney(v){return Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' GDES'}
 function calcularAgentEnvio(){
- const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Envío',key=agentOperationKey(operation),fee=agentHtiFee(amount,operation),safeFee=fee===null?0:fee;
+ const amount=Number(document.getElementById('agent-monto')?.value||0),operation=document.getElementById('agent-operation')?.value||'Depósito',key=agentOperationKey(operation),fee=key==='DEPOSITO'?0:agentHtiFee(amount,operation),safeFee=fee===null?0:fee;
+ const net=key==='DEPOSITO'?amount:Math.max(0,amount-safeFee),debit=key==='DEPOSITO'?amount:amount+safeFee;
+ const A=document.getElementById('agent-calc-monto'),B=document.getElementById('agent-calc-comision'),T=document.getElementById('agent-calc-total'),R=document.getElementById('agent-calc-recibir'),G=document.getElementById('agent-beneficiario-group');
+ if(A)A.textContent=htgMoney(key==='DEPOSITO'?amount:net);if(B)B.textContent=htgMoney(safeFee);if(T)T.textContent=htgMoney(debit);if(R)R.textContent=htgMoney(key==='DEPOSITO'?amount:net);if(G)G.style.display=key==='DEPOSITO'?'none':'';
+ const btn=document.querySelector('#agentEnvioModal button.btn-primary');if(btn)btn.textContent=key==='DEPOSITO'?'Registrar depósito':'Registrar operación';
  renderAgentHtiTariffTable();
- // En el módulo de Agente, el monto introducido YA INCLUYE la tarifa.
- // Ejemplo: 2,000 GDES con tarifa 25 GDES => recibe 1,975 GDES y el total sigue siendo 2,000 GDES.
- const net=Math.max(0,amount-safeFee),total=amount;
- const a=document.getElementById('agent-calc-monto'),b=document.getElementById('agent-calc-comision'),t=document.getElementById('agent-calc-total'),r=document.getElementById('agent-calc-recibir');
- if(a)a.textContent=htgMoney(net);
- if(b)b.textContent=htgMoney(safeFee);
- if(t)t.textContent=htgMoney(total);
- if(r)r.textContent=htgMoney(net);
- const op=document.getElementById('agent-operation');
- if(op)op.title=key==='RETIRO'?'Tarifa de Retiro incluida dentro del monto ingresado.':'Tarifa de Envío incluida dentro del monto ingresado.';
 }
 function updateAgentBeneficiarySuggestions(){
  const input=document.getElementById('agent-beneficiario-input'),box=document.getElementById('agent-beneficiario-suggestions');if(!input||!box)return;
