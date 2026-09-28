@@ -1902,9 +1902,9 @@ async function ensureUniqueAgentIdentity(){if(!isAdmin())return;const users=Obje
 async function createTransaction(collection,fields,amount){
  if(!canTransact()){toast('Su cuenta no tiene permiso para realizar operaciones.','error');['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);return null}
  if(!firebaseReady||!firebase.auth().currentUser){toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);return null}
- const id=uid(collection),amountNumber=Number(amount||0),creditUsed=isAdmin()?0:Number(currentUser.__creditUsedForOperation||0),suppliedCommission=Number.isFinite(Number(fields?.commission))?Number(fields.commission):null,rate=commissionRateFor(collection,{...fields,amount:amountNumber,commission:suppliedCommission}),commissionAmount=suppliedCommission!==null?suppliedCommission:amountNumber*rate;
+ const id=uid(collection),amountNumber=Number(amount||0),balanceDebitOverride=Number.isFinite(Number(fields?.balanceDebitOverride))?Number(fields.balanceDebitOverride):amountNumber,creditUsed=0,suppliedCommission=Number.isFinite(Number(fields?.commission))?Number(fields.commission):null,rate=commissionRateFor(collection,{...fields,amount:amountNumber,commission:suppliedCommission}),commissionAmount=suppliedCommission!==null?suppliedCommission:amountNumber*rate;
  const agentMode=isAgentUser(currentUser);const record={id,...fields,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount:amountNumber,commissionRate:amountNumber>0?commissionAmount/amountNumber:rate,commission:commissionAmount,status:'Pendiente',createdAt:now(),balanceDebited:false,balanceRefunded:false,accountingType:'COMERCIAL',commissionSplit:agentMode?'100% PLATAFORMA':'50/50',commissionBeneficiary:agentMode?'PLATAFORMA':'REPARTIDO',agentOperation:agentMode,creditUsed,adminVisible:true,adminInbox:true};
- if(!isAdmin()&&!agentMode)record.balanceDebited=true;
+ if(!isAdmin())record.balanceDebited=true;record.balanceDebitOverride=balanceDebitOverride;
  state[collection]=state[collection]||{};state[collection][id]=record;addAudit('Crear '+collection,id);
  try{
    // Guardamos la operación en su nodo propio para que un Remitente pueda
@@ -1921,7 +1921,7 @@ async function createTransaction(collection,fields,amount){
    toast(msg,'error');
    ['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);
    if(record.balanceDebited){
-     const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.amount||0)-used);
+     const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.balanceDebitOverride??record.amount||0)-used);
      if(firebaseReady)await firebase.database().ref(DB_PATH+'/users/'+currentUser.id).transaction(u=>u?{...u,balance:Number(u.balance||0)+balanceUsed,creditOutstanding:Math.max(0,Number(u.creditOutstanding||0)-used)}:undefined);
      else{currentUser.balance=Number(currentUser.balance||0)+balanceUsed;currentUser.creditOutstanding=Math.max(0,Number(currentUser.creditOutstanding||0)-used);state.users[currentUser.id]=currentUser}
    }
@@ -1982,23 +1982,26 @@ async function saveCreditGrant(){
  try{const tx=await ref.transaction(u=>{if(!u||!isManagedUser(u))return undefined;const grants={...(u.creditGrants||{})};return {...u,creditLimit:Number(u.creditLimit||0)+amount,creditGrantedTotal:Number(u.creditGrantedTotal||0)+amount,creditGrants:{...grants,[cid]:{id:cid,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'}}}});if(!tx.committed)return toast('No se pudo guardar el crédito. Verifique que el remitente exista.','error');const updated=tx.snapshot.val(),record={id:cid,userId:id,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'};state.users[id]=updated;state.credits=state.credits||{};state.credits[cid]=record;try{await firebase.database().ref(DB_PATH+'/credits/'+cid).set(record)}catch(e){console.warn('Índice de crédito no disponible:',e)}if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);localSave();closeModal('creditGrantModal');renderAll();try{await addNotification(id,'Administración le otorgó '+money(amount)+' de crédito. Cupo disponible: '+money(creditInfo(updated).available)+'.','credits',cid)}catch(_){}toast('Crédito otorgado y guardado correctamente.','success')}catch(e){console.warn('saveCreditGrant:',e);toast('No se pudo guardar el crédito en Firebase.','error')}
 }
 async function guardBalance(amount){
- if(isAdmin()||isAgentUser(currentUser))return true;
- const needed=Number(amount||0);if(needed<=0)return true;
- if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede reservar dinero ni crédito offline.','error');
+ const needed=Number(amount||0);
+ if(needed<=0)return true;
+ if(isAdmin())return true;
+ if(!currentUser||currentUser.active===false)return toast('La cuenta no está activa.','error');
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede realizar una operación sin verificar el saldo.','error');
  try{
-  const ref=firebase.database().ref(DB_PATH+'/users/'+currentUser.id);let actualCreditUsed=0;
+  const ref=firebase.database().ref(DB_PATH+'/users/'+currentUser.id);
   const tx=await ref.transaction(u=>{
-   if(!u||u.role!=='Remitente')return undefined;
-   const balance=Number(u.balance||0),limit=Number(u.creditLimit||0),out=Number(u.creditOutstanding||0),available=Math.max(0,limit-out);
-   const fromBalance=Math.min(balance,needed),creditNeeded=needed-fromBalance;if(creditNeeded>available)return undefined;
-   actualCreditUsed=creditNeeded;
-   return {...u,balance:balance-fromBalance,creditOutstanding:out+creditNeeded};
+   if(!u||u.active===false)return undefined;
+   const role=String(u.role||'').trim().toLowerCase();
+   if(!['remitente','remitentes','agente','agent','agentes'].includes(role))return undefined;
+   const balance=Number(u.balance||0);
+   if(!Number.isFinite(balance)||balance<needed)return undefined;
+   return {...u,balance:balance-needed};
   });
-  if(!tx.committed){toast('Balance insuficiente y el crédito disponible no cubre esta operación.','warn');return false}
-  const updated=tx.snapshot.val();currentUser={...updated,__creditUsedForOperation:actualCreditUsed};state.users[currentUser.id]=updated;
+  if(!tx.committed){toast('Saldo insuficiente. La operación supera el balance disponible y fue bloqueada.','warn');return false}
+  const updated=tx.snapshot.val();currentUser={...updated,__creditUsedForOperation:0};state.users[currentUser.id]=updated;
   if(lastSyncedState?.users?.[currentUser.id])lastSyncedState.users[currentUser.id]=cloneState(updated);
   localSave();return true;
- }catch(e){console.warn('Balance/crédito:',e);toast('No se pudo actualizar balance/crédito en Firebase.','error');return false}
+ }catch(e){console.warn('Bloqueo de saldo:',e);toast('No se pudo verificar/actualizar el saldo en Firebase. La operación fue bloqueada.','error');return false}
 }
 function resolveByText(value,collection,fields){let v=String(value||'').trim().toLowerCase();if(!v)return null;return Object.values(collection).find(x=>fields.some(f=>String(x[f]||'').trim().toLowerCase()===v||String(x[f]||'').trim().toLowerCase().includes(v)))?.id||null}
 function normalizeSearchText(v){return String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim()}
@@ -6171,6 +6174,8 @@ document.addEventListener('click',function(ev){
     const ben=benId?state.beneficiaries?.[benId]:null;
     if(k!=='DEPOSITO'&&!ben)return toast('Sélectionnez un bénéficiaire valide.','warn');
     const balanceDelta=k==='DEPOSITO'?amount:-(amount+f);
+    const requiredDebit=k==='DEPOSITO'?amount:amount+f;
+    if(!await guardBalance(requiredDebit))return;
     if(!beginFormSubmit('agentEnvioModal'))return;
     try{
       const id=await createTransaction('envios',{
@@ -6182,6 +6187,7 @@ document.addEventListener('click',function(ev){
         balanceDebit:Math.abs(balanceDelta),destination:amount,fee:f,commission:0,commissionTotal:0,
         accountingType:k==='DEPOSITO'?'AGENT_DEPOSITO_GDES':'AGENT_HAITI_GDES',
         agentOperationKey:k,agentBalanceDelta:balanceDelta,agentTariffOnly:true,
+        balanceDebitOverride:requiredDebit,
         agentCurrencyOnly:'GDES',platformFeeDeductedFromBalance:k!=='DEPOSITO'
       },amount);
       if(!id)return;
@@ -6551,6 +6557,9 @@ document.addEventListener('click',function(ev){
 })();
 </script>
 
+
+<!-- SENDWAYO FINAL SAFETY / MOBILE FORM / HIDDEN TARIFF TABLES V1 -->
+<style id="sendwayo-final-safety-v1">#envioModal .table-wrap,#agentEnvioModal .table-wrap,#agent-hti-gdes-tariffs,#agentHtiNatcashTable,#agentHtiMoncashTable{display:none!important}@media(max-width:800px){#envioModal .form-grid,#agentEnvioModal .form-grid{grid-template-columns:1fr!important}}</style>
+<script id="sendwayo-final-safety-v1">(function(){'use strict';if(window.__sendwayoFinalSafetyV1)return;window.__sendwayoFinalSafetyV1=true;function unlock(){document.querySelectorAll('.modal').forEach(function(m){if(getComputedStyle(m).display==='none')return;m.style.pointerEvents='auto';var c=m.querySelector('.modal-content');if(c){c.style.pointerEvents='auto';c.style.position='relative';c.style.zIndex='1'}m.querySelectorAll('input,select,textarea,button').forEach(function(e){if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;e.disabled=false;e.style.pointerEvents='auto';e.style.touchAction='manipulation';if(!e.hasAttribute('data-readonly'))e.readOnly=false})})}function hideTables(){['#envioModal .table-wrap','#agentEnvioModal .table-wrap','#agent-hti-gdes-tariffs','#agentHtiNatcashTable','#agentHtiMoncashTable'].forEach(function(s){document.querySelectorAll(s).forEach(function(e){e.style.setProperty('display','none','important')})})}document.addEventListener('click',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('focusin',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('input',function(e){if(e.target?.closest?.('.modal'))hideTables()},true);setTimeout(function(){unlock();hideTables()},300);setInterval(function(){unlock();hideTables()},1200)})();</script>
 </body>
 </html>
-
