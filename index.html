@@ -1299,26 +1299,8 @@ async function boot(){
 }
 // Arranque seguro: esperar a que todo el HTML exista antes de inicializar la aplicación.
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});else setTimeout(()=>boot(),0);
-/* Re-traducción segura de elementos dinámicos; no bloquea la interfaz. */
-(function installSendwayoLanguageObserver(){
- let timer=0,locked=false;
- const run=()=>{
-   if(locked)return;
-   locked=true;
-   try{translateInterface()}catch(_){}
-   locked=false;
- };
- const start=()=>{
-   if(!document.body||window.__sendwayoLanguageObserver)return;
-   const obs=new MutationObserver(()=>{
-     clearTimeout(timer);
-     timer=setTimeout(run,120);
-   });
-   obs.observe(document.body,{subtree:true,childList:true});
-   window.__sendwayoLanguageObserver=obs;
- };
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else setTimeout(start,0);
-})();
+/* Traducción dinámica controlada. No se observa todo el DOM para evitar ciclos y bloqueos. */
+
 
 
 function showWelcome(){document.getElementById('welcome-screen').classList.remove('hidden');document.getElementById('login-screen').classList.add('hidden');document.body.style.overflow='';closeMobileMenu()}
