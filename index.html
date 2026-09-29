@@ -404,6 +404,57 @@ body.sendwayo-operation-open .modal{z-index:30000!important}
       <div class="kpi" style="border-top-color:#f3b51b"><b>Comisión Total</b><h2 id="kpi-commission">RD$ 0.00</h2></div>
       <div class="kpi admin-only" style="border-top-color:#d4a017"><b>Capital</b><h2 id="kpi-capital-static">RD$ 0.00</h2></div>
     </div>
+    <div id="sendwayo-master-dashboard" class="card admin-only" style="margin-top:14px">
+      <div class="card-header">
+        <div>
+          <h2>Dashboard General</h2>
+          <p class="muted">Comisión Remitentes (50%) &amp; Agentes (0% - Admin 100%)</p>
+        </div>
+      </div>
+      <div class="kpis" style="margin-bottom:14px">
+        <div class="kpi" style="border-top-color:#16803c">
+          <b>Capital Compartido Agentes (Haití)</b>
+          <h2 id="sw-dashboard-gdes-capital">GDES 0.00</h2>
+          <span class="muted">Fondo común para operaciones de agentes (Envíos, Depósitos, Retiros).</span>
+        </div>
+        <div class="kpi" style="border-top-color:#1d4ed8">
+          <b>Capital General Remitentes (RD$)</b>
+          <h2 id="sw-dashboard-dop-capital">RD$ 0.00</h2>
+          <span class="muted">Gestión de transacciones en Pesos Dominicanos (Incluye cálculo de 50% comisión).</span>
+        </div>
+        <div class="kpi">
+          <b>TOTAL ENVÍOS (GDES)</b>
+          <h2 id="sw-dashboard-total-envios-gdes">GDES 0.00</h2>
+        </div>
+        <div class="kpi">
+          <b>TOTAL REMESAS (RD$)</b>
+          <h2 id="sw-dashboard-total-remesas-dop">RD$ 0.00</h2>
+        </div>
+        <div class="kpi" style="border-top-color:#f3b51b">
+          <b>COMISIONES REMITENTES (50%)</b>
+          <h2 id="sw-dashboard-remitente-commission">RD$ 0.00</h2>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" onclick="window.SENDWAYO_OPEN_AGENT_DASHBOARD()"><i class="fa-solid fa-paper-plane"></i> Registrar Transacción</button>
+        <button type="button" class="btn btn-light" onclick="switchView('recargas')"><i class="fa-solid fa-mobile-screen"></i> Ir a Recargas</button>
+        <button type="button" class="btn btn-warning" onclick="window.SENDWAYO_OPEN_CAPITAL('acreditar')"><i class="fa-solid fa-circle-plus"></i> Acreditar capital GDES/DOP</button>
+      </div>
+      <div class="info-box" style="margin-top:12px">
+        <strong>Registrar Transacción - SENDWAY EXPRESS</strong><br>
+        Módulo Operativo: los agentes trabajan exclusivamente en Gourdes Haitianos (GDES/HTG). Los agentes reciben 0% de comisión; el 100% de la comisión de sus operaciones pertenece a Administración y alimenta el capital compartido GDES. Los Remitentes/Revendedores reciben 50% de las comisiones que les correspondan.
+      </div>
+      <div class="card" style="margin-top:12px;margin-bottom:0">
+        <div class="card-header"><h3>Nueva Recarga / Paquetico y Facturación (HTG)</h3></div>
+        <p class="muted">Para operaciones del módulo Haití, el monto se registra en Gourdes (HTG/GDES), sin DOP.</p>
+        <div class="actions"><button type="button" class="btn btn-primary" onclick="switchView('recargas')">Abrir módulo de Recargas</button><button type="button" class="btn btn-light" onclick="switchView('paqueticos')">Abrir Paqueticos</button></div>
+      </div>
+      <div class="card" style="margin-top:12px;margin-bottom:0">
+        <div class="card-header"><h3>Gestión de Capital Compartido (HTG)</h3></div>
+        <p class="muted">Aporte al Capital Compartido de Agentes (Gourdes HTG). Solo Administración puede acreditar o ajustar este fondo.</p>
+        <div class="actions"><button type="button" class="btn btn-success" onclick="window.SENDWAYO_OPEN_CAPITAL('acreditar-gdes')">Actualizar Capital GDES</button><button type="button" class="btn btn-warning" onclick="window.SENDWAYO_OPEN_CAPITAL('ajustar-gdes')">Ajustar Capital GDES</button></div>
+      </div>
+    </div>
     <div id="ganancias-dia-card" class="card-ganancias-dia">
       <h3>Ganancia de hoy</h3>
       <div id="ganancias-dia-lista"></div>
@@ -7629,6 +7680,60 @@ body.sendwayo-hti-hti-only #envioModal .sendwayo-transaction-summary strong{ }
   document.addEventListener('change',function(e){if(e.target&&e.target.id==='env-tipo-trans')setTimeout(enforce,0);});
   document.addEventListener('input',function(e){if(e.target&&e.target.id==='env-monto'&&agent())setTimeout(enforce,0);});
   setInterval(function(){if(agent()&&document.getElementById('envioModal')?.style.display!=='none')enforce();},700);
+})();
+</script><script id="sendwayo-master-dashboard-20260929">
+(function(){
+  function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
+  function moneyD(v){return 'RD$ '+num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function moneyG(v){return 'GDES '+num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function approvedRows(collection){
+    return Object.values(state?.[collection]||{}).filter(function(r){return r&&String(r.status||'').toLowerCase()==='aprobado'})
+  }
+  function isAgentRecord(r){
+    const u=state?.users?.[r?.userId];
+    return typeof isAgentUser==='function' && isAgentUser(u)
+  }
+  function refreshMasterDashboard(){
+    if(typeof isAdmin==='function'&&!isAdmin())return;
+    const g=typeof gdes==='function'?num(gdes()):0;
+    const d=typeof dop==='function'?num(dop()):0;
+    let envG=0, remD=0, remComm=0;
+    approvedRows('envios').forEach(function(r){
+      const a=num(r.amount||r.amountSent||r.monto);
+      const currency=String(r.currency||r.currencyCode||'').toUpperCase();
+      if(isAgentRecord(r)||currency==='GDES'||currency==='HTG')envG+=a;
+      else remD+=a;
+      if(!isAgentRecord(r))remComm+=num(r.commissionUser??(num(r.commission||0)*0.5));
+    });
+    ['recargas','paqueticos','pagos','paquetes'].forEach(function(c){
+      approvedRows(c).forEach(function(r){
+        if(isAgentRecord(r)||String(r.currency||r.currencyCode||'').toUpperCase()==='GDES')envG+=num(r.amount||r.cost||r.monto);
+        else remD+=num(r.amount||r.cost||r.monto);
+        if(!isAgentRecord(r))remComm+=num(r.commissionUser??(num(r.commission||0)*0.5));
+      });
+    });
+    const set=function(id,v){const e=document.getElementById(id);if(e)e.textContent=v};
+    set('sw-dashboard-gdes-capital',moneyG(g));
+    set('sw-dashboard-dop-capital',moneyD(d));
+    set('sw-dashboard-total-envios-gdes',moneyG(envG));
+    set('sw-dashboard-total-remesas-dop',moneyD(remD));
+    set('sw-dashboard-remitente-commission',moneyD(remComm));
+  }
+  window.SENDWAYO_OPEN_AGENT_DASHBOARD=function(){
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return toast('No se encontró el módulo de operaciones de agente.','error');
+    const f=document.getElementById('agent-monto');if(f)f.value='';
+    const b=document.getElementById('agent-beneficiario-input');if(b)b.value='';
+    const op=document.getElementById('agent-operation');if(op)op.value='Transfert';
+    if(typeof openModal==='function')openModal('agentEnvioModal');
+    if(typeof calcularAgentEnvio==='function')calcularAgentEnvio();
+  };
+  const oldRenderMaster=window.renderMaster;
+  window.renderMaster=function(){if(typeof oldRenderMaster==='function')oldRenderMaster.apply(this,arguments);refreshMasterDashboard()};
+  const oldSwitch=window.switchView;
+  window.switchView=function(){const r=oldSwitch.apply(this,arguments);setTimeout(refreshMasterDashboard,60);return r};
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(refreshMasterDashboard,500);});
+  setInterval(refreshMasterDashboard,5000);
 })();
 </script></body>
 
