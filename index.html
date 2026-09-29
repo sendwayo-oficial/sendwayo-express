@@ -6834,5 +6834,51 @@ setInterval(apply,3000);
 })();
 </script>
 
+
+<!-- SENDWAYO HTG/GDES DISPLAY LOCK -->
+<script id="sendwayo-htg-display-lock">
+(function(){
+'use strict';
+if(window.__SENDWAYO_HTG_DISPLAY_LOCK__)return;
+window.__SENDWAYO_HTG_DISPLAY_LOCK__=true;
+function isAgent(){
+ try{return !!window.currentUser && typeof isAgentUser==='function' && isAgentUser(window.currentUser)}catch(e){return false}
+}
+function forceGdes(){
+ if(!isAgent())return;
+ var modal=document.getElementById('agentEnvioModal');
+ if(modal){
+   modal.querySelectorAll('*').forEach(function(el){
+     if(el.children.length===0 && /RD\$/i.test(el.textContent||'')){
+       el.textContent=String(el.textContent).replace(/RD\$/gi,'GDES');
+     }
+     if(el.placeholder && /RD\$/i.test(el.placeholder)){
+       el.placeholder=String(el.placeholder).replace(/RD\$/gi,'GDES');
+     }
+   });
+   ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(function(id){
+     var e=document.getElementById(id);
+     if(e)e.textContent=String(e.textContent||'').replace(/RD\$/gi,'GDES');
+   });
+ }
+ var table=document.getElementById('enviosTable');
+ if(table){
+   table.querySelectorAll('th,td').forEach(function(el){
+     if(/RD\$/i.test(el.textContent||''))el.textContent=String(el.textContent).replace(/RD\$/gi,'GDES');
+   });
+ }
+}
+window.SENDWAYO_FORCE_GDES=forceGdes;
+document.addEventListener('click',function(){setTimeout(forceGdes,0);setTimeout(forceGdes,200)},true);
+document.addEventListener('input',function(){setTimeout(forceGdes,0)},true);
+document.addEventListener('change',function(){setTimeout(forceGdes,0)},true);
+new MutationObserver(function(){forceGdes()}).observe(document.body,{subtree:true,childList:true,characterData:true});
+setTimeout(forceGdes,100);
+setTimeout(forceGdes,1000);
+setTimeout(forceGdes,3000);
+setInterval(forceGdes,1500);
+})();
+</script>
+
 </body>
 </html>
