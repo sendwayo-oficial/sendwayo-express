@@ -1,0 +1,16 @@
+name: SENDWAYO UI Integrity
+
+on:
+  push:
+    branches: ["main", "guard/**", "fix/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  ui-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify interface integrity
+        run: node scripts/sendwayo-ui-integrity-check.mjs
