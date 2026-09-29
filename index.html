@@ -796,7 +796,7 @@ document.addEventListener('click',function(ev){
  if(collection&&id&&typeof window.showReceipt==='function')window.showReceipt(collection,id);
 },true);
 window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=function(ev,origen){try{if(ev){ev.preventDefault();ev.stopImmediatePropagation()}var m=document.getElementById('beneficiarioModal');if(!m)return false;m.dataset.origen=origen||'gestion';if(origen==='agente'){var a=document.getElementById('agentEnvioModal');if(a)a.style.zIndex='1100'}m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='12000';document.body.style.overflow='hidden';var n=document.getElementById('ben-nombre'),c=document.getElementById('ben-cel');if(n)n.value='';if(c)c.value='';setTimeout(function(){if(n){n.focus();try{n.select()}catch(_){}}},25)}catch(e){console.warn('SENDWAYO beneficiary open:',e)}return false};
-document.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest?ev.target.closest('#beneficiario-add-btn'):null;if(b){window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(ev,'gestion');return}var p=ev.target&&ev.target.closest?ev.target.closest('#agentEnvioModal .plus-btn'):null;if(p&&/openBeneficiarioModal/.test(p.getAttribute('onclick')||''))window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(ev,'agente')},true);
+/* Beneficiarios: un solo controlador funcional vive en el bloque V3; se evita un segundo listener global. */
 window.sendwayoResetAdminPassword=async function(){var status=document.getElementById('login-status');var set=function(m,c){if(status){status.textContent=m;status.className='login-status '+(c||'')}};try{set('Enviando enlace de recuperación…');if(typeof firebase==='undefined'||!firebase.auth)throw new Error('FIREBASE_UNAVAILABLE');var ready=typeof initFirebase==='function'?await initFirebase():false;if(!ready)throw new Error('FIREBASE_UNAVAILABLE');await firebase.auth().sendPasswordResetEmail('sendwayoexpress@gmail.com');set('Enlace enviado al correo sendwayoexpress@gmail.com. Revise también Spam o Correo no deseado.','ok');toast('Se envió el enlace para restablecer la contraseña.','success')}catch(e){console.warn('SENDWAYO password reset:',e);var msg=e.code==='auth/user-not-found'?'La cuenta administrativa no existe en Firebase Authentication.':e.code==='auth/operation-not-allowed'?'El acceso por correo y contraseña no está habilitado en Firebase Authentication.':e.code==='auth/network-request-failed'?'No fue posible comunicarse con Firebase. Revise Internet.':'No se pudo enviar el enlace de recuperación.';set(msg,'error');toast(msg,'error')}};
 window.sendwayoLogin=function(){
   var status=document.getElementById('login-status'),u=document.getElementById('login-user'),p=document.getElementById('login-pass');
@@ -6041,41 +6041,6 @@ img[data-current-brand-logo="true"]{
 })();
 </script>
 
-<!-- SENDWAYO BENEFICIARY ADD FINAL REPAIR V2 -->
-<script id="sendwayo-beneficiary-add-final-repair-v2">
-(function(){
-  if(window.__sendwayoBeneficiaryAddFinalRepairV2)return;
-  window.__sendwayoBeneficiaryAddFinalRepairV2=true;
-  function openBeneficiaryFinal(ev,origin){
-    try{
-      if(ev){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}
-      var modal=document.getElementById('beneficiarioModal');
-      if(!modal)return false;
-      var agent=document.getElementById('agentEnvioModal');
-      modal.dataset.origen=origin||'gestion';
-      if(agent&&origin==='agente'){agent.style.zIndex='49000';agent.style.pointerEvents='none';}
-      modal.style.display='flex';modal.style.visibility='visible';modal.style.opacity='1';
-      modal.style.pointerEvents='auto';modal.style.zIndex='50000';modal.classList.add('show');
-      var name=document.getElementById('ben-nombre'),phone=document.getElementById('ben-cel');
-      if(name)name.value='';if(phone)phone.value='';
-      setTimeout(function(){
-        [name,phone].forEach(function(el){if(el){el.disabled=false;el.readOnly=false;el.style.pointerEvents='auto';}});
-        if(name)name.focus();
-      },40);
-    }catch(e){console.warn('SENDWAYO beneficiary add final:',e);}
-    return false;
-  }
-  window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=openBeneficiaryFinal;
-  window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=openBeneficiaryFinal;
-  window.openBeneficiarioModal=function(origin){return openBeneficiaryFinal(null,origin||'gestion');};
-  document.addEventListener('click',function(ev){
-    var t=ev.target&&ev.target.closest?ev.target.closest('#agentEnvioModal .plus-btn[title="Ajouter un bénéficiaire"],#beneficiario-add-btn'):null;
-    if(!t)return;
-    openBeneficiaryFinal(ev,t.id==='beneficiario-add-btn'?'gestion':'agente');
-  },true);
-})();
-</script>
-
 <!-- SENDWAYO BENEFICIARY FINAL FUNCTIONAL PATCH V3 -->
 <script id="sendwayo-beneficiary-final-functional-v3">
 (function(){
@@ -9148,7 +9113,7 @@ img[data-current-brand-logo="true"]{
     if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#sw-agent-create-modal'))setTimeout(fix,0);
   },true);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix,{once:true});else fix();
-  setInterval(fix,1500);
+  /* Sin temporizador permanente: los eventos click/focusin/DOMContentLoaded ya cubren la reactivación. */
 })();
 </script>
 
