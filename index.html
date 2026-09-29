@@ -7543,7 +7543,57 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script>
 
-</body>
+<style id="sendwayo-hti-hti-gdes-final-20260929">
+/* HTI → HTI: toda la operación se expresa y calcula únicamente en gourdes (GDES/HTG). */
+body.sendwayo-hti-hti-only #envioModal .form-group label,
+body.sendwayo-hti-hti-only #envioModal .sendwayo-transaction-summary strong{ }
+</style>
+<script id="sendwayo-hti-hti-gdes-final-20260929">
+(function(){
+  'use strict';
+  function agent(){return typeof isAgentUser==='function'&&isAgentUser(window.currentUser);}
+  function enforce(){
+    if(!agent()) return;
+    var typ=document.getElementById('env-tipo-trans');
+    if(!typ)return;
+    var wanted=[
+      ['HTI a HTI Natcash','Envoi Haïti → Haïti — NatCash (GDES)'],
+      ['HTI a HTI Retiro Natcash','Retrait Haïti → Haïti — NatCash (GDES)'],
+      ['HTI a HTI MonCash','Envoi Haïti → Haïti — MonCash (GDES)'],
+      ['HTI a HTI Retiro MonCash','Retrait Haïti → Haïti — MonCash (GDES)']
+    ];
+    var current=typ.value;
+    typ.innerHTML=wanted.map(function(o){return '<option value="'+o[0]+'">'+o[1]+'</option>';}).join('');
+    if(wanted.some(function(o){return o[0]===current;}))typ.value=current;
+    else typ.value=wanted[0][0];
+
+    var group=document.getElementById('env-monto')?.closest('.form-group');
+    var lab=group?.querySelector('label');
+    if(lab)lab.textContent='Montant en gourdes haïtiennes (GDES)';
+    ['calc-enviado','calc-comision','calc-total-debito','calc-neto','calc-recibir'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && !el.dataset.htiGdesBound){el.dataset.htiGdesBound='1';}
+    });
+    var hint=document.getElementById('env-official-tariff-hint');
+    if(hint)hint.textContent='Haïti → Haïti : toutes les opérations sont en gourdes haïtiennes (GDES/HTG), avec NatCash ou MonCash.';
+    document.body.classList.add('sendwayo-hti-hti-only');
+    if(typeof calcularEnvioModal==='function')calcularEnvioModal();
+  }
+  var oldOpen=window.openModal;
+  if(typeof oldOpen==='function'&&!oldOpen.__htiGdes){
+    var wrapped=function(id){
+      var out=oldOpen.apply(this,arguments);
+      if(id==='envioModal')setTimeout(enforce,0);
+      return out;
+    };
+    wrapped.__htiGdes=true;
+    window.openModal=wrapped;
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='env-tipo-trans')setTimeout(enforce,0);});
+  document.addEventListener('input',function(e){if(e.target&&e.target.id==='env-monto'&&agent())setTimeout(enforce,0);});
+  setInterval(function(){if(agent()&&document.getElementById('envioModal')?.style.display!=='none')enforce();},700);
+})();
+</script></body>
 </html>
 
 <!-- SENDWAYO AUTHORITATIVE FORM/TRANSACTION UX PATCH 2026-09-29 -->
