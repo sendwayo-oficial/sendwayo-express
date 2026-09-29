@@ -652,7 +652,7 @@ body.sendwayo-operation-open .modal{z-index:30000!important}
 <tr><td>Transfert — 20 a 99 GDES</td><td>0 (Gratuit)</td></tr><tr><td>Transfert — 100 a 249 GDES</td><td>0 (Gratuit)</td></tr><tr><td>Transfert — 250 a 499 GDES</td><td>0 (Gratuit)</td></tr><tr><td>Transfert — 500 a 999 GDES</td><td>6</td></tr><tr><td>Transfert — 1,000 a 1,999 GDES</td><td>18</td></tr><tr><td>Transfert — 2,000 a 3,999 GDES</td><td>25</td></tr><tr><td>Transfert — 4,000 a 7,999 GDES</td><td>35</td></tr><tr><td>Transfert — 8,000 a 11,999 GDES</td><td>54</td></tr><tr><td>Transfert — 12,000 a 19,999 GDES</td><td>63</td></tr><tr><td>Transfert — 20,000 a 39,999 GDES</td><td>68</td></tr><tr><td>Transfert — 40,000 a 59,999 GDES</td><td>90</td></tr><tr><td>Transfert — 60,000 a 74,999 GDES</td><td>108</td></tr><tr><td>Transfert — 75,000 a 99,999 GDES</td><td>115</td></tr>
 <tr><td>Retrait — 20 a 99 GDES</td><td>6</td></tr><tr><td>Retrait — 100 a 249 GDES</td><td>12</td></tr><tr><td>Retrait — 250 a 499 GDES</td><td>15</td></tr><tr><td>Retrait — 500 a 999 GDES</td><td>28</td></tr><tr><td>Retrait — 1,000 a 1,999 GDES</td><td>46</td></tr><tr><td>Retrait — 2,000 a 3,999 GDES</td><td>81</td></tr><tr><td>Retrait — 4,000 a 7,999 GDES</td><td>130</td></tr><tr><td>Retrait — 8,000 a 11,999 GDES</td><td>248</td></tr><tr><td>Retrait — 12,000 a 19,999 GDES</td><td>342</td></tr><tr><td>Retrait — 20,000 a 39,999 GDES</td><td>576</td></tr><tr><td>Retrait — 40,000 a 59,999 GDES</td><td>945</td></tr><tr><td>Retrait — 60,000 a 74,999 GDES</td><td>1,260</td></tr><tr><td>Retrait — 75,000 a 99,999 GDES</td><td>1,440</td></tr>
 </tbody></table></div>
-</div></div><div class="modal" id="beneficiarioModal"><div class="modal-content"><button class="modal-close-x" type="button" onclick="closeModal('beneficiarioModal')">×</button><h3>Registrar Beneficiario</h3><div class="form-grid"><div class="form-group"><label>Nombre completo *</label><input id="ben-nombre" class="form-control" autocomplete="name" placeholder="Nombre y apellido"></div><div class="form-group"><label>Número de celular (Haití) *</label><div class="search-select-wrap" style="display:flex;align-items:center"><span style="padding:10px 9px;border:1px solid #cbd5e1;border-right:0;border-radius:7px 0 0 7px;background:#f1f5f9;color:#0f2c59;font-weight:800;white-space:nowrap">(+509) HT</span><input id="ben-cel" class="form-control" style="border-radius:0 7px 7px 0" inputmode="numeric" autocomplete="tel-national" placeholder="00000000" oninput="formatHaitiBeneficiaryPhone(this)" maxlength="8"></div></div></div><div class="field-hint">Seuls le nom complet et le numéro de téléphone sont requis. Aucune adresse n’est nécessaire.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" type="button" onclick="closeModal('beneficiarioModal')">Cerrar</button><button class="btn btn-primary" type="button" id="ben-save-btn" onclick="guardarBeneficiario()">Guardar beneficiario</button></div></div></div>
+</div></div><div class="modal" id="beneficiarioModal"><div class="modal-content"><button class="modal-close-x" type="button" onclick="closeModal('beneficiarioModal')">×</button><h3>Registrar Beneficiario</h3><div class="form-grid"><div class="form-group"><label>Nombre completo *</label><input id="ben-nombre" class="form-control" autocomplete="name" placeholder="Nombre y apellido"></div><div class="form-group"><label>Número de celular (Haití) *</label><div class="search-select-wrap" style="display:flex;align-items:center"><span style="padding:10px 9px;border:1px solid #cbd5e1;border-right:0;border-radius:7px 0 0 7px;background:#f1f5f9;color:#0f2c59;font-weight:800;white-space:nowrap">(+509) HT</span><input id="ben-cel" class="form-control" style="border-radius:0 7px 7px 0" inputmode="numeric" autocomplete="tel-national" placeholder="00000000" oninput="formatHaitiBeneficiaryPhone(this)" maxlength="8"></div></div></div><div class="field-hint">Seuls le nom complet et le numéro de téléphone sont requis. Aucune adresse n’est nécessaire.</div><div class="beneficiary-actions"><button class="btn btn-light" type="button" onclick="closeModal('beneficiarioModal')">Cerrar</button><button class="btn btn-primary" type="button" id="ben-save-btn" onclick="guardarBeneficiario()">Guardar beneficiario</button></div></div></div>
 
 <div class="modal" id="cuentaModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('cuentaModal')">×</button><h3>Agregar Cuenta Bancaria</h3><div class="form-grid"><div class="form-group"><label>Banco</label><input id="cta-banco" class="form-control"></div><div class="form-group"><label>Titular</label><input id="cta-titular" class="form-control"></div><div class="form-group"><label>Número de Cuenta</label><input id="cta-numero" class="form-control"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('cuentaModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarCuenta()">Guardar</button></div></div></div>
 
@@ -7198,6 +7198,87 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
   document.addEventListener('DOMContentLoaded',function(){forceBottom();setTimeout(forceBottom,300);setTimeout(forceBottom,1000);});
   document.addEventListener('click',function(){setTimeout(forceBottom,0);setTimeout(forceBottom,100);},true);
   window.addEventListener('resize',forceBottom);
+})();
+</script>
+
+<!-- SENDWAYO BENEFICIARY SINGLE PATH REPAIR 2026-09-29 -->
+<style id="sendwayo-beneficiary-single-path-style">
+#beneficiarioModal{z-index:99999!important}
+#beneficiarioModal .modal-content{position:relative!important;z-index:2!important;pointer-events:auto!important}
+#beneficiarioModal input,#beneficiarioModal button{pointer-events:auto!important;touch-action:manipulation!important}
+#beneficiarioModal .beneficiary-actions{display:flex!important;flex-direction:column!important;gap:9px!important;width:100%!important;margin-top:14px!important}
+#beneficiarioModal .beneficiary-actions .btn{width:100%!important;min-height:46px!important;justify-content:center!important}
+</style>
+<script id="sendwayo-beneficiary-single-path-repair">
+(function(){
+'use strict';
+if(window.__SENDWAYO_BENEFICIARY_SINGLE_PATH__)return;
+window.__SENDWAYO_BENEFICIARY_SINGLE_PATH__=true;
+
+function openBeneficiary(){
+  var m=document.getElementById('beneficiarioModal');
+  if(!m)return false;
+  m.dataset.origen='gestion';
+  m.style.setProperty('display','flex','important');
+  m.style.setProperty('visibility','visible','important');
+  m.style.setProperty('opacity','1','important');
+  m.style.setProperty('pointer-events','auto','important');
+  m.style.setProperty('z-index','99999','important');
+  document.body.style.overflow='hidden';
+  var n=document.getElementById('ben-nombre'),p=document.getElementById('ben-cel');
+  if(n){n.disabled=false;n.readOnly=false;n.value='';n.style.setProperty('pointer-events','auto','important');}
+  if(p){p.disabled=false;p.readOnly=false;p.value='';p.style.setProperty('pointer-events','auto','important');}
+  var save=document.getElementById('ben-save-btn');
+  if(save){save.disabled=false;save.removeAttribute('disabled');save.style.setProperty('pointer-events','auto','important');}
+  setTimeout(function(){if(n)n.focus()},50);
+  return false;
+}
+async function saveBeneficiary(){
+  var n=document.getElementById('ben-nombre'),p=document.getElementById('ben-cel');
+  if(!n||!p)return false;
+  var name=String(n.value||'').trim();
+  var phone=String(p.value||'').replace(/\D/g,'').slice(0,8);
+  p.value=phone;
+  if(!name||phone.length!==8){
+    if(typeof toast==='function')toast(phone.length!==8?'El celular haitiano debe tener 8 dígitos.':'Escriba el nombre completo.','warn');
+    return false;
+  }
+  if(typeof guardarBeneficiario==='function'){
+    await guardarBeneficiario();
+    return false;
+  }
+  if(typeof toast==='function')toast('El formulario de beneficiario no está disponible.','error');
+  return false;
+}
+window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=openBeneficiary;
+window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=openBeneficiary;
+window.openBeneficiarioModal=function(){return openBeneficiary();};
+
+document.addEventListener('click',function(ev){
+  var add=ev.target&&ev.target.closest?ev.target.closest('#beneficiario-add-btn'):null;
+  if(add){
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    openBeneficiary();
+    return false;
+  }
+},true);
+
+document.addEventListener('click',function(ev){
+  var save=ev.target&&ev.target.closest?ev.target.closest('#ben-save-btn'):null;
+  if(save){
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    saveBeneficiary();
+    return false;
+  }
+},true);
+
+document.addEventListener('input',function(ev){
+  if(ev.target&&ev.target.id==='ben-cel')ev.target.value=String(ev.target.value||'').replace(/\D/g,'').slice(0,8);
+},true);
 })();
 </script>
 </body>
