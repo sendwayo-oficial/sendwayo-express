@@ -7532,8 +7532,9 @@ setInterval(apply,2000);
 (function(){
 'use strict';
 function sendwayoOpenBeneficiaryFinal(ev){
-  if(ev){try{ev.preventDefault();ev.stopPropagation();}catch(_){}}
-  var m=document.getElementById('beneficiarioModal');
+  if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}catch(_) {}}
+  document.body.classList.remove('sendwayo-operation-open');
+
   if(!m)return false;
   m.dataset.origen='gestion';
   m.style.cssText += ';display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:2147483000!important;';
@@ -7549,3 +7550,6 @@ window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=sendwayoOpenBeneficiaryFinal;
 window.openBeneficiarioModal=sendwayoOpenBeneficiaryFinal;
 })();
 </script>
+
+<!-- SENDWAYO BENEFICIARY WHITE-SCREEN REPAIR 2026-09-29 -->
+<script>(function(){var old=window.closeModal;if(typeof old==='function'&&!old.__beneficiaryWhiteFix){var w=function(id){var r=old.apply(this,arguments);if(id==='beneficiarioModal'){document.body.classList.remove('sendwayo-operation-open');document.body.style.overflow='';}return r};w.__beneficiaryWhiteFix=true;window.closeModal=w;}})();</script>
