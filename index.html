@@ -6926,7 +6926,20 @@ window.deleteRecord=async function(collection,id){
    return;
  }
  if(typeof oldDelete==='function')return oldDelete(collection,id);
- return toast('La acción de eliminar no está disponible para este registro.','error');
+ const admin=typeof isAdmin==='function'&&isAdmin();
+ const owner=r.userId===currentUser?.id||r.createdUserId===currentUser?.id||r.requesterUserId===currentUser?.id;
+ if(!admin&&(!owner||!['Rechazado','No coincide'].includes(String(r.status||''))))return toast('No tiene permiso para eliminar este registro.','warn');
+ const financial=['envios','recargas','paqueticos','pagos','paquetes','deposits','accountWithdrawals','commissions','credits'].includes(collection);
+ if(r.status==='Aprobado'||(financial&&r.status==='Pagado'))return toast('Una operación financiera aprobada no se elimina.','warn');
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');
+ if(!confirm('¿Eliminar el registro '+String(id)+'?'))return;
+ try{
+   await firebase.database().ref(DB_PATH+'/'+collection+'/'+id).remove();
+   if(state[collection])delete state[collection][id];
+   if(lastSyncedState?.[collection])delete lastSyncedState[collection][id];
+   renderAll();toast('Registro eliminado de Firebase.','success');
+ }catch(e){console.warn('deleteRecord bridge:',e);toast('No se pudo eliminar el registro en Firebase.','error')}
+ return;
 };
 window.editBeneficiary=window.editBeneficiary||editBeneficiary;
 function enforceAgentGdes(){
