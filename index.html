@@ -6786,7 +6786,7 @@ function ensureAgentEntry(){
   try{
     if(typeof isAgentUser!=='function'||!window.currentUser)return;
     if(!isAgentUser(window.currentUser))return;
-    var link=document.querySelector('#sidebar-menu a[onclick*="switchView(\\'envios\\')"]');
+    var link=document.querySelector("#sidebar-menu a[onclick*=\"switchView('envios')\"]");
     if(link){
       link.style.display='flex';
       link.style.pointerEvents='auto';
