@@ -724,17 +724,16 @@ window.sendwayoLogin=function(){
   var set=function(m,c){if(status){status.textContent=m;status.className='login-status '+(c||'')}};
   var user=(u&&u.value||'').trim(),pass=(p&&p.value||'');
   if(!user||!pass){set('Escriba usuario y contraseña.','warn');return}
-  set('Iniciando acceso…');
-  var attempts=0;
-  function launch(){
-    try{
-      if(typeof realizarLogin==='function'){set('Verificando credenciales…');realizarLogin();return}
-      attempts++;
-      if(attempts<300){set('Preparando el módulo de acceso…');setTimeout(launch,100);return}
-      set('El módulo de acceso no terminó de cargar. Cierre y abra nuevamente la página.','error');
-    }catch(e){set('Error al iniciar el acceso: '+(e.message||e),'error');}
+  if(typeof realizarLogin==='function'){set('Verificando credenciales…');try{return realizarLogin()}catch(e){set('Error de acceso: '+(e.message||e),'error');return}}
+  set('Preparando acceso seguro…');
+  var tries=0;
+  function wait(){
+    if(typeof realizarLogin==='function'){set('Verificando credenciales…');try{return realizarLogin()}catch(e){set('Error de acceso: '+(e.message||e),'error');return}}
+    tries++;
+    if(tries<60)return setTimeout(wait,250);
+    set('El módulo de acceso no pudo inicializarse. Recargue la página una vez.','error');
   }
-  setTimeout(launch,0);
+  wait();
 };
 </script>
 <script>
