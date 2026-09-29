@@ -268,10 +268,11 @@ aside{height:100vh;min-height:0;overflow:hidden}
   .form-control{width:100%!important;box-sizing:border-box!important;font-size:16px!important}
   .modal-content{width:min(96vw,720px)!important;max-width:96vw!important;box-sizing:border-box!important}
   .modal-content .actions,.modal-content>div[style*="display:flex"]{flex-wrap:wrap!important}
-  .modal-content button{max-width:100%;touch-action:manipulation}
+  .modal-content button{max-width:100%;touch-action:manipulation!important;pointer-events:auto!important}
   .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
-  input,select,textarea,button{touch-action:manipulation}
+  input,select,textarea,button{touch-action:manipulation!important;pointer-events:auto}
 }
+</style>
 <style id="sendwayo-service-suggestion-mobile-final">
 .form-group:has(#pag-empresa){position:relative}
 #payment-service-suggestions{position:absolute;left:0;right:0;top:calc(100% - 8px);z-index:12050;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 10px 24px rgba(0,0,0,.16);overflow:hidden;max-height:240px;overflow-y:auto}
@@ -6826,7 +6827,7 @@ document.addEventListener('click',function(){setTimeout(apply,0);setTimeout(appl
 document.addEventListener('focusin',function(){setTimeout(apply,0)},true);
 document.addEventListener('change',function(){setTimeout(apply,0)},true);
 document.addEventListener('input',function(){setTimeout(apply,0)},true);
-new MutationObserver(function(){apply()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['disabled','style','class']});
+new MutationObserver(function(){apply()}).observe(document.body,{subtree:true,childList:true});
 setTimeout(apply,100);
 setTimeout(apply,500);
 setTimeout(apply,1500);
