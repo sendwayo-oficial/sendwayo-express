@@ -28,7 +28,7 @@
         ]
       },
       "accounts": {
-        ".read": "auth != null",
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
         ".write": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')"
       },
       "settings": {
@@ -230,7 +230,7 @@
         ".validate": "!newData.exists() || (newData.child('balance').isNumber() && newData.child('balance').val() >= 0 && newData.child('totalAcreditado').isNumber() && newData.child('totalAcreditado').val() >= 0)"
       },
       "agentCapital": {
-        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || root.child('sendwayo_express_v2/users/agent-betina-lindor/authUid').val() === auth.uid || root.child('sendwayo_express_v2/users/agent-herace-fleuranvil/authUid').val() === auth.uid)",
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
         ".write": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
         ".validate": "!newData.exists() || (newData.child('balance').isNumber() && newData.child('balance').val() >= 0 && newData.child('totalAcreditado').isNumber() && newData.child('totalAcreditado').val() >= 0 && newData.child('totalUtilizado').isNumber() && newData.child('totalUtilizado').val() >= 0 && newData.child('operationsApproved').isNumber() && newData.child('operationsApproved').val() >= 0)"
       }
