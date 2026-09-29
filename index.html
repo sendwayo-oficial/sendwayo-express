@@ -725,10 +725,12 @@ window.sendwayoLogin=function(){
   var user=(u&&u.value||'').trim(),pass=(p&&p.value||'');
   if(!user||!pass){set('Escriba usuario y contraseña.','warn');return}
   if(typeof realizarLogin==='function'){set('Verificando credenciales…');try{return realizarLogin()}catch(e){set('Error de acceso: '+(e.message||e),'error');return}}
+  if(typeof realizarLoginOriginal==='function'){set('Verificando credenciales…');try{return realizarLoginOriginal()}catch(e){set('Error de acceso: '+(e.message||e),'error');return}}
   set('Preparando acceso seguro…');
   var tries=0;
   function wait(){
     if(typeof realizarLogin==='function'){set('Verificando credenciales…');try{return realizarLogin()}catch(e){set('Error de acceso: '+(e.message||e),'error');return}}
+    if(typeof realizarLoginOriginal==='function'){set('Verificando credenciales…');try{return realizarLoginOriginal()}catch(e){set('Error de acceso: '+(e.message||e),'error');return}}
     tries++;
     if(tries<60)return setTimeout(wait,250);
     set('El módulo de acceso no pudo inicializarse. Recargue la página una vez.','error');
