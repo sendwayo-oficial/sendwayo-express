@@ -496,7 +496,7 @@ body.sendwayo-operation-open .modal{z-index:30000!important}
   </section>
 
   <section id="view-beneficiarios" class="view-section">
-    <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button id="beneficiario-add-btn" type="button" class="btn btn-primary" onclick="return window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'gestion')">Agregar Nuevo</button></div>
+    <div class="card"><div class="card-header"><h3>Gestión de Beneficiarios</h3><button id="beneficiario-add-btn" type="button" class="btn btn-primary" onclick="window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'gestion');return false;" onpointerup="window.SENDWAYO_OPEN_BENEFICIARIO_SAFE(event,'gestion');return false;">Agregar Nuevo</button></div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','benefTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','benefTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','benefTable')">CSV</button></div><input class="search-box" placeholder="Buscar por nombre o celular..." oninput="filterTable(this,'benefTable')"></div>
     <div class="table-wrap"><table id="benefTable"><thead><tr><th>N°</th><th>Nombre completo</th><th>Número de celular</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
@@ -7518,5 +7518,34 @@ document.addEventListener('input',function(){setTimeout(apply,0)},true);
 document.addEventListener('change',function(){setTimeout(apply,0)},true);
 window.addEventListener('load',function(){setTimeout(apply,250)},{once:true});
 setInterval(apply,2000);
+})();
+</script>
+
+<!-- SENDWAYO FINAL BENEFICIARY HARD FIX 2026-09-29 -->
+<style>
+#beneficiarioModal{z-index:2147483000!important}
+#beneficiarioModal .modal-content{width:min(560px,96vw)!important;pointer-events:auto!important}
+#beneficiarioModal #ben-nombre,#beneficiarioModal #ben-cel{display:block!important;visibility:visible!important;pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important}
+#beneficiarioModal #ben-save-btn,#beneficiarioModal .btn{pointer-events:auto!important;touch-action:manipulation!important}
+</style>
+<script>
+(function(){
+'use strict';
+function sendwayoOpenBeneficiaryFinal(ev){
+  if(ev){try{ev.preventDefault();ev.stopPropagation();}catch(_){}}
+  var m=document.getElementById('beneficiarioModal');
+  if(!m)return false;
+  m.dataset.origen='gestion';
+  m.style.cssText += ';display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:2147483000!important;';
+  document.body.style.overflow='hidden';
+  var n=document.getElementById('ben-nombre'), p=document.getElementById('ben-cel'), b=document.getElementById('ben-save-btn');
+  [n,p].forEach(function(x){if(x){x.disabled=false;x.readOnly=false;x.removeAttribute('disabled');x.value='';x.style.pointerEvents='auto';}});
+  if(b){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='auto';}
+  setTimeout(function(){if(n)n.focus();},30);
+  return false;
+}
+window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=sendwayoOpenBeneficiaryFinal;
+window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=sendwayoOpenBeneficiaryFinal;
+window.openBeneficiarioModal=sendwayoOpenBeneficiaryFinal;
 })();
 </script>
