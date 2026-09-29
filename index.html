@@ -6974,7 +6974,7 @@ document.addEventListener('click',function(ev){
     return openBeneficiary(b.id==='beneficiario-add-btn'?'gestion':'agente');
   }
 
-  var d=ev.target&&ev.target.closest?ev.target.closest('#depositoModal + * button,button[onclick*="openModal(\'depositoModal\')"],button[onclick*='openModal("depositoModal")']'):null;
+  var d=ev.target&&ev.target.closest?ev.target.closest('button[onclick*="depositoModal"]'):null;
   if(d){
     ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
     return openDeposit();
