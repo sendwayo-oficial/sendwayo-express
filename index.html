@@ -6755,5 +6755,84 @@ setInterval(apply,2500);
 })();
 </script>
 
+
+<!-- SENDWAYO FINAL FORM/AGENT ACCESS PATCH 2026-09-28 -->
+<script id="sendwayo-final-form-agent-patch">
+(function(){
+'use strict';
+if(window.__SENDWAYO_FINAL_FORM_AGENT_PATCH__)return;
+window.__SENDWAYO_FINAL_FORM_AGENT_PATCH__=true;
+
+function unlockVisibleForm(root){
+  root=root||document;
+  root.querySelectorAll('.modal:not([data-submitting="1"])').forEach(function(m){
+    if(getComputedStyle(m).display==='none')return;
+    m.querySelectorAll('input,select,textarea,button').forEach(function(el){
+      if(el.hasAttribute('data-hard-disabled')||el.hasAttribute('data-system-disabled'))return;
+      if(el.dataset.sendwayoIntentionalDisabled==='1')return;
+      if(el.readOnly && (el.id==='profile-staff-id'||el.id==='profile-username'||el.id==='profile-phone'||el.id==='env-remitente-phone'||el.id==='env-remitente-doc'||el.id==='agent-current'||el.id==='pers-user'||el.id==='pers-auth-email'||el.id==='pers-initial-pass'))return;
+      el.disabled=false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents='auto';
+      el.style.touchAction='manipulation';
+      el.style.opacity='1';
+    });
+    m.style.pointerEvents='auto';
+  });
+}
+
+function ensureAgentEntry(){
+  try{
+    if(typeof isAgentUser!=='function'||!window.currentUser)return;
+    if(!isAgentUser(window.currentUser))return;
+    var link=document.querySelector('#sidebar-menu a[onclick*="switchView(\\'envios\\')"]');
+    if(link){
+      link.style.display='flex';
+      link.style.pointerEvents='auto';
+      link.onclick=function(ev){
+        if(ev)ev.preventDefault();
+        if(typeof switchView==='function')switchView('envios');
+        return false;
+      };
+      link.innerHTML='<i class="fa-solid fa-right-left"></i> Envois et retraits';
+    }
+  }catch(e){console.warn('SENDWAYO agent entry patch:',e)}
+}
+
+function ensureAgentModal(){
+  try{
+    if(typeof isAgentUser!=='function'||!window.currentUser||!isAgentUser(window.currentUser))return;
+    var m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    m.style.pointerEvents='auto';
+    var c=m.querySelector('.modal-content');
+    if(c)c.style.pointerEvents='auto';
+    ['agent-tipo-trans','agent-operation','agent-beneficiario-input','agent-monto'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&!el.hasAttribute('data-hard-disabled')&&!el.hasAttribute('data-system-disabled')){
+        el.disabled=false;el.removeAttribute('disabled');el.style.pointerEvents='auto';el.style.touchAction='manipulation';el.style.opacity='1';
+      }
+    });
+  }catch(e){console.warn('SENDWAYO agent modal patch:',e)}
+}
+
+function apply(){
+  unlockVisibleForm(document);
+  ensureAgentEntry();
+  ensureAgentModal();
+}
+window.SENDWAYO_FINAL_UI_REPAIR=apply;
+document.addEventListener('click',function(){setTimeout(apply,0);setTimeout(apply,150)},true);
+document.addEventListener('focusin',function(){setTimeout(apply,0)},true);
+document.addEventListener('change',function(){setTimeout(apply,0)},true);
+document.addEventListener('input',function(){setTimeout(apply,0)},true);
+new MutationObserver(function(){apply()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['disabled','style','class']});
+setTimeout(apply,100);
+setTimeout(apply,500);
+setTimeout(apply,1500);
+setInterval(apply,3000);
+})();
+</script>
+
 </body>
 </html>
