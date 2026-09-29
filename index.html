@@ -6883,3 +6883,121 @@ setInterval(forceGdes,1500);
 
 </body>
 </html>
+
+<!-- SENDWAYO AUTHORITATIVE FORM/TRANSACTION UX PATCH 2026-09-29 -->
+<style id="sendwayo-authoritative-form-patch">
+/* En las pantallas de operación no se muestran tablas tarifarias: la información se calcula internamente. */
+#envioModal .table-wrap,
+#agentEnvioModal .table-wrap,
+#agent-hti-gdes-tariffs,
+#agentHtiNatcashTable,
+#agentHtiMoncashTable,
+#sendwayo-hti-haiti-table{display:none!important}
+
+/* Los controles de los formularios visibles reciben toque/entrada normalmente. */
+#beneficiarioModal input:not([data-hard-disabled]):not([data-system-disabled]),
+#depositoModal input:not([data-hard-disabled]):not([data-system-disabled]),
+#depositoModal select:not([data-hard-disabled]):not([data-system-disabled]),
+#envioModal input:not([data-hard-disabled]):not([data-system-disabled]),
+#envioModal select:not([data-hard-disabled]):not([data-system-disabled]),
+#envioModal button:not([data-hard-disabled]):not([data-system-disabled]),
+#agentEnvioModal input:not([data-hard-disabled]):not([data-system-disabled]),
+#agentEnvioModal select:not([data-hard-disabled]):not([data-system-disabled]),
+#agentEnvioModal button:not([data-hard-disabled]):not([data-system-disabled]){
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+}
+@media(max-width:800px){
+  #beneficiarioModal .form-grid,
+  #depositoModal .form-grid,
+  #envioModal .form-grid,
+  #agentEnvioModal .form-grid{grid-template-columns:1fr!important}
+}
+</style>
+<script id="sendwayo-authoritative-form-patch-script">
+(function(){
+'use strict';
+if(window.__SENDWAYO_AUTHORITATIVE_FORM_PATCH__)return;
+window.__SENDWAYO_AUTHORITATIVE_FORM_PATCH__=true;
+
+function activateModal(id){
+  var m=document.getElementById(id);
+  if(!m)return false;
+  m.style.display='flex';
+  m.style.visibility='visible';
+  m.style.opacity='1';
+  m.style.pointerEvents='auto';
+  m.style.zIndex='50000';
+  var c=m.querySelector('.modal-content');
+  if(c){c.style.pointerEvents='auto';c.style.position='relative';c.style.zIndex='1';}
+  m.querySelectorAll('input,select,textarea,button').forEach(function(el){
+    if(el.hasAttribute('data-hard-disabled')||el.hasAttribute('data-system-disabled'))return;
+    if(el.dataset.sendwayoIntentionalDisabled==='1')return;
+    el.style.pointerEvents='auto';
+    el.style.touchAction='manipulation';
+  });
+  document.body.style.overflow='hidden';
+  return true;
+}
+
+function openBeneficiary(origin){
+  var m=document.getElementById('beneficiarioModal');
+  if(!activateModal('beneficiarioModal'))return false;
+  m.dataset.origen=origin||'gestion';
+  var n=document.getElementById('ben-nombre'),p=document.getElementById('ben-cel');
+  if(n){n.disabled=false;n.readOnly=false;n.value='';n.style.pointerEvents='auto';}
+  if(p){p.disabled=false;p.readOnly=false;p.value='';p.style.pointerEvents='auto';}
+  setTimeout(function(){if(n){n.focus();try{n.select()}catch(_){} }},40);
+  return false;
+}
+window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=function(ev,origin){
+  if(ev){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}
+  return openBeneficiary(origin||'gestion');
+};
+window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=window.SENDWAYO_OPEN_BENEFICIARIO_SAFE;
+window.openBeneficiarioModal=function(origin){return openBeneficiary(origin||'gestion');};
+
+function openDeposit(){
+  if(!activateModal('depositoModal'))return false;
+  if(typeof currentUser!=='undefined'&&currentUser){
+    var rw=document.getElementById('dep-remitente-wrap');
+    if(rw)rw.style.display=(typeof isAdmin==='function'&&isAdmin())?'block':'none';
+    if(typeof updateDepositSuggestions==='function'&&typeof isAdmin==='function'&&isAdmin())setTimeout(updateDepositSuggestions,80);
+  }
+  return false;
+}
+
+document.addEventListener('click',function(ev){
+  var b=ev.target&&ev.target.closest?ev.target.closest('#beneficiario-add-btn,#agentEnvioModal button[title="Ajouter un bénéficiaire"],button[onclick*="openBeneficiarioModal"]'):null;
+  if(b){
+    ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+    return openBeneficiary(b.id==='beneficiario-add-btn'?'gestion':'agente');
+  }
+
+  var d=ev.target&&ev.target.closest?ev.target.closest('#depositoModal + * button,button[onclick*="openModal(\'depositoModal\')"],button[onclick*='openModal("depositoModal")']'):null;
+  if(d){
+    ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+    return openDeposit();
+  }
+},true);
+
+function apply(){
+  ['beneficiarioModal','depositoModal','envioModal','agentEnvioModal'].forEach(function(id){
+    var m=document.getElementById(id);
+    if(!m||getComputedStyle(m).display==='none')return;
+    m.style.pointerEvents='auto';
+    m.querySelectorAll('input,select,textarea,button').forEach(function(el){
+      if(el.hasAttribute('data-hard-disabled')||el.hasAttribute('data-system-disabled')||el.dataset.sendwayoIntentionalDisabled==='1')return;
+      if(el.dataset.submitting==='1')return;
+      el.style.pointerEvents='auto';el.style.touchAction='manipulation';
+    });
+  });
+  document.querySelectorAll('#envioModal .table-wrap,#agentEnvioModal .table-wrap,#agent-hti-gdes-tariffs,#agentHtiNatcashTable,#agentHtiMoncashTable,#sendwayo-hti-haiti-table').forEach(function(e){e.style.setProperty('display','none','important');});
+}
+document.addEventListener('focusin',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('.modal'))setTimeout(apply,0)},true);
+document.addEventListener('input',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('.modal'))setTimeout(apply,0)},true);
+document.addEventListener('change',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('.modal'))setTimeout(apply,0)},true);
+setTimeout(apply,200);setTimeout(apply,1000);setTimeout(apply,2500);
+})();
+</script>
+
