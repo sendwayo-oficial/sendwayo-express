@@ -7000,7 +7000,111 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
   setTimeout(function(){forceEnvioSummary();forceHaitiGourdes();hideOperationTables();},1200);
 })();
 </script>
-\n</body>
+\n
+<style id="sendwayo-final-form-fix-v2">
+#envioModal #env-actions,
+#agentEnvioModal .sendwayo-agent-actions{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  margin:18px 0 0!important;
+  padding:14px 0 0!important;
+  position:static!important;
+  clear:both!important;
+  float:none!important;
+}
+#envioModal #env-actions .btn,
+#agentEnvioModal .sendwayo-agent-actions .btn{
+  display:flex!important;
+  width:100%!important;
+  min-height:46px!important;
+  margin:0!important;
+  float:none!important;
+  justify-content:center!important;
+}
+#envioModal .form-control,
+#agentEnvioModal .form-control{
+  pointer-events:auto;
+}
+</style>
+<script id="sendwayo-final-form-fix-v2-script">
+(function(){
+  if(window.__sendwayoFinalFormFixV2)return;
+  window.__sendwayoFinalFormFixV2=true;
+
+  function enableOperationFields(){
+    ['envioModal','agentEnvioModal','depositoModal','recargaModal','pagosModal','paqueticoModal','paqueteModal'].forEach(function(id){
+      const modal=document.getElementById(id);
+      if(!modal)return;
+      modal.querySelectorAll('input,select,textarea').forEach(function(el){
+        if(el.hasAttribute('data-hard-disabled')||el.hasAttribute('data-system-disabled'))return;
+        // Only permanent/system-generated identity fields remain read-only.
+        if(['env-remitente-phone','env-remitente-doc','agent-current'].includes(el.id))return;
+        el.disabled=false;
+        el.removeAttribute('disabled');
+        el.style.setProperty('pointer-events','auto','important');
+        el.style.setProperty('opacity','1','important');
+      });
+    });
+  }
+
+  function stackButtons(){
+    const ids=['env-actions','agentEnvioModal'];
+    const env=document.getElementById('env-actions');
+    if(env){
+      env.style.setProperty('display','flex','important');
+      env.style.setProperty('flex-direction','column','important');
+      env.style.setProperty('justify-content','flex-start','important');
+      env.style.setProperty('align-items','stretch','important');
+      env.style.setProperty('width','100%','important');
+      env.style.setProperty('position','static','important');
+      env.style.setProperty('float','none','important');
+      env.style.setProperty('clear','both','important');
+    }
+    const agent=document.querySelector('#agentEnvioModal .sendwayo-agent-actions');
+    if(agent){
+      agent.style.setProperty('display','flex','important');
+      agent.style.setProperty('flex-direction','column','important');
+      agent.style.setProperty('justify-content','flex-start','important');
+      agent.style.setProperty('align-items','stretch','important');
+      agent.style.setProperty('width','100%','important');
+      agent.style.setProperty('position','static','important');
+      agent.style.setProperty('float','none','important');
+      agent.style.setProperty('clear','both','important');
+    }
+  }
+
+  function hideTables(){
+    document.querySelectorAll('#envioModal .table-wrap,#agentEnvioModal .table-wrap').forEach(function(el){
+      el.style.setProperty('display','none','important');
+    });
+  }
+
+  function fix(){
+    enableOperationFields();
+    stackButtons();
+    hideTables();
+  }
+
+  document.addEventListener('click',function(e){
+    if(e.target.closest?.('#envioModal,#agentEnvioModal'))setTimeout(fix,0);
+  },true);
+  document.addEventListener('input',function(e){
+    if(e.target.closest?.('#envioModal,#agentEnvioModal'))fix();
+  },true);
+  document.addEventListener('change',function(e){
+    if(e.target.closest?.('#envioModal,#agentEnvioModal'))fix();
+  },true);
+
+  setTimeout(fix,100);
+  setTimeout(fix,500);
+  setTimeout(fix,1500);
+})();
+</script>
+
+</body>
 </html>
 
 <!-- SENDWAYO AUTHORITATIVE FORM/TRANSACTION UX PATCH 2026-09-29 -->
