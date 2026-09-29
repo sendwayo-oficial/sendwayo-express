@@ -7430,6 +7430,119 @@ setInterval(run,1500);
 })();
 </script>
 
+
+<!-- SENDWAYO FINAL ACTIONS / RECEIPTS REPAIR 2026-09-29 -->
+<script id="sendwayo-final-actions-receipts-20260929">
+(function(){
+'use strict';
+if(window.__SENDWAYO_FINAL_ACTIONS_RECEIPTS_20260929__)return;
+window.__SENDWAYO_FINAL_ACTIONS_RECEIPTS_20260929__=true;
+
+function resolveRecord(collection,id){
+  collection=String(collection||'');id=String(id||'');
+  if(!collection||!id)return null;
+  state[collection]=state[collection]||{};
+  if(state[collection][id])return state[collection][id];
+  var candidates=[
+    state.transacciones?.[id],
+    state.envios?.[id],
+    state.deposits?.[id],
+    state.recargas?.[id],
+    state.paqueticos?.[id],
+    state.pagos?.[id],
+    state.paquetes?.[id],
+    state.accountWithdrawals?.[id],
+    state.credits?.[id],
+    state.commissions?.[id]
+  ];
+  var r=candidates.find(function(x){return !!x;});
+  if(r){
+    state[collection][id]=Object.assign({},r,{_sourceCollection:r._sourceCollection||collection});
+    return state[collection][id];
+  }
+  return null;
+}
+
+function repairActions(){
+  document.querySelectorAll('#enviosTable button,#depositsTable button,table button').forEach(function(b){
+    if(b.closest('[data-submitting="1"]'))return;
+    b.disabled=false;
+    b.removeAttribute('disabled');
+    b.style.pointerEvents='auto';
+    b.style.touchAction='manipulation';
+    b.style.opacity='1';
+  });
+}
+
+/* Ver: nunca falla solamente porque el registro esté almacenado en transacciones. */
+var originalView=window.viewRecord;
+window.viewRecord=function(collection,id){
+  var r=resolveRecord(collection,id);
+  if(!r){
+    try{toast('No se encontró el registro.','error')}catch(_){}
+    return false;
+  }
+  if(typeof originalView==='function'){
+    /* La función original ya recibe el registro desde state; ahora sí existe. */
+    return originalView.call(this,collection,id);
+  }
+  var detail=document.getElementById('detail-content'),modal=document.getElementById('detailModal');
+  if(detail)detail.innerHTML='<div class="receipt-shell"><h3>Registro</h3><p><b>ID:</b> '+String(r.id||id)+'</p></div>';
+  if(modal){modal.style.display='flex';modal.style.visibility='visible';modal.style.opacity='1';modal.style.pointerEvents='auto';modal.style.zIndex='30000';}
+  return false;
+};
+
+/* Comprobante: resuelve primero el registro y abre siempre el modal, nunca una pantalla blanca. */
+window.SENDWAYO_FORCE_RECEIPT=function(collection,id,ev){
+  try{
+    if(ev){ev.preventDefault();ev.stopPropagation();}
+    var r=resolveRecord(collection,id);
+    if(!r){toast('No se encontró el registro para generar el comprobante.','error');return false;}
+    document.body.classList.remove('sendwayo-operation-open');
+    if(typeof window.showReceipt==='function'){
+      window.showReceipt(collection,id);
+      setTimeout(function(){
+        var m=document.getElementById('detailModal');
+        if(m){
+          m.style.display='flex';
+          m.style.visibility='visible';
+          m.style.opacity='1';
+          m.style.pointerEvents='auto';
+          m.style.zIndex='30000';
+        }
+      },30);
+    }else{
+      var d=document.getElementById('detail-content'),m=document.getElementById('detailModal');
+      if(d)d.innerHTML='<div class="receipt-shell"><h3>Comprobante</h3><p><b>ID:</b> '+String(r.id||id)+'</p></div>';
+      if(m){m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='30000';}
+    }
+  }catch(e){
+    console.error(e);
+    try{toast('No se pudo abrir el comprobante.','error')}catch(_){}
+  }
+  return false;
+};
+
+/* Un único capturador para que el toque no active otra acción ni abra una pantalla paralela. */
+document.addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('.sw-receipt-btn,[data-sendwayo-receipt="1"]'):null;
+  if(!b)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  window.SENDWAYO_FORCE_RECEIPT(b.getAttribute('data-receipt-collection'),b.getAttribute('data-receipt-id'),e);
+},true);
+
+document.addEventListener('click',function(){
+  setTimeout(repairActions,0);
+  setTimeout(repairActions,120);
+},true);
+document.addEventListener('DOMContentLoaded',function(){
+  repairActions();
+  setTimeout(repairActions,500);
+  setTimeout(repairActions,1500);
+},{once:true});
+})();
+</script>
+
 </body>
 </html>
 
