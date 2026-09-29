@@ -7001,3 +7001,106 @@ setTimeout(apply,200);setTimeout(apply,1000);setTimeout(apply,2500);
 })();
 </script>
 
+
+<!-- SENDWAYO AUTHORITATIVE ALL-FIELDS / FINANCE / RECEIPTS PATCH 2026-09-29 V1 -->
+<style id="sendwayo-authoritative-all-fields-v1">
+/* Todo control de formulario visible queda operativo. La seguridad financiera se mantiene en las funciones/Firebase. */
+input:not([data-sendwayo-readonly-system]),
+select,
+textarea,
+button,
+option{
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+}
+input:not([data-sendwayo-readonly-system]),
+select,
+textarea,
+button{
+  opacity:1!important;
+}
+</style>
+<script id="sendwayo-authoritative-all-fields-v1-script">
+(function(){
+'use strict';
+if(window.__SENDWAYO_AUTHORITATIVE_ALL_FIELDS_V1)return;
+window.__SENDWAYO_AUTHORITATIVE_ALL_FIELDS_V1=true;
+
+function unlockAllFields(){
+  document.querySelectorAll('input,select,textarea,button,option').forEach(function(el){
+    var host=el.closest('.modal[data-submitting="1"]');
+    if(host)return;
+    /* No se usa disabled como mecanismo de seguridad: Firebase y las funciones de rol siguen protegiendo las operaciones. */
+    el.disabled=false;
+    el.removeAttribute('disabled');
+    el.style.pointerEvents='auto';
+    el.style.touchAction='manipulation';
+    if(el.tagName!=='OPTION')el.style.opacity='1';
+  });
+}
+window.SENDWAYO_UNLOCK_ALL_FIELDS=unlockAllFields;
+
+function ensureFinancialActions(){
+  /* Reactiva específicamente las acciones financieras visibles de Administración. */
+  var selectors=[
+    '#capitalModal input','#capitalModal select','#capitalModal textarea','#capitalModal button',
+    '#accountingModal input','#accountingModal select','#accountingModal textarea','#accountingModal button',
+    '#depositoModal input','#depositoModal select','#depositoModal textarea','#depositoModal button',
+    '#creditModal input','#creditModal select','#creditModal textarea','#creditModal button',
+    '#balanceModal input','#balanceModal select','#balanceModal textarea','#balanceModal button'
+  ];
+  selectors.forEach(function(s){
+    document.querySelectorAll(s).forEach(function(el){
+      if(!el.closest('.modal[data-submitting="1"]')){
+        el.disabled=false;el.removeAttribute('disabled');el.style.pointerEvents='auto';el.style.touchAction='manipulation';el.style.opacity='1';
+      }
+    });
+  });
+}
+
+function approvedReceiptSweep(){
+  if(!window.state||typeof generateReceipt!=='function')return;
+  var cols=['envios','recargas','paqueticos','pagos','paquetes','deposits','accountWithdrawals'];
+  cols.forEach(function(col){
+    Object.keys(state[col]||{}).forEach(function(id){
+      var r=state[col][id];
+      if(!r||String(r.status||'').trim().toLowerCase()!=='aprobado')return;
+      if(!r.receipt){
+        try{
+          var rec=generateReceipt(col,id);
+          if(rec&&typeof persistGeneratedReceipt==='function'){
+            Promise.resolve(persistGeneratedReceipt(col,id,state[col][id])).catch(function(e){console.warn('Receipt persistence:',e);});
+          }
+        }catch(e){console.warn('Receipt generation:',col,id,e);}
+      }
+    });
+  });
+}
+
+function refreshFinanceViews(){
+  try{if(typeof renderAccounting==='function'&&typeof isAdmin==='function'&&isAdmin())renderAccounting();}catch(e){}
+  try{if(typeof renderCapital==='function'&&typeof isAdmin==='function'&&isAdmin())renderCapital();}catch(e){}
+  try{if(typeof renderDashboard==='function'&&currentUser)renderDashboard();}catch(e){}
+}
+
+function applyAll(){
+  unlockAllFields();
+  ensureFinancialActions();
+  approvedReceiptSweep();
+  refreshFinanceViews();
+}
+window.SENDWAYO_FINAL_FINANCE_REPAIR=applyAll;
+
+document.addEventListener('DOMContentLoaded',function(){setTimeout(applyAll,100);setTimeout(applyAll,700);}, {once:true});
+document.addEventListener('click',function(){
+  setTimeout(unlockAllFields,0);
+  setTimeout(approvedReceiptSweep,120);
+  setTimeout(refreshFinanceViews,180);
+},true);
+document.addEventListener('focusin',function(){setTimeout(unlockAllFields,0)},true);
+document.addEventListener('input',function(){setTimeout(unlockAllFields,0)},true);
+document.addEventListener('change',function(){setTimeout(unlockAllFields,0)},true);
+window.addEventListener('load',function(){setTimeout(applyAll,250)}, {once:true});
+setInterval(function(){unlockAllFields();approvedReceiptSweep();},2200);
+})();
+</script>
