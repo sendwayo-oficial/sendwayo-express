@@ -7309,6 +7309,127 @@ document.addEventListener('input',function(ev){
 },true);
 })();
 </script>
+
+<!-- SENDWAYO FINAL UI REPAIR 2026-09-29 -->
+<style id="sendwayo-final-ui-repair-20260929">
+/* No ocultar toda la aplicación al abrir una operación: el modal ya cubre la pantalla. */
+body.sendwayo-operation-open #app-shell{visibility:visible!important}
+/* Un solo botón Agregar: queda dentro de la barra de Excel/PDF/CSV. */
+#view-envios .card-header #envio-add-btn,
+#view-beneficiarios .card-header #beneficiario-add-btn{display:none!important}
+#view-envios .table-toolbar .sendwayo-primary-add,
+#view-beneficiarios .table-toolbar .sendwayo-primary-add{
+  display:inline-flex!important;
+  order:-1!important;
+}
+#agentEnvioModal .sendwayo-agent-operation-label{
+  font-weight:700!important;
+}
+#agentEnvioModal #agent-monto{
+  color:#0f2c59!important;
+}
+</style>
+<script id="sendwayo-final-ui-repair-20260929-js">
+(function(){
+'use strict';
+if(window.__SENDWAYO_FINAL_UI_REPAIR_20260929__)return;
+window.__SENDWAYO_FINAL_UI_REPAIR_20260929__=true;
+
+function moveSingleAddButtons(){
+  [
+    ['envio-add-btn','view-envios','Agregar envío'],
+    ['beneficiario-add-btn','view-beneficiarios','Agregar beneficiario']
+  ].forEach(function(item){
+    var btn=document.getElementById(item[0]), view=document.getElementById(item[1]);
+    if(!btn||!view)return;
+    var toolbar=view.querySelector('.table-toolbar .actions');
+    if(!toolbar)return;
+    btn.classList.add('sendwayo-primary-add');
+    btn.textContent=item[2];
+    if(btn.parentElement!==toolbar)toolbar.insertBefore(btn,toolbar.firstChild);
+    btn.style.removeProperty('display');
+  });
+}
+
+function repairAgentOperation(){
+  var m=document.getElementById('agentEnvioModal');
+  if(!m)return;
+
+  var op=document.getElementById('agent-operation');
+  if(op){
+    var current=op.value;
+    op.innerHTML='';
+    [
+      ['Dépôt','Dépôt'],
+      ['Envoi','Envoi'],
+      ['Retrait','Retrait']
+    ].forEach(function(x){
+      var o=document.createElement('option');
+      o.value=x[0];o.textContent=x[1];op.appendChild(o);
+    });
+    op.value=(current==='Retrait'||current==='Envoi'||current==='Dépôt')?current:'Dépôt';
+    var label=op.closest('.form-group')?.querySelector('label');
+    if(label){
+      label.textContent='Sélectionner l’opération';
+      label.classList.add('sendwayo-agent-operation-label');
+    }
+  }
+
+  var amount=document.getElementById('agent-monto');
+  if(amount){
+    amount.setAttribute('data-currency','HTG');
+    amount.removeAttribute('data-currency-rd');
+    amount.placeholder='0 GDES';
+  }
+
+  var amountLabel=amount?.closest('.form-group')?.querySelector('label');
+  if(amountLabel)amountLabel.textContent='Montant en gourdes haïtiennes (GDES)';
+
+  /* Nunca permitir RD$ dentro de la pantalla del agente. */
+  m.querySelectorAll('*').forEach(function(el){
+    if(el.children.length===0 && /RD\$/i.test(el.textContent||'')){
+      el.textContent=String(el.textContent).replace(/RD\$/gi,'GDES');
+    }
+  });
+  m.querySelectorAll('input').forEach(function(el){
+    if(/RD\$/i.test(el.placeholder||''))el.placeholder=String(el.placeholder).replace(/RD\$/gi,'GDES');
+  });
+
+  /* Elimina residuos literales /n o /n/n si algún texto dinámico los introduce. */
+  m.querySelectorAll('*').forEach(function(el){
+    if(el.children.length===0 && /\/n(?:\/n)?/i.test(el.textContent||'')){
+      el.textContent=String(el.textContent).replace(/\/n\/n|\/n/gi,' ').replace(/\s{2,}/g,' ').trim();
+    }
+  });
+
+  if(typeof window.calcularAgentEnvio==='function')window.calcularAgentEnvio();
+}
+
+function run(){
+  moveSingleAddButtons();
+  repairAgentOperation();
+}
+document.addEventListener('DOMContentLoaded',function(){
+  run();setTimeout(run,300);setTimeout(run,1000);
+},{once:true});
+document.addEventListener('click',function(){
+  setTimeout(run,0);setTimeout(run,150);
+},true);
+document.addEventListener('change',function(e){
+  if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal'))setTimeout(repairAgentOperation,0);
+},true);
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal'))setTimeout(function(){
+    var m=document.getElementById('agentEnvioModal');
+    if(m)m.querySelectorAll('*').forEach(function(el){
+      if(el.children.length===0&&/RD\$/i.test(el.textContent||''))el.textContent=String(el.textContent).replace(/RD\$/gi,'GDES');
+    });
+  },0);
+},true);
+setInterval(run,1500);
+})();
+</script>
+
 </body>
 </html>
 
@@ -7532,6 +7653,7 @@ setInterval(apply,2000);
 (function(){
 'use strict';
 function sendwayoOpenBeneficiaryFinal(ev){
+  var m=document.getElementById('beneficiarioModal');
   if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}catch(_) {}}
   document.body.classList.remove('sendwayo-operation-open');
 
