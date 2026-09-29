@@ -7126,6 +7126,32 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
 </script>
 
 
+<style id="sendwayo-operation-actions-final-20260929">
+/* Acciones siempre dentro de la misma tarjeta del formulario y abajo, nunca como panel lateral. */
+#envioModal .modal-content > #env-actions,
+#agentEnvioModal .modal-content > .sendwayo-agent-actions{
+  margin-top:auto!important;
+  align-self:stretch!important;
+}
+#envioModal #env-actions,
+#agentEnvioModal .sendwayo-agent-actions{
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex-wrap:nowrap!important;
+}
+@media (max-width:520px){
+  #envioModal #env-actions,
+  #agentEnvioModal .sendwayo-agent-actions{
+    flex-wrap:wrap!important;
+    justify-content:flex-end!important;
+  }
+  #envioModal #env-actions .btn,
+  #agentEnvioModal .sendwayo-agent-actions .btn{
+    flex:1 1 140px!important;
+  }
+}
+</style>
 <style id="sendwayo-absolute-bottom-operation-layout-20260929">
 /* REGLA ÚNICA: en una operación no hay acciones laterales. Todo queda abajo, en columna. */
 #envioModal .modal-content,
@@ -7150,10 +7176,10 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
 #agentEnvioModal .sendwayo-agent-actions,
 .sendwayo-bottom-actions{
   display:flex!important;
-  flex-direction:column!important;
+  flex-direction:row!important;
   flex-wrap:nowrap!important;
-  align-items:stretch!important;
-  justify-content:flex-start!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
   gap:10px!important;
   width:100%!important;
   margin:20px 0 0!important;
@@ -7163,6 +7189,7 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
   float:none!important;
   clear:both!important;
   order:999!important;
+  box-sizing:border-box!important;
 }
 #envioModal #env-actions .btn,
 #agentEnvioModal .sendwayo-agent-actions .btn,
@@ -7170,12 +7197,13 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
   display:flex!important;
   position:static!important;
   float:none!important;
-  width:100%!important;
-  min-width:100%!important;
+  width:auto!important;
+  min-width:120px!important;
   min-height:46px!important;
   margin:0!important;
   justify-content:center!important;
   align-items:center!important;
+  flex:0 0 auto!important;
 }
 /* Nunca mostrar una superficie lateral de tarifas durante una operación. */
 #envioModal .table-wrap,
