@@ -599,7 +599,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div class="form-group"><label>Bénéficiaire</label><div class="search-select-wrap"><input id="env-beneficiario-input" class="form-control" placeholder="Saisissez le nom ou le numéro…" autocomplete="off" oninput="document.getElementById('env-beneficiario-select').value='';updateEnvioSuggestions('beneficiario')" onfocus="updateEnvioSuggestions('beneficiario')"><button type="button" class="plus-btn" onclick="openBeneficiarioModal('envio')" title="Ajouter un bénéficiaire">+</button><div id="env-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div></div><input id="env-beneficiario-select" type="hidden"><div class="field-hint">Seleccione: número (nombre del beneficiario).</div></div></div>
 <div class="account-card" style="padding:10px;margin:8px 0"><b>Identificación del remitente</b><div class="form-grid" style="margin-top:8px"><div><label style="font-size:.75rem">WhatsApp</label><input id="env-remitente-phone" class="form-control" readonly></div><div><label style="font-size:.75rem">Cédula / Pasaporte</label><input id="env-remitente-doc" class="form-control" readonly></div></div></div>
 <div class="info-box" id="env-official-tariff-hint">Las tarifas por rango de RD$ solo aplican a envíos RD → Haití vía MonCash y RD → Haití vía NatCash. En Agentes no aplican: las operaciones Haití → Haití se realizan únicamente en GDES (gourdes haitianos), tanto para depósitos, envíos como retiros.</div>
-<div style="background:#f1f5f9;padding:12px;border-radius:7px;margin:12px 0"><p><strong>MONTO ENVIADO:</strong> <b id="calc-neto">0.00 RD$</b></p><p><strong>COMISIÓN:</strong> <b id="calc-comision">0.00 RD$</b></p><p><strong>MONTO TOTAL:</strong> <b id="calc-total">0.00 RD$</b></p><p id="calc-recibir-row" style="display:none"><strong>MONTO A RECIBIR:</strong> <b id="calc-recibir">0.00 HTG</b></p></div>
+<div id="env-summary" class="sendwayo-transaction-summary"><p><strong>MONTO ENVIADO:</strong> <b id="calc-enviado">0.00 RD$</b></p><p><strong>COMISIÓN:</strong> <b id="calc-comision">0.00 RD$</b></p><p><strong>MONTO TOTAL:</strong> <b id="calc-total-debito">0.00 RD$</b></p><p><strong>NETO:</strong> <b id="calc-neto">0.00 RD$</b></p><p><strong>MONTO A RECIBIR:</strong> <b id="calc-recibir">0.00 HTG</b></p></div>
 
 
 
@@ -1894,7 +1894,7 @@ function officialHtiCashFee(amount,type){if(!isOfficialHtiCashRoute(type))return
 function envioCommissionRate(type,amount){const fee=officialHtiCashFee(amount,type);if(fee!==null&&Number(amount)>0)return fee/Number(amount);return String(type||'').trim().toUpperCase()==='HTI A HTI'?0.05:0.10}
 function commissionRateFor(collection,record){if(collection!=='envios')return 0.05;const amount=Number(record?.amount||0),fee=officialHtiCashFee(amount,record?.type);return fee!==null&&amount>0?fee/amount:envioCommissionRate(record?.type,amount)}
 function calcEnvio(m,type){const amount=Number(m||0),fee=officialHtiCashFee(amount,type);if(isOfficialHtiCashRoute(type)&&fee===null)return{commission:0,net:0,total:0,valid:false,official:true};const commission=fee!==null?fee:amount*envioCommissionRate(type,amount),net=amount-commission,total=net*2.10;return{commission,net,total,valid:amount>0,official:fee!==null}}
-function calcularEnvioModal(){const type=document.getElementById('env-tipo-trans')?.value,amount=Number(document.getElementById('env-monto')?.value||0),x=calcEnvio(amount,type);document.getElementById('calc-neto').textContent=x.valid?money(x.net):'—';document.getElementById('calc-comision').textContent=x.valid?money(x.commission):(isOfficialHtiCashRoute(type)?'RD$ 50.00 mínimo':'—');document.getElementById('calc-total').textContent=x.valid?x.total.toFixed(2)+' HTG':'—';const hint=document.getElementById('env-official-tariff-hint');if(hint)hint.textContent=isOfficialHtiCashRoute(type)?'Tarifa oficial MonCash/NatCash: RD$50 mínimo · RD$36,000 máximo. La comisión se calcula exactamente según el rango del monto enviado.':'Las tarifas por rango de RD$ solo aplican a envíos RD → Haití vía MonCash y RD → Haití vía NatCash. Las operaciones de Agentes Haití → Haití se realizan en GDES y usan su propia tarifa oficial.'}
+function calcularEnvioModal(){const type=document.getElementById('env-tipo-trans')?.value,amount=Number(document.getElementById('env-monto')?.value||0),x=calcEnvio(amount,type),enviado=document.getElementById('calc-enviado'),comision=document.getElementById('calc-comision'),totalDebito=document.getElementById('calc-total-debito'),neto=document.getElementById('calc-neto'),recibir=document.getElementById('calc-recibir');if(enviado)enviado.textContent=x.valid?money(amount):'—';if(comision)comision.textContent=x.valid?money(x.commission):(isOfficialHtiCashRoute(type)?'RD$ 50.00 mínimo':'—');if(totalDebito)totalDebito.textContent=x.valid?money(amount+x.commission):'—';if(neto)neto.textContent=x.valid?money(x.net):'—';if(recibir)recibir.textContent=x.valid?x.total.toFixed(2)+' HTG':'—';const hint=document.getElementById('env-official-tariff-hint');if(hint)hint.textContent=isOfficialHtiCashRoute(type)?'Tarifa oficial MonCash/NatCash: RD$50 mínimo · RD$36,000 máximo. La comisión se calcula exactamente según el rango del monto enviado.':'Las tarifas por rango de RD$ solo aplican a envíos RD → Haití vía MonCash y RD → Haití vía NatCash. Las operaciones de Agentes Haití → Haití se realizan en GDES y usan su propia tarifa oficial.'}
 function canTransact(){return !!currentUser&&currentUser.active!==false&&(isAdmin()||isManagedUser(currentUser))}
 function owner(){return currentUser}
 function userById(id){return state.users[id]||{}}
@@ -6867,7 +6867,140 @@ window.addEventListener('load',function(){setTimeout(fixOperationalLayout,100);}
 document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50);},true);
 })();
 </script>
-</body>
+
+<style id="sendwayo-transaction-layout-final-v1">
+/* SENDWAYO: operaciones sin paneles laterales ni botones laterales. */
+#envioModal .modal-content,
+#agentEnvioModal .modal-content{width:min(720px,96vw);}
+#envioModal #env-actions,
+#agentEnvioModal .sendwayo-agent-actions{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  gap:9px!important;
+  width:100%!important;
+  margin:18px 0 0!important;
+  padding:14px 0 0!important;
+  border-top:1px solid #e5eaf0!important;
+  position:static!important;
+  clear:both!important;
+}
+#envioModal #env-actions .btn,
+#agentEnvioModal .sendwayo-agent-actions .btn{
+  width:100%!important;
+  justify-content:center!important;
+  min-height:44px!important;
+}
+#envioModal .sendwayo-transaction-summary,
+#agentEnvioModal .sendwayo-agent-summary{
+  display:block!important;
+  width:100%!important;
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:7px;
+  margin:12px 0 0;
+}
+#envioModal .sendwayo-transaction-summary p,
+#agentEnvioModal .sendwayo-agent-summary p{margin:6px 0;}
+/* Durante la operación no se muestran las tablas tarifarias laterales/inferiores. */
+#envioModal .table-wrap,
+#agentEnvioModal .table-wrap{display:none!important;}
+</style>
+<script id="sendwayo-transaction-final-rules-v1">
+(function(){
+  'use strict';
+  if(window.__sendwayoTransactionFinalRulesV1)return;
+  window.__sendwayoTransactionFinalRulesV1=true;
+
+  function forceEnvioSummary(){
+    const m=document.getElementById('envioModal');
+    if(!m)return;
+    const type=document.getElementById('env-tipo-trans')?.value||'';
+    const amount=Number(document.getElementById('env-monto')?.value||0);
+    if(typeof window.calcEnvio==='function'){
+      try{
+        const x=window.calcEnvio(amount,type);
+        const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+        set('calc-enviado',x.valid?window.money(amount):'—');
+        set('calc-comision',x.valid?window.money(x.commission):(typeof window.isOfficialHtiCashRoute==='function'&&window.isOfficialHtiCashRoute(type)?'RD$ 50.00 mínimo':'—'));
+        set('calc-total-debito',x.valid?window.money(amount+x.commission):'—');
+        set('calc-neto',x.valid?window.money(x.net):'—');
+        set('calc-recibir',x.valid?Number(x.total).toFixed(2)+' HTG':'—');
+      }catch(e){console.warn('SENDWAYO summary enforcement',e);}
+    }
+    const actions=document.getElementById('env-actions');
+    if(actions){
+      actions.style.display='flex';
+      actions.style.flexDirection='column';
+      actions.style.position='static';
+      actions.style.width='100%';
+      actions.style.clear='both';
+    }
+  }
+
+  function forceHaitiGourdes(){
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    const replaceText=(el)=>{
+      if(!el||el.children.length)return;
+      const t=el.textContent||'';
+      if(/RD\$|DOP|RD\b/i.test(t))el.textContent=t.replace(/RD\$/gi,'GDES').replace(/DOP/gi,'GDES').replace(/\bRD\b/gi,'GDES');
+    };
+    m.querySelectorAll('*').forEach(replaceText);
+    const amount=document.getElementById('agent-monto');
+    if(amount){
+      amount.setAttribute('data-currency','HTG');
+      amount.placeholder='0 GDES';
+      const fg=amount.closest('.form-group');
+      const label=fg?.querySelector('label');
+      if(label)label.textContent='Montant en gourdes haïtiennes (GDES) — GDES UNIQUEMENT';
+    }
+    const banner=document.getElementById('agent-hti-gdes-only-banner');
+    if(banner)banner.textContent='HAÏTI → HAÏTI · GDES UNIQUEMENT (GOURDES HAÏTIENS)';
+    const summary=m.querySelector('.sendwayo-agent-summary');
+    if(summary)summary.querySelectorAll('b').forEach(b=>{b.textContent=String(b.textContent||'').replace(/RD\$/gi,'GDES').replace(/DOP/gi,'GDES');});
+    const actions=m.querySelector('.sendwayo-agent-actions');
+    if(actions){
+      actions.style.display='flex';
+      actions.style.flexDirection='column';
+      actions.style.position='static';
+      actions.style.width='100%';
+    }
+  }
+
+  function hideOperationTables(){
+    document.querySelectorAll('#envioModal .table-wrap,#agentEnvioModal .table-wrap').forEach(e=>e.style.display='none');
+  }
+
+  const oldOpen=window.openModal;
+  if(typeof oldOpen==='function'&&!oldOpen.__sendwayoTransactionFinalWrapped){
+    const wrapped=function(id){
+      const out=oldOpen.apply(this,arguments);
+      setTimeout(function(){
+        if(id==='envioModal')forceEnvioSummary();
+        if(id==='agentEnvioModal')forceHaitiGourdes();
+        hideOperationTables();
+      },0);
+      return out;
+    };
+    wrapped.__sendwayoTransactionFinalWrapped=true;
+    window.openModal=wrapped;
+  }
+
+  document.addEventListener('input',function(e){
+    if(e.target?.closest?.('#envioModal'))forceEnvioSummary();
+    if(e.target?.closest?.('#agentEnvioModal'))forceHaitiGourdes();
+  },true);
+  document.addEventListener('change',function(e){
+    if(e.target?.closest?.('#envioModal'))forceEnvioSummary();
+    if(e.target?.closest?.('#agentEnvioModal'))forceHaitiGourdes();
+  },true);
+  setTimeout(function(){forceEnvioSummary();forceHaitiGourdes();hideOperationTables();},300);
+  setTimeout(function(){forceEnvioSummary();forceHaitiGourdes();hideOperationTables();},1200);
+})();
+</script>
+\n</body>
 </html>
 
 <!-- SENDWAYO AUTHORITATIVE FORM/TRANSACTION UX PATCH 2026-09-29 -->
