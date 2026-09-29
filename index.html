@@ -7614,6 +7614,177 @@ body.sendwayo-hti-hti-only #envioModal .sendwayo-transaction-summary strong{ }
   setInterval(function(){if(agent()&&document.getElementById('envioModal')?.style.display!=='none')enforce();},700);
 })();
 </script></body>
+
+<!-- SENDWAYO AUTHORITATIVE LANGUAGE CONSISTENCY FIX 2026-09-29 -->
+<script id="sendwayo-language-consistency-fix">
+(function(){
+  'use strict';
+  if(window.__SENDWAYO_LANGUAGE_CONSISTENCY_FIX__)return;
+  window.__SENDWAYO_LANGUAGE_CONSISTENCY_FIX__=true;
+
+  /*
+   * Canonical rule:
+   * 1) Every visible UI string is normalized back to its Spanish source.
+   * 2) The selected language is then applied from that canonical source.
+   * 3) This also handles DOM elements created after the first render.
+   * 4) User-entered values are never translated; only visible labels/text,
+   *    placeholders, titles, aria-labels and OPTION labels are processed.
+   */
+  function mapsFor(lang){
+    var out={};
+    if(window.UI_TRANSLATIONS && window.UI_TRANSLATIONS[lang])
+      Object.assign(out,window.UI_TRANSLATIONS[lang]);
+    if(window.SW_I18N && window.SW_I18N[lang])
+      Object.assign(out,window.SW_I18N[lang]);
+    if(window.SW_FORCE_I18N && window.SW_FORCE_I18N[lang])
+      Object.assign(out,window.SW_FORCE_I18N[lang]);
+    return out;
+  }
+
+  var allLangs=['fr','en','ht'];
+  var reverseMaps={};
+
+  function buildReverse(){
+    reverseMaps={};
+    allLangs.forEach(function(lang){
+      var map=mapsFor(lang), rev={};
+      Object.keys(map).forEach(function(es){
+        var translated=String(map[es]??'').trim();
+        var canonical=String(es??'').trim();
+        if(!translated||!canonical||translated===canonical)return;
+        if(!rev[translated])rev[translated]=canonical;
+      });
+      reverseMaps[lang]=rev;
+    });
+  }
+
+  function canonicalize(value){
+    var input=String(value??'');
+    var trimmed=input.trim();
+    if(!trimmed)return input;
+
+    /* Exact reverse lookup first: this fixes Expéditeur -> Remitente,
+       Sender -> Remitente, etc., even when the node was created later. */
+    for(var i=0;i<allLangs.length;i++){
+      var exact=reverseMaps[allLangs[i]]?.[trimmed];
+      if(exact)return input.replace(trimmed,exact);
+    }
+
+    var out=input;
+    var pairs=[];
+    allLangs.forEach(function(lang){
+      Object.keys(reverseMaps[lang]||{}).forEach(function(from){
+        pairs.push([from,reverseMaps[lang][from]]);
+      });
+    });
+    pairs.sort(function(a,b){return b[0].length-a[0].length});
+    for(var j=0;j<pairs.length;j++){
+      var from=pairs[j][0],to=pairs[j][1];
+      if(from&&out.includes(from))out=out.split(from).join(to);
+    }
+    return out;
+  }
+
+  function translate(value,lang){
+    var base=canonicalize(value);
+    if(lang==='es')return base;
+    var map=mapsFor(lang);
+    var trimmed=base.trim();
+    if(map[trimmed])return base.replace(trimmed,map[trimmed]);
+
+    var entries=Object.entries(map).filter(function(x){
+      return x[0]&&x[1]&&x[0]!==x[1];
+    }).sort(function(a,b){return b[0].length-a[0].length});
+    var out=base;
+    for(var i=0;i<entries.length;i++){
+      if(out.includes(entries[i][0]))out=out.split(entries[i][0]).join(entries[i][1]);
+    }
+    return out;
+  }
+
+  function process(){
+    if(document.hidden)return;
+    buildReverse();
+    var lang=localStorage.getItem('sendwayo_language')||'es';
+    if(!['es','fr','en','ht'].includes(lang))lang='es';
+
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    var nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+
+    nodes.forEach(function(node){
+      var p=node.parentElement;
+      if(!p||p.closest('script,style,noscript'))return;
+
+      /* Never translate editable/user data. */
+      if(p.closest('input,textarea,[contenteditable="true"]'))return;
+
+      var current=node.nodeValue||'';
+      if(!current.trim())return;
+
+      var base=canonicalize(current);
+      var result=translate(base,lang);
+      if(result!==current)node.nodeValue=result;
+      node.__sendwayoCanonical=base;
+    });
+
+    document.querySelectorAll(
+      'input[placeholder],textarea[placeholder],button[title],button[aria-label],' +
+      'input[aria-label],select[aria-label],select[title],option'
+    ).forEach(function(el){
+      ['placeholder','title','aria-label'].forEach(function(attr){
+        if(!el.hasAttribute(attr))return;
+        var current=el.getAttribute(attr)||'';
+        var base=canonicalize(current);
+        var result=translate(base,lang);
+        if(result!==current)el.setAttribute(attr,result);
+      });
+      if(el.tagName==='OPTION'){
+        var current=el.textContent||'';
+        if(current.trim()){
+          var base=canonicalize(current);
+          var result=translate(base,lang);
+          if(result!==current)el.textContent=result;
+        }
+      }
+    });
+  }
+
+  window.SENDWAYO_APPLY_LANGUAGE_CONSISTENCY=process;
+
+  /* Always re-apply after the application's own language/render cycle. */
+  var oldSetLanguage=window.setLanguage;
+  if(typeof oldSetLanguage==='function'&&!oldSetLanguage.__sendwayoConsistencyWrapped){
+    var wrappedSetLanguage=function(lang){
+      var result=oldSetLanguage.apply(this,arguments);
+      setTimeout(process,0);
+      setTimeout(process,120);
+      setTimeout(process,450);
+      return result;
+    };
+    wrappedSetLanguage.__sendwayoConsistencyWrapped=true;
+    window.setLanguage=wrappedSetLanguage;
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(process,50);
+    setTimeout(process,500);
+    setTimeout(process,1200);
+  },{once:true});
+
+  /* New modals/forms are often created by click/change handlers. */
+  ['click','change'].forEach(function(evt){
+    document.addEventListener(evt,function(){
+      setTimeout(process,80);
+      setTimeout(process,350);
+    },true);
+  });
+
+  window.addEventListener('load',function(){
+    setTimeout(process,250);
+  },{once:true});
+})();
+</script>
 </html>
 
 <!-- SENDWAYO AUTHORITATIVE FORM/TRANSACTION UX PATCH 2026-09-29 -->
