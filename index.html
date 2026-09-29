@@ -7492,36 +7492,56 @@ window.viewRecord=function(collection,id){
   return false;
 };
 
-/* Comprobante: resuelve primero el registro y abre siempre el modal, nunca una pantalla blanca. */
+/* Comprobante: genera primero el recibo aprobado y luego abre el comprobante. */
 window.SENDWAYO_FORCE_RECEIPT=function(collection,id,ev){
   try{
     if(ev){ev.preventDefault();ev.stopPropagation();}
+    collection=String(collection||'').trim();
+    id=String(id||'').trim();
+    if(!collection||!id){toast('No se encontró el comprobante solicitado.','error');return false;}
+
     var r=resolveRecord(collection,id);
     if(!r){toast('No se encontró el registro para generar el comprobante.','error');return false;}
+
+    var status=String(r.status||'').trim().toLowerCase();
+    if(status!=='aprobado'){
+      toast('El comprobante solo aparece después de la aprobación del Administrador.','warn');
+      return false;
+    }
+
+    /* Solo repara la generación faltante; no altera balances, estados ni otras acciones. */
+    if(!r.receipt && typeof window.generateReceipt==='function'){
+      var generated=window.generateReceipt(collection,id);
+      r=state[collection]?.[id]||r;
+      if(!generated && !r.receipt){
+        toast('No se pudo generar el comprobante.','error');
+        return false;
+      }
+    }
+
     document.body.classList.remove('sendwayo-operation-open');
     if(typeof window.showReceipt==='function'){
       window.showReceipt(collection,id);
       setTimeout(function(){
         var m=document.getElementById('detailModal');
-        if(m){
+        var d=document.getElementById('detail-content');
+        if(m&&d&&d.innerHTML.trim()){
           m.style.display='flex';
           m.style.visibility='visible';
           m.style.opacity='1';
           m.style.pointerEvents='auto';
           m.style.zIndex='30000';
         }
-      },30);
+      },50);
     }else{
-      var d=document.getElementById('detail-content'),m=document.getElementById('detailModal');
-      if(d)d.innerHTML='<div class="receipt-shell"><h3>Comprobante</h3><p><b>ID:</b> '+String(r.id||id)+'</p></div>';
-      if(m){m.style.display='flex';m.style.visibility='visible';m.style.opacity='1';m.style.pointerEvents='auto';m.style.zIndex='30000';}
+      toast('El módulo de comprobantes todavía no está disponible.','error');
     }
   }catch(e){
-    console.error(e);
+    console.error('SENDWAYO FORCE RECEIPT:',e);
     try{toast('No se pudo abrir el comprobante.','error')}catch(_){}
   }
   return false;
-};
+}
 
 /* Un único capturador para que el toque no active otra acción ni abra una pantalla paralela. */
 document.addEventListener('click',function(e){
