@@ -2191,7 +2191,7 @@ async function guardarBeneficiario(){
  state.beneficiaries[id]=beneficiary;
  try{
    addAudit(isAgentOrigin?'Créer bénéficiaire — Agent':'Crear beneficiario',id);
-   const ok=isAgentOrigin ? await firebaseSet('beneficiaries/'+id,beneficiary) : await persist();
+   const ok=await firebaseSet('beneficiaries/'+id,beneficiary);
    if(!ok){
      delete state.beneficiaries[id];
      localSave();
@@ -3424,7 +3424,23 @@ async function editUser(id){
 }
 function deleteUser(id){if(id==='admin')return;if(!confirm('¿Eliminar usuario?'))return;delete state.users[id];persist();renderAll();toast('Usuario eliminado.')}
 function renderBeneficiaries(){const body=document.querySelector('#benefTable tbody');if(!body)return;const rows=newestFirst(state.beneficiaries).filter(b=>isAdmin()||b.userId===currentUser?.id);body.innerHTML=rows.map((b,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(b.name||'')}</td><td>${escapeHtml(b.phone||'')}</td><td><span class="status ${b.active!==false?'st-Activo':'st-Inactivo'}">${b.active!==false?'Activo':'Inactivo'}</span></td><td><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord('beneficiaries','${b.id}')">Ver</button><button class="btn btn-warning btn-sm" onclick="editBeneficiary('${b.id}')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('beneficiaries','${b.id}')">Eliminar</button></div></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No hay beneficiarios.</td></tr>'}
-function editBeneficiary(id){let b=state.beneficiaries[id];b.name=prompt('Nombre y apellido:',b.name)??b.name;b.phone=prompt('Celular:',b.phone)??b.phone;b.active=confirm('¿Beneficiario activo?');persist();renderAll()}
+async function editBeneficiary(id){
+ const b=state.beneficiaries?.[id];if(!b)return toast('No se encontró el beneficiario.','error');
+ const uid=firebaseReady&&firebase.auth().currentUser?firebase.auth().currentUser.uid:null;
+ const allowed=isAdmin()||b.userId===currentUser?.id||b.ownerAuthUid===uid;
+ if(!allowed)return toast('No tiene permiso para editar este beneficiario.','warn');
+ const name=prompt('Nombre y apellido:',String(b.name||''));if(name===null)return;
+ const phone=prompt('Celular:',String(b.phone||''));if(phone===null)return;
+ const active=confirm('¿Beneficiario activo?');
+ const updated={...b,name:String(name).trim(),phone:String(phone).trim(),active};
+ if(!updated.name||!updated.phone)return toast('Nombre y número son obligatorios.','warn');
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');
+ try{
+   const ok=await firebaseSet('beneficiaries/'+id,updated);if(!ok)throw new Error('FIREBASE_WRITE_FAILED');
+   state.beneficiaries[id]=updated;if(lastSyncedState?.beneficiaries)lastSyncedState.beneficiaries[id]=cloneState(updated);
+   renderAll();toast('Beneficiario actualizado en Firebase.','success');
+ }catch(e){console.warn('editBeneficiary:',e);toast('No se pudo guardar el beneficiario en Firebase.','error')}
+}
 function renderAccounts(){
  let rows=Object.values(state.accounts||{});
  if(!rows.length)rows=[];
@@ -6882,6 +6898,52 @@ setInterval(forceGdes,1500);
 })();
 </script>
 
+<script id="sendwayo-authoritative-crud-bridge-2026-09-29">
+(function(){
+'use strict';
+if(window.__SENDWAYO_AUTHORITATIVE_CRUD_BRIDGE__)return;
+window.__SENDWAYO_AUTHORITATIVE_CRUD_BRIDGE__=true;
+function showRecord(collection,id){
+ const r=window.state?.[collection]?.[id];if(!r)return toast('No se encontró el registro.','error');
+ const box=document.getElementById('detail-content');if(!box)return;
+ box.innerHTML='<div class="receipt-shell"><h3>Registro</h3><p><b>ID:</b> '+escapeHtml(r.id||id)+'</p><pre style="white-space:pre-wrap;word-break:break-word;background:#f6f8fa;padding:12px;border-radius:8px;max-height:60vh;overflow:auto">'+escapeHtml(JSON.stringify(r,null,2))+'</pre></div>';
+ if(typeof openModal==='function')openModal('detailModal');
+}
+window.viewRecord=showRecord;
+const oldDelete=window.deleteRecord;
+window.deleteRecord=async function(collection,id){
+ const r=window.state?.[collection]?.[id];if(!r)return toast('No se encontró el registro.','error');
+ if(collection==='beneficiaries'){
+   const uid=firebaseReady&&firebase.auth().currentUser?firebase.auth().currentUser.uid:null;
+   if(!(isAdmin()||r.userId===currentUser?.id||r.ownerAuthUid===uid))return toast('No tiene permiso para eliminar este beneficiario.','warn');
+   if(!confirm('¿Eliminar el beneficiario '+String(r.name||id)+'?'))return;
+   if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');
+   try{
+     await firebase.database().ref(DB_PATH+'/beneficiaries/'+id).remove();
+     delete state.beneficiaries[id];if(lastSyncedState?.beneficiaries)delete lastSyncedState.beneficiaries[id];
+     renderAll();toast('Beneficiario eliminado de Firebase.','success');
+   }catch(e){console.warn('delete beneficiary:',e);toast('No se pudo eliminar el beneficiario en Firebase.','error')}
+   return;
+ }
+ if(typeof oldDelete==='function')return oldDelete(collection,id);
+ return toast('La acción de eliminar no está disponible para este registro.','error');
+};
+window.editBeneficiary=window.editBeneficiary||editBeneficiary;
+function enforceAgentGdes(){
+ const m=document.getElementById('agentEnvioModal');if(!m)return;
+ m.querySelectorAll('input,select,textarea,label,p,b,th,td,h3,.info-box').forEach(function(el){
+   if(el.children.length===0&&/RD\$/i.test(el.textContent||''))el.textContent=String(el.textContent).replace(/RD\$/gi,'GDES');
+   if(el.placeholder&&/RD\$/i.test(el.placeholder))el.placeholder=String(el.placeholder).replace(/RD\$/gi,'GDES');
+ });
+ const amount=document.getElementById('agent-monto');if(amount){amount.dataset.currency='GDES';amount.setAttribute('aria-label','Monto en gourdes haitianos (GDES)');}
+ ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(function(id){const e=document.getElementById(id);if(e)e.textContent=String(e.textContent||'').replace(/RD\$/gi,'GDES')});
+}
+window.SENDWAYO_ENFORCE_GDES=enforceAgentGdes;
+document.addEventListener('click',function(){setTimeout(enforceAgentGdes,0)},true);
+document.addEventListener('input',function(){setTimeout(enforceAgentGdes,0)},true);
+setTimeout(enforceAgentGdes,300);setTimeout(enforceAgentGdes,1200);
+})();
+</script>
 </body>
 </html>
 
