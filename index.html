@@ -9077,39 +9077,7 @@ img[data-current-brand-logo="true"]{
 
 
 <!-- SENDWAYO BENEFICIARY ADD FINAL REPAIR V2 -->
-<script id="sendwayo-beneficiary-add-final-repair-v2">
-(function(){
-  if(window.__sendwayoBeneficiaryAddFinalRepairV2)return;
-  window.__sendwayoBeneficiaryAddFinalRepairV2=true;
-  function openBeneficiaryFinal(ev,origin){
-    try{
-      if(ev){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();}
-      var modal=document.getElementById('beneficiarioModal');
-      if(!modal)return false;
-      var agent=document.getElementById('agentEnvioModal');
-      modal.dataset.origen=origin||'gestion';
-      if(agent&&origin==='agente'){agent.style.zIndex='49000';agent.style.pointerEvents='none';}
-      modal.style.display='flex';modal.style.visibility='visible';modal.style.opacity='1';
-      modal.style.pointerEvents='auto';modal.style.zIndex='50000';modal.classList.add('show');
-      var name=document.getElementById('ben-nombre'),phone=document.getElementById('ben-cel');
-      if(name)name.value='';if(phone)phone.value='';
-      setTimeout(function(){
-        [name,phone].forEach(function(el){if(el){el.disabled=false;el.readOnly=false;el.style.pointerEvents='auto';}});
-        if(name)name.focus();
-      },40);
-    }catch(e){console.warn('SENDWAYO beneficiary add final:',e);}
-    return false;
-  }
-  window.SENDWAYO_OPEN_BENEFICIARIO_SAFE=openBeneficiaryFinal;
-  window.SENDWAYO_OPEN_BENEFICIARIO_CLEAN=openBeneficiaryFinal;
-  window.openBeneficiarioModal=function(origin){return openBeneficiaryFinal(null,origin||'gestion');};
-  document.addEventListener('click',function(ev){
-    var t=ev.target&&ev.target.closest?ev.target.closest('#agentEnvioModal .plus-btn[title="Ajouter un bénéficiaire"],#beneficiario-add-btn'):null;
-    if(!t)return;
-    openBeneficiaryFinal(ev,t.id==='beneficiario-add-btn'?'gestion':'agente');
-  },true);
-})();
-</script>
+
 
 <!-- SENDWAYO BENEFICIARY FINAL FUNCTIONAL PATCH V3 -->
 
