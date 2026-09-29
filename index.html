@@ -6037,7 +6037,7 @@ img[data-current-brand-logo="true"]{
     if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#sw-agent-create-modal'))setTimeout(fix,0);
   },true);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix,{once:true});else fix();
-  setInterval(fix,1500);
+  /* Barrera anti-congelamiento: no mantener un temporizador permanente que reescriba el DOM. */
 })();
 </script>
 
