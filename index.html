@@ -7184,7 +7184,7 @@ window.SENDWAYO_TOGGLE_ACCOUNTS=bankManagementToggle;
 function installBankManagement(){
   var view=document.getElementById('view-cuentas_depositos');
   if(!view)return;
-  view.classList.remove('sendwayo-show-bank-management');
+  if(!view.dataset.sendwayoBankManagementInitialized){view.classList.remove('sendwayo-show-bank-management');view.dataset.sendwayoBankManagementInitialized='1';}
   var header=view.querySelector('.card-header .actions');
   if(header&&!document.getElementById('sendwayo-bank-toggle')){
     var b=document.createElement('button');
