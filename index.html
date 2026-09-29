@@ -1438,12 +1438,27 @@ function openBrandSite(){window.location.href='https://sendwayo-oficial.github.i
 async function boot(){
   if(window.__sendwayoBootStarted)return;
   window.__sendwayoBootStarted=true;
+  // Acceso directo: no bloquear la pantalla de entrada esperando Firebase/RTDB.
+  // La restauración de sesión ocurre en segundo plano y, si no aplica, el usuario
+  // queda inmediatamente en el formulario de acceso.
   try{
-    const restored=await restoreSession();
-    if(!restored)showWelcome();
+    const access=new URLSearchParams(location.search).get('access');
+    showLogin();
+    if(access){
+      const u=document.getElementById('login-user');
+      if(u)u.value=access;
+    }
+    restoreSession().then(restored=>{
+      if(restored)return;
+      // Mantener el formulario de acceso visible aunque Firebase tarde o falle.
+      showLogin();
+    }).catch(e=>{
+      console.warn('SENDWAYO boot/restore:',e);
+      showLogin();
+    });
   }catch(e){
     console.error('SENDWAYO boot/restore:',e);
-    showWelcome();
+    try{showLogin()}catch(_){}
   }
 }
 // Arranque seguro: esperar a que todo el HTML exista antes de inicializar la aplicación.
