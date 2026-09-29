@@ -7104,3 +7104,165 @@ window.addEventListener('load',function(){setTimeout(applyAll,250)}, {once:true}
 setInterval(function(){unlockAllFields();approvedReceiptSweep();},2200);
 })();
 </script>
+
+
+<!-- SENDWAYO MASTER OPERATIONAL REPAIR 2026-09-29 -->
+<style id="sendwayo-master-operational-repair-style">
+/* Tarifas: se conservan en el código para cálculo, pero jamás se muestran en las pantallas operativas. */
+#agentHtiNatcashTable,#agentHtiMoncashTable,#agent-hti-gdes-tariffs,#sendwayo-hti-haiti-table,
+#envioModal .table-wrap,#agentEnvioModal .table-wrap,
+#env-official-tariff-hint,#agentEnvioModal .tariff-table,#envioModal .tariff-table{
+  display:none!important;
+}
+/* Cuentas bancarias: los datos permanecen registrados, pero no se muestran fuera de Gestión de Cuentas. */
+#view-cuentas_depositos .sendwayo-bank-management{display:none!important}
+#view-cuentas_depositos.sendwayo-show-bank-management .sendwayo-bank-management{display:block!important}
+#view-cuentas_depositos:not(.sendwayo-show-bank-management) #cuentaTable,
+#view-cuentas_depositos:not(.sendwayo-show-bank-management) #cuentaTableWrap,
+#view-cuentas_depositos:not(.sendwayo-show-bank-management) .sendwayo-bank-list-title{display:none!important}
+#view-cuentas_depositos:not(.sendwayo-show-bank-management) #cuentaTable{visibility:hidden!important}
+#depositoModal #dep-cuenta{display:none!important}
+#depositoModal .sendwayo-deposit-account-notice{display:block!important}
+#depositoModal .sendwayo-deposit-account-notice .sendwayo-bank-detail{display:none!important}
+/* Todo campo operativo debe poder recibir interacción; la seguridad sigue en las validaciones/Firebase. */
+input,select,textarea,button{pointer-events:auto!important;touch-action:manipulation!important;opacity:1!important}
+</style>
+<script id="sendwayo-master-operational-repair">
+(function(){
+'use strict';
+if(window.__SENDWAYO_MASTER_OPERATIONAL_REPAIR__)return;
+window.__SENDWAYO_MASTER_OPERATIONAL_REPAIR__=true;
+
+function activeAccounts(){
+  try{
+    return Object.values(window.state&&state.accounts||{}).filter(function(a){return a&&a.active!==false});
+  }catch(e){return []}
+}
+function ensureDepositAccount(){
+  var sel=document.getElementById('dep-cuenta');
+  if(!sel)return;
+  var accounts=activeAccounts();
+  var current=sel.value;
+  sel.innerHTML='';
+  if(current&&accounts.some(function(a){return a.id===current})){
+    sel.value=current;
+  }else if(accounts[0]){
+    var opt=document.createElement('option');
+    opt.value=accounts[0].id;
+    opt.textContent='Cuenta bancaria oficial registrada';
+    sel.appendChild(opt);
+    sel.value=accounts[0].id;
+  }else{
+    var empty=document.createElement('option');
+    empty.value='';
+    empty.textContent='No hay cuenta bancaria registrada';
+    sel.appendChild(empty);
+  }
+  var modal=sel.closest('.modal');
+  if(modal&&!modal.querySelector('.sendwayo-deposit-account-notice')){
+    var label=sel.parentElement&&sel.parentElement.querySelector('label');
+    if(label)label.textContent='Cuenta bancaria de destino';
+    var note=document.createElement('div');
+    note.className='sendwayo-deposit-account-notice muted';
+    note.textContent=accounts.length?'Cuenta bancaria oficial registrada. Los datos bancarios solo están disponibles en «Agregar cuentas».':'No hay cuenta bancaria registrada. Administración debe agregarla en «Agregar cuentas».';
+    sel.parentElement.appendChild(note);
+  }
+}
+function bankManagementToggle(force){
+  var view=document.getElementById('view-cuentas_depositos');
+  if(!view)return;
+  var show=force===undefined?!view.classList.contains('sendwayo-show-bank-management'):!!force;
+  view.classList.toggle('sendwayo-show-bank-management',show);
+  var list=view.querySelector('#cuentaTable')?.closest('.table-wrap');
+  if(list)list.classList.toggle('sendwayo-bank-management',true);
+  view.querySelectorAll('.sendwayo-bank-list-title').forEach(function(e){e.style.display=show?'block':'none'});
+  var btn=document.getElementById('sendwayo-bank-toggle');
+  if(btn)btn.textContent=show?'Ocultar cuentas':'Agregar cuentas';
+  if(show&&typeof renderAccounts==='function')try{renderAccounts()}catch(e){}
+}
+window.SENDWAYO_TOGGLE_ACCOUNTS=bankManagementToggle;
+function installBankManagement(){
+  var view=document.getElementById('view-cuentas_depositos');
+  if(!view)return;
+  view.classList.remove('sendwayo-show-bank-management');
+  var header=view.querySelector('.card-header .actions');
+  if(header&&!document.getElementById('sendwayo-bank-toggle')){
+    var b=document.createElement('button');
+    b.id='sendwayo-bank-toggle';
+    b.type='button';
+    b.className='btn btn-primary admin-only';
+    b.textContent='Agregar cuentas';
+    b.onclick=function(){bankManagementToggle()};
+    header.insertBefore(b,header.firstChild);
+  }
+  var title=view.querySelector('#cuentaTable')?.closest('.table-wrap');
+  if(title)title.classList.add('sendwayo-bank-management');
+  var h4s=view.querySelectorAll('h4');
+  h4s.forEach(function(h){
+    if(/Listado de Cuentas Bancarias Oficiales/i.test(h.textContent||'')){
+      h.classList.add('sendwayo-bank-list-title');
+      h.style.display='none';
+    }
+  });
+}
+function hideAllTariffSurfaces(){
+  document.querySelectorAll('#agentHtiNatcashTable,#agentHtiMoncashTable,#agent-hti-gdes-tariffs,#sendwayo-hti-haiti-table,#envioModal .table-wrap,#agentEnvioModal .table-wrap,#env-official-tariff-hint').forEach(function(e){
+    e.style.setProperty('display','none','important');
+  });
+}
+function enforceGdes(){
+  var m=document.getElementById('agentEnvioModal');
+  if(!m)return;
+  var labels=m.querySelectorAll('label,h3,p,b,span,button,option');
+  labels.forEach(function(e){
+    if(e.children.length===0&&/RD\$/i.test(e.textContent||''))e.textContent=String(e.textContent).replace(/RD\$/gi,'GDES');
+  });
+  m.querySelectorAll('input,select,textarea').forEach(function(e){
+    if(/RD\$/i.test(e.placeholder||''))e.placeholder=String(e.placeholder).replace(/RD\$/gi,'GDES');
+  });
+  var amount=document.getElementById('agent-monto');
+  if(amount){amount.setAttribute('data-currency','HTG');amount.removeAttribute('data-currency-rd');}
+  var type=document.getElementById('agent-tipo-trans');
+  if(type&&type.value&&!/^HAITI A HAITI /i.test(type.value))type.value='HAITI A HAITI NatCash';
+  var op=document.getElementById('agent-operation');
+  if(op&&op.value&&!/^(Depósito|Transfert|Transfert|Retrait|Transfert)$/i.test(op.value))op.value='Dépôt';
+}
+function unlockOperationalControls(){
+  document.querySelectorAll('input,select,textarea,button').forEach(function(e){
+    var submitting=e.closest('.modal[data-submitting="1"]');
+    if(submitting)return;
+    e.disabled=false;
+    e.removeAttribute('disabled');
+    e.style.pointerEvents='auto';
+    e.style.touchAction='manipulation';
+    e.style.opacity='1';
+  });
+  ['beneficiario-add-btn','ben-save-btn'].forEach(function(id){
+    var e=document.getElementById(id);
+    if(e){e.disabled=false;e.removeAttribute('disabled');e.style.pointerEvents='auto';}
+  });
+}
+function repairAddNewButtons(){
+  document.querySelectorAll('button').forEach(function(b){
+    var txt=String(b.textContent||'').trim();
+    if(/Agregar Nuevo|Agregar beneficiario|Agregar beneficiario|Ajouter nouveau|Ajouter un bénéficiaire/i.test(txt)){
+      b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='auto';b.style.touchAction='manipulation';b.style.opacity='1';
+    }
+  });
+}
+function apply(){
+  installBankManagement();
+  ensureDepositAccount();
+  hideAllTariffSurfaces();
+  enforceGdes();
+  unlockOperationalControls();
+  repairAddNewButtons();
+}
+document.addEventListener('DOMContentLoaded',function(){setTimeout(apply,50);setTimeout(apply,500);setTimeout(apply,1500)},{once:true});
+document.addEventListener('click',function(){setTimeout(apply,0);setTimeout(apply,120)},true);
+document.addEventListener('input',function(){setTimeout(apply,0)},true);
+document.addEventListener('change',function(){setTimeout(apply,0)},true);
+window.addEventListener('load',function(){setTimeout(apply,250)},{once:true});
+setInterval(apply,2000);
+})();
+</script>
