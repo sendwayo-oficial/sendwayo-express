@@ -519,7 +519,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
         <div class="service-catalog-group"><h4>2. Energía Eléctrica</h4><div class="service-chip-list"><span class="service-chip">CEPM</span><span class="service-chip">EDESur</span></div></div>
         <div class="service-catalog-group"><h4>3. Peaje / Paso Rápido</h4><div class="service-chip-list"><span class="service-chip">Paso Rápido</span></div></div>
         <div class="service-catalog-group"><h4>4. Cuentas de apuestas deportivas online</h4><div class="service-chip-list"><span class="service-chip">Betcris</span><span class="service-chip">Juancito Sport</span><span class="service-chip">OROBET</span><span class="service-chip">SuperBets</span><span class="service-chip">Star Sport</span></div></div>
-        <div class="service-catalog-group"><h4>5. Pólizas de seguros de vehículos</h4><div class="service-chip-list"><span class="service-chip">Amalia Seguros</span><span class="service-chip">Dominicana Compañía de Seguros</span></div></div><div class="service-catalog-group"><h4>6. IS y otros Servicios</h4><div class="service-chip-list"><span class="service-chip">IS</span><span class="service-chip">Servicios</span></div></div>
+        <div class="service-catalog-group"><h4>5. Pólizas de seguros de vehículos</h4><div class="service-chip-list"><span class="service-chip">Amalia Seguros</span><span class="service-chip">Dominicana Compañía de Seguros</span></div></div>
       </div>
     </div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','pagoTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','pagoTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','pagoTable')">CSV</button></div><input class="search-box" placeholder="Buscar servicio..." oninput="filterTable(this,'pagoTable')"></div>
@@ -606,7 +606,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 
 </div>
 
-<div id="env-actions" style="display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:8px!important;width:100%!important;box-sizing:border-box!important;margin:20px 0 0!important;padding:14px 0 0!important;border-top:1px solid #e5eaf0!important;position:static!important;clear:both!important;"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
+<div id="env-actions" style="display:flex!important;flex-direction:row!important;justify-content:flex-end!important;gap:8px!important;width:100%!important;box-sizing:border-box!important;margin:20px 0 0!important;padding:14px 0 0!important;border-top:1px solid #e5eaf0!important;position:static!important;clear:both!important;"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
 <div class="table-wrap" style="margin:10px 0"><table style="font-size:.72rem"><thead><tr><th colspan="2">TABLA OFICIAL MONCASH / NATCASH</th></tr><tr><th>Monto enviado RD$</th><th>Comisión RD$</th></tr></thead><tbody><tr><td>RD$ 50 – RD$ 500</td><td>RD$ 50</td></tr><tr><td>RD$ 501 – RD$ 1,000</td><td>RD$ 100</td></tr><tr><td>RD$ 1,001 – RD$ 2,000</td><td>RD$ 150</td></tr><tr><td>RD$ 2,001 – RD$ 3,000</td><td>RD$ 200</td></tr><tr><td>RD$ 3,001 – RD$ 4,000</td><td>RD$ 250</td></tr><tr><td>RD$ 4,001 – RD$ 5,000</td><td>RD$ 300</td></tr><tr><td>RD$ 5,001 – RD$ 6,000</td><td>RD$ 350</td></tr><tr><td>RD$ 6,001 – RD$ 7,000</td><td>RD$ 400</td></tr><tr><td>RD$ 7,001 – RD$ 8,000</td><td>RD$ 450</td></tr><tr><td>RD$ 8,001 – RD$ 9,000</td><td>RD$ 500</td></tr><tr><td>RD$ 9,001 – RD$ 10,000</td><td>RD$ 550</td></tr><tr><td>RD$ 10,001 – RD$ 11,000</td><td>RD$ 600</td></tr><tr><td>RD$ 11,001 – RD$ 12,000</td><td>RD$ 650</td></tr><tr><td>RD$ 12,001 – RD$ 13,000</td><td>RD$ 700</td></tr><tr><td>RD$ 13,001 – RD$ 14,000</td><td>RD$ 750</td></tr><tr><td>RD$ 14,001 – RD$ 15,000</td><td>RD$ 800</td></tr><tr><td>RD$ 15,001 – RD$ 16,000</td><td>RD$ 850</td></tr><tr><td>RD$ 16,001 – RD$ 17,000</td><td>RD$ 900</td></tr><tr><td>RD$ 17,001 – RD$ 18,000</td><td>RD$ 950</td></tr><tr><td>RD$ 18,001 – RD$ 19,000</td><td>RD$ 1,000</td></tr><tr><td>RD$ 19,001 – RD$ 20,000</td><td>RD$ 1,050</td></tr><tr><td>RD$ 20,001 – RD$ 21,000</td><td>RD$ 1,100</td></tr><tr><td>RD$ 21,001 – RD$ 22,000</td><td>RD$ 1,150</td></tr><tr><td>RD$ 22,001 – RD$ 23,000</td><td>RD$ 1,200</td></tr><tr><td>RD$ 23,001 – RD$ 24,000</td><td>RD$ 1,250</td></tr><tr><td>RD$ 24,001 – RD$ 25,000</td><td>RD$ 1,300</td></tr><tr><td>RD$ 25,001 – RD$ 26,000</td><td>RD$ 1,350</td></tr><tr><td>RD$ 26,001 – RD$ 27,000</td><td>RD$ 1,400</td></tr><tr><td>RD$ 27,001 – RD$ 28,000</td><td>RD$ 1,500</td></tr><tr><td>RD$ 28,001 – RD$ 29,000</td><td>RD$ 1,550</td></tr><tr><td>RD$ 29,001 – RD$ 30,000</td><td>RD$ 1,600</td></tr><tr><td>RD$ 30,001 – RD$ 31,000</td><td>RD$ 1,650</td></tr><tr><td>RD$ 31,001 – RD$ 32,000</td><td>RD$ 1,700</td></tr><tr><td>RD$ 32,001 – RD$ 33,000</td><td>RD$ 1,750</td></tr><tr><td>RD$ 33,001 – RD$ 34,000</td><td>RD$ 1,800</td></tr><tr><td>RD$ 34,001 – RD$ 35,000</td><td>RD$ 1,850</td></tr><tr><td>RD$ 35,001 – RD$ 36,000</td><td>RD$ 1,900</td></tr></tbody></table></div><div class="modal" id="agentEnvioModal" onclick="handleModalBackdropClick(event)"><div class="modal-content agent-hti-gdes-form" onclick="event.stopPropagation()">
 <button class="modal-close-x" onclick="closeModal('agentEnvioModal')">×</button>
 <h3 style="text-align:center">Haïti → Haïti — Envoi / Retrait (GDES)</h3><div id="agent-hti-gdes-only-banner" style="margin:10px 0 14px;padding:12px 14px;border:2px solid #c0392b;border-radius:9px;background:#fff5f5;color:#8a1c1c;font-weight:900;text-align:center">AGENT · HAÏTI → HAÏTI · GDES UNIQUEMENT (GOURDES HAÏTIENS)</div>
@@ -648,7 +648,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 
 <div class="modal" id="paquetikoModal"><div class="modal-content" role="dialog" aria-modal="true"><button class="modal-close-x" type="button" onclick="closeModal('paquetikoModal')">×</button><h3>Paquetico</h3><div class="form-grid"><div class="form-group"><label for="pkt-comp">Compañía</label><select id="pkt-comp" class="form-control"><option value="Claro">Claro</option><option value="Viva">Viva</option><option value="Altice">Altice</option></select></div><div class="form-group"><label for="pkt-num">Número</label><input id="pkt-num" class="form-control" type="tel" inputmode="numeric" autocomplete="tel" maxlength="15"></div><div class="form-group"><label for="pkt-plan">Plan</label><input id="pkt-plan" class="form-control" autocomplete="off"></div><div class="form-group"><label for="pkt-monto">Monto RD$</label><input id="pkt-monto" type="number" min="1" step="0.01" inputmode="decimal" class="form-control"></div></div><div class="actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn btn-light" type="button" onclick="closeModal('paquetikoModal')">Cancelar</button><button class="btn btn-primary" type="button" onclick="guardarPaquetico()">Guardar y Notificar</button></div></div></div>
 
-<div class="modal" id="pagoModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('pagoModal')">×</button><h3>Pago de Factura / Servicio</h3><div class="form-grid"><div class="form-group"><label>Empresa / Servicio</label><input id="pag-empresa" class="form-control" list="service-options" autocomplete="off" placeholder="Escriba el nombre del servicio..." onfocus="updatePaymentServiceSuggestions(this.value)" oninput="filterServiceCatalog(this.value);updatePaymentServiceSuggestions(this.value)"><datalist id="service-options"><option value="Claro"><option value="Altice"><option value="Viva"><option value="Digicel"><option value="Moun"><option value="Natcom"><option value="Activa"><option value="Wind"><option value="CEPM"><option value="EDESur"><option value="Paso Rápido"><option value="Betcris"><option value="Juancito Sport"><option value="OROBET"><option value="SuperBets"><option value="Star Sport"><option value="Amalia Seguros"><option value="Dominicana Compañía de Seguros"><option value="IS"><option value="Servicios"></datalist><div id="payment-service-suggestions" class="env-suggestions" style="display:none"></div></div><div class="form-group"><label>NIS / Contrato</label><input id="pag-contrato" class="form-control"></div><div class="form-group"><label>Concepto</label><input id="pag-concepto" class="form-control" placeholder="Ej.: factura de energía, internet, agua, etc."></div><div class="form-group"><label>Monto RD$</label><input id="pag-monto" type="number" class="form-control"></div></div><div class="muted" style="margin:8px 0">Seleccione únicamente un servicio del catálogo oficial de SENDWAYO EXPRESS.</div><button class="btn btn-primary" onclick="guardarPago()">Guardar y Notificar</button></div></div>
+<div class="modal" id="pagoModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('pagoModal')">×</button><h3>Pago de Factura / Servicio</h3><div class="form-grid"><div class="form-group"><label>Empresa / Servicio</label><input id="pag-empresa" class="form-control" list="service-options" autocomplete="off" placeholder="Escriba el nombre del servicio..." onfocus="updatePaymentServiceSuggestions(this.value)" oninput="filterServiceCatalog(this.value);updatePaymentServiceSuggestions(this.value)"><datalist id="service-options"><option value="Claro"><option value="Altice"><option value="Viva"><option value="Digicel"><option value="Moun"><option value="Natcom"><option value="Activa"><option value="Wind"><option value="CEPM"><option value="EDESur"><option value="Paso Rápido"><option value="Betcris"><option value="Juancito Sport"><option value="OROBET"><option value="SuperBets"><option value="Star Sport"><option value="Amalia Seguros"><option value="Dominicana Compañía de Seguros"></datalist><div id="payment-service-suggestions" class="env-suggestions" style="display:none"></div></div><div class="form-group"><label>NIS / Contrato</label><input id="pag-contrato" class="form-control"></div><div class="form-group"><label>Concepto</label><input id="pag-concepto" class="form-control" placeholder="Ej.: factura de energía, internet, agua, etc."></div><div class="form-group"><label>Monto RD$</label><input id="pag-monto" type="number" class="form-control"></div></div><div class="muted" style="margin:8px 0">Seleccione únicamente un servicio del catálogo oficial de SENDWAYO EXPRESS.</div><button class="btn btn-primary" onclick="guardarPago()">Guardar y Notificar</button></div></div>
 
 <div class="modal" id="paqueteModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('paqueteModal')">×</button><h3>Paquete - Recepción y Envío</h3><div class="form-grid"><div class="form-group"><label>Tipo</label><select id="paq-tipo" class="form-control"><option>Enviar paquete</option><option>Recibir paquete</option></select></div><div class="form-group"><label>Peso (kg)</label><input id="paq-peso" type="number" step=".01" class="form-control"></div><div class="form-group"><label>Descripción</label><input id="paq-desc" class="form-control"></div><div class="form-group"><label>Costo RD$</label><input id="paq-costo" type="number" step=".01" class="form-control"></div></div><button class="btn btn-primary" onclick="guardarPaquete()">Guardar y Notificar</button></div></div>
 
@@ -7327,66 +7327,6 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
   document.addEventListener('input',function(e){if(e.target?.closest('#agentEnvioModal,#envioModal'))apply()},true);
   document.addEventListener('change',function(e){if(e.target?.closest('#agentEnvioModal,#envioModal'))apply()},true);
   window.addEventListener('load',function(){setTimeout(apply,300)},{once:true});
-})();
-</script>
-<!-- SENDWAYO V9 FINAL INTEGRATION GUARD 2026-09-30 -->
-<style>
-/* V9 FINAL: protección contra regresiones de interfaz */
-#agentEnvioModal .form-control,#agentEnvioModal label,#agentEnvioModal .field-hint{font-style:italic}
-#agentEnvioModal .sendwayo-agent-gdes-lock{display:block!important}
-@media(max-width:800px){#agentEnvioModal .table-wrap{display:none!important}}
-</style>
-<script>
-(function(){
-  'use strict';
-  function q(id){return document.getElementById(id)}
-  function agentLock(){
-    const m=q('agentEnvioModal'); if(!m)return;
-    const sel=q('agent-tipo-trans');
-    if(sel){
-      const wanted=['HAITI A HAITI NatCash','HAITI A HAITI MonCash'];
-      Array.from(sel.options).forEach(o=>{o.textContent=o.value==='HAITI A HAITI NatCash'?'Haïti → Haïti — NatCash':'Haïti → Haïti — MonCash'});
-      if(!wanted.includes(sel.value))sel.value=wanted[0];
-    }
-    const amount=q('agent-monto'), group=amount&&amount.closest('.form-group');
-    const lab=group&&group.querySelector('label');
-    if(lab)lab.textContent='Montant en gourdes haïtiennes (GDES)';
-    ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(id=>{
-      const e=q(id); if(e)e.textContent=String(e.textContent||'').replace(/RD\$/gi,'GDES').replace(/HTG/gi,'GDES');
-    });
-    m.querySelectorAll('*').forEach(e=>{
-      if(e.children.length===0&&e.textContent){
-        e.textContent=e.textContent.replace(/RD\$/gi,'GDES').replace(/HTG/gi,'GDES');
-      }
-    });
-  }
-  function beneficiaryPhoneLock(){
-    const input=q('ben-cel'); if(!input)return;
-    input.setAttribute('inputmode','numeric');
-    input.setAttribute('maxlength','12');
-    if(input.dataset.sendwayoPhoneGuard)return;
-    input.dataset.sendwayoPhoneGuard='1';
-    input.addEventListener('input',function(){
-      let d=String(this.value||'').replace(/\D/g,'');
-      if(d.startsWith('509'))d=d.slice(3);
-      d=d.slice(0,8);
-      this.value=d?'+509'+d:'';
-    });
-  }
-  function removeDownloadActions(){
-    document.querySelectorAll('button,a').forEach(el=>{
-      const t=String(el.textContent||'').trim().toLowerCase();
-      if(t==='descargar'||t.startsWith('descargar '))el.remove();
-    });
-  }
-  function install(){
-    agentLock(); beneficiaryPhoneLock(); removeDownloadActions();
-  }
-  document.addEventListener('DOMContentLoaded',install);
-  document.addEventListener('click',()=>setTimeout(install,0),true);
-  document.addEventListener('change',()=>setTimeout(install,0),true);
-  document.addEventListener('input',()=>setTimeout(install,0),true);
-  setInterval(install,2500);
 })();
 </script>
 </body>
