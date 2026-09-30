@@ -7119,7 +7119,164 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
 .agent-hti-gdes-form .agent-hti-fields{max-width:680px!important;margin:0 auto!important}
 .agent-hti-gdes-form .sendwayo-agent-actions{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;width:100%!important;margin:20px auto 0!important;gap:10px!important;position:static!important;float:none!important;clear:both!important}
 .agent-hti-gdes-form .sendwayo-agent-actions .btn{width:min(100%,260px)!important;min-height:46px!important;margin:0!important;float:none!important}
-</style></body>
+</style>
+<script id="sendwayo-module-isolation-gdes-final-v1">
+(function(){
+  if(window.__sendwayoModuleIsolationGdesFinalV1)return;
+  window.__sendwayoModuleIsolationGdesFinalV1=true;
+
+  /* Cada "Agregar Nuevo" abre únicamente su propio módulo. Nunca quedan dos
+     formularios superpuestos ni un formulario anterior captura los clics. */
+  const MODAL_IDS=[
+    'requestModal','envioModal','agentEnvioModal','beneficiarioModal','cuentaModal',
+    'recargaModal','paquetikoModal','pagoModal','paqueteModal','personaModal',
+    'depositoModal','retiroCuentaModal','comisionModal','secretaModal','capitalModal',
+    'adminCreditModal','creditGrantModal','detailModal','agentCreateModal'
+  ];
+
+  function closeOtherModals(except){
+    MODAL_IDS.forEach(function(id){
+      if(id===except)return;
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.style.display='none';
+      el.classList.remove('show');
+      el.style.visibility='hidden';
+      el.style.pointerEvents='none';
+      if(el.dataset)delete el.dataset.submitting;
+    });
+    document.body.style.overflow='';
+  }
+
+  const originalOpenModal=window.openModal;
+  window.openModal=function(id){
+    closeOtherModals(id);
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.style.visibility='visible';
+    el.style.pointerEvents='auto';
+    if(typeof originalOpenModal==='function'){
+      originalOpenModal(id);
+    }else{
+      el.style.display='flex';
+    }
+    el.style.visibility='visible';
+    el.style.pointerEvents='auto';
+    const first=el.querySelector('input:not([readonly]):not([type="hidden"]),select,textarea');
+    if(first)setTimeout(function(){try{first.focus()}catch(_){}},30);
+  };
+
+  /* Beneficiarios tiene un abridor propio; también debe aislarse. */
+  const originalOpenBenef=window.openBeneficiarioModal;
+  window.openBeneficiarioModal=function(origen){
+    closeOtherModals('beneficiarioModal');
+    if(typeof originalOpenBenef==='function')return originalOpenBenef(origen);
+    const el=document.getElementById('beneficiarioModal');
+    if(el){el.style.display='flex';el.style.visibility='visible';el.style.pointerEvents='auto'}
+  };
+
+  /* Envíos: nunca poner Cerrar/Enviar a la derecha. */
+  const style=document.createElement('style');
+  style.id='sendwayo-final-module-layout';
+  style.textContent=[
+    '#envioModal #env-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;width:100%!important;gap:10px!important;margin:20px 0 0!important;padding:14px 0 0!important;box-sizing:border-box!important;position:static!important;clear:both!important}',
+    '#envioModal #env-actions button{display:block!important;width:100%!important;min-height:46px!important;margin:0!important;flex:none!important}',
+    '#envioModal .modal-content{display:flex!important;flex-direction:column!important}',
+    '#recargaModal .modal-content,#paquetikoModal .modal-content,#pagoModal .modal-content,#paqueteModal .modal-content{display:flex!important;flex-direction:column!important}',
+    '#recargaModal .modal-content>.btn-primary,#paquetikoModal .modal-content>.btn-primary,#pagoModal .modal-content>.btn-primary,#paqueteModal .modal-content>.btn-primary{display:block!important;width:100%!important;min-height:46px!important;margin-top:16px!important}',
+    '#agentEnvioModal .sendwayo-agent-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;gap:10px!important;margin-top:18px!important}',
+    '#agentEnvioModal .sendwayo-agent-actions button{display:block!important;width:100%!important;min-height:46px!important;margin:0!important}',
+    '#agentEnvioModal .table-wrap table td,#agentEnvioModal .table-wrap table th{font-variant-numeric:tabular-nums}',
+    '#agentEnvioModal [id*="calc-"]{font-variant-numeric:tabular-nums}'
+  ].join('');
+  document.head.appendChild(style);
+
+  /* Blindaje de GDES: todo Haití→Haití se presenta exclusivamente como gourdes
+     haitianos. No se permite que RD$ aparezca dentro del formulario del agente. */
+  window.sendwayoForceAgentGdes=function(){
+    const m=document.getElementById('agentEnvioModal');
+    if(!m)return;
+    m.querySelectorAll('label,.field-hint,p,strong,b,th,td').forEach(function(el){
+      if(el.closest('.modal-close-x'))return;
+      const t=el.textContent||'';
+      if(/RD\s*\$/i.test(t)){
+        el.textContent=t.replace(/RD\s*\$/gi,'GDES');
+      }
+    });
+    const amount=document.getElementById('agent-monto');
+    if(amount)amount.setAttribute('aria-label','Montant en gourdes haïtiennes (GDES)');
+    ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(function(id){
+      const e=document.getElementById(id);
+      if(e&&!/GDES/i.test(e.textContent||''))e.textContent=(e.textContent||'0').replace(/RD\s*\$/gi,'')+' GDES';
+    });
+    const n=document.getElementById('agentHtiNatcashTable');
+    const o=document.getElementById('agentHtiMoncashTable');
+    if(n)n.style.display=document.getElementById('agent-tipo-trans')?.value?.includes('NatCash')?'table':'none';
+    if(o)o.style.display=document.getElementById('agent-tipo-trans')?.value?.includes('MonCash')?'table':'none';
+  };
+
+  const originalAgentCalc=window.calcularAgentEnvio;
+  window.calcularAgentEnvio=function(){
+    const r=typeof originalAgentCalc==='function'?originalAgentCalc.apply(this,arguments):undefined;
+    window.sendwayoForceAgentGdes();
+    return r;
+  };
+
+  /* Recargas, paqueticos, facturas y paquetes son módulos independientes. */
+  const cleanFields={
+    recargaModal:['rec-comp','rec-num','rec-monto'],
+    paquetikoModal:['pkt-comp','pkt-num','pkt-plan','pkt-monto'],
+    pagoModal:['pag-empresa','pag-contrato','pag-concepto','pag-monto'],
+    paqueteModal:['paq-tipo','paq-peso','paq-desc','paq-costo']
+  };
+  function resetModule(id){
+    (cleanFields[id]||[]).forEach(function(fid){
+      const e=document.getElementById(fid);
+      if(!e)return;
+      if(e.tagName==='SELECT')e.selectedIndex=0; else e.value='';
+      e.disabled=false;e.readOnly=false;e.style.pointerEvents='auto';
+    });
+    const m=document.getElementById(id);
+    if(m)delete m.dataset.submitting;
+  }
+
+  ['recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(!el)return;
+    const observer=new MutationObserver(function(){
+      if(el.style.display==='flex'||el.classList.contains('show'))window.setTimeout(function(){resetModule(id)},0);
+    });
+    observer.observe(el,{attributes:true,attributeFilter:['style','class']});
+  });
+
+  /* El comprobante debe abrir en el primer clic, sin depender de un segundo
+     evento, ni de una escritura previa en Firebase. */
+  document.addEventListener('pointerdown',function(ev){
+    const b=ev.target&&ev.target.closest?ev.target.closest('.sw-receipt-btn,[data-sendwayo-receipt="1"]'):null;
+    if(!b)return;
+    const col=b.getAttribute('data-receipt-collection'),rid=b.getAttribute('data-receipt-id');
+    if(!col||!rid)return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    if(typeof window.SENDWAYO_FORCE_RECEIPT==='function'){
+      window.SENDWAYO_FORCE_RECEIPT(col,rid,ev);
+    }else if(typeof window.showReceipt==='function'){
+      window.showReceipt(col,rid);
+    }
+  },true);
+
+  /* Cualquier apertura del formulario de agente vuelve a fijar GDES. */
+  document.addEventListener('click',function(ev){
+    const agentBtn=ev.target&&ev.target.closest?ev.target.closest('#envio-add-btn'):null;
+    if(agentBtn && typeof isAgentUser==='function' && isAgentUser(currentUser)){
+      setTimeout(window.sendwayoForceAgentGdes,0);
+    }
+    const type=ev.target&&ev.target.closest?ev.target.closest('#agent-tipo-trans'):null;
+    if(type)setTimeout(window.sendwayoForceAgentGdes,0);
+  },true);
+})();
+</script>
+</body>
 </html>
 
 <!-- SENDWAYO AUTHORITATIVE FORM/TRANSACTION UX PATCH 2026-09-29 -->
