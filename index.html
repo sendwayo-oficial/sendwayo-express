@@ -1190,21 +1190,29 @@ async function initFirebase(){
   if(window.__sendwayoFirebaseInitPromise)return window.__sendwayoFirebaseInitPromise;
   window.__sendwayoFirebaseInitPromise=(async()=>{
     try{
+      // Una sola ruta de arranque. Los tres SDK se cargan en paralelo si todavía
+      // no están disponibles; esto evita carreras entre los scripts "defer" y
+      // el cargador dinámico y evita que el acceso quede esperando indefinidamente.
       if(typeof firebase==='undefined'||!firebase.initializeApp){
         const base='https://www.gstatic.com/firebasejs/9.23.0/';
-        await loadScript(base+'firebase-app-compat.js',7000);
-        await loadScript(base+'firebase-auth-compat.js',7000);
-        await loadScript(base+'firebase-database-compat.js',7000);
+        await Promise.all([
+          loadScript(base+'firebase-app-compat.js',9000),
+          loadScript(base+'firebase-auth-compat.js',9000),
+          loadScript(base+'firebase-database-compat.js',9000)
+        ]);
       }
       if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
       if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-      // Storage NO es requisito para iniciar sesión. Si su SDK no carga,
-      // Authentication y Realtime Database deben seguir funcionando.
+      if(!firebase.auth||!firebase.database)throw new Error('FIREBASE_AUTH_OR_DATABASE_NOT_LOADED');
+
+      // Storage NO es requisito para iniciar sesión.
+      // Authentication y Realtime Database deben quedar disponibles aunque Storage/CDN falle.
       try{
-        if(firebase.auth&&firebase.auth.Auth&&firebase.auth.Auth.Persistence){
+        if(firebase.auth().setPersistence&&firebase.auth.Auth&&firebase.auth.Auth.Persistence){
           await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         }
       }catch(e){console.warn('Persistencia Firebase:',e)}
+
       firebaseReady=true;
       return true;
     }catch(e){
