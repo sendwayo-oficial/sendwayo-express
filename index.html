@@ -1268,21 +1268,35 @@ async function loadScript(src,timeout=8000){return new Promise((resolve,reject)=
 async function initFirebase(){
   if(window.__sendwayoFirebaseInitPromise)return window.__sendwayoFirebaseInitPromise;
   window.__sendwayoFirebaseInitPromise=(async()=>{
+    const cdns=[
+      'https://www.gstatic.com/firebasejs/9.23.0/',
+      'https://cdn.jsdelivr.net/npm/firebase@9.23.0/'
+    ];
     try{
       if(typeof firebase==='undefined'||!firebase.initializeApp){
-        const base='https://www.gstatic.com/firebasejs/9.23.0/';
-        await loadScript(base+'firebase-app-compat.js',7000);
-        await loadScript(base+'firebase-auth-compat.js',7000);
-        await loadScript(base+'firebase-database-compat.js',7000);
+        let loaded=false,lastError=null;
+        for(const base of cdns){
+          try{
+            await loadScript(base+'firebase-app-compat.js',5000);
+            await loadScript(base+'firebase-auth-compat.js',5000);
+            await loadScript(base+'firebase-database-compat.js',5000);
+            loaded=true;break;
+          }catch(e){lastError=e}
+        }
+        if(!loaded)throw lastError||new Error('FIREBASE_SDK_NOT_LOADED');
       }
       if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
       if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-      if(!firebase.storage){
-        const base='https://www.gstatic.com/firebasejs/9.23.0/';
-        await loadScript(base+'firebase-storage-compat.js',7000);
-      }
+      // Authentication + Realtime Database son suficientes para iniciar sesión.
+      // Storage se carga después, en segundo plano, y nunca puede bloquear el acceso.
       try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Persistencia Firebase:',e)}
       firebaseReady=true;
+      Promise.resolve().then(async()=>{
+        if(firebase.storage)return;
+        for(const base of cdns){
+          try{await loadScript(base+'firebase-storage-compat.js',5000);return}catch(e){}
+        }
+      });
       return true;
     }catch(e){
       firebaseReady=false;
