@@ -1198,11 +1198,13 @@ async function initFirebase(){
       }
       if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
       if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-      if(!firebase.storage){
-        const base='https://www.gstatic.com/firebasejs/9.23.0/';
-        await loadScript(base+'firebase-storage-compat.js',7000);
-      }
-      try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Persistencia Firebase:',e)}
+      // Storage NO es requisito para iniciar sesión. Si su SDK no carga,
+      // Authentication y Realtime Database deben seguir funcionando.
+      try{
+        if(firebase.auth&&firebase.auth.Auth&&firebase.auth.Auth.Persistence){
+          await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        }
+      }catch(e){console.warn('Persistencia Firebase:',e)}
       firebaseReady=true;
       return true;
     }catch(e){
