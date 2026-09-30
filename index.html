@@ -1810,6 +1810,8 @@ function applyRoleVisibility(){
  let admin=isAdmin(),agent=isAgentUser(currentUser);
  if(agent&&currentUser){currentUser={...currentUser,commissionMode:'ADMIN_100',commissionShare:0,platformCommissionShare:1,commissionWithdrawAllowed:false,approvalRequired:true};}
  document.querySelectorAll('#sidebar-menu li').forEach(li=>{let txt=li.innerText;li.style.display=(!admin && (txt.includes('Solicitudes')||txt.includes('Información Secreta'))) ? 'none':''});
+ const secretMenu=document.querySelector("#sidebar-menu a[onclick*="switchView('secretas')"]")?.closest('li');
+ if(secretMenu)secretMenu.style.setProperty('display',admin?'block':'none','important');
  let sb=document.getElementById('envio-statusbar');if(sb)sb.style.display=admin?'flex':'none';
  document.querySelectorAll('.admin-only').forEach(e=>{if(e.classList.contains('view-section'))return;e.style.setProperty('display',admin?(e.classList.contains('modal')?'flex':'block'):'none','important')});
  document.querySelectorAll('.remitente-only').forEach(e=>e.style.display=admin?'none':'');
