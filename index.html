@@ -2768,7 +2768,6 @@ async function setTransactionStatus(collection,id,status){
    const accountLabel=agent?'100% PLATAFORMA / 0% AGENTE':'50% REMITENTE / 50% ADMINISTRADOR';
    let agentCapitalReserved=false;
    const agentOp=agent?String(r.agentOperationKey||agentOperationKey(r.operation||'Envío')):'';
-   const agentFee=agent?Number(r.feeHTG??r.tariffHTG??r.fee??0):0;
    const agentDelta=agent?(agentOp==='DEPOSITO'?amount:-(amount+agentFee)):0;
    if(agent){
      const capTx=await firebase.database().ref(DB_PATH+'/agentCapital').transaction(v=>{
