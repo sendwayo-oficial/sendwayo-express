@@ -7329,6 +7329,66 @@ document.addEventListener('click',function(){setTimeout(fixOperationalLayout,50)
   window.addEventListener('load',function(){setTimeout(apply,300)},{once:true});
 })();
 </script>
+<!-- SENDWAYO V9 FINAL INTEGRATION GUARD 2026-09-30 -->
+<style>
+/* V9 FINAL: protección contra regresiones de interfaz */
+#agentEnvioModal .form-control,#agentEnvioModal label,#agentEnvioModal .field-hint{font-style:italic}
+#agentEnvioModal .sendwayo-agent-gdes-lock{display:block!important}
+@media(max-width:800px){#agentEnvioModal .table-wrap{display:none!important}}
+</style>
+<script>
+(function(){
+  'use strict';
+  function q(id){return document.getElementById(id)}
+  function agentLock(){
+    const m=q('agentEnvioModal'); if(!m)return;
+    const sel=q('agent-tipo-trans');
+    if(sel){
+      const wanted=['HAITI A HAITI NatCash','HAITI A HAITI MonCash'];
+      Array.from(sel.options).forEach(o=>{o.textContent=o.value==='HAITI A HAITI NatCash'?'Haïti → Haïti — NatCash':'Haïti → Haïti — MonCash'});
+      if(!wanted.includes(sel.value))sel.value=wanted[0];
+    }
+    const amount=q('agent-monto'), group=amount&&amount.closest('.form-group');
+    const lab=group&&group.querySelector('label');
+    if(lab)lab.textContent='Montant en gourdes haïtiennes (GDES)';
+    ['agent-calc-monto','agent-calc-comision','agent-calc-total','agent-calc-recibir'].forEach(id=>{
+      const e=q(id); if(e)e.textContent=String(e.textContent||'').replace(/RD\$/gi,'GDES').replace(/HTG/gi,'GDES');
+    });
+    m.querySelectorAll('*').forEach(e=>{
+      if(e.children.length===0&&e.textContent){
+        e.textContent=e.textContent.replace(/RD\$/gi,'GDES').replace(/HTG/gi,'GDES');
+      }
+    });
+  }
+  function beneficiaryPhoneLock(){
+    const input=q('ben-cel'); if(!input)return;
+    input.setAttribute('inputmode','numeric');
+    input.setAttribute('maxlength','12');
+    if(input.dataset.sendwayoPhoneGuard)return;
+    input.dataset.sendwayoPhoneGuard='1';
+    input.addEventListener('input',function(){
+      let d=String(this.value||'').replace(/\D/g,'');
+      if(d.startsWith('509'))d=d.slice(3);
+      d=d.slice(0,8);
+      this.value=d?'+509'+d:'';
+    });
+  }
+  function removeDownloadActions(){
+    document.querySelectorAll('button,a').forEach(el=>{
+      const t=String(el.textContent||'').trim().toLowerCase();
+      if(t==='descargar'||t.startsWith('descargar '))el.remove();
+    });
+  }
+  function install(){
+    agentLock(); beneficiaryPhoneLock(); removeDownloadActions();
+  }
+  document.addEventListener('DOMContentLoaded',install);
+  document.addEventListener('click',()=>setTimeout(install,0),true);
+  document.addEventListener('change',()=>setTimeout(install,0),true);
+  document.addEventListener('input',()=>setTimeout(install,0),true);
+  setInterval(install,2500);
+})();
+</script>
 </body>
 </html>
 
