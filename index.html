@@ -606,7 +606,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 
 </div>
 
-<div id="env-actions" style="display:flex!important;flex-direction:row!important;justify-content:flex-end!important;gap:8px!important;width:100%!important;box-sizing:border-box!important;margin:20px 0 0!important;padding:14px 0 0!important;border-top:1px solid #e5eaf0!important;position:static!important;clear:both!important;"><button class="btn btn-light" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarEnvio()">Enviar esta transacción</button></div>
+<div id="env-actions" style="display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:10px!important;width:100%!important;box-sizing:border-box!important;margin:20px 0 0!important;padding:14px 0 0!important;border-top:1px solid #e5eaf0!important;position:static!important;clear:both!important;"><button class="btn btn-light" style="width:100%!important;min-height:46px!important;margin:0!important;" onclick="closeModal('envioModal')">Cerrar</button><button class="btn btn-primary" style="width:100%!important;min-height:46px!important;margin:0!important;" onclick="guardarEnvio()">Enviar esta transacción</button></div>
 <div class="table-wrap" style="margin:10px 0"><table style="font-size:.72rem"><thead><tr><th colspan="2">TABLA OFICIAL MONCASH / NATCASH</th></tr><tr><th>Monto enviado RD$</th><th>Comisión RD$</th></tr></thead><tbody><tr><td>RD$ 50 – RD$ 500</td><td>RD$ 50</td></tr><tr><td>RD$ 501 – RD$ 1,000</td><td>RD$ 100</td></tr><tr><td>RD$ 1,001 – RD$ 2,000</td><td>RD$ 150</td></tr><tr><td>RD$ 2,001 – RD$ 3,000</td><td>RD$ 200</td></tr><tr><td>RD$ 3,001 – RD$ 4,000</td><td>RD$ 250</td></tr><tr><td>RD$ 4,001 – RD$ 5,000</td><td>RD$ 300</td></tr><tr><td>RD$ 5,001 – RD$ 6,000</td><td>RD$ 350</td></tr><tr><td>RD$ 6,001 – RD$ 7,000</td><td>RD$ 400</td></tr><tr><td>RD$ 7,001 – RD$ 8,000</td><td>RD$ 450</td></tr><tr><td>RD$ 8,001 – RD$ 9,000</td><td>RD$ 500</td></tr><tr><td>RD$ 9,001 – RD$ 10,000</td><td>RD$ 550</td></tr><tr><td>RD$ 10,001 – RD$ 11,000</td><td>RD$ 600</td></tr><tr><td>RD$ 11,001 – RD$ 12,000</td><td>RD$ 650</td></tr><tr><td>RD$ 12,001 – RD$ 13,000</td><td>RD$ 700</td></tr><tr><td>RD$ 13,001 – RD$ 14,000</td><td>RD$ 750</td></tr><tr><td>RD$ 14,001 – RD$ 15,000</td><td>RD$ 800</td></tr><tr><td>RD$ 15,001 – RD$ 16,000</td><td>RD$ 850</td></tr><tr><td>RD$ 16,001 – RD$ 17,000</td><td>RD$ 900</td></tr><tr><td>RD$ 17,001 – RD$ 18,000</td><td>RD$ 950</td></tr><tr><td>RD$ 18,001 – RD$ 19,000</td><td>RD$ 1,000</td></tr><tr><td>RD$ 19,001 – RD$ 20,000</td><td>RD$ 1,050</td></tr><tr><td>RD$ 20,001 – RD$ 21,000</td><td>RD$ 1,100</td></tr><tr><td>RD$ 21,001 – RD$ 22,000</td><td>RD$ 1,150</td></tr><tr><td>RD$ 22,001 – RD$ 23,000</td><td>RD$ 1,200</td></tr><tr><td>RD$ 23,001 – RD$ 24,000</td><td>RD$ 1,250</td></tr><tr><td>RD$ 24,001 – RD$ 25,000</td><td>RD$ 1,300</td></tr><tr><td>RD$ 25,001 – RD$ 26,000</td><td>RD$ 1,350</td></tr><tr><td>RD$ 26,001 – RD$ 27,000</td><td>RD$ 1,400</td></tr><tr><td>RD$ 27,001 – RD$ 28,000</td><td>RD$ 1,500</td></tr><tr><td>RD$ 28,001 – RD$ 29,000</td><td>RD$ 1,550</td></tr><tr><td>RD$ 29,001 – RD$ 30,000</td><td>RD$ 1,600</td></tr><tr><td>RD$ 30,001 – RD$ 31,000</td><td>RD$ 1,650</td></tr><tr><td>RD$ 31,001 – RD$ 32,000</td><td>RD$ 1,700</td></tr><tr><td>RD$ 32,001 – RD$ 33,000</td><td>RD$ 1,750</td></tr><tr><td>RD$ 33,001 – RD$ 34,000</td><td>RD$ 1,800</td></tr><tr><td>RD$ 34,001 – RD$ 35,000</td><td>RD$ 1,850</td></tr><tr><td>RD$ 35,001 – RD$ 36,000</td><td>RD$ 1,900</td></tr></tbody></table></div><div class="modal" id="agentEnvioModal" onclick="handleModalBackdropClick(event)"><div class="modal-content agent-hti-gdes-form" onclick="event.stopPropagation()">
 <button class="modal-close-x" onclick="closeModal('agentEnvioModal')">×</button>
 <h3 style="text-align:center">Haïti → Haïti — Envoi / Retrait (GDES)</h3><div id="agent-hti-gdes-only-banner" style="margin:10px 0 14px;padding:12px 14px;border:2px solid #c0392b;border-radius:9px;background:#fff5f5;color:#8a1c1c;font-weight:900;text-align:center">AGENT · HAÏTI → HAÏTI · GDES UNIQUEMENT (GOURDES HAÏTIENS)</div>
@@ -5960,7 +5960,7 @@ img[data-current-brand-logo="true"]{
     if(e.target&&e.target.closest&&e.target.closest('#agentEnvioModal,#sw-agent-create-modal'))setTimeout(fix,0);
   },true);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix,{once:true});else fix();
-  setInterval(fix,1500);
+  /* No polling: preserve user input and focus. */
 })();
 </script>
 
@@ -6620,7 +6620,7 @@ document.addEventListener('click',function(ev){
 
 <!-- SENDWAYO FINAL SAFETY / MOBILE FORM / HIDDEN TARIFF TABLES V1 -->
 <style id="sendwayo-final-safety-v1">#envioModal .table-wrap,#agentEnvioModal .table-wrap,#agent-hti-gdes-tariffs,#agentHtiNatcashTable,#agentHtiMoncashTable,#sendwayo-hti-haiti-table{display:none!important}@media(max-width:800px){#envioModal .form-grid,#agentEnvioModal .form-grid{grid-template-columns:1fr!important}}</style>
-<script id="sendwayo-final-safety-v1">(function(){'use strict';if(window.__sendwayoFinalSafetyV1)return;window.__sendwayoFinalSafetyV1=true;function unlock(){document.querySelectorAll('.modal').forEach(function(m){if(getComputedStyle(m).display==='none')return;m.style.pointerEvents='auto';var c=m.querySelector('.modal-content');if(c){c.style.pointerEvents='auto';c.style.position='relative';c.style.zIndex='1'}m.querySelectorAll('input,select,textarea,button').forEach(function(e){if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;e.style.pointerEvents='auto';e.style.touchAction='manipulation'})})}function hideTables(){['#envioModal .table-wrap','#agentEnvioModal .table-wrap','#agent-hti-gdes-tariffs','#agentHtiNatcashTable','#agentHtiMoncashTable'].forEach(function(s){document.querySelectorAll(s).forEach(function(e){e.style.setProperty('display','none','important')})})}document.addEventListener('click',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('focusin',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('input',function(e){if(e.target?.closest?.('.modal'))hideTables()},true);setTimeout(function(){unlock();hideTables()},300);setInterval(function(){unlock();hideTables()},1200)})();</script>
+<script id="sendwayo-final-safety-v1">(function(){'use strict';if(window.__sendwayoFinalSafetyV1)return;window.__sendwayoFinalSafetyV1=true;function unlock(){document.querySelectorAll('.modal').forEach(function(m){if(getComputedStyle(m).display==='none')return;m.style.pointerEvents='auto';var c=m.querySelector('.modal-content');if(c){c.style.pointerEvents='auto';c.style.position='relative';c.style.zIndex='1'}m.querySelectorAll('input,select,textarea,button').forEach(function(e){if(e.hasAttribute('data-hard-disabled')||e.hasAttribute('data-system-disabled'))return;e.style.pointerEvents='auto';e.style.touchAction='manipulation'})})}function hideTables(){['#envioModal .table-wrap','#agentEnvioModal .table-wrap','#agent-hti-gdes-tariffs','#agentHtiNatcashTable','#agentHtiMoncashTable'].forEach(function(s){document.querySelectorAll(s).forEach(function(e){e.style.setProperty('display','none','important')})})}document.addEventListener('click',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('focusin',function(e){if(e.target?.closest?.('.modal'))setTimeout(function(){unlock();hideTables()},0)},true);document.addEventListener('input',function(e){if(e.target?.closest?.('.modal'))hideTables()},true);setTimeout(function(){unlock();hideTables()},300);/* No polling: modal state is event-driven. */})();</script>
 
 <!-- SENDWAYO ACCESS RECOVERY FINAL V1 -->
 <!-- SENDWAYO ROLE CRUD HARDENING V1 -->
@@ -6755,7 +6755,7 @@ document.addEventListener('change',function(){setTimeout(apply,0)},true);
 setTimeout(apply,150);
 setTimeout(apply,700);
 setTimeout(apply,1800);
-setInterval(apply,2500);
+/* No polling: never rewrite fields while the user is typing. */
 })();
 </script>
 
@@ -6802,7 +6802,7 @@ new MutationObserver(function(){forceGdes()}).observe(document.body,{subtree:tru
 setTimeout(forceGdes,100);
 setTimeout(forceGdes,1000);
 setTimeout(forceGdes,3000);
-setInterval(forceGdes,1500);
+/* No polling: GDES is enforced by the core calculation, not a DOM rewrite loop. */
 })();
 </script>
 
