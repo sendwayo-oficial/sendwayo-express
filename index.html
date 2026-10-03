@@ -1243,7 +1243,7 @@ async function createFirebaseAccountForUser(user){
     console.warn('Crear cuenta Firebase:',e);user.accountStatus='Error de activación';return {status:'error',code:e.code||''};
   }
 }
-async async function crearAccesosIniciales(){
+async function crearAccesosIniciales(){
   if(!isAdmin())return toast('Solo el Administrador puede crear accesos.','warn');
   const users=Object.values(state.users||{}).filter(u=>u.active!==false&&(['Remitente','Agente'].includes(String(u.role||''))||isAgentUser(u)));
   let created=0,exists=0,errors=0;
