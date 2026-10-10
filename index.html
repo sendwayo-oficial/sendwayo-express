@@ -724,6 +724,12 @@ function addReceipt(rec,open=true){
 window.__sendwayoAddReceipt=addReceipt;
 
 function showReceipt(rec){
+  // Bloqueo de seguridad: nunca mostrar un comprobante antes de la aprobación administrativa.
+  if(String(rec?.estado||"").trim().toLowerCase()!=="aprobado"){
+    const existing=document.getElementById("sendwayo-generic-receipt");if(existing)existing.remove();
+    console.warn("SENDWAYO: comprobante bloqueado; la operación aún no está aprobada.");
+    return false;
+  }
   let old=document.getElementById("sendwayo-generic-receipt");if(old)old.remove();
   const receiptTimes=sendwayoReceiptTimes(rec||{}),id=rec.comprobanteId||`CMP-${rec.id||Date.now()}`,img=logo(),routeText=String(rec.routeFull||rec.route||rec.tipo||rec.compania||""),toHaiti=/RD->HT|RD a Haití|USA->HT|USA a Haití/i.test(routeText),toRD=/HT->RD|Haití a RD/i.test(routeText),receivedRaw=toHaiti?(rec.htg??rec.receivedAmount??rec.amountReceived??rec.montoRecibido??rec.net??rec.amount??rec.monto??0):toRD?(rec.rd??rec.receivedAmount??rec.amountReceived??rec.montoRecibido??rec.net??rec.amount??rec.monto??0):(rec.receivedAmount??rec.amountReceived??rec.montoRecibido??rec.net??rec.amount??rec.monto??rec.costo??0),amount=Number(receivedRaw||0),currency=toHaiti?"HTG":toRD?"RD$":(rec.currency||rec.moneda||"RD$"),operationRaw=routeText||"Operación SENDWAYO EXPRESS",operation=cleanMethod(operationRaw),owner=rec.ownerName||rec.remitente||sess().name||"",destRaw=rec.beneficiario||rec.numero||rec.referencia||rec.servicio||"—",createdDateTime=receiptTimes.operationDateTime,approvedDateTime=receiptTimes.approvalDateTime;
   const parsedBenef = parseBeneficiario(destRaw);
