@@ -65,7 +65,7 @@ service cloud.firestore {
       allow write: if false;
     }
     match /ledger/{entryId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && resource.data.kind != 'settlement' && resource.data.ownerUid == request.auth.uid);
       allow create, update, delete: if false;
     }
     match /auditLogs/{logId} {
