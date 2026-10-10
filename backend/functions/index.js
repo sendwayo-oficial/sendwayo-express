@@ -1290,3 +1290,133 @@ exports.deleteBeneficiary = callable(async (data, context) => {
   });
   return {ok:true,id};
 });
+
+// Receptor de solicitudes públicas: se guarda en Firestore y notifica al administrador.
+// No altera saldos ni otorga acceso a la plataforma.
+exports.submitContactRequest = callable(async (data, context) => {
+  const name = text(data.name || data.displayName, 180);
+  const phone = text(data.phone, 60);
+  const email = domain.normalizeEmail(data.email || '');
+  const requestType = text(data.requestType || 'contacto', 60);
+  const details = text(data.details || data.detail || '', 1200);
+  const city = text(data.city || '', 120);
+  if (!name || !phone || !details) fail('invalid-argument', 'Completa nombre, celular y detalle de la solicitud.');
+  const admins = await listAdminUids();
+  if (!admins.length) fail('failed-precondition', 'No hay un perfil administrador activo que pueda recibir la solicitud.');
+  const requestId = cleanId(data.requestId || `contact-${crypto.randomUUID()}`);
+  const ref = db.collection('contactRequests').doc(requestId);
+  await db.runTransaction(async tx => {
+    const old = await tx.get(ref);
+    if (old.exists) return;
+    const now = Date.now();
+    tx.create(ref, {
+      id: requestId, name, phone, email, city, details, requestType,
+      status: 'Pendiente', createdByUid: context?.auth?.uid || null,
+      createdAt: FV.serverTimestamp(), createdAtMs: now
+    });
+    addNotices(tx, admins, `contact-${requestId}`, {
+      type: 'contact_request', title: 'Nueva solicitud recibida',
+      message: `${name} · ${phone} · ${requestType}`, section: 'solicitudes', requestId
+    });
+  });
+  return { ok: true, requestId, status: 'Pendiente', message: 'Solicitud enviada a Administración.' };
+});
+
+// El administrador puede modificar datos de contacto, nunca elevar ni cambiar el rol.
+exports.adminUpdateProfile = callable(async (data, context) => {
+  const actor = await requireAdmin(context);
+  const identifier = text(data.uid || data.targetUid || data.legacyId || data.id, 140);
+  if (!identifier) fail('invalid-argument', 'Falta el identificador del perfil.');
+  const target = await resolveProfile(identifier);
+  if (!target) fail('not-found', 'No se encontró el perfil en Firebase.');
+  const role = domain.normalizeRole(target.role);
+  if (!['remitente', 'agent'].includes(role)) fail('failed-precondition', 'Esta pantalla solo puede modificar perfiles de remitente o agente.');
+  const displayName = data.displayName == null ? undefined : text(data.displayName, 180);
+  const phone = data.phone == null ? undefined : text(data.phone, 60);
+  const username = data.username == null ? undefined : text(data.username, 60).toLowerCase();
+  if (displayName !== undefined && !displayName) fail('invalid-argument', 'El nombre no puede quedar vacío.');
+  const phoneNormalized = phone === undefined ? undefined : domain.normalizePhone(phone);
+  if (phone !== undefined && !phoneNormalized) fail('invalid-argument', 'El teléfono no es válido.');
+  if (username !== undefined && username && !/^[a-z0-9._-]{3,40}$/.test(username)) fail('invalid-argument', 'El usuario debe tener entre 3 y 40 caracteres permitidos.');
+  const uid = target.uid;
+  const profileRef = db.collection('profiles').doc(uid);
+  const accountRef = accountDoc(uid);
+  const auditRef = db.collection('auditLogs').doc(`profile-update-${crypto.randomUUID()}`);
+  const normalizedUsername = username === '' ? null : username;
+  let before = null, after = null;
+  await db.runTransaction(async tx => {
+    const queries = [tx.get(profileRef), tx.get(accountRef)];
+    if (normalizedUsername !== undefined && normalizedUsername) queries.push(tx.get(db.collection('profiles').where('username', '==', normalizedUsername).limit(10)));
+    if (phoneNormalized !== undefined) queries.push(tx.get(db.collection('profiles').where('phoneNormalized', '==', phoneNormalized).limit(10)));
+    const values = await Promise.all(queries);
+    const profileSnap = values[0], accountSnap = values[1];
+    if (!profileSnap.exists) fail('not-found', 'El perfil desapareció durante la actualización.');
+    const current = profileSnap.data();
+    if (domain.normalizeRole(current.role) !== role) fail('failed-precondition', 'El rol cambió; vuelve a cargar la lista.');
+    let cursor = 2;
+    const usernameSnap = normalizedUsername !== undefined && normalizedUsername ? values[cursor++] : null;
+    const phoneSnap = phoneNormalized !== undefined ? values[cursor++] : null;
+    if (usernameSnap?.docs.some(d => d.id !== uid)) fail('already-exists', 'Ese nombre de usuario ya está registrado.');
+    if (phoneSnap?.docs.some(d => d.id !== uid)) fail('already-exists', 'Ese teléfono ya está vinculado a otra cuenta.');
+    const updates = { updatedAt: FV.serverTimestamp(), updatedByUid: actor.uid };
+    if (displayName !== undefined) updates.displayName = displayName;
+    if (phone !== undefined) { updates.phone = phone; updates.phoneNormalized = phoneNormalized; }
+    if (normalizedUsername !== undefined) updates.username = normalizedUsername || FV.delete();
+    before = { displayName: current.displayName || current.name || '', phone: current.phone || '', username: current.username || '' };
+    after = { displayName: displayName ?? before.displayName, phone: phone ?? before.phone, username: normalizedUsername === undefined ? before.username : (normalizedUsername || '') };
+    tx.update(profileRef, updates);
+    if (role === 'remitente' && accountSnap.exists) {
+      const accountUpdates = { updatedAt: FV.serverTimestamp() };
+      if (displayName !== undefined) accountUpdates.displayName = displayName;
+      if (phone !== undefined) accountUpdates.phone = phone;
+      tx.set(accountRef, accountUpdates, { merge: true });
+    }
+    tx.create(auditRef, {
+      kind: 'profile_updated', actorUid: actor.uid, targetUid: uid, role, before, after,
+      createdAt: FV.serverTimestamp(), createdAtMs: Date.now()
+    });
+    addNotices(tx, [uid], auditRef.id, {
+      type: 'profile', title: 'Datos de perfil actualizados',
+      message: 'Administración actualizó tus datos de contacto.', section: 'perfil'
+    });
+  });
+  return { ok: true, uid, role, before, after };
+});
+
+// Desactivar conserva el historial y los dos balances; no permite desactivar administradores.
+exports.adminDeactivateProfile = callable(async (data, context) => {
+  const actor = await requireAdmin(context);
+  const identifier = text(data.uid || data.targetUid || data.legacyId || data.id, 140);
+  if (!identifier) fail('invalid-argument', 'Falta el identificador del perfil.');
+  const target = await resolveProfile(identifier);
+  if (!target) fail('not-found', 'No se encontró el perfil en Firebase.');
+  const role = domain.normalizeRole(target.role);
+  if (!['remitente', 'agent'].includes(role)) fail('failed-precondition', 'No se puede desactivar un perfil administrativo desde esta pantalla.');
+  const uid = target.uid;
+  const profileRef = db.collection('profiles').doc(uid);
+  const accountRef = accountDoc(uid);
+  const auditRef = db.collection('auditLogs').doc(`profile-deactivate-${crypto.randomUUID()}`);
+  let previousStatus = '';
+  await db.runTransaction(async tx => {
+    const [profileSnap, accountSnap] = await Promise.all([tx.get(profileRef), tx.get(accountRef)]);
+    if (!profileSnap.exists) fail('not-found', 'No se encontró el perfil.');
+    const profile = profileSnap.data();
+    if (domain.normalizeRole(profile.role) !== role) fail('failed-precondition', 'El rol cambió; vuelve a cargar la lista.');
+    previousStatus = String(profile.status || '');
+    if (['disabled', 'inactive', 'desactivado'].includes(previousStatus.toLowerCase())) fail('failed-precondition', 'El perfil ya estaba desactivado.');
+    tx.update(profileRef, {
+      status: 'disabled', active: false, deactivatedAt: FV.serverTimestamp(), deactivatedByUid: actor.uid
+    });
+    if (accountSnap.exists) tx.set(accountRef, { active: false, updatedAt: FV.serverTimestamp() }, { merge: true });
+    tx.create(auditRef, {
+      kind: 'profile_deactivated', actorUid: actor.uid, targetUid: uid, role, previousStatus,
+      balancesPreserved: true, createdAt: FV.serverTimestamp(), createdAtMs: Date.now()
+    });
+    addNotices(tx, [uid], auditRef.id, {
+      type: 'profile', title: 'Acceso desactivado',
+      message: 'El acceso a SENDWAYO fue desactivado por Administración. Tus operaciones e historial se conservan.',
+      section: 'perfil'
+    });
+  });
+  return { ok: true, uid, role, status: 'disabled', balancesPreserved: true };
+});
