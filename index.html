@@ -599,7 +599,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
 <div class="form-group"><label>Type de transaction</label><select id="env-tipo-trans" class="form-control"><option>RD a HTI NatCash</option><option>RD a HTI MonCash</option><option>RD a USA</option><option>USA a RD</option><option>USA a HTI</option><option>RD a Canadá</option><option>RD a Francia</option><option>RD a Chile</option><option>RD a España</option></select></div>
 <div class="form-group"><label>Remitente</label><div class="search-select-wrap"><input id="env-remitente-input" class="form-control" placeholder="Saisissez le nom ou le numéro…" autocomplete="off" oninput="document.getElementById('env-remitente-select').value='';updateEnvioSuggestions('remitente')" onfocus="updateEnvioSuggestions('remitente')"><button type="button" class="plus-btn" onclick="openPerson('Remitente')" title="Agregar remitente">+</button></div><div id="env-remitente-suggestions" class="env-suggestions"></div><input id="env-remitente-select" type="hidden"><div class="field-hint">Seleccione: número (nombre del remitente).</div></div>
 <div class="form-group"><label>Monto en RD$</label><input id="env-monto" type="number" min="0" step="1" class="form-control" oninput="calcularEnvioModal()"></div>
-<div class="form-group"><label>Bénéficiaire</label><div class="search-select-wrap"><input id="env-beneficiario-input" class="form-control" placeholder="Saisissez le nom ou le numéro…" autocomplete="off" oninput="document.getElementById('env-beneficiario-select').value='';updateEnvioSuggestions('beneficiario')" onfocus="updateEnvioSuggestions('beneficiario')"><button type="button" class="plus-btn" onclick="openBeneficiarioModal('envio')" title="Ajouter un bénéficiaire">+</button><div id="env-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div></div><input id="env-beneficiario-select" type="hidden"><div class="field-hint">Seleccione: número (nombre del beneficiario).</div></div></div>
+<div class="form-group"><label>Bénéficiaire</label><div class="search-select-wrap"><input id="env-beneficiario-input" class="form-control" placeholder="Saisissez le nom ou le numéro…" autocomplete="off" oninput="document.getElementById('env-beneficiario-select').value='';updateEnvioSuggestions('beneficiario')" onfocus="updateEnvioSuggestions('beneficiario')"><button type="button" class="plus-btn" onclick="openBeneficiarioModal('envio')" title="Ajouter un bénéficiaire">+</button><div id="env-beneficiario-suggestions" class="env-suggestions env-beneficiario-inline"></div></div><input id="env-beneficiario-select" type="hidden"><div class="field-hint">Seleccione: nombre (celular del beneficiario).</div></div></div>
 <div class="account-card" style="padding:10px;margin:8px 0"><b>Identificación del remitente</b><div class="form-grid" style="margin-top:8px"><div><label style="font-size:.75rem">WhatsApp</label><input id="env-remitente-phone" class="form-control" readonly></div><div><label style="font-size:.75rem">Cédula / Pasaporte</label><input id="env-remitente-doc" class="form-control" readonly></div></div></div>
 <div class="info-box" id="env-official-tariff-hint">Las tarifas por rango de RD$ solo aplican a envíos RD → Haití vía MonCash y RD → Haití vía NatCash. En Agentes no aplican: las operaciones Haití → Haití se realizan únicamente en GDES (gourdes haitianos), tanto para depósitos, envíos como retiros.</div>
 <div id="env-summary" class="sendwayo-transaction-summary"><p><strong>MONTO ENVIADO:</strong> <b id="calc-enviado">0.00 RD$</b></p><p><strong>COMISIÓN:</strong> <b id="calc-comision">0.00 RD$</b></p><p><strong>MONTO TOTAL:</strong> <b id="calc-total-debito">0.00 RD$</b></p><p><strong>NETO:</strong> <b id="calc-neto">0.00 RD$</b></p><p><strong>MONTO A RECIBIR:</strong> <b id="calc-recibir">0.00 HTG</b></p></div>
@@ -2074,7 +2074,7 @@ function personMatchesQuery(x,q){
 function setEnvioPersonFields(kind,x,id){
  const input=document.getElementById('env-'+kind+'-input'),hidden=document.getElementById('env-'+kind+'-select');if(!input||!hidden||!x)return;
  const phone=personPhone(x)||'Sin número',name=personName(x)||'Sin nombre';
- hidden.value=id;input.value=phone+' ('+name+')';input.dataset.personId=id;input.dataset.personPhone=phone;input.dataset.personName=name;
+ hidden.value=id;input.value=name+' ('+phone+')';input.dataset.personId=id;input.dataset.personPhone=phone;input.dataset.personName=name;
  const box=document.getElementById('env-'+kind+'-suggestions');if(box){box.innerHTML='';box.style.display='none'}
  if(kind==='remitente'){const ph=document.getElementById('env-remitente-phone'),doc=document.getElementById('env-remitente-doc');if(ph)ph.value=phone==='Sin número'?'':phone;if(doc)doc.value=x.doc||x.document||''}
  else{const ph=document.getElementById('env-beneficiario-phone');if(ph)ph.value=phone==='Sin número'?'':phone}
@@ -2106,7 +2106,7 @@ function updateEnvioSuggestions(kind){
  // Solo una sugerencia: la coincidencia más relevante, sin listado y sin mostrar comisiones.
  const match=list[0];
  if(!match){box.innerHTML='';box.style.display='none';return;}
- box.innerHTML=`<button type="button" class="env-suggestion env-suggestion-single" onclick="chooseEnvioPerson('${escapeHtml(kind)}','${escapeHtml(match.id)}')"><b>${escapeHtml(personPhone(match)||'Sin número')}</b> <span>(${escapeHtml(personName(match)||'Sin nombre')})</span></button>`;
+ box.innerHTML=`<button type="button" class="env-suggestion env-suggestion-single" onclick="chooseEnvioPerson('${escapeHtml(kind)}','${escapeHtml(match.id)}')"><b>${escapeHtml(personName(match)||'Sin nombre')}</b> <span>(${escapeHtml(personPhone(match)||'Sin número')})</span></button>`;
  box.style.display='block';
 }
 function updateDepositSuggestions(){
@@ -2117,12 +2117,12 @@ function updateDepositSuggestions(){
    const be=nq&&(normalizeSearchText(personName(b))===nq||normalizeSearchText(b.username)===nq||normalizeSearchText(b.staffId)===nq||(qd&&phoneDigits(personPhone(b))===qd));
    return Number(be)-Number(ae)||personName(a).localeCompare(personName(b));
  });
- box.innerHTML=list.map(u=>{const phone=personPhone(u)||u.staffId||'Sin número',name=personName(u)||'Sin nombre';return '<button type="button" class="env-suggestion" onclick="chooseDepositRemitente(\''+escapeHtml(u.id)+'\')"><b>'+escapeHtml(phone)+'</b> <span>('+escapeHtml(name)+')</span></button>'}).join('');
+ box.innerHTML=list.map(u=>{const phone=personPhone(u)||u.staffId||'Sin número',name=personName(u)||'Sin nombre';return '<button type="button" class="env-suggestion" onclick="chooseDepositRemitente(\''+escapeHtml(u.id)+'\')"><b>'+escapeHtml(name)+'</b> <span>('+escapeHtml(phone)+')</span></button>'}).join('');
  box.style.display=list.length?'block':'none';
 }
 function chooseDepositRemitente(id){
  const u=state.users?.[id],sel=document.getElementById('dep-remitente'),input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions');if(!u||!sel||!input)return;
- sel.value=id;input.value=(personPhone(u)||u.staffId||'Sin número')+' ('+(personName(u)||'')+')';if(box)box.style.display='none';
+ sel.value=id;input.value=(personName(u)||'Sin nombre')+' ('+(personPhone(u)||u.staffId||'Sin número')+')';if(box)box.style.display='none';
 }
 function updateAdminDepositSuggestions(){
  const input=document.getElementById('admin-dep-remitente-search'),box=document.getElementById('admin-dep-remitente-suggestions'),sel=document.getElementById('admin-dep-remitente');if(!input||!box||!sel)return;
@@ -2132,12 +2132,12 @@ function updateAdminDepositSuggestions(){
    const be=nq&&(normalizeSearchText(personName(b))===nq||normalizeSearchText(b.username)===nq||normalizeSearchText(b.staffId)===nq||(qd&&phoneDigits(personPhone(b))===qd));
    return Number(be)-Number(ae)||personName(a).localeCompare(personName(b));
  });
- box.innerHTML=list.map(u=>{const phone=personPhone(u)||u.staffId||'Sin número',name=personName(u)||'Sin nombre';return '<button type="button" class="env-suggestion" onclick="chooseAdminDepositRemitente(\''+escapeHtml(u.id)+'\')"><b>'+escapeHtml(phone)+'</b> <span>('+escapeHtml(name)+')</span></button>'}).join('');
+ box.innerHTML=list.map(u=>{const phone=personPhone(u)||u.staffId||'Sin número',name=personName(u)||'Sin nombre';return '<button type="button" class="env-suggestion" onclick="chooseAdminDepositRemitente(\''+escapeHtml(u.id)+'\')"><b>'+escapeHtml(name)+'</b> <span>('+escapeHtml(phone)+')</span></button>'}).join('');
  box.style.display=list.length?'block':'none';
 }
 function chooseAdminDepositRemitente(id){
  const u=state.users?.[id],sel=document.getElementById('admin-dep-remitente'),input=document.getElementById('admin-dep-remitente-search'),box=document.getElementById('admin-dep-remitente-suggestions');if(!u||!sel||!input)return;
- sel.value=id;input.value=(personPhone(u)||u.staffId||'Sin número')+' ('+(personName(u)||'')+')';if(box)box.style.display='none';
+ sel.value=id;input.value=(personName(u)||'Sin nombre')+' ('+(personPhone(u)||u.staffId||'Sin número')+')';if(box)box.style.display='none';
 }
 function resolveEnvioPerson(kind){
  const input=document.getElementById('env-'+kind+'-input'),hidden=document.getElementById('env-'+kind+'-select');if(!input||!hidden)return;
@@ -2181,12 +2181,12 @@ function updateAgentBeneficiarySuggestions(){
    return !raw || (qText && n.includes(qText)) || (qDigits && p.includes(qDigits));
  }).sort(function(a,b){return personName(a).localeCompare(personName(b),'es')});
  if(!list.length){box.innerHTML='';box.style.display='none';return}
- box.innerHTML=list.map(function(b){return '<button type="button" class="env-suggestion env-suggestion-single" data-agent-ben-id="'+escapeHtml(b.id)+'" onclick="chooseAgentBeneficiary(this.dataset.agentBenId)"><b>'+escapeHtml(personPhone(b)||'Sin número')+'</b> <span>('+escapeHtml(personName(b)||'Sin nombre')+')</span></button>'}).join('');
+ box.innerHTML=list.map(function(b){return '<button type="button" class="env-suggestion env-suggestion-single" data-agent-ben-id="'+escapeHtml(b.id)+'" onclick="chooseAgentBeneficiary(this.dataset.agentBenId)"><b>'+escapeHtml(personName(b)||'Sin nombre')+'</b> <span>('+escapeHtml(personPhone(b)||'Sin número')+')</span></button>'}).join('');
  box.style.display='block';
 }
 function chooseAgentBeneficiary(id){
  const b=state.beneficiaries?.[id],input=document.getElementById('agent-beneficiario-input'),sel=document.getElementById('agent-beneficiario-select'),box=document.getElementById('agent-beneficiario-suggestions');if(!b||!input||!sel)return;
- sel.value=id;input.value=(personPhone(b)||'Sin número')+' ('+(personName(b)||'')+')';input.dataset.personId=id;if(box)box.style.display='none';
+ sel.value=id;input.value=(personName(b)||'Sin nombre')+' ('+(personPhone(b)||'Sin número')+')';input.dataset.personId=id;if(box)box.style.display='none';
 }
 async function aprobarEnvioAgente(id,decision='Aprobado',nota=''){if(!isAdmin())return toast('Solo el administrador puede aprobar operaciones del Agente.','error');const r=state.envios?.[id];if(!r)return toast('Transacción no encontrada.','error');return typeof updateTransactionStatus==='function'?updateTransactionStatus('envios',id,decision,nota):false}
 function canAgentWithdrawCommission(){return false}
@@ -5972,7 +5972,7 @@ function renderAgentSuggestions(){
  if(!list.length){box.innerHTML='<div class="env-suggestion">No hay coincidencias</div>';box.style.display='block';return;}
  box.innerHTML=list.map(b=>{
    const id=String(b.id).replace(/'/g,"\\'");
-   return '<button type="button" class="env-suggestion" data-agent-ben-id="'+escapeHtml(id)+'"><b>'+escapeHtml(personPhone(b)||'Sin número')+'</b> <span>('+escapeHtml(personName(b)||'Sin nombre')+')</span></button>';
+   return '<button type="button" class="env-suggestion" data-agent-ben-id="'+escapeHtml(id)+'"><b>'+escapeHtml(personName(b)||'Sin nombre')+'</b> <span>('+escapeHtml(personPhone(b)||'Sin número')+')</span></button>';
  }).join('');
  box.style.display='block';
  box.style.visibility='visible';
