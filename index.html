@@ -485,9 +485,9 @@ r("button",{onClick:()=>setRequestType("recarga"),className:"border-2 rounded-2x
 }
 
 const SENDWAYO_SUGGESTIONS=[...new Set([
-  ...cm.flatMap(a=>{const n=`${a.name||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\D/g,"");return [n,`${p} (${n})`,makeSendwayoEmail(a.name,a.last),p,a.id]}),
-  ...sm.flatMap(a=>{const n=`${a.first||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\D/g,"");return [n,`${p} (${n})`,makeSendwayoEmail(a.first,a.last),p,a.id]}),
-  "8493727884 (DANIA SAINTHILAIRE)","DANIA SAINTHILAIRE","daniasainthilaire@gmail.com","EDITA ALBERTO","8299644061 (EDITA ALBERTO)","editaalberto@gmail.com","8092703291 (NENES NENES)","NENES NENES","nenesnenes@gmail.com","8292155657 (FLEURANVIL Herace)","FLEURANVIL Herace","fleuranvilherace@gmail.com","fleuranvil@gmail.com","8494783078 (WILNORD HILAIRSAINT)","WILNORD HILAIRSAINT","wilnordhilairsaint@gmail.com","RENETTE Elissaint","41242170","MANITA JOSEPH","33761163"
+  // Sugerencias basadas en los registros cargados por la aplicación; no incluir contactos de ejemplo codificados.
+  ...cm.flatMap(a=>{const n=`${a.name||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\\D/g,"");return [n,p,`${n}${p?\` (${p})\`:""}`].filter(Boolean)}),
+  ...sm.flatMap(a=>{const n=`${a.first||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\\D/g,"");return [n,p,`${n}${p?\` (${p})\`:""}`].filter(Boolean)})
 ])];
 
 function installSendwayoSuggestions(){
