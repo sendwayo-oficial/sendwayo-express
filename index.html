@@ -1312,6 +1312,12 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
     return onSnap(db.collection('transactions'), snap => callback(snap.docs.map(serial).sort((a, b) => Number(b.createdAtMs || b.createdAt?.toMillis?.() || 0) - Number(a.createdAtMs || a.createdAt?.toMillis?.() || 0))), 'admin-transactions');
   }
+  function listenAdminSettlements(callback) {
+    if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
+    return onSnap(db.collection('ledger').where('kind', '==', 'settlement'), snap =>
+      callback(snap.docs.map(serial).sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0))),
+      'admin-settlement-ledger');
+  }
   function listenAccount(accountId, callback) {
     if (!auth.currentUser || !accountId) throw new Error('Falta sesión o identificador de cuenta.');
     return onSnap(db.collection('accounts').doc(String(accountId)), snap => {
