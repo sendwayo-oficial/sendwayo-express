@@ -2966,6 +2966,7 @@ window.showReceipt=function showReceipt(collection,id){
  const t=RT[lang]||RT.es;
  const amountText=displayAmount.toLocaleString(lang==='en'?'en-US':lang==='fr'?'fr-FR':lang==='ht'?'fr-FR':'es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+displayCurrency;
  const html=`<div class="receipt-shell receipt-compact receipt-final receipt-brand-wide" style="max-width:900px!important;padding:14px!important">
+  <div class="receipt-watermark-grid" aria-hidden="true">${Array.from({length:9},()=>`<img src="${LOGO_DATA}" alt="" aria-hidden="true">`).join("")}</div>
   <div class="receipt-head">
    <div class="receipt-brand-row">
      <img class="receipt-logo" src="${LOGO_DATA}" alt="${t.company}" data-current-brand-logo="true">
@@ -7326,6 +7327,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script id="sendwayo-login-visibility-fix-20261003">(function(){function bind(){if(typeof window.showAppForUser!=='function'||window.showAppForUser.__swWrapped)return;const base=window.showAppForUser;function w(){const r=base.apply(this,arguments);document.body.classList.add('sw-authenticated');document.getElementById('app-shell')?.classList.add('sw-authenticated');document.getElementById('app-sidebar')?.classList.add('sw-authenticated');document.getElementById('login-screen')?.classList.add('sw-authenticated');document.getElementById('welcome-screen')?.classList.add('hidden');return r}w.__swWrapped=true;window.showAppForUser=w}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(bind,0)}, {once:true});else setTimeout(bind,0);setTimeout(bind,500)})();</script>
 
 <script id="sendwayo-search-id-final-20261003">(function(){const map={enviosTable:'envios',recTable:'recargas',paqktTable:'paqueticos',pagoTable:'pagos',paqTable:'paquetes',benefTable:'beneficiaries',depTable:'deposits',comTable:'commissions',accountMoveTable:'accountWithdrawals'};window.filterTable=function(input,id){const q=String(input?.value||'').toLowerCase().trim();document.querySelectorAll('#'+id+' tbody tr').forEach(function(row){if(!q){row.style.display='';return}let text=String(row.innerText||'').toLowerCase();const cell=row.querySelector('[data-record-id]'),col=map[id];if(cell&&col){const rec=state?.[col]?.[cell.getAttribute('data-record-id')];if(rec)text+=' '+JSON.stringify(rec).toLowerCase();}row.style.display=text.includes(q)?'':'none'})}})();</script>
+
+<style id="sendwayo-v30-receipt-watermark-grid">
+/* V30 compatible: nueve marcas de agua tenues; el comprobante mantiene la validación de aprobación y el backend RTDB existente. */
+.receipt-shell{position:relative;isolation:isolate}
+.receipt-watermark-grid{position:absolute;inset:0;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:0;padding:18px 12px;pointer-events:none;z-index:0;opacity:.16;overflow:hidden}
+.receipt-watermark-grid img{width:min(155px,72%);max-height:95px;object-fit:contain;align-self:center;justify-self:center;opacity:.38;filter:saturate(.45)}
+.receipt-shell>*:not(.receipt-watermark-grid){position:relative;z-index:1}
+@media print{.receipt-watermark-grid{opacity:.14!important}.receipt-watermark-grid img{opacity:.36!important}}
+</style>
 </body>
 </html>
 
