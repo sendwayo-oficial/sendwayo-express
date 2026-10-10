@@ -84,12 +84,49 @@ function isHaitiToDominican(operation) {
   const origin = normalizeText(operation.originCountry || operation.origin);
   const destination = normalizeText(operation.destinationCountry || operation.destination);
   if (origin && destination) {
-    const fromHaiti = /^(ht|haiti|haitian republic|republica de haiti)$/.test(origin);
-    const toDop = /^(rd|rd\$|dominicana|republica dominicana|dominican republic)$/.test(destination);
+    const fromHaiti = /^(ht|htg|haiti|haitian republic|republica de haiti|gdes|gourde|gourdes)$/.test(origin);
+    const toDop = /^(rd|rd\$|dop|dop\$|dominicana|republica dominicana|dominican republic)$/.test(destination);
     if (fromHaiti && toDop) return true;
   }
-  const route = normalizeText(`${operation.route || ''} ${operation.routeFull || ''}`);
-  return /(?:\bht\b|haiti|haitian republic)\s*(?:-+|→|>|->|\ba\b|\bto\b)\s*(?:\brd\b|republica dominicana|dominican republic)/.test(route);
+  const route = normalizeText(\`\${operation.route || ''} \${operation.routeFull || ''}\`);
+  return /(?:\bht\b|\bhtg\b|haiti|haitian republic)\s*(?:->|→|>|-+|\ba\b|\bto\b)\s*(?:\brd\b|republica dominicana|dominican republic)/.test(route);
+}
+
+function countryBucket(value) {
+  const v = normalizeText(value).replace(/\$/g, '');
+  if (/^(rd|dop|peso|pesos|dominicana|republica dominicana|dominican republic|republica dominicana \(rd\))$/.test(v)) return 'DOP';
+  if (/^(ht|htg|gdes|gourde|gourdes|haiti|haitian republic|republica de haiti)$/.test(v)) return 'HTG';
+  if (/^(us|usa|usd|estados unidos|united states|united states of america)$/.test(v)) return 'USD';
+  return null;
+}
+
+function routeCountryPair(operation) {
+  const fromFields = countryBucket(operation.originCountry || operation.origin);
+  const toFields = countryBucket(operation.destinationCountry || operation.destination);
+  if (fromFields && toFields) return { from: fromFields, to: toFields };
+  const route = normalizeText(\`\${operation.route || ''} \${operation.routeFull || ''}\`);
+  const pairs = [
+    { from: 'DOP', to: 'HTG', re: /(?:^|[^a-z])(?:rd\$?|dop|dominicana|republica dominicana|dominican republic)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:ht|htg|haiti|haitian republic|republica de haiti)(?:$|[^a-z])/ },
+    { from: 'USD', to: 'HTG', re: /(?:^|[^a-z])(?:usa|us|usd|estados unidos|united states|united states of america)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:ht|htg|haiti|haitian republic|republica de haiti)(?:$|[^a-z])/ },
+    { from: 'HTG', to: 'DOP', re: /(?:^|[^a-z])(?:ht|htg|gdes|haiti|haitian republic|republica de haiti)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:rd\$?|dop|dominicana|republica dominicana|dominican republic)(?:$|[^a-z])/ },
+    { from: 'DOP', to: 'USD', re: /(?:^|[^a-z])(?:rd\$?|dop|dominicana|republica dominicana|dominican republic)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:usa|us|usd|estados unidos|united states|united states of america)(?:$|[^a-z])/ },
+    { from: 'USD', to: 'DOP', re: /(?:^|[^a-z])(?:usa|us|usd|estados unidos|united states|united states of america)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:rd\$?|dop|dominicana|republica dominicana|dominican republic)(?:$|[^a-z])/ },
+    { from: 'HTG', to: 'USD', re: /(?:^|[^a-z])(?:ht|htg|gdes|haiti|haitian republic|republica de haiti)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:usa|us|usd|estados unidos|united states|united states of america)(?:$|[^a-z])/ }
+  ];
+  return pairs.find(pair => pair.re.test(route)) || null;
+}
+
+function isInternationalRoute(operation) {
+  if (/international|internacional|envio internacional|envío internacional/.test(textOf(operation))) return true;
+  const pair = routeCountryPair(operation);
+  return !!pair && pair.from !== pair.to;
+}
+
+function receivedCurrencyForOperation(operation) {
+  const pair = routeCountryPair(operation);
+  if (pair) return pair.to;
+  const explicit = String(operation.receivedCurrency || '').trim().toUpperCase();
+  return explicit || null;
 }
 
 function isDeposit(operation) {
@@ -127,10 +164,9 @@ function commissionRate(operation) {
   if (isDeposit(operation)) return 0;
   const text = textOf(operation);
   if (/recarga|paquetik|paquetico|factura|servicio|pago de servicio|top.?up/.test(text)) return 0.05;
-  if (isHaitiToHaiti(operation)) return null; // Flat stepped tariff, not percentage-based.
-  if (isDominicanToHaiti(operation) || isUSAToHaiti(operation) || /international|internacional|international shipment/.test(text)) return 0.10;
-  if (/\brd\b\s*(?:-+|→|>|->|\ba\b|\bto\b)\s*\brd\b/.test(text)) return 0.08;
-  // Keep the current general rate at 8%; specific international/service rules override it.
+  if (isHaitiToHaiti(operation)) return null; // Tarifa fija por tramos.
+  if (isInternationalRoute(operation)) return 0.10;
+  if (/\brd\b\s*(?:->|→|>|-+|\ba\b|\bto\b)\s*\brd\b/.test(text)) return 0.08;
   return 0.08;
 }
 
@@ -154,15 +190,16 @@ function validateOperation(operation, actorRole) {
     if (!isHaitiToHaiti(operation)) throw new Error('El agente solo puede registrar operaciones Haití a Haití.');
     if (currency !== 'HTG') throw new Error('El agente debe registrar operaciones en HTG/GDES.');
   }
-  if ((isDominicanToHaiti(operation) || isUSAToHaiti(operation)) && (domainAmount(operation.receivedAmount) || domainAmount(operation.htg)) === null) {
-    throw new Error('Indica el importe recibido en HTG/GDES para la operación hacia Haití; no se inventará una tasa de cambio.');
-  }
-  if (isHaitiToDominican(operation) && (domainAmount(operation.receivedAmount) || domainAmount(operation.rd)) === null) {
-    throw new Error('Indica el importe recibido en RD$ para la operación desde Haití; no se inventará una tasa de cambio.');
+  if (isInternationalRoute(operation) && !isHaitiToHaiti(operation)) {
+    const receiveCurrency = receivedCurrencyForOperation(operation);
+    const legacyReceived = receiveCurrency === 'HTG' ? operation.htg : (receiveCurrency === 'DOP' ? operation.rd : null);
+    if ((domainAmount(operation.receivedAmount) || domainAmount(legacyReceived)) === null) {
+      const label = receiveCurrency === 'HTG' ? 'HTG/GDES' : receiveCurrency === 'DOP' ? 'RD$' : receiveCurrency === 'USD' ? 'USD' : 'la moneda de destino';
+      throw new Error(\`Indica el importe exacto que recibirá la persona en \${label}; no se inventará una tasa de cambio.\`);
+    }
   }
   return { amount, currency, isDeposit: isDeposit(operation), fee: calculateCommission({ ...operation, amount }) };
 }
-
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -352,5 +389,6 @@ function splitCommission(fee, ownerRole) {
 module.exports = {
   ROLES, CURRENCIES, normalizeRole, normalizeCurrency, parseAmount, round2,
   isDeposit, isHaitiToHaiti, isDominicanToHaiti, isUSAToHaiti, isHaitiToDominican, haitiWalletFee, commissionRate,
-  calculateCommission, validateOperation, splitCommission, normalizeEmail, normalizePhone, legacySourceRank, mergeLegacyAccounts
+  calculateCommission, validateOperation, splitCommission, normalizeEmail, normalizePhone, legacySourceRank, mergeLegacyAccounts,
+  isInternationalRoute, routeCountryPair, receivedCurrencyForOperation
 };
