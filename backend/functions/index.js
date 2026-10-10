@@ -588,6 +588,10 @@ exports.reviewOperation = callable(async (data, context) => {
       id: `settle-${id}`, operationId: id, kind: 'settlement', actorUid: reviewer.uid,
       ownerUid: op.ownerUid || null, currencyCode, principal: amount, fee,
       remitterCommission: split.remitter, adminCommission: split.admin,
+      operationType: text(op.type || op.kind || 'Operación', 100),
+      category: text(op.category || op.type || op.kind || 'Operación', 100),
+      route: text(op.routeFull || op.route || '', 160),
+      method: text(op.method || op.provider || '', 100),
       createdAt: FV.serverTimestamp(), createdAtMs: now
     });
     tx.update(txRef, {
