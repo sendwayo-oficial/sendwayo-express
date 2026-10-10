@@ -1152,23 +1152,6 @@ const OFFICIAL_AGENTS=[
  {id:'agent-betina-lindor',role:'Agente',name:'Betina Lindor',phone:'',username:'betinalindor@gmail.com',authEmail:'betinalindor@gmail.com',agentKey:'BETINA_LINDOR',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,commissionWithdrawAllowed:false,approvalRequired:true,active:true,balance:0,commission:0},
  {id:'agent-herace-fleuranvil',role:'Agente',name:'Herace Fleuranvil',phone:'',username:'heracefleuranvil@gmail.com',authEmail:'heracefleuranvil@gmail.com',agentKey:'HERACE_FLEURANVIL',agentType:'AGENTE_UNICO',agentScope:'OPERACIONES',agentPolicy:'HTI_A_HTI',commissionMode:'PLATFORM_100',commissionShare:0,platformCommissionShare:1,uniqueAgent:true,commissionWithdrawAllowed:false,approvalRequired:true,active:true,balance:0,commission:0}
 ];
-const RESTORED_SECRET_ACCOUNTS=[
- {id:'rm1',role:'Remitente',name:'Ana Maria Santos',phone:'8295552001',doc:'DEMO-RM-01',username:'ana.santos'},
- {id:'rm2',role:'Remitente',name:'Pedro Antonio Diaz',phone:'8295552002',doc:'DEMO-RM-02',username:'pedro.diaz'},
- {id:'rm3',role:'Remitente',name:'Jean Robert',phone:'8295552003',doc:'DEMO-RM-03',username:'jean.robert'},
- {id:'rm4',role:'Remitente',name:'Lucia Fernandez',phone:'8295552004',doc:'DEMO-RM-04',username:'lucia.fernandez'},
- {id:'rm5',role:'Remitente',name:'Miguel Torres',phone:'8295552005',doc:'DEMO-RM-05',username:'miguel.torres'},
- {id:'rm6',role:'Remitente',name:'Sofia Ramirez',phone:'8295552006',doc:'DEMO-RM-06',username:'sofia.ramirez'},
- {id:'rm7',role:'Remitente',name:'David Pierre',phone:'8295552007',doc:'DEMO-RM-07',username:'david.pierre'},
- {id:'rm8',role:'Remitente',name:'Carolina Gomez',phone:'8295552008',doc:'DEMO-RM-08',username:'carolina.gomez'},
- {id:'rm9',role:'Remitente',name:'Ramon Castillo',phone:'8295552009',doc:'DEMO-RM-09',username:'ramon.castillo'},
- {id:'rm10',role:'Remitente',name:'Elena Joseph',phone:'8295552010',doc:'DEMO-RM-10',username:'elena.joseph'},
- {id:'rm11',role:'Remitente',name:'Luis Michel',phone:'8295552011',doc:'DEMO-RM-11',username:'luis.michel'},
- {id:'rm12',role:'Remitente',name:'Patricia Jean',phone:'8295552012',doc:'DEMO-RM-12',username:'patricia.jean'},
- {id:'rm13',role:'Remitente',name:'Roberto Noel',phone:'8295552013',doc:'DEMO-RM-13',username:'roberto.noel',commission:2},
- {id:'rm14',role:'Remitente',name:'Isabel Laurent',phone:'8295552014',doc:'DEMO-RM-14',username:'isabel.laurent'},
- {id:'rm15',role:'Remitente',name:'Wilson Charles',phone:'8295552015',doc:'DEMO-RM-15',username:'wilson.charles'}
-];
 const OFFICIAL_BANK_ACCOUNTS=[
  {id:'b1',bank:'Banco Popular',holder:'Herace Fleuranvil',number:'831434592'},
  {id:'b2',bank:'Banreservas',holder:'Herace Fleuranvil',number:'9601783620'},
@@ -1178,7 +1161,7 @@ function ensureSeedData(){
   state.settings=state.settings||{contact:{phone:'8297676665',email:'sendwayoexpress@gmail.com'}};state.settings.contact=state.settings.contact||{phone:'8297676665',email:'sendwayoexpress@gmail.com'};
   productionResetState();
   state.users=state.users||{}; if(!state.users.admin)state.users.admin={id:'admin',role:'Administrador',name:'Administrador SENDWAYO EXPRESS',phone:'',username:'admin',active:true,balance:0,commission:0,referrals:0};
-  RESTORED_SECRET_ACCOUNTS.forEach(x=>{if(!state.users[x.id])state.users[x.id]={...x,staffId:x.staffId||('ID'+String(10000000+Number(x.id.replace('rm',''))).padStart(8,'0')),active:true,balance:Number(x.balance||0),commission:Number(x.commission||0),referrals:0,accountStatus:'Activo',accountSchemaV3:1,authEmail:authEmailFor(x)};});
+  // No sembrar remitentes de ejemplo: los perfiles deben provenir de los registros reales en Firebase.
   OFFICIAL_AGENTS.forEach(x=>{
     if(!state.users[x.id])state.users[x.id]={...x,staffId:x.staffId||makePermanentId(),accountStatus:'Activo',accountSchemaV3:1};
     else Object.assign(state.users[x.id],x,{staffId:state.users[x.id].staffId||makePermanentId()});
