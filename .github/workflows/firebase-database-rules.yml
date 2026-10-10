@@ -1,39 +1,12 @@
-name: Publicar reglas de Firebase
-
+name: Legacy Realtime Database deployment disabled for A+B review
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'database.rules.json'
-      - 'firebase.json'
-      - '.github/workflows/firebase-database-rules.yml'
-
 jobs:
-  deploy-database-rules:
-    if: github.ref == 'refs/heads/main'
+  notice:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar repositorio
-        uses: actions/checkout@v4
-
-      - name: Instalar Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Comprobar credencial de Firebase
-        id: firebase-token
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      - name: Prevent applying legacy Point B rules to Point A
         run: |
-          if [ -n "$FIREBASE_TOKEN" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::FIREBASE_TOKEN no está configurado; las reglas se validan en GitHub pero no se publican en Firebase."
-          fi
-
-      - name: Publicar reglas de Realtime Database
-        if: steps.firebase-token.outputs.available == 'true'
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only database --project sendwayo-express --token "$FIREBASE_TOKEN"
+          echo "Automatic RTDB deployment is disabled for the fusion branch."
+          echo "database.rules.json belongs to the legacy project sendwayo-express."
+          echo "Review the target project's current RTDB rules separately before any deployment."
