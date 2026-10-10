@@ -1,0 +1,44 @@
+name: Validate SENDWAYO Fusion Candidate
+on:
+  push:
+    branches: [fusion-point-a-b-20261010]
+  pull_request:
+    branches: [main]
+jobs:
+  validate-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Extract inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>", html, re.I)
+          scripts = [s for s in scripts if s.strip()]
+          if not scripts:
+              raise SystemExit("No inline scripts found")
+          for i, code in enumerate(scripts, 1):
+              Path(f"/tmp/sw-script-{i}.js").write_text(code, encoding="utf-8")
+          print(f"Extracted {len(scripts)} inline script blocks")
+          PY
+      - name: Check JavaScript syntax
+        run: |
+          set -e
+          for file in /tmp/sw-script-*.js; do
+            node --check "$file"
+          done
+          echo "Inline JavaScript syntax OK"
+      - name: Check fusion guardrails
+        run: |
+          grep -q 'sendwayo-fusion-import-a-b' index.html
+          grep -q 'sendwayo-express-app-101.web.app/__/firebase/init.js' index.html
+          if grep -qi 'capital' index.html; then
+            echo "Unexpected Capital module/string found"
+            exit 1
+          fi
+          echo "Fusion markers and no-Capital check OK"
