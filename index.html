@@ -486,8 +486,8 @@ r("button",{onClick:()=>setRequestType("recarga"),className:"border-2 rounded-2x
 
 const SENDWAYO_SUGGESTIONS=[...new Set([
   // Sugerencias basadas en los registros cargados por la aplicación; no incluir contactos de ejemplo codificados.
-  ...cm.flatMap(a=>{const n=`${a.name||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\\D/g,"");return [n,p,`${n}${p?\` (${p})\`:""}`].filter(Boolean)}),
-  ...sm.flatMap(a=>{const n=`${a.first||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\\D/g,"");return [n,p,`${n}${p?\` (${p})\`:""}`].filter(Boolean)})
+  ...cm.flatMap(a=>{const n=(String(a.name||"")+" "+String(a.last||"")).trim(),p=String(a.phone||"").replace(/\D/g,"");return [n,p,n+(p?" ("+p+")":"")].filter(Boolean)}),
+  ...sm.flatMap(a=>{const n=(String(a.first||"")+" "+String(a.last||"")).trim(),p=String(a.phone||"").replace(/\D/g,"");return [n,p,n+(p?" ("+p+")":"")].filter(Boolean)})
 ])];
 
 function installSendwayoSuggestions(){
