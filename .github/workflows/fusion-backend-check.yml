@@ -35,6 +35,19 @@ jobs:
           }
           console.log('Firebase target and JSON validated.');
           NODE
+      - name: Verify frontend/backend callable contract
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const backend = fs.readFileSync('backend/functions/index.js', 'utf8');
+          const client = new Set([...html.matchAll(/\\binvoke\\(['"]([A-Za-z0-9_]+)['"]\\)/g)].map(m => m[1]));
+          const server = new Set([...backend.matchAll(/exports\\.([A-Za-z0-9_]+)\\s*=/g)].map(m => m[1]));
+          const missing = [...client].filter(name => !server.has(name));
+          if (missing.length) throw new Error('Callable functions missing in backend: ' + missing.join(', '));
+          if (!client.size) throw new Error('No client callable functions found');
+          console.log(`Callable contract OK: ${client.size} client functions, ${server.size} backend exports.`);
+          NODE
       - name: Install backend dependencies
         run: npm install --no-audit --no-fund
         working-directory: backend/functions
