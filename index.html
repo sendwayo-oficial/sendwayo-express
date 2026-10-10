@@ -1373,7 +1373,7 @@ function attachRealtimeListeners(){
    [['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['deposits','deposits'],['accountWithdrawals','accountWithdrawals'],['commissions','commissions']].forEach(([p,k])=>{
      bind(root.child(p).orderByChild('userId').equalTo(uidv),k);
    });
-   bind(root.child('notifications').orderByChild('targetUserId').equalTo(uidv),'notifications');
+   // notifications se escucha con el filtro por rol que se instala debajo.
    bind(root.child('settings'),'settings','replace');
    bind(root.child('accounts'),'accounts','replace');
  }
@@ -1384,16 +1384,37 @@ function attachRealtimeListeners(){
    if(b){b.title=connected?'Firebase conectado · Actualizar ahora':'Firebase sin conexión · Reintentando';b.style.opacity=connected?'1':'.55'}
  });
  startAutoFirebaseRefresh();
- const nref=firebase.database().ref(DB_PATH+'/notifications');
- nref.off();
- nref.on('child_added',snap=>{
-   const n=snap.val();if(!n||(!isAdmin()&&n.targetUserId!==currentUser?.id))return;
-   state.notifications=state.notifications||{};const existed=!!state.notifications[n.id];state.notifications[n.id]=n;knownNotificationIds.add(n.id);
-   if(notificationHydrated&&!existed){playBell();if(n.collection&&n.recordId&&state[n.collection]?.[n.recordId]?.status==='Aprobado'&&state[n.collection]?.[n.recordId]?.receipt)setTimeout(()=>showReceipt(n.collection,n.recordId),180)}
+ // Escuchar el conjunto completo solo para administración. Los demás roles usan una
+ // consulta limitada a su propio targetUserId, tal como exigen las reglas de Realtime Database.
+ const notificationsRoot=root.child('notifications');
+ const notificationRef=isAdmin()
+   ? notificationsRoot
+   : notificationsRoot.orderByChild('targetUserId').equalTo(String(currentUser?.id||''));
+ notificationRef.off();
+ notificationRef.on('value',snap=>{
+   const incoming=snap.val()||{};
+   state.notifications=incoming;
+   Object.entries(incoming).forEach(([id,n])=>{if(n)knownNotificationIds.add(n.id||id)});
+   lastSyncedState=cloneState(state);
    renderNotifications();
  });
- nref.on('child_changed',snap=>{const n=snap.val();if(n&&(isAdmin()||n.targetUserId===currentUser?.id)){state.notifications=state.notifications||{};state.notifications[n.id]=n;renderNotifications()}});
- nref.once('value').then(()=>notificationHydrated=true).catch(()=>notificationHydrated=true);
+ notificationRef.on('child_added',snap=>{
+   const raw=snap.val();if(!raw)return;
+   const n={...raw,id:raw.id||snap.key};
+   if(!isAdmin()&&String(n.targetUserId||'')!==String(currentUser?.id||''))return;
+   state.notifications=state.notifications||{};
+   const existed=!!state.notifications[n.id];
+   state.notifications[n.id]=n;
+   knownNotificationIds.add(n.id);
+   if(notificationHydrated&&!existed){
+     playBell();
+     if(n.collection&&n.recordId&&state[n.collection]?.[n.recordId]?.status==='Aprobado'&&state[n.collection]?.[n.recordId]?.receipt){
+       setTimeout(()=>showReceipt(n.collection,n.recordId),180);
+     }
+   }
+   renderNotifications();
+ });
+ notificationRef.once('value').then(()=>{notificationHydrated=true;}).catch(()=>{notificationHydrated=true;});
 }
 function applyBrandLogo(){document.querySelectorAll('img.brand-logo, .sidebar-brand img, #login-screen img, #header-avatar, #profile-preview').forEach(img=>{if(!img.dataset.userAvatar)img.src=LOGO_DATA});}
 function openBrandSite(){window.location.href='https://sendwayo-oficial.github.io/sendwayo-express/';}
