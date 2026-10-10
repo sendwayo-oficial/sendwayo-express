@@ -3,6 +3,7 @@ name: Publicar reglas de Firebase
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'database.rules.json'
       - 'firebase.json'
@@ -10,6 +11,7 @@ on:
 
 jobs:
   deploy-database-rules:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Descargar repositorio
