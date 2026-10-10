@@ -54,7 +54,7 @@ test('bloquea agente fuera Haití a Haití o en moneda incorrecta', () => {
 });
 
 test('transferencias entre monedas exigen el importe recibido y no inventan tasa de cambio', () => {
-  assert.throws(() => d.validateOperation({type:'Envío',route:'RD->HT',method:'NatCash',amount:500,currency:'DOP'}, 'remitente'), /importe recibido en HTG/);
+  assert.throws(() => d.validateOperation({type:'Envío',route:'RD->HT',method:'NatCash',amount:500,currency:'DOP'}, 'remitente'), /importe exacto.*HTG/);
   assert.doesNotThrow(() => d.validateOperation({type:'Envío',route:'RD->HT',method:'NatCash',amount:500,currency:'DOP',htg:900}, 'remitente'));
 });
 
@@ -102,4 +102,23 @@ test('fusión no asigna un balance sin moneda y nunca crea balances personales p
   const agent = d.mergeLegacyAccounts([{source:'Punto A',id:'AG-1',role:'Agente',email:'a@example.com',balanceDOP:600,balanceHTG:100,commissionDOP:50}]);
   assert.deepEqual(agent.accounts[0].proposedBalances, {balanceDOP:0,balanceHTG:0,commissionDOP:0});
   assert.equal(agent.accounts[0].agentAmountsIgnored, true);
+});
+
+test('todas las rutas transfronterizas identificadas usan 10%', () => {
+  for (const [route, currency] of [
+    ['RD->HT','DOP'], ['USA->HT','DOP'], ['HT->RD','HTG'],
+    ['HT->USA','HTG'], ['RD->USA','DOP'], ['USA->RD','DOP']
+  ]) {
+    assert.equal(d.calculateCommission({ type:'Envío', route, amount:1000, currency }), 100, route);
+  }
+  assert.equal(d.isInternationalRoute({ route:'RD->USA' }), true);
+  assert.equal(d.receivedCurrencyForOperation({ route:'RD->USA' }), 'USD');
+  assert.equal(d.receivedCurrencyForOperation({ route:'USA->RD' }), 'DOP');
+  assert.equal(d.receivedCurrencyForOperation({ route:'HT->USA' }), 'USD');
+});
+
+test('una ruta transfronteriza debe indicar el importe recibido y no inventar conversiones', () => {
+  assert.throws(() => d.validateOperation({type:'Envío',route:'HT->USA',method:'NatCash',amount:500,currency:'HTG'}, 'remitente'), /importe exacto.*USD/);
+  assert.throws(() => d.validateOperation({type:'Envío',route:'RD->USA',amount:500,currency:'DOP'}, 'remitente'), /importe exacto.*USD/);
+  assert.doesNotThrow(() => d.validateOperation({type:'Envío',route:'HT->USA',method:'NatCash',amount:500,currency:'HTG',receivedAmount:80}, 'remitente'));
 });
