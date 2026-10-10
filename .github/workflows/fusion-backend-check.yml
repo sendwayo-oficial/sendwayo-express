@@ -41,8 +41,8 @@ jobs:
           const fs = require('node:fs');
           const html = fs.readFileSync('index.html', 'utf8');
           const backend = fs.readFileSync('backend/functions/index.js', 'utf8');
-          const client = new Set([...html.matchAll(/\\binvoke\\(['"]([A-Za-z0-9_]+)['"]\\)/g)].map(m => m[1]));
-          const server = new Set([...backend.matchAll(/exports\\.([A-Za-z0-9_]+)\\s*=/g)].map(m => m[1]));
+          const client = new Set([...html.matchAll(/invoke\(['"]([A-Za-z0-9_]+)['"]\)/g)].map(m => m[1]));
+          const server = new Set([...backend.matchAll(/exports[.]([A-Za-z0-9_]+)[ ]*=/g)].map(m => m[1]));
           const missing = [...client].filter(name => !server.has(name));
           if (missing.length) throw new Error('Callable functions missing in backend: ' + missing.join(', '));
           if (!client.size) throw new Error('No client callable functions found');
