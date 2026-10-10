@@ -158,10 +158,15 @@ const refreshAccountLists=()=>{
  if(!isAdmin)return;
  const allowed=p=>["active","approved","aprobado","activo"].includes(String(p.status||"").toLowerCase());
  const sourceProfiles=latestProfiles.filter(p=>allowed(p)&&["remitente","agent","agente"].includes(String(p.role||"").toLowerCase()));
- const seen=new Set(), remitters=[], agents=[];
+ const seenUids=new Set(), seenIdentities=new Set(), remitters=[], agents=[];
  const accountByUid=new Map(latestAccounts.map(a=>[String(a.uid||a.id||""),a]));
  for(const p of sourceProfiles){
-   const uid=String(p.uid||p.id||"");if(!uid||seen.has(uid))continue;seen.add(uid);
+   const uid=String(p.uid||p.id||"");if(!uid||seenUids.has(uid))continue;
+   const emailKey=String(p.emailNormalized||p.email||"").trim().toLowerCase();
+   const phoneKey=String(p.phoneNormalized||p.phone||"").replace(/\D/g,"");
+   const identityKey=emailKey?"email:"+emailKey:(phoneKey?"phone:"+phoneKey:"uid:"+uid);
+   if(seenIdentities.has(identityKey))continue;
+   seenUids.add(uid);seenIdentities.add(identityKey);
    const account=accountByUid.get(uid)||{};
    const display=String(p.displayName||p.name||account.displayName||account.name||p.email||uid).trim();
    const parts=display.split(/\s+/);const normalizedRole=String(p.role||"").toLowerCase();
