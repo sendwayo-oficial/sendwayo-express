@@ -18,15 +18,15 @@
 - Tarifas de dominio centralizadas: rutas internacionales identificadas al 10%; recargas/paqueticos/servicios/facturas al 5%; ruta nacional RD→RD al 8%; Haití→Haití usa la tarifa fija por tramos. Las rutas entre monedas deben incluir importe recibido explícito; no se inventan tipos de cambio.
 - El campo de importe recibido se muestra para las rutas transfronterizas que lo necesitan, con moneda de destino indicada en la interfaz.
 
-## Validaciones ejecutadas
-- [Validación del candidato: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38053705122).
-- [Validación de integridad: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38053705143).
-- [Integridad de interfaz: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38053705128).
-- [Validación de backend: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38053705130).
-- JavaScript inline: **20 bloques, sin errores de sintaxis**.
-- Pruebas de dominio: **16/16 aprobadas**.
-- Contrato cliente/servidor: **24 llamadas callable del frontend corresponden a 24 exports del backend**.
-- Configuración JSON del backend apunta a `sendwayo-express-app-101`; reglas de Firestore niegan escrituras financieras directas desde el cliente.
+## Validaciones ejecutadas en la revisión actual
+- [Validación del candidato: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38083593049).
+- [CI general: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38083593042).
+- [Integridad de interfaz: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38083593126). Los sondeos repetitivos de DOM cada 1,2–3 segundos se sustituyeron por observadores de cambios y eventos; el reloj único de interfaz queda permitido.
+- [Validación de backend: PASS](https://github.com/sendwayo-oficial/sendwayo-express/actions/runs/38083593044).
+- JavaScript inline: validación automática de sintaxis aprobada.
+- Pruebas de dominio: **16/16 aprobadas**, incluidos deduplicación Punto A/B, conflictos de rol y no suma de balances.
+- Contrato frontend/backend: **21 llamadas callable del cliente; 27 exports en el servidor**. Todas las llamadas del cliente tienen función correspondiente.
+- Configuración JSON de backend apunta a `sendwayo-express-app-101`; las reglas de Firestore niegan escrituras financieras directas desde el cliente.
 
 Estas pruebas son estáticas y de lógica de dominio. **No son una prueba end-to-end con Firebase Authentication, Firestore o Cloud Functions en producción.**
 
