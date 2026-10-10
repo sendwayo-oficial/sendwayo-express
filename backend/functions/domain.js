@@ -88,7 +88,7 @@ function isHaitiToDominican(operation) {
     const toDop = /^(rd|rd\$|dop|dop\$|dominicana|republica dominicana|dominican republic)$/.test(destination);
     if (fromHaiti && toDop) return true;
   }
-  const route = normalizeText(\`\${operation.route || ''} \${operation.routeFull || ''}\`);
+  const route = normalizeText(`${operation.route || ''} ${operation.routeFull || ''}`);
   return /(?:\bht\b|\bhtg\b|haiti|haitian republic)\s*(?:->|→|>|-+|\ba\b|\bto\b)\s*(?:\brd\b|republica dominicana|dominican republic)/.test(route);
 }
 
@@ -104,7 +104,7 @@ function routeCountryPair(operation) {
   const fromFields = countryBucket(operation.originCountry || operation.origin);
   const toFields = countryBucket(operation.destinationCountry || operation.destination);
   if (fromFields && toFields) return { from: fromFields, to: toFields };
-  const route = normalizeText(\`\${operation.route || ''} \${operation.routeFull || ''}\`);
+  const route = normalizeText(`${operation.route || ''} ${operation.routeFull || ''}`);
   const pairs = [
     { from: 'DOP', to: 'HTG', re: /(?:^|[^a-z])(?:rd\$?|dop|dominicana|republica dominicana|dominican republic)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:ht|htg|haiti|haitian republic|republica de haiti)(?:$|[^a-z])/ },
     { from: 'USD', to: 'HTG', re: /(?:^|[^a-z])(?:usa|us|usd|estados unidos|united states|united states of america)\s*(?:->|→|>|-+|\bto\b|\ba\b)\s*(?:ht|htg|haiti|haitian republic|republica de haiti)(?:$|[^a-z])/ },
@@ -195,7 +195,7 @@ function validateOperation(operation, actorRole) {
     const legacyReceived = receiveCurrency === 'HTG' ? operation.htg : (receiveCurrency === 'DOP' ? operation.rd : null);
     if ((domainAmount(operation.receivedAmount) || domainAmount(legacyReceived)) === null) {
       const label = receiveCurrency === 'HTG' ? 'HTG/GDES' : receiveCurrency === 'DOP' ? 'RD$' : receiveCurrency === 'USD' ? 'USD' : 'la moneda de destino';
-      throw new Error(\`Indica el importe exacto que recibirá la persona en \${label}; no se inventará una tasa de cambio.\`);
+      throw new Error(`Indica el importe exacto que recibirá la persona en ${label}; no se inventará una tasa de cambio.`);
     }
   }
   return { amount, currency, isDeposit: isDeposit(operation), fee: calculateCommission({ ...operation, amount }) };
