@@ -227,6 +227,169 @@ exports.submitRegistration = callable(async (data, context) => {
   return { ok: true, status: 'Pendiente', message: 'Solicitud recibida. Espera la aprobación del administrador.' };
 });
 
+
+exports.createManagedAccount = callable(async (data, context) => {
+  const actor = await requireAdmin(context);
+  const role = domain.normalizeRole(data.role || data.requestedRole);
+  const email = domain.normalizeEmail(data.email);
+  const displayName = text(data.displayName || data.name, 180);
+  const phone = text(data.phone, 60);
+  const phoneNormalized = domain.normalizePhone(data.phoneNormalized || phone);
+  const phoneCode = text(data.phoneCode || data.code, 24);
+  const country = text(data.country || data.pais, 80);
+  const username = text(data.username || email.split('@')[0], 80).trim().toLowerCase();
+  if (!['remitente', 'agent'].includes(role)) fail('invalid-argument', 'Solo se pueden crear remitentes o agentes.');
+  if (!/^\S+@\S+\.\S+$/.test(email)) fail('invalid-argument', 'Indica un correo electrónico válido.');
+  if (!displayName || !phone || !phoneNormalized || !username) fail('invalid-argument', 'Nombre, teléfono, correo y usuario son obligatorios.');
+
+  const [emailProfiles, emailProfilesLegacy, usernames, phones, oldEmails, oldPhones] = await Promise.all([
+    db.collection('profiles').where('emailNormalized', '==', email).limit(5).get(),
+    db.collection('profiles').where('email', '==', email).limit(5).get(),
+    db.collection('profiles').where('username', '==', username).limit(5).get(),
+    db.collection('profiles').where('phoneNormalized', '==', phoneNormalized).limit(5).get(),
+    db.collection('legacyAccounts').where('emailNormalized', '==', email).limit(5).get(),
+    db.collection('legacyAccounts').where('phoneNormalized', '==', phoneNormalized).limit(5).get()
+  ]);
+  if ([emailProfiles, emailProfilesLegacy, usernames, phones, oldEmails, oldPhones].some(q => !q.empty)) {
+    fail('already-exists', 'El correo, usuario o teléfono ya existe en perfiles o cuentas importadas. Concilia esa cuenta para evitar duplicados.');
+  }
+
+  let user, authCreated = false;
+  try {
+    try {
+      user = await admin.auth().getUserByEmail(email);
+    } catch (err) {
+      if (err.code !== 'auth/user-not-found') throw err;
+      user = await admin.auth().createUser({
+        email, displayName,
+        password: crypto.randomBytes(36).toString('base64url'),
+        disabled: false
+      });
+      authCreated = true;
+    }
+    const inviteLink = await admin.auth().generatePasswordResetLink(email);
+    const profileRef = db.collection('profiles').doc(user.uid);
+    const accountRef = accountDoc(user.uid);
+    await db.runTransaction(async tx => {
+      const [profileSnap, emailSnap, oldEmailSnap, usernameSnap, phoneSnap, accountSnap] = await Promise.all([
+        tx.get(profileRef),
+        tx.get(db.collection('profiles').where('emailNormalized', '==', email).limit(5)),
+        tx.get(db.collection('profiles').where('email', '==', email).limit(5)),
+        tx.get(db.collection('profiles').where('username', '==', username).limit(5)),
+        tx.get(db.collection('profiles').where('phoneNormalized', '==', phoneNormalized).limit(5)),
+        role === 'remitente' ? tx.get(accountRef) : Promise.resolve({ exists: false })
+      ]);
+      if (profileSnap.exists || [...emailSnap.docs, ...oldEmailSnap.docs, ...usernameSnap.docs, ...phoneSnap.docs].some(d => d.id !== user.uid)) {
+        fail('already-exists', 'La cuenta ya apareció en perfiles; no se creó un duplicado.');
+      }
+      if (role === 'remitente' && accountSnap.exists) {
+        fail('failed-precondition', 'Ya existe una cuenta financiera para ese UID. Debe vincularse y conciliarse, no reiniciarse.');
+      }
+      const now = FV.serverTimestamp();
+      tx.create(profileRef, {
+        uid: user.uid, email, emailNormalized: email, username, displayName, name: displayName,
+        phone, phoneNormalized, phoneCode, code: phoneCode, country, role, status: 'active',
+        profileOrigin: 'admin_created', createdByUid: actor.uid, createdAt: now, updatedAt: now
+      });
+      if (role === 'remitente') tx.create(accountRef, {
+        uid: user.uid, role, displayName, email, emailNormalized: email, phone, phoneNormalized,
+        phoneCode, code: phoneCode, country,
+        balanceDOP: 0, balanceHTG: 0, commissionDOP: 0, commissionHTG: 0,
+        createdAt: now, updatedAt: now
+      });
+      tx.create(db.collection('auditLogs').doc('managed-account-created-' + user.uid), {
+        kind: 'managed_account_created', actorUid: actor.uid, targetUid: user.uid,
+        targetRole: role, email, createdAt: now, createdAtMs: Date.now()
+      });
+      addNotices(tx, [user.uid], 'managed-account-created-' + user.uid, {
+        type: 'registration', title: 'Cuenta SENDWAYO creada',
+        message: 'Administración creó tu perfil. Usa el enlace privado para establecer tu propia contraseña.',
+        section: 'dashboard', status: 'active'
+      });
+    });
+    return { ok: true, uid: user.uid, role, email, inviteLink, message: 'Cuenta creada. Comparte el enlace de restablecimiento de forma privada para configurar la contraseña.' };
+  } catch (err) {
+    if (authCreated && user?.uid) {
+      try { await admin.auth().deleteUser(user.uid); } catch (_) {}
+    }
+    throw err;
+  }
+});
+
+exports.updateManagedAccount = callable(async (data, context) => {
+  const actor = await requireAdmin(context);
+  const identifier = text(data.uid || data.identifier || data.id || data.legacyId, 140);
+  if (!identifier) fail('invalid-argument', 'Falta el identificador del perfil.');
+  const profile = await resolveProfile(identifier);
+  if (!profile) fail('not-found', 'No se encontró el perfil.');
+  const role = domain.normalizeRole(profile.role);
+  if (!['remitente', 'agent'].includes(role)) fail('failed-precondition', 'Solo se pueden editar perfiles de remitente o agente.');
+  const displayName = text(data.displayName || data.name, 180);
+  const phone = text(data.phone, 60);
+  const phoneNormalized = domain.normalizePhone(data.phoneNormalized || phone);
+  const phoneCode = text(data.phoneCode || data.code, 24);
+  const country = text(data.country || data.pais, 80);
+  if (!displayName || !phone || !phoneNormalized) fail('invalid-argument', 'Nombre y teléfono son obligatorios.');
+
+  const [samePhone, sameLegacyPhone] = await Promise.all([
+    db.collection('profiles').where('phoneNormalized', '==', phoneNormalized).limit(10).get(),
+    db.collection('legacyAccounts').where('phoneNormalized', '==', phoneNormalized).limit(10).get()
+  ]);
+  if (samePhone.docs.some(d => d.id !== profile.uid) || sameLegacyPhone.docs.some(d => {
+    const row = d.data();
+    return !row.duplicateOf && row.linkedUid !== profile.uid
+      && row.id !== profile.legacyId && row.legacyId !== profile.legacyId
+      && domain.normalizeEmail(row.emailNormalized || row.email) !== domain.normalizeEmail(profile.emailNormalized || profile.email);
+  })) fail('already-exists', 'Ese teléfono pertenece a otra cuenta. No se modificó el perfil.');
+
+  const profileRef = db.collection('profiles').doc(profile.uid);
+  const accountRef = accountDoc(profile.uid);
+  const auditRef = db.collection('auditLogs').doc();
+  await db.runTransaction(async tx => {
+    const [pSnap, accountSnap] = await Promise.all([tx.get(profileRef), tx.get(accountRef)]);
+    if (!pSnap.exists) fail('not-found', 'El perfil ya no existe.');
+    if (!['active', 'approved', 'aprobado', 'activo'].includes(String(pSnap.data().status || '').toLowerCase())) {
+      fail('failed-precondition', 'La cuenta está desactivada; no se actualizó.');
+    }
+    const now = FV.serverTimestamp();
+    const patch = { displayName, name: displayName, phone, phoneNormalized, phoneCode, code: phoneCode, country, updatedAt: now, updatedByUid: actor.uid };
+    tx.update(profileRef, patch);
+    if (role === 'remitente' && accountSnap.exists) tx.update(accountRef, { displayName, phone, phoneNormalized, phoneCode, code: phoneCode, country, updatedAt: now });
+    tx.create(auditRef, { kind: 'managed_account_updated', actorUid: actor.uid, targetUid: profile.uid, targetRole: role, fields: ['displayName', 'phone', 'phoneCode', 'country'], createdAt: now, createdAtMs: Date.now() });
+    addNotices(tx, [profile.uid], 'managed-account-updated-' + profile.uid + '-' + Date.now(), {
+      type: 'profile', title: 'Perfil actualizado', message: 'Administración actualizó tu nombre o teléfono.', section: 'dashboard'
+    });
+  });
+  return { ok: true, uid: profile.uid, role, displayName, phone, phoneCode, country };
+});
+
+exports.archiveManagedAccount = callable(async (data, context) => {
+  const actor = await requireAdmin(context);
+  const identifier = text(data.uid || data.identifier || data.id || data.legacyId, 140);
+  if (!identifier) fail('invalid-argument', 'Falta el identificador de la cuenta.');
+  const profile = await resolveProfile(identifier);
+  if (!profile) fail('not-found', 'No se encontró el perfil; no se modificó nada.');
+  const role = domain.normalizeRole(profile.role);
+  if (!['remitente', 'agent'].includes(role)) fail('failed-precondition', 'No se puede desactivar la cuenta administrativa.');
+  const profileRef = db.collection('profiles').doc(profile.uid);
+  const accountRef = accountDoc(profile.uid);
+  const auditRef = db.collection('auditLogs').doc('archive-account-' + profile.uid + '-' + Date.now());
+  await db.runTransaction(async tx => {
+    const [pSnap, accountSnap] = await Promise.all([tx.get(profileRef), tx.get(accountRef)]);
+    if (!pSnap.exists) fail('not-found', 'El perfil ya no existe.');
+    const now = FV.serverTimestamp();
+    tx.update(profileRef, { status: 'disabled', disabledAt: now, disabledByUid: actor.uid, updatedAt: now });
+    if (role === 'remitente' && accountSnap.exists) tx.update(accountRef, { active: false, archivedAt: now, archivedByUid: actor.uid, updatedAt: now });
+    tx.create(auditRef, { kind: 'managed_account_archived', actorUid: actor.uid, targetUid: profile.uid, targetRole: role, createdAt: now, createdAtMs: Date.now() });
+    addNotices(tx, [profile.uid], 'account-archived-' + profile.uid + '-' + Date.now(), {
+      type: 'profile', title: 'Acceso desactivado',
+      message: 'Administración desactivó este acceso. El historial financiero se conserva.',
+      section: 'dashboard'
+    });
+  });
+  return { ok: true, uid: profile.uid, role, status: 'disabled', historyPreserved: true };
+});
+
 exports.resolveOrBootstrapProfile = callable(async (_data, context) => {
   const uid = requireAuth(context);
   const email = domain.normalizeEmail(context.auth.token.email || '');
