@@ -993,7 +993,7 @@ exports.adjustAccount = callable(async (data, context) => {
         ownerUid: uid === 'admin' ? actor.uid : uid, ownerRole, ownerName,
         createdByUid: actor.uid, createdByRole: actor.role,
         recipientUids: [...new Set([...(uid === 'admin' ? [actor.uid] : [uid]), ...admins])],
-        reason, before, after, status: 'Aprobado',
+        status: 'Aprobado',
         approvedByName: text(actor.displayName || actor.name || actor.email, 180),
         approvedAt: FV.serverTimestamp(), approvedAtMs: now, createdAtMs: now
       };
