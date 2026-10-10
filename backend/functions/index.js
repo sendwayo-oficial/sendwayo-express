@@ -108,12 +108,17 @@ function standardOperationFields(operation, validation, actor, owner, id) {
   const net = isDeposit ? amount : domain.round2(amount - fee);
   let receivedCurrency = validation.currency;
   let receivedAmount = isDeposit ? amount : net;
-  if (domain.isDominicanToHaiti(operation) || domain.isUSAToHaiti(operation)) {
+  const destinationCurrency = domain.receivedCurrencyForOperation(operation);
+  if (destinationCurrency === 'HTG') {
     receivedCurrency = 'HTG';
-    receivedAmount = (domain.parseAmount(operation.receivedAmount) || domain.parseAmount(operation.htg));
-  } else if (domain.isHaitiToDominican(operation)) {
+    receivedAmount = domain.parseAmount(operation.receivedAmount) || domain.parseAmount(operation.htg);
+  } else if (destinationCurrency === 'DOP') {
     receivedCurrency = 'DOP';
-    receivedAmount = (domain.parseAmount(operation.receivedAmount) || domain.parseAmount(operation.rd));
+    receivedAmount = domain.parseAmount(operation.receivedAmount) || domain.parseAmount(operation.rd);
+  } else if (destinationCurrency === 'USD') {
+    receivedCurrency = 'USD';
+    // Cross-currency USD routes must supply receivedAmount; never infer an exchange rate.
+    receivedAmount = domain.parseAmount(operation.receivedAmount);
   } else if (domain.isHaitiToHaiti(operation)) {
     receivedCurrency = 'HTG';
     receivedAmount = net;
@@ -905,7 +910,8 @@ exports.approveLegacyBalanceMigration = callable(async (data, context) => {
 
 exports.adjustAccount = callable(async (data, context) => {
   const actor = await requireAdmin(context);
-  let uid = text(data.uid || data.targetUid, 140);
+  const rawUid = text(data.uid || data.targetUid, 140);
+  let uid = ['admin', 'operations'].includes(rawUid.toLowerCase()) ? rawUid.toLowerCase() : rawUid;
   // Allow admin-facing controls to pass a legacy account ID; always resolve to
   // the canonical Firebase UID before reading/writing financial documents.
   if (uid && !['admin', 'operations'].includes(uid)) {
@@ -918,26 +924,36 @@ exports.adjustAccount = callable(async (data, context) => {
   const reason = text(data.reason, 400);
   const supplied = Number(data.value ?? data.amount);
   const requestId = cleanId(data.idempotencyKey || data.id);
-  if (!uid || !currency || !['balance', 'commission'].includes(kind) || !reason || !Number.isFinite(supplied) || !requestId) fail('invalid-argument', 'Completa cuenta, moneda, tipo, importe, motivo y clave de idempotencia.');
+  const mode = data.mode === 'set' ? 'set' : (['decrement', 'subtract', 'sub'].includes(String(data.mode || '').toLowerCase()) ? 'decrement' : 'increment');
+  if (!uid || !currency || !['balance', 'commission'].includes(kind) || !reason || !Number.isFinite(supplied) || !requestId ||
+      (mode === 'set' ? supplied < 0 : supplied <= 0)) {
+    fail('invalid-argument', 'Completa cuenta, moneda, tipo, importe, motivo y clave de idempotencia con un importe válido.');
+  }
   if (uid === 'operations' && (kind !== 'balance' || currency !== 'HTG')) {
     fail('invalid-argument', 'El fondo operativo compartido de los agentes solo admite ajustes de balance en HTG/GDES.');
   }
   const ref = uid === 'admin' ? systemDoc(SYSTEM_ADMIN_ID) : (uid === 'operations' ? systemDoc(SYSTEM_OPERATIONS_ID) : accountDoc(uid));
   const field = moneyField(currency, kind);
   const auditRef = db.collection('auditLogs').doc(`adjust-${requestId}`);
+  const ledgerRef = ledgerDoc(`adjust-${requestId}`);
+  const receiptId = `CMP-ADJ-${requestId.replace(/[^A-Za-z0-9-]/g, '').slice(-80)}`;
+  const receiptRef = db.collection('receipts').doc(receiptId);
+  const admins = await listAdminUids();
   const agentsForNotice = uid === 'operations' ? await listAgentUids() : [];
   let result;
   await db.runTransaction(async tx => {
     let profileSnap = null;
-    const readTasks = [tx.get(auditRef), tx.get(ref)];
+    const readTasks = [tx.get(auditRef), tx.get(ref), tx.get(ledgerRef), tx.get(receiptRef)];
     if (uid !== 'admin' && uid !== 'operations') readTasks.push(tx.get(db.collection('profiles').doc(uid)));
     const readResults = await Promise.all(readTasks);
     const auditSnap = readResults[0];
     const snap = readResults[1];
-    if (readResults.length > 2) profileSnap = readResults[2];
+    const ledgerSnap = readResults[2];
+    const receiptSnap = readResults[3];
+    if (readResults.length > 4) profileSnap = readResults[4];
     if (auditSnap.exists) {
       const saved = auditSnap.data();
-      if (saved.actorUid !== actor.uid || saved.targetUid !== uid || saved.balanceKind !== kind || saved.currencyCode !== currency || Number(saved.requestValue) !== supplied || saved.requestMode !== (data.mode === 'set' ? 'set' : 'increment')) {
+      if (saved.actorUid !== actor.uid || saved.targetUid !== uid || saved.balanceKind !== kind || saved.currencyCode !== currency || Number(saved.requestValue) !== supplied || saved.requestMode !== mode) {
         fail('already-exists', 'La clave de ajuste ya se utilizó con datos distintos.');
       }
       result = { ok: true, uid, field, before: saved.before, after: saved.after, amount: saved.amount, currency, repeated: true };
@@ -951,16 +967,44 @@ exports.adjustAccount = callable(async (data, context) => {
     }
     const old = snap.exists ? snap.data() : {};
     const before = Number(old[field] || 0);
-    const after = data.mode === 'set' ? domain.round2(supplied) : domain.round2(before + supplied);
+    const after = mode === 'set' ? domain.round2(supplied) : (mode === 'decrement' ? domain.round2(before - supplied) : domain.round2(before + supplied));
     if (after < 0) fail('failed-precondition', 'El ajuste no puede dejar el balance o la comisión por debajo de cero.');
+    const delta = domain.round2(after - before);
+    const now = Date.now();
+    const targetProfile = profileSnap?.exists ? profileSnap.data() : {};
     tx.set(ref, { [field]: after, updatedAt: FV.serverTimestamp() }, { merge: true });
-    tx.create(auditRef, { kind: 'account_adjustment', actorUid: actor.uid, targetUid: uid, balanceKind: kind, currencyCode: currency, field, before, after, amount: domain.round2(after - before), requestValue: supplied, requestMode: data.mode === 'set' ? 'set' : 'increment', reason, createdAt: FV.serverTimestamp(), createdAtMs: Date.now() });
+    tx.create(auditRef, { kind: 'account_adjustment', actorUid: actor.uid, targetUid: uid, balanceKind: kind, currencyCode: currency, field, before, after, amount: delta, requestValue: supplied, requestMode: mode, reason, createdAt: FV.serverTimestamp(), createdAtMs: now });
+    if (!ledgerSnap.exists) tx.create(ledgerRef, {
+      id: `adjust-${requestId}`, operationId: requestId, kind: 'account_adjustment',
+      actorUid: actor.uid, ownerUid: (uid === 'admin' || uid === 'operations') ? null : uid,
+      targetUid: uid, balanceKind: kind, currencyCode: currency, field, before, after,
+      amount: delta, requestMode: mode, reason, createdAt: FV.serverTimestamp(), createdAtMs: now
+    });
+    if (!receiptSnap.exists && uid !== 'operations') {
+      const ownerRole = uid === 'admin' ? 'admin' : 'remitente';
+      const ownerName = uid === 'admin' ? text(actor.displayName || actor.name || actor.email, 180)
+        : text(targetProfile.displayName || targetProfile.name || targetProfile.email, 180);
+      const receipt = {
+        id: receiptId, receiptId, operationId: requestId,
+        type: `${mode === 'decrement' ? 'Descuento' : mode === 'set' ? 'Ajuste' : 'Acreditación'} de ${kind === 'commission' ? 'comisión' : 'balance'}`,
+        route: 'Movimiento administrativo', amount: Math.abs(delta), currency: currencyLabel(currency), currencyCode: currency,
+        receivedAmount: Math.abs(delta), receivedCurrency: currencyLabel(currency),
+        beneficiary: ownerName, beneficiaryPhone: text(targetProfile.phone, 60),
+        ownerUid: uid === 'admin' ? actor.uid : uid, ownerRole, ownerName,
+        createdByUid: actor.uid, createdByRole: actor.role,
+        recipientUids: [...new Set([...(uid === 'admin' ? [actor.uid] : [uid]), ...admins])],
+        reason, before, after, status: 'Aprobado',
+        approvedByName: text(actor.displayName || actor.name || actor.email, 180),
+        approvedAt: FV.serverTimestamp(), approvedAtMs: now, createdAtMs: now
+      };
+      tx.create(receiptRef, receipt);
+    }
     if (uid === 'operations') {
       addNotices(tx, agentsForNotice, auditRef.id, { type: 'account_adjustment', title: 'Fondo operativo actualizado', message: `Administración ajustó el fondo compartido de operaciones en HTG/GDES.`, section: 'dashboard', currencyCode: currency, amount: domain.round2(after - before) });
     } else if (uid !== 'admin') {
-      addNotices(tx, [uid], auditRef.id, { type: 'account_adjustment', title: 'Balance actualizado por Administración', message: `${kind === 'commission' ? 'Comisión' : 'Balance'} ${currencyLabel(currency)} actualizado. Motivo: ${reason}`, section: 'dashboard' });
+      addNotices(tx, [uid], auditRef.id, { type: 'account_adjustment', title: 'Balance actualizado por Administración', message: `${kind === 'commission' ? 'Comisión' : 'Balance'} ${currencyLabel(currency)} actualizado. Motivo: ${reason}`, section: 'dashboard', receiptId });
     }
-    result = { ok: true, uid, field, before, after, amount: domain.round2(after - before), currency };
+    result = { ok: true, uid, field, before, after, amount: domain.round2(after - before), currency, receiptId, mode };
   });
   return result;
 });
