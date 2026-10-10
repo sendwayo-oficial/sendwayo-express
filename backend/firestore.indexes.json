@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "beneficiaries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "active",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
