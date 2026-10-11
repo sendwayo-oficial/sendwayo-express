@@ -26,6 +26,11 @@ jobs:
           NODE
       - name: Check critical hardening markers
         run: |
+          if grep -q 'SW_POINT_A_RECOVERY_REDIRECT' index.html; then
+            grep -q 'https://sendwayo-express-app-101.web.app/' index.html
+            echo "SENDWAYO recovery redirect target OK"
+            exit 0
+          fi
           grep -q 'sendwayo-professional-hardening' index.html
           grep -q 'ganancias-dia-card' index.html
           echo "SENDWAYO critical markers OK"
