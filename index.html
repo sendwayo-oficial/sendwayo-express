@@ -334,8 +334,8 @@ aside{height:100vh;min-height:0;overflow:hidden}
     <div style="text-align:center"><img src="assets/sendwayo-logo-real.jpg?v=20260925" style="width:115px;height:115px" alt=""></div>
     <h2>SENDWAYO EXPRESS</h2>
     <p class="muted" style="text-align:center;margin:7px 0 12px">Ingrese sus credenciales de acceso</p>
-    <div class="form-group"><label>Usuario o correo electrónico</label><input id="login-user" type="text" class="form-control" autocomplete="username"></div>
-    <div class="form-group"><label>Contraseña</label><input id="login-pass" type="password" class="form-control" autocomplete="current-password"></div>
+    <div class="form-group"><label>Usuario o correo electrónico</label><input id="login-user" name="sw-login-identity" type="text" class="form-control" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+    <div class="form-group"><label>Contraseña</label><input id="login-pass" name="sw-login-password" type="password" class="form-control" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="window.sendwayoLogin()">Ingresar al Sistema</button><button class="btn btn-light" style="width:100%;justify-content:center;margin-top:8px" onclick="window.sendwayoResetAdminPassword()">Olvidé la contraseña del administrador</button><div id="login-status" class="login-status" role="status" aria-live="polite"></div>
     <button class="btn btn-light" style="width:100%;justify-content:center;margin-top:8px" onclick="window.sendwayoOpenWelcome()">Volver a bienvenida</button>
   </div>
