@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<!-- SENDWAYO EXPRESS V31: entrada principal; usa la configuración Firebase del Punto A. -->
+<!-- SENDWAYO V30: archivo único auditado; observer circular corregido; mantiene las reglas de balance y comisión del sistema base. -->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>SENDWAYO EXPRESS — Versión 31</title>
+  <title>SENDWAYO EXPRESS — Fusión A+B V31.1, candidato de prueba</title>
 <style id="sw-v26-side-panel-style">@media(max-width:640px){#sendwayo-public-request-admin{left:10px!important;right:10px!important;top:70px!important;bottom:10px!important;width:auto!important;max-width:none!important;max-height:calc(100vh - 80px)!important}}</style></head>
 <body>
+<div id="sendwayo-preview-notice" role="status" style="position:relative;z-index:1000000;box-sizing:border-box;width:100%;padding:9px 14px;background:#fff4d6;border-bottom:1px solid #e7b64b;color:#533b00;font:600 12px/1.45 system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;gap:12px;text-align:center">
+  <span>V31 PARA REVISIÓN: candidato corregido. No es producción; la conexión y los flujos financieros deben verificarse en Firebase antes de publicar.</span>
+  <button type="button" aria-label="Cerrar aviso de prueba" onclick="document.getElementById('sendwayo-preview-notice')?.remove()" style="flex:none;border:1px solid #a87612;border-radius:6px;background:#fff9e9;color:#533b00;padding:3px 8px;cursor:pointer">Cerrar</button>
+</div>
+
 <style>
 #sendwayo-platform-watermark{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:1;}
 #root{position:relative;z-index:1;}
@@ -191,173 +196,7 @@ function sendwayoDownload(name,content,type){const b=new Blob([content],{type});
 function sendwayoSecretRows(){return [...document.querySelectorAll("[data-sendwayo-secret-card]")].filter(x=>x.style.display!=="none").map(el=>({tipo:el.getAttribute("data-secret-role")||"",informacion:el.innerText.replace(/\s+/g," ").trim()}))}
 function sendwayoExportCSV(){const rows=sendwayoSecretRows();const csv=["Tipo,Información",...rows.map(r=>`"${r.tipo.replace(/"/g,'""')}","${r.informacion.replace(/"/g,'""')}"`)].join("\n");sendwayoDownload("SENDWAYO_INFORMACIONES_SECRETAS.csv",csv,"text/csv;charset=utf-8")}
 function sendwayoExportExcel(){const rows=sendwayoSecretRows();const html=`<html><meta charset="utf-8"><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table></html>`;sendwayoDownload("SENDWAYO_INFORMACIONES_SECRETAS.xls",html,"application/vnd.ms-excel;charset=utf-8")}
-function sendwayoExportPDF(){const rows=sendwayoSecretRows();const w=window.open("","_blank","width=1000,height=800");if(!w){alert("Permita las ventanas emergentes para generar el PDF.");return}w.document.write(`<html><head><meta charset="utf-8"><title>SENDWAYO EXPRESS - Informaciones Secretas</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0a245e}h1{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px;text-align:left}th{background:#0a245e;color:#fff}</style></head><body><h1>SENDWAYO EXPRESS — Informaciones Secretas</h1><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table><script>window.onload=()=>window.print()<\/script><script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>`);w.document.close()}
+function sendwayoExportPDF(){const rows=sendwayoSecretRows();const w=window.open("","_blank","width=1000,height=800");if(!w){alert("Permita las ventanas emergentes para generar el PDF.");return}w.document.write(`<html><head><meta charset="utf-8"><title>SENDWAYO EXPRESS - Informaciones Secretas</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0a245e}h1{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px;text-align:left}th{background:#0a245e;color:#fff}</style></head><body><h1>SENDWAYO EXPRESS — Informaciones Secretas</h1><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
 function sendwayoEditSecret(role,id,name){if(!confirm(`Modificar los datos de ${name||id}?`))return;const all=sendwayoSecretUsers();let u=all.find(x=>x.role===role&&String(x.id||"")===String(id||""));if(!u)u={role,name,id,code:id,password:null,identifiers:[name,id]};const nombre=prompt("Nombre",u.name||name||"");if(nombre===null)return;const telefono=prompt("Teléfono",u.phone||"");if(telefono===null)return;const usuario=prompt("Usuario/correo",u.email||u.identifier||"");if(usuario===null)return;const pass=prompt("Nueva contraseña (dejar vacío para conservar)",u.password||"");if(pass===null)return;const next={...u,name:nombre,phone:telefono,email:usuario,identifiers:[...new Set([...(u.identifiers||[]),nombre,telefono,usuario,id]) ]};if(pass)next.password=pass;sendwayoSaveSecretUser(next);alert("Cambios guardados correctamente.");location.reload()}
 function sendwayoAddSecretUser(){const role=prompt("Tipo: escriba AGENTE o REMITENTE");if(!role)return;const r=role.toLowerCase().startsWith("a")?"agent":"remitente";const name=prompt("Nombre completo");if(!name)return;const phone=prompt("Teléfono");if(!phone)return;const id=prompt("ID único (ej. AG-006 / RM-031)");if(!id)return;const email=prompt("Usuario/correo");if(email===null)return;const password=prompt("Contraseña");if(password===null)return;const parts=name.trim().split(/\s+/),first=parts.shift()||"",last=parts.join(" ");const user={role:r,name,first,last,id,code:id,phone,email,password:null,identifiers:[name,phone,email,id],balance:0,balanceDOP:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0};sendwayoSaveSecretUser(user);alert("Registro agregado. Agentes: sin balance ni comisión personal. Remitentes: balance DOP y HTG y comisiones DOP/HTG.");location.reload()}
 const SENDWAYO_USER_STORE="sendwayo_users";
@@ -992,7 +831,8 @@ function installBeneficiaryAutocomplete(){
         wrapper.style.top=(rect.bottom+window.scrollY+4)+"px";
         wrapper.style.width=rect.width+"px";
         wrapper.style.display="block";
-      };      
+      };
+      
       inp.addEventListener("input", (e)=>{
         const val=e.target.value;
         if(val.length>=1) showSuggestions(val);
@@ -1020,12 +860,21 @@ function init(){
   ensurePlatformWatermark();
   enforceRBAC();
   installBeneficiaryAutocomplete();
-  // Re-ejecutar cada 1.5s para SPA
-  setInterval(()=>{
-    enforceRBAC();
-    ensurePlatformWatermark();
-    installBeneficiaryAutocomplete();
-  },1500);
+  // Reconciliar la interfaz por cambios reales del DOM, no mediante sondeo periódico.
+  let swInitQueued=false;
+  const scheduleInit=()=>{
+    if(swInitQueued)return;
+    swInitQueued=true;
+    requestAnimationFrame(()=>{
+      swInitQueued=false;
+      enforceRBAC();
+      ensurePlatformWatermark();
+      installBeneficiaryAutocomplete();
+    });
+  };
+  const swInitObserver=new MutationObserver(scheduleInit);
+  swInitObserver.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('sendwayo:auth-changed',scheduleInit);
 }
 
 if(document.readyState==="loading"){
@@ -1065,7 +914,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   }
   function approve(id){const a=data(),r=a.find(x=>x.id===id);if(!r)return;const b=balances();b.remitentes=b.remitentes||{};b.agentes=b.agentes||{};const key=r.userId;const isH=(r.currency||'RD$')==='HTG';if(r.userRole==='remitente'){const u=b.remitentes[key]||{};if(isH)u.balanceHTG=Number(u.balanceHTG||0)+Number(r.amount||0);else u.balanceDOP=Number(u.balanceDOP||u.balance||0)+Number(r.amount||0);b.remitentes[key]=u}else{const u=b.agentes[key]||{};if(isH)u.balanceHTG=Number(u.balanceHTG||0)+Number(r.amount||0);else u.balanceDOP=Number(u.balanceDOP||0)+Number(r.amount||0);b.agentes[key]=u}r.status='Aprobado';r.approvedAt=Date.now();save(a);saveBalances(b);alert('Crédito aprobado y agregado al balance.');location.reload()}
   function reject(id){const a=data(),r=a.find(x=>x.id===id);if(!r)return;r.status='Rechazado';r.rejectedAt=Date.now();save(a);alert('Crédito rechazado.');location.reload()}
-  const old=window.__sendwayoCreditAdminTimer; if(old)clearInterval(old); setTimeout(render,700); window.__sendwayoCreditAdminTimer=setInterval(render,1500);
+  const old=window.__sendwayoCreditAdminTimer; if(old)clearInterval(old); setTimeout(render,700); window.addEventListener('sendwayo:credit-requests-updated',render); window.addEventListener('storage',function(e){if(e.key==='sendwayo_credit_requests')render()});
 })();
 </script>
 <script>
@@ -1102,7 +951,11 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
     render();
   }
   window.__sendwayoRenderWelcomeRequests=render;
-  function boot(){render();if(!window.__swPublicReqTimer)window.__swPublicReqTimer=setInterval(render,3000)}
+  function boot(){
+    render();
+    window.addEventListener('sendwayo:public-requests-updated',render);
+    window.addEventListener('storage',function(e){if(e.key==='sendwayo_public_requests')render()});
+  }
   if(document.readyState!=="loading")boot();else document.addEventListener("DOMContentLoaded",boot);
 })();
 </script>
@@ -1157,8 +1010,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
  function compactLanguage(){
   const bar=document.querySelector(".sendwayo-language-bar");if(!bar||document.getElementById("sendwayo-lang-select"))return;
   const buttons=[...bar.querySelectorAll("button")];if(buttons.length!==4)return;
-  const sel=document.createElement("select");sel.id="sendwayo-lang-select";sel.style.cssText="border:1px solid #d4af37;border-radius:999px;padding:5px 9px;background:#fff;color:#0a245e;font:800 11px Arial;box-shadow:0 3px 12px rgba(0,0,0,.16)";
-  [["es","Español"],["fr","Français"],["ht","Kreyòl ayisyen"],["en","English"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o)});
+  const sel=document.createElement("select");sel.id="sendwayo-lang-select";sel.style.cssText="border:1px solid #d4af37;border-radius:999px;padding:5px 9px;background:#fff;color:#0a245e;font:800 11px Arial;box-shadow:0 3px 12px rgba(0,0,0,.16)";  [["es","Español"],["fr","Français"],["ht","Kreyòl ayisyen"],["en","English"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o)});
   sel.value=localStorage.getItem("sendwayo_language")||"es";
   sel.onchange=()=>{localStorage.setItem("sendwayo_language",sel.value);const labels={es:"Español",fr:"Français",ht:"Kreyòl ayisyen",en:"English"};buttons.find(b=>b.textContent===labels[sel.value])?.click()};
   bar.innerHTML="";bar.appendChild(sel);bar.style.cssText="position:fixed;top:6px;right:10px;z-index:100001;background:transparent;border:0;padding:0";
@@ -1193,7 +1045,10 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   }
  }
  function run(){addHero();compactLanguage();roleSummary();depositFormUX()}
- const mo=new MutationObserver(run);mo.observe(document.documentElement,{childList:true,subtree:true});setInterval(run,1200);
+ let runQueued=false;
+ const scheduleRun=()=>{if(runQueued)return;runQueued=true;requestAnimationFrame(()=>{runQueued=false;run()})};
+ const mo=new MutationObserver(scheduleRun);mo.observe(document.documentElement,{childList:true,subtree:true});
+ run();
 })();
 </script>
 <script>
@@ -1307,173 +1162,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
     };
     o.querySelector('#sw-v6-pt-csv').onclick=()=>download('SENDWAYO_PAGO_TRANSFERENCIA_RD.csv','Numero,Fecha,Depositante,Deposito_RD$,Pago_transferencia_RD$,Estado\n'+list.map((x,i)=>[i+1,x.fecha,x.depositante,x.deposito,x.pago,x.estado].join(',')).join('\n'),'text/csv');
     o.querySelector('#sw-v6-pt-xls').onclick=()=>download('SENDWAYO_PAGO_TRANSFERENCIA_RD.xls','<table><tr><th>N°</th><th>Fecha</th><th>Depositante</th><th>Depósito RD$</th><th>Pago transferencia RD$</th><th>Estado</th></tr>'+list.map((x,i)=>'<tr><td>'+String(i+1).padStart(2,'0')+'</td><td>'+x.fecha+'</td><td>'+x.depositante+'</td><td>'+x.deposito+'</td><td>'+x.pago+'</td><td>'+x.estado+'</td></tr>').join('')+'</table>','application/vnd.ms-excel');
-    o.querySelector('#sw-v6-pt-pdf').onclick=()=>{const w=window.open('','_blank');if(!w)return;w.document.write('<html><body><h2>SENDWAYO EXPRESS — Pago de transferencia RD$</h2>'+o.querySelector('#sw-v6-pt-rows').parentElement.outerHTML+'<script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>');w.document.close();w.print()};
+    o.querySelector('#sw-v6-pt-pdf').onclick=()=>{const w=window.open('','_blank');if(!w)return;w.document.write('<html><body><h2>SENDWAYO EXPRESS — Pago de transferencia RD$</h2>'+o.querySelector('#sw-v6-pt-rows').parentElement.outerHTML+'</body></html>');w.document.close();w.print()};
     o.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const x=list.find(z=>z.id===b.dataset.view);alert(x?JSON.stringify(x,null,2):'No encontrado')});o.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!confirm('¿Borrar este registro?'))return;const x=list.find(z=>z.id===b.dataset.del);if(!x)return;const a=read(PT,[]).filter(z=>z.id!==x.id);write(PT,a);const bal=read(BAL,{});bal.adminDOP=Number(bal.adminDOP||0)+Number(x.pago||0);write(BAL,bal);o.remove();paymentTransfer()});
   }
   function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
@@ -1491,8 +1180,12 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   function interceptAdminButtons(){ /* sustituido por el manejador monetario unificado V19 */ }
   // Never call this layer before the app has authenticated.
   installSync();interceptAdminButtons();
-  const boot=()=>{addNav();suggestions();setTimeout(()=>{addNav();suggestions()},1200)};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(()=>{addNav();suggestions()},1800);
+  const boot=()=>{addNav();suggestions()};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  let reconcileQueued=false;
+  const scheduleReconcile=()=>{if(reconcileQueued)return;reconcileQueued=true;requestAnimationFrame(()=>{reconcileQueued=false;addNav();suggestions()})};
+  const reconcileObserver=new MutationObserver(scheduleReconcile);
+  reconcileObserver.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 \n<script id="sendwayo-v18-fusion-sync">
@@ -1596,173 +1289,7 @@ function adminAdjust(button){
  const filtered=()=>[...rows].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
  o.querySelector('#v19-pt-csv').onclick=()=>download('SENDWAYO_PAGO_TRANSFERENCIA_RD.csv',['ID,Fecha,Cliente,Teléfono,Monto RD$,Estado',...filtered().map(r=>[r.id,date(r),r.name||r.target,r.phone,r.amount,status(r)].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))].join('\n'),'text/csv;charset=utf-8');
  o.querySelector('#v19-pt-xls').onclick=()=>download('SENDWAYO_PAGO_TRANSFERENCIA_RD.xls','<html><meta charset="utf-8"><table><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Teléfono</th><th>Monto RD$</th><th>Estado</th></tr>'+filtered().map(r=>'<tr><td>'+safe(r.id)+'</td><td>'+safe(date(r))+'</td><td>'+safe(r.name||r.target)+'</td><td>'+safe(r.phone)+'</td><td>'+Number(r.amount||0)+'</td><td>'+safe(status(r))+'</td></tr>').join('')+'</table></html>','application/vnd.ms-excel');
- o.querySelector('#v19-pt-pdf').onclick=()=>{const w=window.open('','_blank');if(!w){alert('Permita las ventanas emergentes para guardar el PDF.');return}w.document.write('<html><meta charset="utf-8"><title>Pago de transferencia</title><body><h2>SENDWAYO EXPRESS — Pago de transferencia</h2>'+list.innerHTML+'<script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>');w.document.close();w.print()};
+ o.querySelector('#v19-pt-pdf').onclick=()=>{const w=window.open('','_blank');if(!w){alert('Permita las ventanas emergentes para guardar el PDF.');return}w.document.write('<html><meta charset="utf-8"><title>Pago de transferencia</title><body><h2>SENDWAYO EXPRESS — Pago de transferencia</h2>'+list.innerHTML+'</body></html>');w.document.close();w.print()};
  render();
 }
 function editTransfer(existing,rows,render){
@@ -1781,8 +1308,12 @@ function ensureTransferButton(){
 }
 /* Reemplaza únicamente handlers administrativos defectuosos; no toca la pantalla principal. */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b||!isAdmin())return;const t=(b.innerText||'').trim();if(/^(Ajustar\s+(balance|balance|comisi[oó]n)(\s+(htg|dop|rd\$))?|Acreditar\s+(balance|comisi[oó]n|bono|cr[eé]dito)(\s+(htg|dop|rd\$))?)$/i.test(t)){e.preventDefault();e.stopImmediatePropagation();adminAdjust(b)}},true);
-function boot(){installSuggestions();ensureTransferButton();setTimeout(()=>{installSuggestions();ensureTransferButton()},1000);setInterval(()=>{installSuggestions();ensureTransferButton()},1800)}
+function boot(){installSuggestions();ensureTransferButton()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+let suggestionQueued=false;
+const scheduleSuggestionRepair=()=>{if(suggestionQueued)return;suggestionQueued=true;requestAnimationFrame(()=>{suggestionQueued=false;installSuggestions();ensureTransferButton()})};
+const suggestionObserver=new MutationObserver(scheduleSuggestionRepair);
+suggestionObserver.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 <script id="sendwayo-v19-ui-corrections">
@@ -1812,7 +1343,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   make('sw-v19-welcome-nav','Solicitudes de bienvenida','📋',()=>{window.__swWelcomePanelHidden=false;window.__sendwayoRenderWelcomeRequests?.();setTimeout(()=>{const box=document.getElementById('sendwayo-public-request-admin');if(box){box.style.left='272px';box.style.right='auto';box.style.top='82px';box.style.bottom='12px';box.scrollIntoView({behavior:'smooth',block:'nearest'})}else alert('No hay solicitudes de bienvenida pendientes.')},80)});
  }
  function boot(){walletModal();rechargePresets();adminSideLinks()}
- const mo=new MutationObserver(boot);if(document.documentElement)mo.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(boot,1500);
+ const mo=new MutationObserver(()=>{if(window.__swV19BootQueued)return;window.__swV19BootQueued=true;requestAnimationFrame(()=>{window.__swV19BootQueued=false;boot()})});
+if(document.documentElement)mo.observe(document.documentElement,{childList:true,subtree:true});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
 
@@ -1830,172 +1363,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  function filename(view){const heading=view.querySelector('h1,h2,h3,[data-page-title]');return 'SENDWAYO_'+slug(heading?.innerText||view.id.replace(/^view-/,''));}
  function csvExport(view){const table=activeTable(view);if(!table){alert('Esta página todavía no tiene una tabla/listado para exportar.');return}const rows=tableMatrix(table);const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');download(filename(view)+'.csv',csv,'text/csv;charset=utf-8')}
  function excelExport(view){const table=activeTable(view);if(!table){alert('Esta página todavía no tiene una tabla/listado para exportar.');return}const copy=cloneForExport(table);download(filename(view)+'.xls','<html><meta charset="utf-8"><table>'+copy.innerHTML+'</table></html>','application/vnd.ms-excel;charset=utf-8')}
- function pdfExport(view){const table=activeTable(view);const w=window.open('','_blank');if(!w){alert('Permita las ventanas emergentes para imprimir o guardar PDF.');return}const title=view.querySelector('h1,h2,h3,[data-page-title]')?.innerText||view.id.replace(/^view-/,'SENDWAYO EXPRESS');const content=table?cloneForExport(table).outerHTML:view.cloneNode(true).innerHTML;w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+escHtml(title)+'</title><style>body{font:12px Arial,sans-serif;color:#111;padding:20px}h2{color:#0a245e}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}button,input,select,.no-print{display:none!important}tr{break-inside:avoid}</style></head><body><h2>'+escHtml(title)+' — SENDWAYO EXPRESS</h2>'+(content||'<p>Sin datos para mostrar.</p>')+'<script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),350)}
+ function pdfExport(view){const table=activeTable(view);const w=window.open('','_blank');if(!w){alert('Permita las ventanas emergentes para imprimir o guardar PDF.');return}const title=view.querySelector('h1,h2,h3,[data-page-title]')?.innerText||view.id.replace(/^view-/,'SENDWAYO EXPRESS');const content=table?cloneForExport(table).outerHTML:view.cloneNode(true).innerHTML;w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+escHtml(title)+'</title><style>body{font:12px Arial,sans-serif;color:#111;padding:20px}h2{color:#0a245e}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}button,input,select,.no-print{display:none!important}tr{break-inside:avoid}</style></head><body><h2>'+escHtml(title)+' — SENDWAYO EXPRESS</h2>'+(content||'<p>Sin datos para mostrar.</p>')+'</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),350)}
  function install(view){if(!view||view.dataset.swV20Exports==='1')return;const table=activeTable(view);if(!table)return;ensureNumbering(table);const buttons=[...view.querySelectorAll('button')];let anchor=buttons.find(b=>/excel|csv|pdf/i.test(b.innerText||''));let holder=anchor?.parentElement;
   if(!holder){holder=view.querySelector('.flex.flex-wrap.items-center.justify-between, .flex.items-center.justify-between, .flex.gap-2, .flex.flex-wrap.gap-2');}
   if(!holder){holder=document.createElement('div');holder.style.cssText='display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:10px 0';const first=view.querySelector('table')?.parentElement||view.firstElementChild;if(first)view.insertBefore(holder,first);else view.appendChild(holder)}
@@ -2166,173 +1534,7 @@ function openBankForm(existing,render){if(!['Pendiente',undefined,null].includes
 function renderBankPage(){const me=currentIdentity(),box=modalBase('sw-v23-bank-page','Mi banco / Mi cuenta bancaria');const c=box.querySelector('[data-content]');c.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px"><button id="sw-v23-bank-new" style="padding:9px 13px;border:0;border-radius:8px;background:#0a245e;color:#fff;font-weight:800">+ Agregar nuevo</button><input id="sw-v23-bank-search" type="search" placeholder="Buscar por código, nombre, banco, referencia, ID o estado" style="flex:1;min-width:240px;padding:10px;border:1px solid #cbd5e1;border-radius:8px"><button id="sw-v23-bank-xls" style="padding:9px 12px;background:#15803d;color:#fff;border:0;border-radius:7px;font-weight:800">Excel</button><button id="sw-v23-bank-pdf" style="padding:9px 12px;background:#b91c1c;color:#fff;border:0;border-radius:7px;font-weight:800">PDF</button><button id="sw-v23-bank-csv" style="padding:9px 12px;background:#0e7490;color:#fff;border:0;border-radius:7px;font-weight:800">CSV</button></div><div id="sw-v23-bank-table"></div><p style="font-size:11px;color:#64748b;margin-top:10px">Código del solicitante vinculado a la sesión: <b>'+esc(me.code)+' · '+esc(me.name)+'</b>. Los movimientos aparecen primero los más recientes.</p>';
  const search=box.querySelector('#sw-v23-bank-search'),table=box.querySelector('#sw-v23-bank-table');let last=[];const normalize=r=>({id:r.id,date:new Date(r.createdAt||Date.now()).toLocaleString('es-DO'),sourceCode:r.sourceCode||'',sourceName:r.sourceName||r.createdByName||'',targetCode:(resolveAccount(r.targetId,r.targetName,r.targetRole)?.code||r.targetId||''),targetName:r.targetName||'',targetRole:r.targetRole||'',bankName:r.bankName||'',bankAccount:r.bankAccount||r.reference||'',amount:r.amount??0,currency:r.currency||'DOP',status:r.status||r.estado||'Pendiente',reason:r.reason||'',comprobanteId:r.comprobanteId||''});
  const render=()=>{const q=search.value.trim().toLowerCase(),all=read(BANK,[]);last=(Array.isArray(all)?all:[]).slice().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).filter(r=>me.role==='admin'||String(r.sourceId||r.createdById||'')===String(me.id)||String(r.targetId||'')===String(me.id)).filter(r=>!q||JSON.stringify(normalize(r)).toLowerCase().includes(q));table.innerHTML=last.length?'<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;min-width:1100px;border-collapse:collapse;font-size:12px"><thead style="background:#f1f5f9"><tr>'+['N°','Fecha','Código origen','Cuenta destino','Banco','Cuenta / referencia','Monto','Estado','Acciones'].map(h=>'<th style="padding:10px;text-align:left">'+h+'</th>').join('')+'</tr></thead><tbody>'+last.map((r,i)=>{const n=normalize(r),own=String(r.sourceId||r.createdById||'')===String(me.id),admin=isAdmin(),pending=n.status==='Pendiente';return '<tr style="border-top:1px solid #e2e8f0"><td style="padding:9px">'+String(i+1).padStart(2,'0')+'<br><small>'+esc(n.id)+'</small></td><td style="padding:9px">'+esc(n.date)+'</td><td style="padding:9px">'+esc(n.sourceCode)+'<br>'+esc(n.sourceName)+'</td><td style="padding:9px">'+esc(n.targetCode)+'<br>'+esc(n.targetName)+' <small>('+esc(n.targetRole)+')</small></td><td style="padding:9px">'+esc(n.bankName)+'</td><td style="padding:9px">'+esc(n.bankAccount)+'<br><small>'+esc(n.reason)+'</small></td><td style="padding:9px;font-weight:800">'+esc(money(n.amount,n.currency))+'</td><td style="padding:9px"><b>'+esc(n.status)+'</b></td><td style="padding:9px;white-space:nowrap"><button data-bv="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#475569;color:#fff">Ver</button>'+(pending&&(admin||own)?'<button data-be="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#ca8a04;color:#fff">Modificar</button><button data-bd="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#b91c1c;color:#fff">Borrar</button>':'')+(pending&&admin?'<button data-ba="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#15803d;color:#fff">Aprobar</button><button data-br="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#b91c1c;color:#fff">Rechazar</button><button data-bn="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#a16207;color:#fff">No coincide</button>':'')+(n.status==='Aprobado'?'<button data-bc="'+esc(n.id)+'" style="margin:2px;padding:6px 8px;border:0;border-radius:6px;background:#0a245e;color:#fff">Comprobante</button>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<p style="padding:18px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:10px">No hay movimientos bancarios que coincidan.</p>';table.querySelectorAll('[data-bv]').forEach(b=>b.onclick=()=>{const r=read(BANK,[]).find(x=>String(x.id)===b.dataset.bv);if(r)alert(JSON.stringify(normalize(r),null,2))});table.querySelectorAll('[data-be]').forEach(b=>b.onclick=()=>{const r=read(BANK,[]).find(x=>String(x.id)===b.dataset.be);if(r)openBankForm(r,render)});table.querySelectorAll('[data-bd]').forEach(b=>b.onclick=()=>{const r=read(BANK,[]).find(x=>String(x.id)===b.dataset.bd);if(!r||!confirm('¿Eliminar esta solicitud bancaria pendiente?'))return;write(BANK,read(BANK,[]).filter(x=>String(x.id)!==String(r.id)));write(REQUESTS,read(REQUESTS,[]).filter(x=>String(x.id)!==String(r.id)));toast('Solicitud pendiente eliminada.');render()});table.querySelectorAll('[data-ba]').forEach(b=>b.onclick=()=>approveRequest(b.dataset.ba));table.querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{if(confirm('¿Rechazar esta solicitud bancaria?'))rejectRequest(b.dataset.br,'Rechazado')});table.querySelectorAll('[data-bn]').forEach(b=>b.onclick=()=>rejectRequest(b.dataset.bn,'No Coincide'));table.querySelectorAll('[data-bc]').forEach(b=>b.onclick=()=>openReceipt(b.dataset.bc))};
- search.oninput=render;box.querySelector('#sw-v23-bank-new').onclick=()=>openBankForm(null,render);box.querySelector('#sw-v23-bank-xls').onclick=()=>{const rows=last.map(normalize);if(!rows.length){toast('No hay registros para exportar.','warning');return}downloadFile('SENDWAYO_MI_BANCO.xls','<html><meta charset="utf-8"><table><tr>'+Object.keys(rows[0]).map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+Object.values(r).map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table></html>','application/vnd.ms-excel')};box.querySelector('#sw-v23-bank-csv').onclick=()=>{const rows=last.map(normalize);if(!rows.length){toast('No hay registros para exportar.','warning');return}downloadFile('SENDWAYO_MI_BANCO.csv',csvText(rows),'text/csv;charset=utf-8')};box.querySelector('#sw-v23-bank-pdf').onclick=()=>{const rows=last.map(normalize);if(!rows.length){toast('No hay registros para exportar.','warning');return}const w=window.open('','_blank');if(!w){toast('Permita las ventanas emergentes para imprimir/guardar PDF.','warning');return}w.document.write('<html><meta charset="utf-8"><title>SENDWAYO - Mi banco</title><body><h2>SENDWAYO EXPRESS — Mi banco / Mi cuenta bancaria</h2><table border="1" cellspacing="0" cellpadding="5"><tr>'+Object.keys(rows[0]).map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+Object.values(r).map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table><script>window.onload=()=>window.print()<\/script><script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>');w.document.close()};render();}
+ search.oninput=render;box.querySelector('#sw-v23-bank-new').onclick=()=>openBankForm(null,render);box.querySelector('#sw-v23-bank-xls').onclick=()=>{const rows=last.map(normalize);if(!rows.length){toast('No hay registros para exportar.','warning');return}downloadFile('SENDWAYO_MI_BANCO.xls','<html><meta charset="utf-8"><table><tr>'+Object.keys(rows[0]).map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+Object.values(r).map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table></html>','application/vnd.ms-excel')};box.querySelector('#sw-v23-bank-csv').onclick=()=>{const rows=last.map(normalize);if(!rows.length){toast('No hay registros para exportar.','warning');return}downloadFile('SENDWAYO_MI_BANCO.csv',csvText(rows),'text/csv;charset=utf-8')};box.querySelector('#sw-v23-bank-pdf').onclick=()=>{const rows=last.map(normalize);if(!rows.length){toast('No hay registros para exportar.','warning');return}const w=window.open('','_blank');if(!w){toast('Permita las ventanas emergentes para imprimir/guardar PDF.','warning');return}w.document.write('<html><meta charset="utf-8"><title>SENDWAYO - Mi banco</title><body><h2>SENDWAYO EXPRESS — Mi banco / Mi cuenta bancaria</h2><table border="1" cellspacing="0" cellpadding="5"><tr>'+Object.keys(rows[0]).map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+Object.values(r).map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table><script>window.onload=()=>window.print()<\/script></body></html>');w.document.close()};render();}
 function ensureBankNav(){const s=session();if(!s||!['admin','agent','agente','remitente'].includes(String(s.role||'').toLowerCase()))return;const sidebar=document.getElementById('sidebar');if(!sidebar)return;const nav=sidebar.querySelector('.overflow-y-auto')||sidebar;if(document.getElementById('sw-v23-my-bank-nav'))return;const b=document.createElement('button');b.id='sw-v23-my-bank-nav';b.type='button';b.className='w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-white/10 text-white font-bold';b.style.cssText='width:100%;text-align:left;padding:10px 14px;border:0;background:transparent;color:#fff;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:10px';b.innerHTML='<span>🏦</span><span style="flex:1">Mi banco / Mi cuenta bancaria</span><span data-count style="background:#dc2626;border-radius:20px;padding:2px 7px;font-size:11px;display:none">0</span>';b.onclick=renderBankPage;const anchor=[...nav.querySelectorAll('button')].find(x=>/pago de transferencia|pago y retiro de comisiones|cuentas bancarias oficiales/i.test(x.innerText||''));if(anchor?.parentElement)anchor.parentElement.insertBefore(b,anchor);else nav.appendChild(b);renderBankBadge()}
 function renderBankBadge(){const b=document.querySelector('#sw-v23-my-bank-nav [data-count]');if(!b)return;const me=currentIdentity(),rows=read(REQUESTS,[]),n=rows.filter(r=>r.source==='mi-banco'&&r.status==='Pendiente'&&(isAdmin()||String(r.sourceId)===String(me.id)||String(r.targetId)===String(me.id))).length;if(b.textContent!==String(n))b.textContent=String(n);const display=n?'inline-block':'none';if(b.style.display!==display)b.style.display=display}
 
@@ -2378,7 +1580,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
 <script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-functions.js"></script>
 <script src="https://sendwayo-express-app-101.web.app/__/firebase/init.js"></script>
 <script>
-  /* No inventar una configuración parcial: usar únicamente la configuración completa de Punto A. */
+  /* Usar solo la configuración completa publicada por Firebase Hosting de Punto A. */
   window.SENDWAYO_FIREBASE_CONFIG = (window.firebase && window.firebase.apps && window.firebase.apps.length && window.firebase.app().options.apiKey && window.firebase.app().options.projectId)
     ? window.firebase.app().options
     : null;
@@ -2593,339 +1795,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   function toCsv(headers,rows){const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';return '\ufeff'+[headers.map(cell).join(','),...rows.map(r=>r.map(cell).join(','))].join('\r\n')}
   function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},1000)}
   function installSearch(view){if(!view||!view.querySelector('table')||view.querySelector('[data-sw-v28-search]'))return;const existing=view.querySelector('[data-sw-v21-search],input[type=search]');if(existing)return;const row=document.createElement('div');row.setAttribute('data-sw-v28-search','1');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0';row.innerHTML='<label style="font:800 12px Arial;color:#334155" for="sw-v28-search-'+Math.random().toString(36).slice(2)+'">Buscar por nombre, número o ID</label><input type="search" aria-label="Buscar por nombre, número o ID" placeholder="Buscar por nombre, número o ID…" style="flex:1;min-width:190px;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;font:13px Arial">';const input=row.querySelector('input');const anchor=view.querySelector('[data-sw-v21-search]')||view.querySelector('table');anchor.insertAdjacentElement('beforebegin',row);input.addEventListener('input',()=>{const q=norm(input.value).toLocaleLowerCase();view.querySelectorAll('table tbody tr').forEach(tr=>{tr.style.display=(!q||norm(tr.innerText).toLocaleLowerCase().includes(q))?'':'none'})})}
-  function installExports(view){if(!view||!view.querySelector('table')||view.querySelector('[data-sw-v27-export-toolbar]'))return;const bar=document.createElement('div');bar.setAttribute('data-sw-v27-export-toolbar','1');bar.style.cssText='display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin:10px 0';bar.innerHTML='<strong style="margin-right:auto;color:#334155;font:800 12px Arial">Exportar listado</strong><button type="button" data-format="excel" style="padding:8px 12px;border-radius:7px;background:#15803d;color:white;font-weight:800;cursor:pointer">Excel</button><button type="button" data-format="pdf" style="padding:8px 12px;border-radius:7px;background:#b91c1c;color:white;font-weight:800;cursor:pointer">PDF</button><button type="button" data-format="csv" style="padding:8px 12px;border-radius:7px;background:#0e7490;color:white;font-weight:800;cursor:pointer">CSV</button>';const searchRow=view.querySelector('[data-sw-v21-search]');if(searchRow)searchRow.insertAdjacentElement('afterend',bar);else view.querySelector('table').insertAdjacentElement('beforebegin',bar);bar.addEventListener('click',e=>{const btn=e.target.closest('button[data-format]');if(!btn)return;const tables=[...view.querySelectorAll('table')].filter(t=>t.offsetParent!==null||view.offsetParent!==null);const all=tables.map(tableRows).filter(x=>x.headers.length);if(!all.length||all.every(x=>!x.rows.length)){toast('No hay filas visibles para exportar.');return}const format=btn.dataset.format,title=(view.querySelector('h1,h2,h3,h4')?.innerText||view.id||'SENDWAYO').replace(/[\/:*?"<>|]+/g,'_');if(format==='csv'){const x=all[0];download(title+'.csv',toCsv(x.headers,x.rows),'text/csv;charset=utf-8');return}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+escapeHtml(title)+'</h2>'+tables.map(t=>t.outerHTML).join('<br>')+'<script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>';download(title+'.xls',html,'application/vnd.ms-excel;charset=utf-8');return}const w=window.open('','_blank');if(!w){toast('Permite las ventanas emergentes para imprimir o guardar como PDF.');return}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(title)+'</title><style>body{font:12px Arial;padding:16px}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #999;padding:5px;text-align:left}h2{margin-bottom:16px}@media print{button{display:none}}</style></head><body><h2>'+escapeHtml(title)+'</h2>'+tables.map(t=>t.outerHTML).join('<br>')+'<script>window.onload=()=>window.print()<\/script><script id="sendwayo-fusion-import-a-b">
-(function(){
-  'use strict';
-  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const clean=s=>String(s??'').trim();
-  const parseMoney=value=>{
-    if(typeof value==='number')return Number.isFinite(value)&&value>=0?Math.round(value*100)/100:null;
-    let s=String(value??'').replace(/[^0-9,.-]/g,'').trim();if(!s)return null;
-    if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
-    else if(s.includes(',')){const p=s.split(',');s=p.length===2&&p[1].length>0&&p[1].length<=2?p[0].replace(/,/g,'')+'.'+p[1]:s.replace(/,/g,'')}
-    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:null;
-  };
-  function parseDelimited(text, delimiter){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i];
-      if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++;continue}
-      if(ch==='"'){quoted=!quoted;continue}
-      if(ch===delimiter&&!quoted){row.push(cell);cell='';continue}
-      if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(v=>clean(v)!==''))rows.push(row);row=[];continue}
-      cell+=ch;
-    }
-    row.push(cell);if(row.some(v=>clean(v)!==''))rows.push(row);
-    if(rows.length<2)throw new Error('El CSV no contiene encabezado y filas.');
-    const headers=rows.shift().map(clean);
-    return rows.map(cols=>Object.fromEntries(headers.map((h,i)=>[h,cols[i]??''])));
-  }
-  function rowsFromJson(parsed){
-    if(Array.isArray(parsed))return parsed;
-    if(parsed&&typeof parsed==='object'){
-      for(const key of ['accounts','users','profiles','remitentes','remitters','agentes','agents','data','rows']){
-        if(Array.isArray(parsed[key]))return parsed[key];
-        if(parsed[key]&&typeof parsed[key]==='object')return Object.values(parsed[key]);
-      }
-    }
-    throw new Error('El JSON no contiene una lista de usuarios/cuentas reconocible.');
-  }
-  function mappedRow(sourceRow, source, priority){
-    const original=sourceRow&&typeof sourceRow==='object'?sourceRow:{};
-    const entries=Object.entries(original).map(([key,value])=>({key,value,norm:norm(key)}));
-    const pick=(exact,contains=[])=>{
-      for(const term of exact){const found=entries.find(e=>e.norm===term&&clean(e.value)!=='');if(found)return found.value}
-      for(const term of contains){const found=entries.find(e=>e.norm.includes(term)&&clean(e.value)!=='');if(found)return found.value}
-      return '';
-    };
-    const rawRole=norm(pick(['role','rol','tipo','tipodeusuario','tipodecuenta','accountrole'],['rol','role']));
-    const role=rawRole.includes('admin')?'admin':rawRole.includes('agente')||rawRole==='agent'?'agent':rawRole.includes('remit')?'remitente':'';
-    const email=clean(pick(['email','correo','correoauth','correoacceso','authemail','usernameemail'],['correoauth','correoacceso','email'])).toLowerCase();
-    const usernameRaw=clean(pick(['username','usuario','nombredeusuario'],['username','usuario']));
-    const username=usernameRaw||email;
-    const legacyId=clean(pick(['legacyid','accountid','idcuenta','idremitente','idagente','idusuario','codigo','code','id'],['legacyid','accountid','idremitente','idagente','codigo']));
-    const displayName=clean(pick(['displayname','nombreyapellido','nombrecompleto','fullname','name','nombre'],['nombreyapellido','nombrecompleto','displayname','fullname']));
-    const phone=clean(pick(['phone','telefono','celular','whatsapp','mobile','telefonocelular'],['whatsapp','telefono','celular','phone']));
-    const rawCurrency=norm(pick(['balancecurrency','currency','moneda','monedabalance','monedaelsaldo'],['monedabalance','currency','moneda']));
-    const currency=rawCurrency.includes('htg')||rawCurrency.includes('gdes')||rawCurrency.includes('gourde')?'HTG':rawCurrency.includes('dop')||rawCurrency.includes('rd')||rawCurrency.includes('peso')?'DOP':'';
-    const result={source,sourceSystem:source,sourcePriority:priority,role,legacyId,email,username,displayName,phone,status:pick(['status','estado','accountstatus','activo'],['status','estado']),active:true};
-    const dop=pick(['balancedop','balancerd','balancesrd','balancepesos','saldord','saldordop','balanceenpesos'],['balancedop','balancerd','saldord','balancepesos']);
-    const htg=pick(['balancehtg','balancegdes','balanceshtg','balancesgdes','saldohtg','saldogdes','balancegourdes'],['balancehtg','balancegdes','saldohtg','saldogdes','gourdes']);
-    const comDop=pick(['commissiondop','comisiondop','commissionrd','comisionrd','comisiondisponiblerd','comisiondisponibledop'],['commissiondop','comisiondop','commissionrd','comisionrd']);
-    const comHtg=pick(['commissionhtg','comisionhtg','commissiongdes','comisiongdes','comisiondisponiblehtg','comisiondisponiblegdes'],['commissionhtg','comisionhtg','commissiongdes','comisiongdes']);
-    const genericBalance=pick(['balance','saldo','balancedisponible'],['balancesaldo']);
-    const genericCommission=pick(['commission','comision','comisiondisponible'],['commission','comision']);
-    const vals=[['balanceDOP',dop],['balanceHTG',htg],['commissionDOP',comDop],['commissionHTG',comHtg]];
-    for(const [key,value] of vals){if(clean(value)!==''){const parsed=parseMoney(value);result[key]=parsed===null?value:parsed}}
-    if(!Object.prototype.hasOwnProperty.call(result,'balanceDOP')&&!Object.prototype.hasOwnProperty.call(result,'balanceHTG')&&clean(genericBalance)!==''){
-      const parsed=parseMoney(genericBalance);result.balance=parsed===null?genericBalance:parsed;if(currency)result.balanceCurrency=currency;
-    }
-    if(!Object.prototype.hasOwnProperty.call(result,'commissionDOP')&&!Object.prototype.hasOwnProperty.call(result,'commissionHTG')&&clean(genericCommission)!==''){
-      const parsed=parseMoney(genericCommission);result.commission=parsed===null?genericCommission:parsed;if(currency)result.currency=currency;
-    }
-    if(currency&&!result.balanceCurrency)result.balanceCurrency=currency;
-    if(!result.role||(!result.legacyId&&!result.email&&!result.phone))return null;
-    if(/^(true|1|si|sí|activo|active|approved|aprobado|aprobada)$/i.test(clean(result.status)))result.active=true;
-    else if(/^(false|0|no|inactivo|inactive|rechazado|rejected|pendiente|pending)$/i.test(clean(result.status)))result.active=false;
-    return result;
-  }
-  async function readExport(file,source,priority){
-    if(!file)return [];
-    const text=await file.text();let rows;
-    if(/\.json$/i.test(file.name)||/json/i.test(file.type))rows=rowsFromJson(JSON.parse(text));
-    else{
-      const line=text.split(/\r?\n/,1)[0]||'';const counts=[',',';','\t'].map(d=>({d,n:[...line].filter(c=>c===d).length})).sort((a,b)=>b.n-a.n);
-      if(!counts[0].n)throw new Error(`No se pudo detectar separador CSV en ${file.name}.`);
-      rows=parseDelimited(text,counts[0].d);
-    }
-    return rows.map(row=>mappedRow(row,source,priority)).filter(Boolean);
-  }
-  function el(tag,attrs={},children=[]){const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='text')node.textContent=v;else if(k==='style')node.style.cssText=v;else if(k==='class')node.className=v;else if(k.startsWith('on')&&typeof v==='function')node.addEventListener(k.slice(2),v);else node.setAttribute(k,v)}for(const child of children){if(typeof child==='string')node.append(document.createTextNode(child));else if(child)node.append(child)}return node}
-  function boot(){
-    if(document.getElementById('sw-fusion-import-launch'))return;
-    const launch=el('button',{id:'sw-fusion-import-launch',type:'button',text:'Conciliar cuentas A + B',style:'display:none;position:fixed;right:14px;bottom:78px;z-index:2147483000;border:0;border-radius:11px;padding:11px 14px;background:#0a245e;color:white;font:700 12px Arial,sans-serif;box-shadow:0 6px 18px #0003;cursor:pointer'});
-    const modal=el('div',{id:'sw-fusion-import-modal',style:'display:none;position:fixed;inset:0;z-index:2147483001;background:#06152bcc;padding:16px;overflow:auto;font:14px Arial,sans-serif;color:#10254f'});
-    const panel=el('div',{style:'max-width:980px;margin:3vh auto;background:white;border-radius:16px;padding:20px;box-shadow:0 22px 60px #0005'});
-    const status=el('div',{id:'sw-fusion-import-status',style:'margin:10px 0;padding:10px;border-radius:8px;background:#f1f5f9;color:#334155;white-space:pre-wrap',text:'Esta herramienta combina registros sin sumar balances. Punto A tiene prioridad; Punto B solo completa datos faltantes.'});
-    const fileA=el('input',{id:'sw-fusion-file-a',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const fileB=el('input',{id:'sw-fusion-file-b',type:'file',accept:'.csv,.json,text/csv,application/json',style:'display:block;width:100%;margin-top:7px'});
-    const preview=el('div',{id:'sw-fusion-import-preview',style:'margin-top:12px;max-height:45vh;overflow:auto'});
-    const parseBtn=el('button',{type:'button',text:'Leer archivos y preparar vista previa',style:'border:0;border-radius:8px;padding:10px 12px;background:#e2e8f0;color:#0f172a;font-weight:700;cursor:pointer;margin:8px 8px 0 0'});
-    const importBtn=el('button',{id:'sw-fusion-import-commit',type:'button',text:'Importar y deduplicar',disabled:'disabled',style:'border:0;border-radius:8px;padding:10px 12px;background:#0a245e;color:white;font-weight:700;cursor:pointer;margin:8px 8px 0 0;opacity:.55'});
-    const closeBtn=el('button',{type:'button',text:'Cerrar',style:'border:0;border-radius:8px;padding:10px 12px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer;margin-top:8px'});
-    panel.append(el('div',{style:'display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap'},[
-      el('div',{},[el('h2',{text:'Fusión de remitentes y agentes',style:'font-size:22px;font-weight:800;margin:0 0 7px'}),el('p',{text:'Punto A manda. Punto B completa campos faltantes. No se suman balances; las cuentas ambiguas pasan a revisión.',style:'margin:0;color:#475569;max-width:700px;line-height:1.5'})]),
-      el('button',{type:'button',text:'✕',style:'border:0;background:#f1f5f9;border-radius:8px;padding:8px 11px;font-weight:700;cursor:pointer',onclick:()=>modal.style.display='none'})
-    ]));
-    const grid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px'});
-    grid.append(el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto A (preferida)',fileA]),el('label',{style:'display:block;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-weight:700'},['Exportación del Punto B (complementaria)',fileB]));
-    panel.append(grid,status,el('div',{style:'display:flex;flex-wrap:wrap;gap:4px'},[parseBtn,importBtn,closeBtn]),preview);modal.append(panel);document.body.append(launch,modal);
-    let preparedRows=[];
-    function setStatus(msg,ok=false){status.textContent=msg;status.style.background=ok?'#ecfdf5':'#f1f5f9';status.style.color=ok?'#065f46':'#334155'}
-    closeBtn.addEventListener('click',()=>{modal.style.display='none'});launch.addEventListener('click',()=>{modal.style.display='block'});
-    parseBtn.addEventListener('click',async()=>{
-      parseBtn.disabled=true;importBtn.disabled=true;importBtn.style.opacity='.55';preview.replaceChildren();
-      try{
-        const [a,b]=await Promise.all([readExport(fileA.files[0],'Punto A',2),readExport(fileB.files[0],'Punto B',1)]);
-        preparedRows=[...a,...b];
-        if(!preparedRows.length)throw new Error('Selecciona al menos un CSV o JSON con usuarios y roles.');
-        if(preparedRows.length>350)throw new Error(`Hay ${preparedRows.length} registros. Para deduplicar ambas fuentes juntas, el máximo por lote es 350; exporta solo remitentes, agentes y administración activos.`);
-        const counts={admin:0,remitente:0,agent:0};preparedRows.forEach(r=>counts[r.role]++);
-        setStatus(`Vista previa lista: ${a.length} filas del Punto A + ${b.length} del Punto B = ${preparedRows.length}. Roles: ${counts.admin} administración, ${counts.remitente} remitentes, ${counts.agent} agentes. No se ha escrito nada todavía.`,true);
-        preview.append(el('p',{text:'La vista previa detectó estas cuentas. El servidor quitará duplicados por correo/ID y solo unirá por teléfono cuando no existan correos contradictorios.',style:'color:#475569;margin:0 0 8px'}));
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Fuente','Rol','ID','Nombre','Correo','Teléfono'].map(t=>el('th',{text:t,style:'text-align:left;padding:7px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        preparedRows.slice(0,100).forEach(r=>tb.append(el('tr',{},[r.source,r.role,r.legacyId,r.displayName,r.email,r.phone].map(v=>el('td',{text:String(v||'—'),style:'padding:7px;border-bottom:1px solid #e2e8f0;max-width:210px;word-break:break-word'})))));table.append(tb);preview.append(table);
-        if(preparedRows.length>100)preview.append(el('p',{text:`Se muestran las primeras 100 filas de ${preparedRows.length}.`,style:'color:#64748b'}));
-        importBtn.disabled=false;importBtn.style.opacity='1';
-      }catch(err){preparedRows=[];setStatus(err.message||'No se pudieron leer los archivos.');}
-      finally{parseBtn.disabled=false}
-    });
-    importBtn.addEventListener('click',async()=>{
-      const cloud=window.sendwayoCloud;
-      if(!cloud?.ready||typeof cloud.importLegacyAccounts!=='function'){setStatus('Firebase no está conectado o la función de importación no está desplegada. No se importó nada.');return}
-      const saved=(()=>{try{return JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null')}catch{return null}})();
-      if(!saved||saved.role!=='admin'){setStatus('Solo Administración puede importar cuentas.');return}
-      if(!preparedRows.length){setStatus('Primero prepara la vista previa.');return}
-      if(!confirm(`Vas a enviar ${preparedRows.length} registros para deduplicación. Los balances no se modificarán hasta revisarlos y aprobarlos explícitamente. ¿Continuar?`))return;
-      importBtn.disabled=true;parseBtn.disabled=true;importBtn.textContent='Importando…';
-      try{
-        const result=await cloud.importLegacyAccounts({accounts:preparedRows});
-        setStatus(`Importación revisada por el servidor. Cuentas principales: ${result.accepted}; duplicados unidos: ${result.duplicatesRemoved}; alias creados: ${result.aliases}; conflictos por revisar: ${(result.conflicts||[]).length}; teléfonos ambiguos: ${(result.ambiguousPhones||[]).length}; balances sin moneda/invalidos: ${result.balanceReviewCount}. No se han aplicado balances automáticamente.`,true);
-        preview.replaceChildren();
-        const candidates=result.migrationCandidates||[];
-        const table=el('table',{style:'width:100%;border-collapse:collapse;font-size:12px'});const thead=el('thead');thead.append(el('tr',{},['Cuenta','Rol','Balances propuestos','Estado','Acción'].map(t=>el('th',{text:t,style:'text-align:left;padding:8px;border-bottom:2px solid #cbd5e1;background:#f8fafc'}))));table.append(thead);const tb=el('tbody');
-        candidates.forEach(c=>{
-          const p=c.proposedBalances||{};const amountText=`RD$: ${p.balanceDOP??'—'} · HTG/GDES: ${p.balanceHTG??'—'} · Comisión RD$: ${p.commissionDOP??'—'} · Comisión HTG: ${p.commissionHTG??'—'}`;
-          const role=String(c.role||'').toLowerCase();let stateText=c.needsBalanceReview?'Revisar moneda/importes':c.agentAmountsIgnored||role==='agent'?'Agente: sin billetera personal':'Pendiente de aprobación';
-          const action=el('button',{type:'button',text:'Aprobar saldos revisados',style:'border:0;border-radius:7px;padding:7px 8px;background:#0a245e;color:white;font-weight:700;cursor:pointer;font-size:11px'});
-          if(c.needsBalanceReview||role==='agent'||!Object.keys(p).length){action.disabled=true;action.style.opacity='.4'}
-          action.addEventListener('click',async()=>{
-            if(!confirm(`Confirma los saldos propuestos para ${c.displayName||c.legacyId}. Se aplicarán solo si la cuenta no tiene balances ni historial financiero, y nunca se sumarán a los importes actuales.`))return;
-            action.disabled=true;action.textContent='Revisando…';
-            try{const done=await cloud.approveLegacyBalanceMigration({legacyId:c.legacyId,confirm:true});stateText=done.status==='applied'?'Balances aplicados y auditados':done.status==='approved_waiting_for_link'?'Aprobados; se aplicarán cuando se vincule la cuenta':done.status==='agent_wallet_ignored'?'Agente: billetera personal bloqueada':'Ya procesado';const stateCell=tr.children[3];stateCell.textContent=stateText;action.textContent='Procesado';setStatus(`Balance revisado: ${c.displayName||c.legacyId}. Estado: ${stateText}.`,true)}catch(err){action.disabled=false;action.textContent='Aprobar saldos revisados';setStatus(err?.message||'No fue posible aprobar estos saldos. No se aplicó ningún cambio.')}});
-          const tr=el('tr',{},[c.displayName||c.legacyId,role,amountText,stateText,action].map((v,i)=>el('td',{style:'padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;max-width:260px;word-break:break-word'},[typeof v==='string'?v:v])));
-          tb.append(tr);
-        });table.append(tb);preview.append(table);
-        if(result.conflicts?.length)preview.append(el('h3',{text:`Conflictos para conciliación manual (${result.conflicts.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.conflicts,null,2),style:'white-space:pre-wrap;background:#fff7ed;padding:10px;border-radius:8px;color:#7c2d12;font-size:11px'}));
-        if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
-      }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
-      finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
-    window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
-    let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-</body></html>');w.document.close()})}
+  function installExports(view){if(!view||!view.querySelector('table')||view.querySelector('[data-sw-v27-export-toolbar]'))return;const bar=document.createElement('div');bar.setAttribute('data-sw-v27-export-toolbar','1');bar.style.cssText='display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin:10px 0';bar.innerHTML='<strong style="margin-right:auto;color:#334155;font:800 12px Arial">Exportar listado</strong><button type="button" data-format="excel" style="padding:8px 12px;border-radius:7px;background:#15803d;color:white;font-weight:800;cursor:pointer">Excel</button><button type="button" data-format="pdf" style="padding:8px 12px;border-radius:7px;background:#b91c1c;color:white;font-weight:800;cursor:pointer">PDF</button><button type="button" data-format="csv" style="padding:8px 12px;border-radius:7px;background:#0e7490;color:white;font-weight:800;cursor:pointer">CSV</button>';const searchRow=view.querySelector('[data-sw-v21-search]');if(searchRow)searchRow.insertAdjacentElement('afterend',bar);else view.querySelector('table').insertAdjacentElement('beforebegin',bar);bar.addEventListener('click',e=>{const btn=e.target.closest('button[data-format]');if(!btn)return;const tables=[...view.querySelectorAll('table')].filter(t=>t.offsetParent!==null||view.offsetParent!==null);const all=tables.map(tableRows).filter(x=>x.headers.length);if(!all.length||all.every(x=>!x.rows.length)){toast('No hay filas visibles para exportar.');return}const format=btn.dataset.format,title=(view.querySelector('h1,h2,h3,h4')?.innerText||view.id||'SENDWAYO').replace(/[\/:*?"<>|]+/g,'_');if(format==='csv'){const x=all[0];download(title+'.csv',toCsv(x.headers,x.rows),'text/csv;charset=utf-8');return}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+escapeHtml(title)+'</h2>'+tables.map(t=>t.outerHTML).join('<br>')+'</body></html>';download(title+'.xls',html,'application/vnd.ms-excel;charset=utf-8');return}const w=window.open('','_blank');if(!w){toast('Permite las ventanas emergentes para imprimir o guardar como PDF.');return}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(title)+'</title><style>body{font:12px Arial;padding:16px}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #999;padding:5px;text-align:left}h2{margin-bottom:16px}@media print{button{display:none}}</style></head><body><h2>'+escapeHtml(title)+'</h2>'+tables.map(t=>t.outerHTML).join('<br>')+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close()})}
   function boot(){ensureTrigger();makeModal();$$('#root .view[id^="view-"],#root [data-view-page]').forEach(v=>{installSearch(v);installExports(v)})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();new MutationObserver(()=>boot()).observe(document.documentElement,{childList:true,subtree:true});
 })();
@@ -2990,7 +1860,8 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if(!pending||pending.signature!==signature||!pending.id||Date.now()-Number(pending.createdAt||0)>86400000){pending={signature,id:`SW-${Date.now()}-${Math.random().toString(36).slice(2,10)}`,createdAt:Date.now()};try{localStorage.setItem(pendingKey,JSON.stringify(pending))}catch{}}
     payload.idempotencyKey=pending.id;window.__sendwayoSubmitBusy=true;
     try{const result=await cloud.submitOperation({operation:payload});try{const latest=JSON.parse(localStorage.getItem(pendingKey)||'null');if(latest?.id===pending.id)localStorage.removeItem(pendingKey)}catch{}return result}
-    catch(err){console.error('SENDWAYO: submitOperation no confirmado',err);throw err}    finally{window.__sendwayoSubmitBusy=false}
+    catch(err){console.error('SENDWAYO: submitOperation no confirmado',err);throw err}
+    finally{window.__sendwayoSubmitBusy=false}
   };
 })();
 </script>
@@ -3151,8 +2022,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         if(result.ambiguousPhones?.length)preview.append(el('h3',{text:`Teléfonos compartidos que no se fusionaron (${result.ambiguousPhones.length})`,style:'font-weight:800;margin-top:12px'}),el('pre',{text:JSON.stringify(result.ambiguousPhones,null,2),style:'white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;font-size:11px'}));
       }catch(err){setStatus(err?.message||'La importación no terminó. Revisa el estado antes de reintentar.');}
       finally{importBtn.disabled=true;parseBtn.disabled=false;importBtn.textContent='Importar y deduplicar'}
-    });
-    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
+    });    const update=()=>{try{const u=JSON.parse(localStorage.getItem('sendwayo_authenticated_user')||'null');const cloud=window.sendwayoCloud;launch.style.display=u?.role==='admin'&&cloud?.auth?.currentUser?'block':'none'}catch{launch.style.display='none'}};
     window.addEventListener('storage',update);window.addEventListener('sendwayo:auth-changed',update);window.addEventListener('focus',update);
     let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})});if(document.body)observer.observe(document.body,{childList:true,subtree:true});update();
   }
