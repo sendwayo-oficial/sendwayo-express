@@ -1,0 +1,56 @@
+name: Validate SENDWAYO Fusion Backend
+on:
+  push:
+    branches: [fusion-point-a-b-20261010]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/fusion-backend-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/fusion-backend-check.yml'
+permissions:
+  contents: read
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Firebase target and JSON
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const project = JSON.parse(fs.readFileSync('backend/.firebaserc', 'utf8'));
+          const firebase = JSON.parse(fs.readFileSync('backend/firebase.json', 'utf8'));
+          JSON.parse(fs.readFileSync('backend/firestore.indexes.json', 'utf8'));
+          if (project.projects.default !== 'sendwayo-express-app-101') {
+            throw new Error('Backend target is not Point A');
+          }
+          if (firebase.firestore.rules !== 'firestore.rules') {
+            throw new Error('Firestore rules file mismatch');
+          }
+          console.log('Firebase target and JSON validated.');
+          NODE
+      - name: Verify frontend/backend callable contract
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const backend = fs.readFileSync('backend/functions/index.js', 'utf8');
+          const client = new Set([...html.matchAll(/invoke\(['"]([A-Za-z0-9_]+)['"]\)/g)].map(m => m[1]));
+          const server = new Set([...backend.matchAll(/exports[.]([A-Za-z0-9_]+)[ ]*=/g)].map(m => m[1]));
+          const missing = [...client].filter(name => !server.has(name));
+          if (missing.length) throw new Error('Callable functions missing in backend: ' + missing.join(', '));
+          if (!client.size) throw new Error('No client callable functions found');
+          console.log(`Callable contract OK: ${client.size} client functions, ${server.size} backend exports.`);
+          NODE
+      - name: Install backend dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: backend/functions
+      - name: Check syntax and run domain tests
+        run: npm run check
+        working-directory: backend/functions

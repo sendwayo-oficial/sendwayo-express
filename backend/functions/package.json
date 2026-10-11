@@ -1,0 +1,15 @@
+{
+  "name": "sendwayo-express-functions",
+  "private": true,
+  "description": "Backend financiero autenticado de SENDWAYO EXPRESS; no desplegar hasta completar integración frontend y auditoría.",
+  "main": "index.js",
+  "engines": { "node": "22" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check index.js && node --check domain.js && npm test"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0",
+    "firebase-functions": "^6.4.0"
+  }
+}

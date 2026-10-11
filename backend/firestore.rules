@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function profilePath(uid) { return /databases/$(database)/documents/profiles/$(uid); }
+    function hasActiveProfile() {
+      return signedIn() && exists(profilePath(request.auth.uid))
+        && get(profilePath(request.auth.uid)).data.status in ['active', 'approved', 'aprobado', 'activo'];
+    }
+    function isAdmin() {
+      return hasActiveProfile() && get(profilePath(request.auth.uid)).data.role in ['admin', 'Administrador', 'administrador'];
+    }
+    function isAgent() {
+      return hasActiveProfile() && get(profilePath(request.auth.uid)).data.role in ['agent', 'Agente', 'agente'];
+    }
+    function owns(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Client SDK may read permitted data. Profile roles and financial state are server-managed.
+    match /bankAccounts/{bankId} {
+      // Administración manages records through callable functions; active users can only read active official deposit accounts.
+      allow read: if isAdmin() || (hasActiveProfile() && resource.data.active == true);
+      allow create, update, delete: if false;
+    }
+    match /beneficiaries/{beneficiaryId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.createdByUid == request.auth.uid && resource.data.active == true);
+      allow create, update, delete: if false;
+    }
+    match /reconciliations/{reconciliationId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+    match /packages/{packageId} {
+      allow read: if isAdmin() || (signedIn() && (resource.data.ownerUid == request.auth.uid || resource.data.createdByUid == request.auth.uid));
+      allow create, update, delete: if false;
+    }
+    match /profiles/{uid} {
+
+      allow read: if owns(uid) || isAdmin();
+      allow create, update, delete: if false;
+    }
+    match /registrationRequests/{uid} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update, delete: if false;
+    }
+    match /legacyAccounts/{legacyId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /transactions/{operationId} {
+      allow read: if isAdmin() || (signedIn() && (
+        resource.data.actorUid == request.auth.uid ||
+        resource.data.ownerUid == request.auth.uid ||
+        resource.data.targetUid == request.auth.uid ||
+        resource.data.sourceUid == request.auth.uid
+      ));
+      allow create, update, delete: if false;
+    }
+    match /accounts/{uid} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update, delete: if false;
+    }
+    match /systemBalances/{systemId} {
+      // Agents may read only the shared HTG/GDES operations fund to check availability.
+      allow read: if isAdmin() || (systemId == 'operations' && isAgent());
+      allow write: if false;
+    }
+    match /ledger/{entryId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.kind != 'settlement' && resource.data.ownerUid == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /receipts/{receiptId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.recipientUids is list && request.auth.uid in resource.data.recipientUids);
+      allow create, update, delete: if false;
+    }
+    match /notifications/{uid}/items/{notificationId} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, delete: if false;
+      allow update: if owns(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt'])
+        && request.resource.data.read == true;
+    }
+    // Deny everything not explicitly allowed above.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

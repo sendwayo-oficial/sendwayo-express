@@ -1,0 +1,81 @@
+name: SENDWAYO — verificación de acceso a Firebase (solo lectura)
+
+on:
+  push:
+    branches: [fusion-point-a-b-20261010]
+    paths:
+      - '.github/workflows/fusion-firebase-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firebase-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Seleccionar autenticación disponible
+        id: auth-check
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SENDWAYO_EXPRESS_APP_101 }}
+        run: |
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT:-}" ]; then
+            echo "mode=service-account" >> "$GITHUB_OUTPUT"
+            echo "Se usará una cuenta de servicio de solo lectura."
+          elif [ -n "${FIREBASE_TOKEN:-}" ]; then
+            echo "mode=legacy-token" >> "$GITHUB_OUTPUT"
+            echo "Se usará FIREBASE_TOKEN heredado."
+          else
+            echo '::error::Falta la credencial. Configure FIREBASE_SERVICE_ACCOUNT_SENDWAYO_EXPRESS_APP_101 (recomendado) o FIREBASE_TOKEN como secreto del repositorio.'
+            exit 1
+          fi
+      - name: Autenticar con cuenta de servicio
+        if: steps.auth-check.outputs.mode == 'service-account'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SENDWAYO_EXPRESS_APP_101 }}
+      - name: Comprobar acceso de solo lectura a Firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          npm install --global firebase-tools
+          firebase projects:list --json > /tmp/sendwayo-projects.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const raw=fs.readFileSync('/tmp/sendwayo-projects.json','utf8');
+          if(!raw.includes('sendwayo-express-app-101')) {
+            console.error('La credencial no puede ver sendwayo-express-app-101; se detiene sin cambios.');
+            process.exit(2);
+          }
+          console.log('Proyecto objetivo visible: sendwayo-express-app-101.');
+          NODE
+          firebase functions:list --project sendwayo-express-app-101 --json > /tmp/sendwayo-functions.json
+          firebase hosting:sites:list --project sendwayo-express-app-101 --json > /tmp/sendwayo-sites.json
+          firebase firestore:databases:list --project sendwayo-express-app-101 --json > /tmp/sendwayo-firestore.json
+          firebase database:instances:list --project sendwayo-express-app-101 --json > /tmp/sendwayo-rtdb.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const files=[
+            ['/tmp/sendwayo-functions.json','Funciones'],
+            ['/tmp/sendwayo-sites.json','Sitios de Hosting'],
+            ['/tmp/sendwayo-firestore.json','Bases Firestore'],
+            ['/tmp/sendwayo-rtdb.json','Instancias Realtime Database']
+          ];
+          for (const [file,label] of files) {
+            let j;
+            try { j=JSON.parse(fs.readFileSync(file,'utf8')); }
+            catch { console.log(label+': respuesta no JSON; revisar logs.'); continue; }
+            const rows=Array.isArray(j)?j:(j.result||j.functions||j.sites||j.databases||j.instances||[]);
+            const names=rows.map(x=>x.name||x.id||x.functionId||x.siteId||x.instance||'').filter(Boolean);
+            console.log(label+': '+(names.length?names.join(', '):'ninguno devuelto / revisar permisos'));
+          }
+          NODE
+          echo 'Fin de verificación: solo lectura. No se desplegó nada ni se modificaron datos ni balances.'
+# Trigger a fresh read-only access check for the current fusion branch.

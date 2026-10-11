@@ -26,6 +26,16 @@ jobs:
           NODE
       - name: Check critical hardening markers
         run: |
-          grep -q 'sendwayo-professional-hardening' index.html
-          grep -q 'ganancias-dia-card' index.html
-          echo "SENDWAYO critical markers OK"
+          if grep -q 'sendwayo-fusion-import-a-b' index.html; then
+            # Nueva interfaz Firebase: comprobar la capa cloud y los listeners en lugar de los IDs de la interfaz anterior.
+            grep -q 'sendwayoCloud' index.html
+            grep -q 'listenAdminOperations' index.html
+            grep -q 'listenNotifications' index.html
+            grep -q 'sendwayo-express-app-101.web.app/__/firebase/init.js' index.html
+            echo "SENDWAYO fusion cloud markers OK"
+          else
+            # Aplicación anterior: conservar su guardarraíl original.
+            grep -q 'sendwayo-professional-hardening' index.html
+            grep -q 'ganancias-dia-card' index.html
+            echo "SENDWAYO legacy hardening markers OK"
+          fi
