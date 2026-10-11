@@ -1188,7 +1188,12 @@ async function initFirebase(){
         ]);
       }
       if(typeof firebase==='undefined'||!firebase.initializeApp)throw new Error('FIREBASE_SDK_NOT_LOADED');
-      if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+      if(!firebase.apps.length){
+        // SENDWAYO: cargar la configuración publicada de Punto A; no inicializar el proyecto antiguo.
+        await loadScript('https://sendwayo-express-app-101.web.app/__/firebase/init.js',9000);
+      }
+      if(!firebase.apps.length)throw new Error('PUNTO_A_FIREBASE_CONFIG_NOT_LOADED');
+      if(String(firebase.app().options.projectId||'')!=='sendwayo-express-app-101')throw new Error('FIREBASE_WRONG_PROJECT');
       if(!firebase.auth||!firebase.database)throw new Error('FIREBASE_AUTH_OR_DATABASE_NOT_LOADED');
 
       // Storage NO es requisito para iniciar sesión.
