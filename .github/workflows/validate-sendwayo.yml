@@ -2,7 +2,7 @@ name: Validar SENDWAYO EXPRESS
 
 on:
   push:
-    branches: [main]
+    branches: [main, "fix/**"]
   workflow_dispatch:
 
 jobs:
@@ -31,3 +31,29 @@ jobs:
             echo "=== $f ==="
             node --check "$f"
           done
+      - name: Validate V31 fusion candidate JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path("v31-prueba.html").read_text(encoding="utf-8")
+          if "</script>  </body></html>" in html[:-200]:
+              raise SystemExit("V31 aún contiene un cierre de script incrustado sin escapar")
+          scripts=re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", html, re.S|re.I)
+          if len(scripts) < 25:
+              raise SystemExit(f"V31: solo se reconocieron {len(scripts)} bloques de script; revise el HTML")
+          out=Path("/tmp/sendwayo-v31")
+          out.mkdir(exist_ok=True)
+          for i, code in enumerate(scripts,1):
+              if code.strip():
+                  (out/f"{i}.js").write_text(code,encoding="utf-8")
+          print("V31: bloques reales reconocidos:",len(scripts))
+          PY
+          for f in /tmp/sendwayo-v31/*.js; do
+            echo "=== $f ==="
+            node --check "$f"
+          done
+          grep -q 'window.sendwayoCloud' v31-prueba.html
+          grep -q 'resolveOrBootstrapProfile' v31-prueba.html
+          grep -q 'submitOperation' v31-prueba.html
+          echo "V31 cloud API markers OK"
