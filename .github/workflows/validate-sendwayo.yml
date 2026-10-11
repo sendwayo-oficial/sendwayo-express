@@ -57,3 +57,19 @@ jobs:
           grep -q 'resolveOrBootstrapProfile' v31-prueba.html
           grep -q 'submitOperation' v31-prueba.html
           echo "V31 cloud API markers OK"
+      - name: Preflight real Firebase Point A and callable backend
+        run: |
+          set -eu
+          INIT_URL="https://sendwayo-express-app-101.web.app/__/firebase/init.js"
+          curl --fail --location --silent --show-error --max-time 20 "$INIT_URL" -o /tmp/sw-firebase-init.js
+          grep -q 'sendwayo-express-app-101' /tmp/sw-firebase-init.js || { echo "::error::Firebase Hosting init.js does not identify the expected project"; exit 1; }
+          for fn in resolveOrBootstrapProfile submitOperation reviewOperation adjustAccount; do
+            code=$(curl --silent --show-error --max-time 20 -o "/tmp/sw-${fn}.json" -w '%{http_code}' -H 'Content-Type: application/json' -d '{"data":{}}' "https://us-central1-sendwayo-express-app-101.cloudfunctions.net/$fn")
+            echo "$fn unauthenticated probe HTTP $code"
+            case "$code" in
+              200|400|401|403) ;;
+              404) echo "::error::Firebase callable function $fn was not found in Point A"; cat "/tmp/sw-${fn}.json"; exit 1 ;;
+              *) echo "::error::Unexpected response from $fn"; cat "/tmp/sw-${fn}.json"; exit 1 ;;
+            esac
+          done
+          echo "Firebase project and critical callable endpoints respond."
