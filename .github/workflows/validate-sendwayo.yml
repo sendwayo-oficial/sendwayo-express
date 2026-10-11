@@ -31,6 +31,22 @@ jobs:
             echo "=== $f ==="
             node --check "$f"
           done
+      - name: Check Firebase deployment access without exposing credentials
+        if: always()
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "::warning::No existe FIREBASE_TOKEN disponible para publicar servicios de Firebase desde este repositorio."
+            exit 0
+          fi
+          npx --yes firebase-tools projects:list --token "$FIREBASE_TOKEN" > /tmp/sw-firebase-projects.txt
+          if grep -q 'sendwayo-express-app-101' /tmp/sw-firebase-projects.txt; then
+            echo "Firebase token can see sendwayo-express-app-101."
+          else
+            echo "::warning::Firebase token is available but cannot see sendwayo-express-app-101."
+            grep -E 'sendwayo-express|Project ID' /tmp/sw-firebase-projects.txt || true
+          fi
       - name: Validate V31 fusion candidate JavaScript
         run: |
           python - <<'PY'
