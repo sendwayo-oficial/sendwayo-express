@@ -3769,8 +3769,8 @@ window.addEventListener('load',()=>{if(typeof startProductionRealtimeRefresh==='
 
 /* POLITICA FINANCIERA SENDWAYO EXPRESS — DEPÓSITOS Y COMISIONES 2026-09-21 */
 /* DEPÓSITOS: 100% al balance/capital del Remitente; comisión = RD$0.00; nunca pasan por el reparto 50/50. */
-/* ENVÍOS INTERNACIONALES: 10%; HTI→HTI: 5%; recargas/paqueticos/facturas/servicios: 5%. Siempre 50/50. */
-function sendwayoFinancialPolicy(){return {depositRate:0,internationalRate:0.10,htiToHtiRate:0.05,serviceRate:0.05,remitterShare:0.50,adminShare:0.50}}
+/* Política vigente: comisión general 8%; recargas/paqueticos/facturas/servicios 5%; reparto 50/50. Haití→Haití conserva sus tarifas específicas en GDES. */
+function sendwayoFinancialPolicy(){return {depositRate:0,internationalRate:0.08,htiToHtiRate:0.05,serviceRate:0.05,remitterShare:0.50,adminShare:0.50}}
 </script>
 <div class="modal" id="adminDepositModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('adminDepositModal')">×</button><h3 style="color:#0f2c59;margin-bottom:12px">Asignar depósito directo al Remitente</h3><div class="info-box" style="margin-bottom:12px">Este depósito se acredita directamente al balance/capital del Remitente. <b>No genera comisión</b> y no aumenta el balance administrativo.</div><div class="form-group"><label>Remitente</label><div class="search-select-wrap"><input id="admin-dep-remitente-search" class="form-control" placeholder="Buscar por nombre, usuario o número..." autocomplete="off" oninput="updateAdminDepositSuggestions()" onfocus="updateAdminDepositSuggestions()"><button type="button" class="plus-btn" title="Buscar remitente" onclick="updateAdminDepositSuggestions()">⌕</button></div><div id="admin-dep-remitente-suggestions" class="env-suggestions"></div><select id="admin-dep-remitente" class="form-control" style="display:none"></select></div><div class="form-grid"><div class="form-group"><label>Monto RD$</label><input id="admin-dep-monto" type="number" min="0" step="0.01" class="form-control"></div><div class="form-group"><label>Referencia / nota</label><input id="admin-dep-nota" class="form-control" placeholder="Opcional"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('adminDepositModal')">Cerrar</button><button class="btn btn-warning" onclick="guardarDepositoAdministrativo()">Acreditar al balance</button></div></div></div>
 <script>
@@ -4491,7 +4491,7 @@ function swCommission(r,admin,uid,col){
     const amount=swAmount(r);
     let rate=0;
     if(col==='envios'){
-      rate=0.10;
+      rate=0.08;
       try{
         if(typeof commissionRateFor==='function'){
           const configured=Number(commissionRateFor(col,r));
