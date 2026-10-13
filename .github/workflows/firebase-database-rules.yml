@@ -1,39 +1,76 @@
-name: Publicar reglas de Firebase
+name: Publicar SENDWAYO EXPRESS en Firebase
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - 'database.rules.json'
+      - 'index.html'
+      - 'assets/**'
+      - 'sw.js'
       - 'firebase.json'
+      - '.firebaserc'
+      - 'database.rules.json'
       - '.github/workflows/firebase-database-rules.yml'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: sendwayo-firebase-production
+  cancel-in-progress: false
+
 jobs:
-  deploy-database-rules:
-    if: github.ref == 'refs/heads/main'
+  validate-and-deploy:
+    name: Validar y publicar Hosting + Realtime Database
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar repositorio
+      - name: Descargar código
         uses: actions/checkout@v4
 
-      - name: Instalar Firebase CLI
-        run: npm install -g firebase-tools
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      - name: Comprobar credencial de Firebase
-        id: firebase-token
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      - name: Validar configuración del proyecto
+        shell: bash
         run: |
-          if [ -n "$FIREBASE_TOKEN" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::FIREBASE_TOKEN no está configurado; las reglas se validan en GitHub pero no se publican en Firebase."
-          fi
+          node <<'NODE'
+          const fs = require('node:fs');
+          const cfg = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
+          const rc = JSON.parse(fs.readFileSync('.firebaserc', 'utf8'));
+          if (rc.projects?.default !== 'sendwayo-express') {
+            throw new Error('El proyecto predeterminado de .firebaserc no coincide con sendwayo-express.');
+          }
+          if (cfg.database?.rules !== 'database.rules.json') {
+            throw new Error('No está configurado database.rules.json.');
+          }
+          if (cfg.hosting?.public !== '.') {
+            throw new Error('Firebase Hosting debe publicar la raíz del sitio donde está index.html.');
+          }
+          if (!fs.existsSync('index.html') || !fs.existsSync('database.rules.json')) {
+            throw new Error('Falta index.html o database.rules.json.');
+          }
+          console.log('Configuración validada para Firebase: sendwayo-express');
+          NODE
 
-      - name: Publicar reglas de Realtime Database
-        if: steps.firebase-token.outputs.available == 'true'
+      - name: Comprobar credencial de despliegue
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only database --project sendwayo-express --token "$FIREBASE_TOKEN"
+        shell: bash
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "::error::Falta el secreto FIREBASE_TOKEN en GitHub. Añádelo en Settings > Secrets and variables > Actions > New repository secret. No coloques el token en el código."
+            exit 1
+          fi
+          echo "Credencial FIREBASE_TOKEN disponible."
+
+      - name: Instalar Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Publicar aplicación y reglas de Realtime Database
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only hosting,database --project sendwayo-express --token "$FIREBASE_TOKEN" --non-interactive
