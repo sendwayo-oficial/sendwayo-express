@@ -191,7 +191,75 @@ function sendwayoDownload(name,content,type){const b=new Blob([content],{type});
 function sendwayoSecretRows(){return [...document.querySelectorAll("[data-sendwayo-secret-card]")].filter(x=>x.style.display!=="none").map(el=>({tipo:el.getAttribute("data-secret-role")||"",informacion:el.innerText.replace(/\s+/g," ").trim()}))}
 function sendwayoExportCSV(){const rows=sendwayoSecretRows();const csv=["Tipo,Información",...rows.map(r=>`"${r.tipo.replace(/"/g,'""')}","${r.informacion.replace(/"/g,'""')}"`)].join("\n");sendwayoDownload("SENDWAYO_INFORMACIONES_SECRETAS.csv",csv,"text/csv;charset=utf-8")}
 function sendwayoExportExcel(){const rows=sendwayoSecretRows();const html=`<html><meta charset="utf-8"><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table></html>`;sendwayoDownload("SENDWAYO_INFORMACIONES_SECRETAS.xls",html,"application/vnd.ms-excel;charset=utf-8")}
-function sendwayoExportPDF(){const rows=sendwayoSecretRows();const w=window.open("","_blank","width=1000,height=800");if(!w){alert("Permita las ventanas emergentes para generar el PDF.");return}w.document.write(`<html><head><meta charset="utf-8"><title>SENDWAYO EXPRESS - Informaciones Secretas</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0a245e}h1{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px;text-align:left}th{background:#0a245e;color:#fff}</style></head><body><h1>SENDWAYO EXPRESS — Informaciones Secretas</h1><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table><\x73cript>window.onload=()=>window.print()<\/script>\n\n</body></html>`);w.document.close()}
+function sendwayoExportPDF(){const rows=sendwayoSecretRows();const w=window.open("","_blank","width=1000,height=800");if(!w){alert("Permita las ventanas emergentes para generar el PDF.");return}w.document.write(`<html><head><meta charset="utf-8"><title>SENDWAYO EXPRESS - Informaciones Secretas</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0a245e}h1{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px;text-align:left}th{background:#0a245e;color:#fff}</style></head><body><h1>SENDWAYO EXPRESS — Informaciones Secretas</h1><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table><\x73cript>window.onload=()=>window.print()<\/script>\n\n
+<script id="sendwayo-auth-password-recovery">
+/* Recuperación de contraseña Firebase: no crea cuentas ni cambia roles/perfiles. */
+(function () {
+  'use strict';
+  function install() {
+    const root = document.getElementById('root');
+    if (!root) return;
+    const forms = Array.from(root.querySelectorAll('form'));
+    for (const form of forms) {
+      const password = form.querySelector('input[type="password"]');
+      const submit = form.querySelector('button[type="submit"]');
+      if (!password || !submit || form.querySelector('#sw-auth-recover')) continue;
+      const button = document.createElement('button');
+      button.id = 'sw-auth-recover';
+      button.type = 'button';
+      button.textContent = 'RECUPERAR CONTRASEÑA';
+      button.style.cssText = 'width:100%;margin-top:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;padding:10px 12px;border-radius:9px;font-weight:900;font-size:12px;cursor:pointer';
+      const notice = document.createElement('div');
+      notice.id = 'sw-auth-recover-message';
+      notice.setAttribute('role', 'status');
+      notice.style.cssText = 'display:none;margin-top:8px;padding:9px;border-radius:8px;font-size:12px;line-height:1.45;overflow-wrap:anywhere';
+      button.addEventListener('click', async function () {
+        const emailInput = form.querySelector('input[autocomplete="username"]') || form.querySelector('input[type="email"]') || form.querySelector('input[type="text"]');
+        const email = String(emailInput?.value || '').trim();
+        notice.style.display = 'block';
+        notice.style.background = '#fff7ed';
+        notice.style.color = '#9a3412';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          notice.textContent = 'Escriba primero el correo electrónico registrado de la cuenta (no el número de celular).';
+          return;
+        }
+        const auth = window.firebase && typeof window.firebase.auth === 'function' ? window.firebase.auth() : null;
+        if (!auth || typeof auth.sendPasswordResetEmail !== 'function') {
+          notice.textContent = 'Firebase Authentication no está disponible en esta página. Recargue el enlace publicado y vuelva a intentarlo.';
+          return;
+        }
+        button.disabled = true;
+        button.textContent = 'ENVIANDO…';
+        try {
+          await auth.sendPasswordResetEmail(email);
+          notice.style.background = '#ecfdf5';
+          notice.style.color = '#065f46';
+          notice.textContent = 'Solicitud enviada. Revise la bandeja de entrada y el correo no deseado. Si existe una cuenta con ese correo, recibirá las instrucciones para cambiar la contraseña.';
+        } catch (err) {
+          console.error('[SENDWAYO] Password recovery failed', err);
+          notice.textContent = err && err.code === 'auth/invalid-email'
+            ? 'El correo no tiene un formato válido.'
+            : 'No se pudo enviar la recuperación. Verifique el correo, la conexión de Firebase y los ajustes de correo de autenticación.';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'RECUPERAR CONTRASEÑA';
+        }
+      });
+      submit.insertAdjacentElement('afterend', button);
+      button.insertAdjacentElement('afterend', notice);
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
+  install();
+  const root = document.getElementById('root');
+  if (root && !window.__sendwayoPasswordRecoveryObserver) {
+    window.__sendwayoPasswordRecoveryObserver = new MutationObserver(install);
+    window.__sendwayoPasswordRecoveryObserver.observe(root, { childList: true, subtree: true });
+  }
+})();
+</script>
+
+</body></html>`);w.document.close()}
 function sendwayoEditSecret(role,id,name){if(!confirm(`Modificar los datos de ${name||id}?`))return;const all=sendwayoSecretUsers();let u=all.find(x=>x.role===role&&String(x.id||"")===String(id||""));if(!u)u={role,name,id,code:id,password:null,identifiers:[name,id]};const nombre=prompt("Nombre",u.name||name||"");if(nombre===null)return;const telefono=prompt("Teléfono",u.phone||"");if(telefono===null)return;const usuario=prompt("Usuario/correo",u.email||u.identifier||"");if(usuario===null)return;const pass=prompt("Nueva contraseña (dejar vacío para conservar)",u.password||"");if(pass===null)return;const next={...u,name:nombre,phone:telefono,email:usuario,identifiers:[...new Set([...(u.identifiers||[]),nombre,telefono,usuario,id]) ]};if(pass)next.password=pass;sendwayoSaveSecretUser(next);alert("Cambios guardados correctamente.");location.reload()}
 function sendwayoAddSecretUser(){const role=prompt("Tipo: escriba AGENTE o REMITENTE");if(!role)return;const r=role.toLowerCase().startsWith("a")?"agent":"remitente";const name=prompt("Nombre completo");if(!name)return;const phone=prompt("Teléfono");if(!phone)return;const id=prompt("ID único (ej. AG-006 / RM-031)");if(!id)return;const email=prompt("Usuario/correo");if(email===null)return;const password=prompt("Contraseña");if(password===null)return;const parts=name.trim().split(/\s+/),first=parts.shift()||"",last=parts.join(" ");const user={role:r,name,first,last,id,code:id,phone,email,password:null,identifiers:[name,phone,email,id],balance:0,balanceDOP:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0};sendwayoSaveSecretUser(user);alert("Registro agregado. Agentes: sin balance ni comisión personal. Remitentes: balance DOP y HTG y comisiones DOP/HTG.");location.reload()}
 const SENDWAYO_USER_STORE="sendwayo_users";
