@@ -1927,6 +1927,7 @@ function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(c
 function isAdminUser(user){const u=user||{};return u.id==='admin'||String(u.role||'').trim().toLowerCase()==='administrador'||String(u.username||'').trim().toLowerCase()==='admin'||String(u.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com'}
 function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return ['agente','agent','agentes'].includes(role)||String(u.agentType||'').trim().toUpperCase()==='AGENTE'||String(u.agentScope||'').trim().toUpperCase()==='OPERACIONES'&&String(u.agentPolicy||'').trim().toUpperCase()==='HTI_A_HTI'||!!u.agentKey;}
 function isManagedUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return !!u&&(['remitente','remitentes'].includes(role)||isAgentUser(u))}
+function isRemitterProfile(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u?.role||'').trim().toLowerCase();return !!u&&['remitente','remitentes'].includes(role)&&!isAdminUser(u)&&!isAgentUser(u)}
 function isOperationalUser(userOrId){return isAdminUser(userOrId)||isManagedUser(userOrId)}
 async function ensureHeraceFleuranvilAgent(){
  if(!isAdmin()||!firebaseReady)return;
@@ -2019,27 +2020,27 @@ async function saveCreditGrant(){
  const cid=uid('crd'),ref=firebase.database().ref(DB_PATH+'/users/'+id);
  try{const tx=await ref.transaction(u=>{if(!u||!isManagedUser(u))return undefined;const grants={...(u.creditGrants||{})};return {...u,creditLimit:Number(u.creditLimit||0)+amount,creditGrantedTotal:Number(u.creditGrantedTotal||0)+amount,creditGrants:{...grants,[cid]:{id:cid,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'}}}});if(!tx.committed)return toast('No se pudo guardar el crédito. Verifique que el remitente exista.','error');const updated=tx.snapshot.val(),record={id:cid,userId:id,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'};state.users[id]=updated;state.credits=state.credits||{};state.credits[cid]=record;try{await firebase.database().ref(DB_PATH+'/credits/'+cid).set(record)}catch(e){console.warn('Índice de crédito no disponible:',e)}if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);localSave();closeModal('creditGrantModal');renderAll();try{await addNotification(id,'Administración le otorgó '+money(amount)+' de crédito. Cupo disponible: '+money(creditInfo(updated).available)+'.','credits',cid)}catch(_){}toast('Crédito otorgado y guardado correctamente.','success')}catch(e){console.warn('saveCreditGrant:',e);toast('No se pudo guardar el crédito en Firebase.','error')}
 }
-async function guardBalance(amount){
- const needed=Number(amount||0);
- if(needed<=0)return true;
+async function guardBalance(amount,currency='DOP'){
+ const needed=Number(amount||0),cur=String(currency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+ if(!Number.isFinite(needed)||needed<=0)return true;
  if(isAdmin())return true;
  if(!currentUser||currentUser.active===false)return toast('La cuenta no está activa.','error');
- if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede realizar una operación sin verificar el saldo.','error');
- try{
-  const ref=firebase.database().ref(DB_PATH+'/users/'+currentUser.id);
-  const tx=await ref.transaction(u=>{
-   if(!u||u.active===false)return undefined;
-   const role=String(u.role||'').trim().toLowerCase();
-   if(!['remitente','remitentes','agente','agent','agentes'].includes(role))return undefined;
-   const balance=Number(u.balance||0);
-   if(!Number.isFinite(balance)||balance<needed)return undefined;
-   return {...u,balance:balance-needed};
-  });
-  if(!tx.committed){toast('Saldo insuficiente. La operación supera el balance disponible y fue bloqueada.','warn');return false}
-  const updated=tx.snapshot.val();currentUser={...updated,__creditUsedForOperation:0};state.users[currentUser.id]=updated;
-  if(lastSyncedState?.users?.[currentUser.id])lastSyncedState.users[currentUser.id]=cloneState(updated);
-  localSave();return true;
- }catch(e){console.warn('Bloqueo de saldo:',e);toast('No se pudo verificar/actualizar el saldo en Firebase. La operación fue bloqueada.','error');return false}
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede verificar el balance real.','error');
+ if(isAgentUser(currentUser)){try{const snap=await firebase.database().ref(DB_PATH+'/agentCapital/balance').once('value'),available=Number(snap.val()||0);if(!Number.isFinite(available)||available<needed)return toast('Balance operativo insuficiente: disponible '+money(available)+'; requerido '+money(needed)+'.','warn');return true}catch(e){console.warn('Balance operativo del agente:',e);return toast('No se pudo verificar el balance operativo del agente en Firebase.','error')}}
+ const userId=currentUser.id,ref=firebase.database().ref(DB_PATH+'/users/'+userId);let observed=0,failure='UNKNOWN';
+ try{const tx=await ref.transaction(u=>{
+   if(!u||u.active===false){failure='PROFILE';return undefined}
+   const role=String(u.role||'').trim().toLowerCase();if(!['remitente','remitentes'].includes(role)){failure='ROLE';return undefined}
+   let available;
+   if(cur==='HTG'){if(u.balanceHTG!==undefined&&u.balanceHTG!==null)available=Number(u.balanceHTG);else if(String(u.balanceCurrency||'').toUpperCase()==='HTG')available=Number(u.balance||0);else{failure='NO_HTG';return undefined}}
+   else{if(String(u.balanceCurrency||'').toUpperCase()==='HTG'&&u.balanceDOP==null){failure='NO_DOP';return undefined}available=Number(u.balanceDOP!==undefined&&u.balanceDOP!==null?u.balanceDOP:u.balance||0)}
+   observed=available;if(!Number.isFinite(available)){failure='INVALID';return undefined}if(available+0.000001<needed){failure='LOW';return undefined}
+   const next={...u};if(cur==='HTG'){if(u.balanceHTG!==undefined&&u.balanceHTG!==null)next.balanceHTG=available-needed;else next.balance=available-needed}else{next.balance=available-needed;if(u.balanceDOP!==undefined&&u.balanceDOP!==null)next.balanceDOP=available-needed}failure='OK';return next;
+ });
+ if(!tx.committed){try{const fresh=(await ref.once('value')).val();if(fresh){state.users[userId]=fresh;if(currentUser?.id===userId)currentUser=fresh;observed=cur==='HTG'?(fresh.balanceHTG!=null?Number(fresh.balanceHTG):(String(fresh.balanceCurrency||'').toUpperCase()==='HTG'?Number(fresh.balance||0):0)):Number(fresh.balanceDOP!=null?fresh.balanceDOP:fresh.balance||0);renderAll()}}catch(readError){console.warn('No se pudo releer balance:',readError)}
+   if(failure==='NO_HTG')return toast('No existe un balance HTG registrado para este remitente. No se usará su balance en pesos.','error');if(failure==='NO_DOP')return toast('No existe un balance en pesos dominicanos registrado.','error');if(failure==='LOW'||observed+0.000001<needed)return toast('Fondos insuficientes: disponible '+money(observed)+'; total requerido '+money(needed)+'.','warn');if(failure==='ROLE'||failure==='PROFILE')return toast('No se encontró un perfil activo de remitente autorizado.','error');return toast('Firebase rechazó el débito aunque el saldo es suficiente. No se creó la operación; revise las reglas de balance.','error')}
+ const updated=tx.snapshot.val();currentUser={...updated,__creditUsedForOperation:0};state.users[userId]=updated;if(lastSyncedState?.users?.[userId])lastSyncedState.users[userId]=cloneState(updated);localSave();return true
+ }catch(e){console.warn('Validación de saldo:',e);return toast('No se pudo consultar o actualizar el balance real en Firebase. La operación fue bloqueada.','error')}
 }
 function resolveByText(value,collection,fields){let v=String(value||'').trim().toLowerCase();if(!v)return null;return Object.values(collection).find(x=>fields.some(f=>String(x[f]||'').trim().toLowerCase()===v||String(x[f]||'').trim().toLowerCase().includes(v)))?.id||null}
 function normalizeSearchText(v){return String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim()}
