@@ -2202,10 +2202,10 @@ async function guardarEnvio(){
  }else if(!c.valid||isOfficialHtiCashRoute(type)&&officialHtiCashFee(amount,type)===null){
    return toast(isOfficialHtiCashRoute(type)?'Para MonCash/NatCash el monto debe estar dentro de la tarifa autorizada.':'Ingrese un monto válido.','warn');
  }
- if(!await guardBalance(amount+(haitiRoute?haitiFee:0)))return;
+ const debitCurrency=haitiRoute?'HTG':'DOP';const totalDebit=amount+(haitiRoute?haitiFee:c.commission);if(!await guardBalance(totalDebit,debitCurrency))return;
  if(!beginFormSubmit('envioModal'))return;
  const ben=state.beneficiaries[benId],rem=userById(remId),remName=personName(rem),remPhone=personPhone(rem),benName=personName(ben),benPhone=personPhone(ben);
- const id=await createTransaction('envios',{type,route:type,remitenteId:remId,remitente:remName,remitenteNombre:remName,remitentePhone:remPhone,remitenteDoc:rem.doc||rem.document||'',beneficiarioId:benId,beneficiario:benName,beneficiarioNombre:benName,beneficiarioPhone:benPhone,net:haitiRoute?amount:c.net,commission:haitiRoute?haitiFee:c.commission,destination:haitiRoute?amount+haitiFee:c.total,currency:haitiRoute?'HTG':'DOP',balanceCurrency:haitiRoute?'HTG':'DOP',amountHTG:haitiRoute?amount:null,feeHTG:haitiRoute?haitiFee:null,tariffHTG:haitiRoute?haitiFee:null,totalHTG:haitiRoute?amount+haitiFee:null,accountingType:haitiRoute?'HAITI_HAITI_GDES':'COMERCIAL'},amount+(haitiRoute?haitiFee:0));
+ const id=await createTransaction('envios',{type,route:type,remitenteId:remId,remitente:remName,remitenteNombre:remName,remitentePhone:remPhone,remitenteDoc:rem.doc||rem.document||'',beneficiarioId:benId,beneficiario:benName,beneficiarioNombre:benName,beneficiarioPhone:benPhone,net:haitiRoute?amount:c.net,commission:haitiRoute?haitiFee:c.commission,destination:haitiRoute?amount+haitiFee:c.total,currency:haitiRoute?'HTG':'DOP',balanceCurrency:haitiRoute?'HTG':'DOP',amountHTG:haitiRoute?amount:null,feeHTG:haitiRoute?haitiFee:null,tariffHTG:haitiRoute?haitiFee:null,totalHTG:haitiRoute?amount+haitiFee:null,balanceDebitOverride:totalDebit,totalDebit,balanceDebit:totalDebit,accountingType:haitiRoute?'HAITI_HAITI_GDES':'COMERCIAL'},amount);
  if(!id){resetFormSubmitState('envioModal');return;}
  closeModal('envioModal');toast('Envío guardado como PENDIENTE y enviado a la página del Administrador.','success');
 }
