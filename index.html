@@ -2801,7 +2801,7 @@ function transactionConcept(collection,r){
  if(collection==='paqueticos')return 'Paquetico '+(r.company||'telefónico')+(r.plan?' - '+r.plan:'');
  if(collection==='pagos')return (r.concepto||r.concept||r.description||('Pago de servicio '+(r.company||'')));
  if(collection==='paquetes')return (r.type==='Envío'?'Envío de paquete':'Recepción de paquete');
- if(collection==='deposits')return 'Depósito bancario';
+ if(collection==='deposits')return 'Depósito de dinero';
  return 'Operación SENDWAYO EXPRESS';
 }
 function receiptSpecificData(collection,r){
@@ -2813,6 +2813,11 @@ function receiptSpecificData(collection,r){
 }
 function receiptServiceHtml(collection,r,t,benName,benPhone){
  const d=receiptSpecificData(collection,r);
+ if(collection==='deposits'){
+   const a=state.accounts?.[r.accountId]||{},issuer=state.users?.[r.createdByUserId]||{},approver=state.users?.[r.reviewedByUserId]||{};
+   const bank=[a.bank||r.accountBank||'',a.holder||r.accountHolder||'',a.number||r.accountNumber||''].filter(Boolean).join(' — ')||'Cuenta bancaria registrada';
+   return '<div class="receipt-concept"><b>CONCEPTO</b><br>Depósito de dinero</div><div class="receipt-concept"><b>CUENTA BANCARIA</b><br>'+escapeHtml(bank)+'</div><div class="receipt-concept"><b>BENEFICIARIO (REMITENTE)</b><br>'+escapeHtml(benName||r.beneficiaryName||r.username||'Remitente')+(benPhone?' — '+escapeHtml(benPhone):'')+'</div><div class="receipt-concept"><b>EMITIDO POR</b><br>'+escapeHtml(r.createdByName||issuer.name||r.createdByRole||'—')+(r.createdByRole?' — '+escapeHtml(r.createdByRole):'')+(r.createdByStaffId?'<br>CÓDIGO DE AGENTE: '+escapeHtml(r.createdByStaffId):'')+'</div><div class="receipt-concept"><b>AUTORIZADO POR</b><br>'+escapeHtml(r.reviewedByName||r.reviewedBy||approver.name||'—')+(r.reviewedByRole?' — '+escapeHtml(r.reviewedByRole):'')+(r.reviewedByStaffId?'<br>CÓDIGO DE AGENTE: '+escapeHtml(r.reviewedByStaffId):'')+'</div>';
+ }
  if(d.kind==='recarga')return '<div class="receipt-concept"><b>RECARGA</b><br>Compañía: '+escapeHtml(d.company)+(d.phone?' — Número: '+escapeHtml(d.phone):'')+'</div>';
  if(d.kind==='paquetico')return '<div class="receipt-concept"><b>PAQUETICO</b><br>Compañía: '+escapeHtml(d.company)+(d.phone?' — Número: '+escapeHtml(d.phone):'')+(d.plan?' — Plan: '+escapeHtml(d.plan):'')+'</div>';
  if(d.kind==='pago')return '<div class="receipt-concept"><b>FACTURA / SERVICIO</b><br>Empresa: '+escapeHtml(d.company)+(d.contract?' — NIS/Contrato: '+escapeHtml(d.contract):'')+'<br>Concepto: '+escapeHtml(d.concept||'Pago de servicio')+'</div>';
@@ -2843,6 +2848,16 @@ function generateReceipt(collection,id){
  const d=new Date();
  const receiptId=r.receipt?.id||('SW-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0'));
  r.receipt={id:receiptId,date:d.toLocaleDateString('es-DO'),time:d.toLocaleTimeString('es-DO'),business:'SENDWAYO EXPRESS',user:u.name||'',username:u.username||'',staffId:u.staffId||'',role:u.role||'Remitente',concept,type:r.type||concept,route:r.route||r.type||'Según operación',amount:Number(r.amount||r.monto||0),net:Number(r.net||r.amount||r.monto||0),remitente:r.remitenteNombre||r.remitente||u.name||'',remitentePhone:r.remitentePhone||u.phone||'',beneficiario:benName,beneficiarioPhone:benPhone,collection,status:'Aprobado',original:true,contactPhone:'8297676665',contactEmail:'sendwayoexpress@gmail.com'};
+ if(collection==='deposits'){
+   const a=state.accounts?.[r.accountId]||{},issuer=users[r.createdByUserId]||{},approver=users[r.reviewedByUserId]||{};
+   Object.assign(r.receipt,{
+    concept:'Depósito de dinero',type:'Depósito de dinero',currency:String(r.currency||'DOP').toUpperCase(),balanceCurrency:String(r.currency||'DOP').toUpperCase(),
+    cuentaBancaria:[a.bank||r.accountBank||'',a.holder||r.accountHolder||'',a.number||r.accountNumber||''].filter(Boolean).join(' — '),
+    emitidoPor:r.createdByName||issuer.name||r.createdByRole||r.username||'—',emitidoPorRol:r.createdByRole||issuer.role||'',codigoAgenteEmisor:r.createdByStaffId||issuer.staffId||'',
+    autorizadoPor:r.reviewedByName||r.reviewedBy||approver.name||'—',autorizadoPorRol:r.reviewedByRole||approver.role||'',codigoAgenteAutorizador:r.reviewedByStaffId||approver.staffId||'',
+    beneficiario:r.beneficiaryName||u.name||r.username||'Remitente',beneficiarioPhone:r.beneficiaryPhone||u.phone||''
+   });
+ }
  bucket[id]=r;
  return r.receipt;
 }
@@ -2884,7 +2899,7 @@ window.showReceipt=function showReceipt(collection,id){
  const netAmount=Number(r.net??rec.net??r.amount??0);
  const isRdHaiti=/^RD\s*a\s*HTI/i.test(String(r.type||r.route||tipo));
  const displayAmount=isRdHaiti?Number(r.destination??(netAmount*2.10)):amount;
- const displayCurrency=isRdHaiti?'HTG':'RD$';
+ const displayCurrency=collection==='deposits'?(String(r.currency||'DOP').toUpperCase()==='HTG'?'HTG':'RD$'):(isRdHaiti?'HTG':'RD$');
  const contact=(()=>{const c=state.settings?.contact||{phone:'8297676665',email:'sendwayoexpress@gmail.com'};return c.phone==='829'+'857'+'3043'?{...c,phone:'8297676665'}:c;})();
  const lang=localStorage.getItem('sendwayo_language')||'es';
  const RT={
