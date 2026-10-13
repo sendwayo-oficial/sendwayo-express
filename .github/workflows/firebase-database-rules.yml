@@ -71,7 +71,7 @@ jobs:
             printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$CREDENTIAL_FILE"
             chmod 600 "$CREDENTIAL_FILE"
 
-            node -e 'const fs=require("node:fs"); const key=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(key.type!=="service_account" || key.project_id!=="sendwayo-express" || !key.client_email || !key.private_key) throw new Error("FIREBASE_SERVICE_ACCOUNT no es una clave válida para sendwayo-express."); console.log("Credencial de cuenta de servicio validada.");' "$CREDENTIAL_FILE"
+            node -e 'const fs=require("node:fs"); const key=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(key.type!=="service_account" || key.project_id!=="sendwayo-express" || !key.client_email || !key.private_key) throw new Error("FIREBASE_SERVICE_ACCOUNT no es una clave válida para sendwayo-express."); console.log("Credencial de cuenta de servicio validada."); console.log("CUENTA_DE_SERVICIO_FIREBASE="+key.client_email); console.log("PROYECTO_DE_LA_CREDENCIAL="+key.project_id);' "$CREDENTIAL_FILE"
 
             echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDENTIAL_FILE" >> "$GITHUB_ENV"
             echo "FIREBASE_AUTH_MODE=service-account" >> "$GITHUB_ENV"
