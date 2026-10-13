@@ -71,14 +71,7 @@ jobs:
             printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$CREDENTIAL_FILE"
             chmod 600 "$CREDENTIAL_FILE"
 
-            node - "$CREDENTIAL_FILE" <<'NODE'
-            const fs = require('node:fs');
-            const key = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-            if (key.type !== 'service_account' || key.project_id !== 'sendwayo-express' || !key.client_email || !key.private_key) {
-              throw new Error('FIREBASE_SERVICE_ACCOUNT no es una clave válida de cuenta de servicio para sendwayo-express.');
-            }
-            console.log('Credencial de cuenta de servicio validada.');
-            NODE
+            node -e 'const fs=require("node:fs"); const key=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(key.type!=="service_account" || key.project_id!=="sendwayo-express" || !key.client_email || !key.private_key) throw new Error("FIREBASE_SERVICE_ACCOUNT no es una clave válida para sendwayo-express."); console.log("Credencial de cuenta de servicio validada.");' "$CREDENTIAL_FILE"
 
             echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDENTIAL_FILE" >> "$GITHUB_ENV"
             echo "FIREBASE_AUTH_MODE=service-account" >> "$GITHUB_ENV"
@@ -87,7 +80,7 @@ jobs:
             echo "FIREBASE_AUTH_MODE=token" >> "$GITHUB_ENV"
             echo "::warning::FIREBASE_SERVICE_ACCOUNT no está configurado; se utilizará el secreto FIREBASE_TOKEN existente como respaldo."
           else
-            echo "::error::No hay credenciales de despliegue configuradas. Añade FIREBASE_SERVICE_ACCOUNT (JSON de cuenta de servicio) o FIREBASE_TOKEN en Settings > Secrets and variables > Actions. No pegues claves privadas en el código ni en el chat."
+            echo "::error::No hay credenciales de despliegue configuradas. Añade FIREBASE_SERVICE_ACCOUNT (JSON de cuenta de servicio) en Settings > Secrets and variables > Actions. Como alternativa, añade FIREBASE_TOKEN. No pegues claves privadas en el código ni en el chat."
             exit 1
           fi
 
