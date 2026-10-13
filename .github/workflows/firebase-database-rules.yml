@@ -53,7 +53,7 @@ jobs:
           if (!fs.existsSync('index.html') || !fs.existsSync('database.rules.json')) {
             throw new Error('Falta index.html o database.rules.json.');
           }
-          console.log('Configuración validada: Hosting sendwayo-express-app-101; Realtime Database sendwayo-express.');
+          console.log('Configuración validada: Hosting sendwayo-express; Realtime Database sendwayo-express.');
           NODE
 
       - name: Preparar credenciales de Firebase
@@ -94,9 +94,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
-            firebase deploy --only hosting --project sendwayo-express-app-101 --non-interactive --token "$FIREBASE_TOKEN"
+            firebase deploy --only hosting --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
           else
-            firebase deploy --only hosting --project sendwayo-express-app-101 --non-interactive
+            firebase deploy --only hosting --project sendwayo-express --non-interactive
           fi
 
       - name: Publicar las reglas de Realtime Database del backend
