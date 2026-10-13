@@ -1328,9 +1328,10 @@ function showNonBlockingNotification(n){
  playBell();
 }
 
-function attachRealtimeListeners(){
+async function attachRealtimeListeners(){
  if(!firebaseReady||!firebase.auth().currentUser)return;
  const root=firebase.database().ref(DB_PATH);
+ if(!isAdmin()&&isAgentUser(currentUser)){const au=firebase.auth().currentUser;try{await root.child('approvalActors').child(au.uid).set({authUid:au.uid,userId:currentUser.id,role:String(currentUser.role||''),name:String(currentUser.name||currentUser.username||currentUser.id),staffId:String(currentUser.staffId||currentUser.agentNumber||''),active:currentUser.active!==false,updatedAt:now()})}catch(e){console.warn('No se pudo verificar el rol de agente:',e)}}
  root.off('value');
  const bind=(ref,key,mode='merge')=>{
    ref.off('value');ref.on('value',snap=>{
@@ -1357,10 +1358,11 @@ function attachRealtimeListeners(){
    });
  }else if(currentUser?.id){
    const uidv=currentUser.id;
-   bind(root.child('users').child(uidv),'users','user');
-   [['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['deposits','deposits'],['accountWithdrawals','accountWithdrawals'],['commissions','commissions']].forEach(([p,k])=>{
+   if(isAgentUser(currentUser))bind(root.child('users'),'users','replace');else bind(root.child('users').child(uidv),'users','user');
+   [['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['accountWithdrawals','accountWithdrawals'],['commissions','commissions']].forEach(([p,k])=>{
      bind(root.child(p).orderByChild('userId').equalTo(uidv),k);
    });
+   bind(isAgentUser(currentUser)?root.child('deposits'):root.child('deposits').orderByChild('userId').equalTo(uidv),'deposits');
    // notifications se escucha con el filtro por rol que se instala debajo.
    bind(root.child('settings'),'settings','replace');
    bind(root.child('accounts'),'accounts','replace');
