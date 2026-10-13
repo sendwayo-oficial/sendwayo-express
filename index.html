@@ -1916,7 +1916,7 @@ function addAudit(action,detail){const id=uid('a'),entry={id,user:currentUser?.u
 const SENDWAYO_OFFICIAL_HTI_TARIFF=[[50,500,50],[501,1000,100],[1001,2000,150],[2001,3000,200],[3001,4000,250],[4001,5000,300],[5001,6000,350],[6001,7000,400],[7001,8000,450],[8001,9000,500],[9001,10000,550],[10001,11000,600],[11001,12000,650],[12001,13000,700],[13001,14000,750],[14001,15000,800],[15001,16000,850],[16001,17000,900],[17001,18000,950],[18001,19000,1000],[19001,20000,1050],[20001,21000,1100],[21001,22000,1150],[22001,23000,1200],[23001,24000,1250],[24001,25000,1300],[25001,26000,1350],[26001,27000,1400],[27001,28000,1500],[28001,29000,1550],[29001,30000,1600],[30001,31000,1650],[31001,32000,1700],[32001,33000,1750],[33001,34000,1800],[34001,35000,1850],[35001,36000,1900]];
 function isOfficialHtiCashRoute(type){const t=String(type||'').trim().toUpperCase().replace(/\s+/g,' ');return t==='RD A HTI MONCASH'||t==='RD A HTI NATCASH'}
 function officialHtiCashFee(amount,type){if(!isOfficialHtiCashRoute(type))return null;const m=Number(amount||0);if(!Number.isFinite(m)||m<50||m>36000)return null;const whole=Math.floor(m);const row=SENDWAYO_OFFICIAL_HTI_TARIFF.find(([min,max])=>whole>=min&&whole<=max);return row?Number(row[2]):null}
-function envioCommissionRate(type,amount){const fee=officialHtiCashFee(amount,type);if(fee!==null&&Number(amount)>0)return fee/Number(amount);return String(type||'').trim().toUpperCase()==='HTI A HTI'?0.05:0.10}
+function envioCommissionRate(type,amount){const fee=officialHtiCashFee(amount,type);if(fee!==null&&Number(amount)>0)return fee/Number(amount);return /HTI\s*A\s*HTI/i.test(String(type||''))?0.05:0.08}
 function commissionRateFor(collection,record){if(collection!=='envios')return 0.05;const amount=Number(record?.amount||0),fee=officialHtiCashFee(amount,record?.type);return fee!==null&&amount>0?fee/amount:envioCommissionRate(record?.type,amount)}
 function calcEnvio(m,type){const amount=Number(m||0),fee=officialHtiCashFee(amount,type);if(isOfficialHtiCashRoute(type)&&fee===null)return{commission:0,net:0,total:0,valid:false,official:true};const commission=fee!==null?fee:amount*envioCommissionRate(type,amount),net=amount-commission,total=net*2.10;return{commission,net,total,valid:amount>0,official:fee!==null}}
 function calcularEnvioModal(){const type=document.getElementById('env-tipo-trans')?.value,amount=Number(document.getElementById('env-monto')?.value||0),x=calcEnvio(amount,type),enviado=document.getElementById('calc-enviado'),comision=document.getElementById('calc-comision'),totalDebito=document.getElementById('calc-total-debito'),neto=document.getElementById('calc-neto'),recibir=document.getElementById('calc-recibir');if(enviado)enviado.textContent=x.valid?money(amount):'—';if(comision)comision.textContent=x.valid?money(x.commission):(isOfficialHtiCashRoute(type)?'RD$ 50.00 mínimo':'—');if(totalDebito)totalDebito.textContent=x.valid?money(amount+x.commission):'—';if(neto)neto.textContent=x.valid?money(x.net):'—';if(recibir)recibir.textContent=x.valid?x.total.toFixed(2)+' HTG':'—';const hint=document.getElementById('env-official-tariff-hint');if(hint)hint.textContent=isOfficialHtiCashRoute(type)?'Tarifa oficial MonCash/NatCash: RD$50 mínimo · RD$36,000 máximo. La comisión se calcula exactamente según el rango del monto enviado.':'Las tarifas por rango de RD$ solo aplican a envíos RD → Haití vía MonCash y RD → Haití vía NatCash. Las operaciones de Agentes Haití → Haití se realizan en GDES y usan su propia tarifa oficial.'}
@@ -1942,7 +1942,7 @@ async function createTransaction(collection,fields,amount){
  if(!firebaseReady||!firebase.auth().currentUser){toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);return null}
  const id=uid(collection),amountNumber=Number(amount||0),balanceDebitOverride=Number.isFinite(Number(fields?.balanceDebitOverride))?Number(fields.balanceDebitOverride):amountNumber,creditUsed=0,suppliedCommission=Number.isFinite(Number(fields?.commission))?Number(fields.commission):null,rate=commissionRateFor(collection,{...fields,amount:amountNumber,commission:suppliedCommission}),commissionAmount=suppliedCommission!==null?suppliedCommission:amountNumber*rate;
  const agentMode=isAgentUser(currentUser);const record={id,...fields,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount:amountNumber,commissionRate:amountNumber>0?commissionAmount/amountNumber:rate,commission:commissionAmount,status:'Pendiente',createdAt:now(),balanceDebited:false,balanceRefunded:false,accountingType:'COMERCIAL',commissionSplit:agentMode?'100% PLATAFORMA':'50/50',commissionBeneficiary:agentMode?'PLATAFORMA':'REPARTIDO',agentOperation:agentMode,creditUsed,adminVisible:true,adminInbox:true};
- if(!isAdmin())record.balanceDebited=true;record.balanceDebitOverride=balanceDebitOverride;
+ if(!isAdmin()&&!isAgentUser(currentUser))record.balanceDebited=true;record.balanceDebitOverride=balanceDebitOverride;
  state[collection]=state[collection]||{};state[collection][id]=record;addAudit('Crear '+collection,id);
  try{
    // Guardamos la operación en su nodo propio para que un Remitente pueda
@@ -1960,7 +1960,7 @@ async function createTransaction(collection,fields,amount){
    ['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);
    if(record.balanceDebited){
      const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.balanceDebitOverride ?? (record.amount || 0))-used);
-     if(firebaseReady)await firebase.database().ref(DB_PATH+'/users/'+currentUser.id).transaction(u=>u?{...u,balance:Number(u.balance||0)+balanceUsed,creditOutstanding:Math.max(0,Number(u.creditOutstanding||0)-used)}:undefined);
+     const currencyKey=String(fields?.balanceCurrency||fields?.currency||'DOP').toUpperCase()==='HTG'?'balanceHTG':'balance';if(firebaseReady)await firebase.database().ref(DB_PATH+'/users/'+currentUser.id+'/'+currencyKey).transaction(v=>Number(v||0)+balanceUsed);
      else{currentUser.balance=Number(currentUser.balance||0)+balanceUsed;currentUser.creditOutstanding=Math.max(0,Number(currentUser.creditOutstanding||0)-used);state.users[currentUser.id]=currentUser}
    }
    delete state[collection][id];localSave();return null;
@@ -2194,7 +2194,7 @@ async function guardarEnvio(){
  }else if(!c.valid||isOfficialHtiCashRoute(type)&&officialHtiCashFee(amount,type)===null){
    return toast(isOfficialHtiCashRoute(type)?'Para MonCash/NatCash el monto debe estar dentro de la tarifa autorizada.':'Ingrese un monto válido.','warn');
  }
- if(!await guardBalance(amount+(haitiRoute?haitiFee:0)))return;
+ if(!await guardBalance(amount+(haitiRoute?haitiFee:0),haitiRoute?'HTG':'DOP'))return;
  if(!beginFormSubmit('envioModal'))return;
  const ben=state.beneficiaries[benId],rem=userById(remId),remName=personName(rem),remPhone=personPhone(rem),benName=personName(ben),benPhone=personPhone(ben);
  const id=await createTransaction('envios',{type,route:type,remitenteId:remId,remitente:remName,remitenteNombre:remName,remitentePhone:remPhone,remitenteDoc:rem.doc||rem.document||'',beneficiarioId:benId,beneficiario:benName,beneficiarioNombre:benName,beneficiarioPhone:benPhone,net:haitiRoute?amount:c.net,commission:haitiRoute?haitiFee:c.commission,destination:haitiRoute?amount+haitiFee:c.total,currency:haitiRoute?'HTG':'DOP',balanceCurrency:haitiRoute?'HTG':'DOP',amountHTG:haitiRoute?amount:null,feeHTG:haitiRoute?haitiFee:null,tariffHTG:haitiRoute?haitiFee:null,totalHTG:haitiRoute?amount+haitiFee:null,accountingType:haitiRoute?'HAITI_HAITI_GDES':'COMERCIAL'},amount+(haitiRoute?haitiFee:0));
@@ -2934,7 +2934,7 @@ window.showReceipt=function showReceipt(collection,id){
  const netAmount=Number(r.net??rec.net??r.amount??0);
  const isRdHaiti=/^RD\s*a\s*HTI/i.test(String(r.type||r.route||tipo));
  const displayAmount=isRdHaiti?Number(r.destination??(netAmount*2.10)):amount;
- const displayCurrency=isRdHaiti?'HTG':'RD$';
+ const displayCurrency=collection==='deposits'?(String(r.currency||r.balanceCurrency||rec.currency||'DOP').toUpperCase()==='HTG'?'HTG':'RD$'):(isRdHaiti?'HTG':'RD$');
  const contact=(()=>{const c=state.settings?.contact||{phone:'8297676665',email:'sendwayoexpress@gmail.com'};return c.phone==='829'+'857'+'3043'?{...c,phone:'8297676665'}:c;})();
  const lang=localStorage.getItem('sendwayo_language')||'es';
  const RT={
@@ -3769,8 +3769,8 @@ window.addEventListener('load',()=>{if(typeof startProductionRealtimeRefresh==='
 
 /* POLITICA FINANCIERA SENDWAYO EXPRESS — DEPÓSITOS Y COMISIONES 2026-09-21 */
 /* DEPÓSITOS: 100% al balance/capital del Remitente; comisión = RD$0.00; nunca pasan por el reparto 50/50. */
-/* ENVÍOS INTERNACIONALES: 10%; HTI→HTI: 5%; recargas/paqueticos/facturas/servicios: 5%. Siempre 50/50. */
-function sendwayoFinancialPolicy(){return {depositRate:0,internationalRate:0.10,htiToHtiRate:0.05,serviceRate:0.05,remitterShare:0.50,adminShare:0.50}}
+/* ENVÍOS GENERALES: 8%; rutas HTI→HTI mantienen su cálculo GDES; recargas/paqueticos/facturas/servicios: 5%. Siempre 50/50. */
+function sendwayoFinancialPolicy(){return {depositRate:0,internationalRate:0.08,htiToHtiRate:0.05,serviceRate:0.05,remitterShare:0.50,adminShare:0.50}}
 </script>
 <div class="modal" id="adminDepositModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('adminDepositModal')">×</button><h3 style="color:#0f2c59;margin-bottom:12px">Asignar depósito directo al Remitente</h3><div class="info-box" style="margin-bottom:12px">Este depósito se acredita directamente al balance/capital del Remitente. <b>No genera comisión</b> y no aumenta el balance administrativo.</div><div class="form-group"><label>Remitente</label><div class="search-select-wrap"><input id="admin-dep-remitente-search" class="form-control" placeholder="Buscar por nombre, usuario o número..." autocomplete="off" oninput="updateAdminDepositSuggestions()" onfocus="updateAdminDepositSuggestions()"><button type="button" class="plus-btn" title="Buscar remitente" onclick="updateAdminDepositSuggestions()">⌕</button></div><div id="admin-dep-remitente-suggestions" class="env-suggestions"></div><select id="admin-dep-remitente" class="form-control" style="display:none"></select></div><div class="form-grid"><div class="form-group"><label>Monto RD$</label><input id="admin-dep-monto" type="number" min="0" step="0.01" class="form-control"></div><div class="form-group"><label>Referencia / nota</label><input id="admin-dep-nota" class="form-control" placeholder="Opcional"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('adminDepositModal')">Cerrar</button><button class="btn btn-warning" onclick="guardarDepositoAdministrativo()">Acreditar al balance</button></div></div></div>
 <script>
@@ -4491,7 +4491,7 @@ function swCommission(r,admin,uid,col){
     const amount=swAmount(r);
     let rate=0;
     if(col==='envios'){
-      rate=0.10;
+      rate=0.08;
       try{
         if(typeof commissionRateFor==='function'){
           const configured=Number(commissionRateFor(col,r));
@@ -7517,5 +7517,150 @@ document.addEventListener('input',function(){setTimeout(apply,0)},true);
 document.addEventListener('change',function(){setTimeout(apply,0)},true);
 window.addEventListener('load',function(){setTimeout(apply,250)},{once:true});
 /* No hay bucle de reparación: no tocar controles mientras el usuario escribe o guarda. */
+})();
+</script>
+
+<script id="sendwayo-financial-audit-fix-20261012">
+(function(){
+'use strict';
+if(window.__SENDWAYO_FINANCIAL_AUDIT_FIX_20261012)return;
+window.__SENDWAYO_FINANCIAL_AUDIT_FIX_20261012=true;
+function role(u){return String(u&&u.role||'').trim().toLowerCase()}
+function isRemitter(u){return !!u&&['remitente','remitentes'].includes(role(u))&&!isAgentUser(u)&&!isAdminUser(u)}
+function isReviewer(){return !!currentUser&&currentUser.active!==false&&(isAdmin()||isAgentUser(currentUser))}
+function authUid(){try{return firebaseReady&&firebase.auth().currentUser?firebase.auth().currentUser.uid:''}catch(_){return ''}}
+function cur(v){return String(v||'DOP').toUpperCase()==='HTG'?'HTG':'DOP'}
+function fmt(v,c){const n=Number(v||0);return cur(c)==='HTG'?'GDES '+n.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2}):'RD$ '+n.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function accounts(){return Object.values(state.accounts||{}).filter(a=>a&&a.id&&a.active!==false)}
+function operator(u){if(!u)return 'No identificado';const r=isAdminUser(u)?'Administrador':(isAgentUser(u)?'Agente':'Remitente');return String(u.name||u.username||u.id)+' · '+r+' · Código '+String(u.staffId||u.agentCode||u.username||u.id||'—')}
+
+async function ensureAgentApprover(){
+ if(!firebaseReady||!firebase.auth().currentUser||!isAgentUser(currentUser)||currentUser.active===false)return false;
+ const uid=authUid(),ref=firebase.database().ref(DB_PATH+'/users/'+currentUser.id);if(!uid||!currentUser.id)return false;
+ try{
+  let u=state.users[currentUser.id]||currentUser;
+  if(u.authUid!==uid){
+   const tx=await ref.transaction(v=>!v||v.active===false||!isAgentUser(v)||(v.authUid&&v.authUid!==uid)?undefined:Object.assign({},v,{authUid:uid}));
+   if(!tx.committed||!tx.snapshot.exists())return false;u=tx.snapshot.val();state.users[currentUser.id]=u;currentUser=u;
+  }
+  await firebase.database().ref(DB_PATH+'/depositApprovers/'+uid).set({active:true,role:'Agente',profileId:u.id,staffId:u.staffId||u.agentCode||'',updatedAt:now()});
+  return true;
+ }catch(e){console.warn('Registro agente depositos:',e);return false}
+}
+let registrySig='',registryTask=null;
+async function syncAdminApprovers(){
+ if(!firebaseReady||!firebase.auth().currentUser||!isAdmin())return false;
+ const arr=Object.values(state.users||{}).filter(u=>u&&isAgentUser(u)&&u.authUid);
+ const sig=authUid()+'|'+arr.map(u=>[u.authUid,u.id,u.active===false?'0':'1'].join(':')).sort().join('|');if(sig===registrySig)return true;if(registryTask)return registryTask;
+ registryTask=(async()=>{try{const up={};arr.forEach(u=>up[u.authUid]={active:u.active!==false,role:'Agente',profileId:u.id,staffId:u.staffId||u.agentCode||'',updatedAt:now()});const old=await firebase.database().ref(DB_PATH+'/depositApprovers').once('value');old.forEach(s=>{if(!Object.prototype.hasOwnProperty.call(up,s.key))up[s.key]=Object.assign({},s.val()||{},{active:false,updatedAt:now()})});if(Object.keys(up).length)await firebase.database().ref(DB_PATH+'/depositApprovers').update(up);registrySig=sig;return true}catch(e){console.warn('Registro de agentes autorizados:',e);return false}})();
+ try{return await registryTask}finally{registryTask=null}
+}
+function fillAccounts(){const s=document.getElementById('dep-cuenta');if(!s)return;const prev=s.value,a=accounts();s.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+a.map(x=>'<option value="'+escapeHtml(x.id)+'">'+escapeHtml(x.bank||x.bankName||'Banco')+(x.holder||x.titular?' · '+escapeHtml(x.holder||x.titular):'')+(x.number||x.accountNumber?' · '+escapeHtml(x.number||x.accountNumber):'')+'</option>').join('');if(prev&&a.some(x=>String(x.id)===String(prev)))s.value=prev}
+function fillRemitters(){const s=document.getElementById('dep-remitente');if(!s)return;const prev=s.value,a=Object.values(state.users||{}).filter(u=>isRemitter(u)&&u.active!==false);s.innerHTML='<option value="">Seleccione el remitente beneficiario</option>'+a.sort((x,y)=>String(x.name||x.username||'').localeCompare(String(y.name||y.username||''))).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' · '+escapeHtml(u.staffId||u.username||u.id)+'</option>').join('');if(prev&&a.some(u=>String(u.id)===String(prev)))s.value=prev}
+function setupDeposit(){
+ const m=document.getElementById('depositoModal'),content=m&&m.querySelector('.modal-content');if(!content)return;
+ const title=content.querySelector('h3'),bank=document.getElementById('dep-cuenta'),amt=document.getElementById('dep-monto'),rw=document.getElementById('dep-remitente-wrap'),ri=document.getElementById('dep-remitente-search'),rs=document.getElementById('dep-remitente'),vf=document.getElementById('dep-voucher');if(!bank||!amt||!rw||!ri||!rs||!vf)return;
+ let host=document.getElementById('sendwayo-deposit-fields');if(!host){host=document.createElement('div');host.id='sendwayo-deposit-fields';host.style.cssText='display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:100%;margin:12px 0';if(title&&title.nextSibling)content.insertBefore(host,title.nextSibling);else content.insertBefore(host,content.firstChild)}
+ const bg=bank.closest('.form-group'),ag=amt.closest('.form-group'),grid=bg&&bg.parentElement&&bg.parentElement.classList.contains('form-grid')?bg.parentElement:null;
+ let cg=document.getElementById('dep-moneda')&&document.getElementById('dep-moneda').closest('.form-group');if(!cg){cg=document.createElement('div');cg.className='form-group';cg.innerHTML='<label for="dep-moneda">Moneda del depósito</label><select id="dep-moneda" class="form-control" required><option value="DOP">Peso dominicano (RD$)</option><option value="HTG">Gourde haitiano (HTG / GDES)</option></select>'}
+ let og=document.getElementById('dep-operator-wrap');if(!og){og=document.createElement('div');og.id='dep-operator-wrap';og.className='form-group';og.innerHTML='<label for="dep-operator">Emitido / registrado por</label><input id="dep-operator" class="form-control" readonly><small class="muted">Quien registra la solicitud; no es el beneficiario del dinero.</small>'}
+ rw.classList.remove('admin-only');rw.style.display='block';rw.style.width='100%';const l=rw.querySelector('label');if(l)l.textContent='Beneficiario (remitente que recibirá el dinero)';const h=rw.querySelector('small');if(h)h.textContent='El dinero se acreditará al remitente indicado aquí, nunca al agente ni a Administración.';
+ if(bg&&ag){host.appendChild(bg);host.appendChild(ag);host.appendChild(cg);host.appendChild(og);host.appendChild(rw);const vg=vf.closest('.form-group');if(vg)host.appendChild(vg);const info=Array.from(content.children).find(x=>x!==host&&x.classList&&x.classList.contains('muted')&&/dep[oó]sito del remitente/i.test(x.textContent||''));if(info)host.appendChild(info);if(grid&&!grid.children.length)grid.remove()}
+ const csel=document.getElementById('dep-moneda');if(csel&&!csel.value)csel.value='DOP';fillAccounts();fillRemitters();
+ const op=document.getElementById('dep-operator');if(op)op.value=operator(currentUser);
+ if(isRemitter(currentUser)){rs.value=currentUser.id;ri.value=(currentUser.name||currentUser.username||currentUser.id)+' · '+(currentUser.staffId||currentUser.username||currentUser.id);ri.readOnly=true;ri.style.background='#f1f5f9';const plus=rw.querySelector('.plus-btn');if(plus)plus.style.display='none';const box=document.getElementById('dep-remitente-suggestions');if(box)box.style.display='none'}
+ else if(isReviewer()){ri.readOnly=false;ri.style.background='';ri.placeholder='Buscar remitente por nombre, usuario o código';const plus=rw.querySelector('.plus-btn');if(plus)plus.style.display=''}
+ else{ri.readOnly=true;ri.value='Inicie sesión con una cuenta autorizada';rs.value=''}
+}
+window.updateDepositSuggestions=function(){const i=document.getElementById('dep-remitente-search'),b=document.getElementById('dep-remitente-suggestions'),s=document.getElementById('dep-remitente');if(!i||!b||!s||!isReviewer())return;const q=String(i.value||'').trim(),n=normalizeSearchText(q),d=phoneDigits(q);const a=Object.values(state.users||{}).filter(u=>isRemitter(u)&&u.active!==false&&(personMatchesQuery(u,q)||normalizeSearchText(u.staffId||'').includes(n))).sort((x,y)=>{const score=u=>{const name=normalizeSearchText(personName(u)),user=normalizeSearchText(u.username),id=normalizeSearchText(u.staffId),phone=phoneDigits(personPhone(u));return(n&&(name===n||user===n||id===n||(d&&phone===d))?1000:0)+(name.startsWith(n)?100:0)};return score(y)-score(x)}).slice(0,12);b.innerHTML=a.map(u=>'<button type="button" class="env-suggestion" onclick="chooseDepositRemitente(\''+escapeHtml(u.id)+'\')"><b>'+escapeHtml(personName(u)||u.username||u.id)+'</b> <span>('+escapeHtml(personPhone(u)||u.staffId||'Sin número')+')</span></button>').join('');b.style.display=a.length?'block':'none'};
+window.chooseDepositRemitente=function(id){const u=state.users&&state.users[id];if(!isRemitter(u)||u.active===false)return toast('El beneficiario debe ser un remitente activo.','warn');const s=document.getElementById('dep-remitente'),i=document.getElementById('dep-remitente-search'),b=document.getElementById('dep-remitente-suggestions');if(!s||!i)return;s.value=id;i.value=(personName(u)||u.username||u.id)+' · '+(u.staffId||u.username||u.id);if(b)b.style.display='none'};
+const baseOpen=window.openModal;if(typeof baseOpen==='function')window.openModal=function(id){if(id==='depositoModal')setupDeposit();const r=baseOpen.apply(this,arguments);if(id==='depositoModal'){setupDeposit();if(isReviewer())window.updateDepositSuggestions();if(isAdmin())Promise.resolve(syncAdminApprovers()).catch(()=>{});if(isAgentUser(currentUser))Promise.resolve(ensureAgentApprover()).catch(()=>{})}return r};
+
+window.guardBalance=async function(amount,currency){
+ const needed=Number(amount||0);if(needed<=0)return true;if(isAdmin())return true;if(!currentUser||currentUser.active===false){toast('La cuenta no está activa.','error');return false}if(!firebaseReady||!firebase.auth().currentUser){toast('Firebase no está conectado; no se puede verificar el saldo.','error');return false}
+ const currencyKey=cur(currency),field=currencyKey==='HTG'?'balanceHTG':'balance',local=Number(currencyKey==='HTG'?(currentUser.balanceHTG??((currentUser.balances||{}).HTG)??0):(currentUser.balance??currentUser.balanceDOP??((currentUser.balances||{}).DOP)??0));let fail='',server=null;
+ try{
+  const pr=firebase.database().ref(DB_PATH+'/users/'+currentUser.id),snap=await pr.once('value'),u=snap.val();if(!u){toast('No existe el perfil financiero de esta sesión en Firebase. No se debitó dinero.','error');return false}if(u.active===false){toast('La cuenta está inactiva en Firebase.','error');return false}if(!(isRemitter(u)||isAgentUser(u))){toast('El rol del perfil de Firebase no está autorizado para enviar.','error');return false}
+  const tx=await pr.child(field).transaction(function(v){const bal=Number(v??0);server=bal;if(!Number.isFinite(bal)||bal<0){fail='INVALID';return}if(bal<needed){fail='INSUFFICIENT';return}return Number((bal-needed).toFixed(2))});
+  if(!tx.committed){if(fail==='INSUFFICIENT'){if(local>=needed&&local>server)toast('Diferencia de sincronización: la pantalla muestra '+fmt(local,currencyKey)+', pero Firebase confirma '+fmt(server,currencyKey)+'. No se debitó dinero. Sincronice el balance con Administración.','warn');else toast('Fondos insuficientes en '+(currencyKey==='HTG'?'HTG / GDES':'RD$')+'. Firebase confirma '+fmt(server,currencyKey)+' disponibles; el envío requiere '+fmt(needed,currencyKey)+'.','warn')}else if(fail==='INVALID')toast('El balance guardado en Firebase no es válido. No se debitó dinero.','error');else toast('Firebase no confirmó la reserva de fondos. No se debitó dinero; revise permisos o sincronización.','error');return false}
+  const value=Number(tx.snapshot.val()||0),updated=Object.assign({},u,{[field]:value});if(currencyKey==='DOP'&&Object.prototype.hasOwnProperty.call(updated,'balanceDOP'))updated.balanceDOP=value;if(updated.balances&&typeof updated.balances==='object')updated.balances=Object.assign({},updated.balances,{[currencyKey]:value});state.users[currentUser.id]=updated;currentUser=Object.assign({},updated,{__creditUsedForOperation:0});if(lastSyncedState&&lastSyncedState.users&&lastSyncedState.users[currentUser.id])lastSyncedState.users[currentUser.id]=cloneState(updated);localSave();return true;
+ }catch(e){console.warn('Validación de balance:',e);const code=String(e&&e.code||'');toast(code.includes('PERMISSION_DENIED')||code.includes('permission_denied')?'Firebase rechazó la reserva por permisos; no es un saldo insuficiente y no se realizó el envío.':'No se pudo confirmar el balance en Firebase. No se realizó el envío.','error');return false}
+};
+
+window.creditDepositToRemitente=async function(id,remitenteId,amount,currency){
+ if(!isReviewer())throw new Error('DEPOSIT_REVIEWER_REQUIRED');const n=Number(amount),currencyKey=cur(currency);if(!id||!remitenteId||!Number.isFinite(n)||n<=0)throw new Error('DEPOSITO_INVALIDO');if(!firebaseReady||!firebase.auth().currentUser)throw new Error('FIREBASE_NO_AUTORIZADO');
+ const ref=firebase.database().ref(DB_PATH+'/users/'+remitenteId);let result={creditRepaid:0,balanceAdded:0,currency:currencyKey};
+ const tx=await ref.transaction(function(u){if(!u||!isRemitter(u)||u.active===false)return;const credits=Object.assign({},u.depositCredits||{}),currencies=Object.assign({},u.depositCreditCurrencies||{});
+  if(Object.prototype.hasOwnProperty.call(credits,id)){if(Math.abs(Number(credits[id])-n)<0.000001&&cur(currencies[id]||'DOP')===currencyKey){result={creditRepaid:Number((u.creditRepayments||{})[id]||0),balanceAdded:Number((u.depositBalanceAdded||{})[id]||0),currency:currencyKey};return u}return}
+  const field=currencyKey==='HTG'?'balanceHTG':'balance',nextAmount=Number((Number(u[field]||0)+n).toFixed(2));result={creditRepaid:0,balanceAdded:n,currency:currencyKey};
+  const next=Object.assign({},u,{[field]:nextAmount,depositCredits:Object.assign({},credits,{[id]:n}),depositCreditCurrencies:Object.assign({},currencies,{[id]:currencyKey}),creditRepayments:Object.assign({},u.creditRepayments||{},{[id]:0}),depositBalanceAdded:Object.assign({},u.depositBalanceAdded||{},{[id]:n}),lastDepositCreditId:id,lastDepositCreditAmount:n,lastDepositCreditCurrency:currencyKey});
+  if(currencyKey==='DOP'&&Object.prototype.hasOwnProperty.call(next,'balanceDOP'))next.balanceDOP=nextAmount;if(next.balances&&typeof next.balances==='object')next.balances=Object.assign({},next.balances,{[currencyKey]:nextAmount});return next;
+ });
+ if(!tx.committed)throw new Error('DEPOSITO_NO_ACREDITADO');const u=tx.snapshot.val();state.users[remitenteId]=u;if(currentUser&&currentUser.id===remitenteId)currentUser=u;if(lastSyncedState&&lastSyncedState.users&&lastSyncedState.users[remitenteId])lastSyncedState.users[remitenteId]=cloneState(u);localSave();return{user:u,creditRepaid:result.creditRepaid,balanceAdded:result.balanceAdded,currency:currencyKey};
+};
+
+window.guardarDeposito=async function(){
+ const modal=document.getElementById('depositoModal');if(modal&&modal.dataset.submitting==='1')return;if(!currentUser||(!isReviewer()&&!isRemitter(currentUser)))return toast('Esta sesión no puede registrar depósitos.','error');if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado; el depósito no se guardará offline.','error');
+ const accountId=document.getElementById('dep-cuenta')?.value||'',amount=Number(document.getElementById('dep-monto')?.value||0),currencyKey=cur(document.getElementById('dep-moneda')?.value||'DOP');if(!accountId||!accounts().some(a=>String(a.id)===String(accountId)))return toast('Seleccione una cuenta bancaria oficial activa.','warn');if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto válido.','warn');
+ const own=isRemitter(currentUser),targetId=own?currentUser.id:(document.getElementById('dep-remitente')?.value||''),target=state.users&&state.users[targetId];if(!targetId)return toast('Seleccione el remitente que recibirá el depósito.','warn');if(!isRemitter(target)||target.active===false)return toast('El beneficiario debe ser un remitente activo, nunca un agente ni Administración.','warn');
+ const op=currentUser,file=document.getElementById('dep-voucher')?.files?.[0],id=uid('dep');if(!beginFormSubmit('depositoModal'))return;
+ try{
+  let voucher={name:'Sin archivo',uploaded:false};if(file)voucher=await uploadDepositVoucher(file,id,target.id);const bank=accounts().find(a=>String(a.id)===String(accountId));
+  const record={id,userId:target.id,remitenteId:target.id,beneficiaryUserId:target.id,username:target.username||target.name,beneficiarioNombre:target.name||target.username,createdByUserId:op.id,createdByName:op.name||op.username,createdByRole:isAdmin()?'Administrador':(isAgentUser(op)?'Agente':'Remitente'),createdByStaffId:op.staffId||op.agentCode||'',createdByAuthUid:authUid(),issuerName:op.name||op.username,issuerRole:isAdmin()?'Administrador':(isAgentUser(op)?'Agente':'Remitente'),issuerStaffId:op.staffId||op.agentCode||'',accountId:accountId,accountSnapshot:{bank:bank.bank||bank.bankName||'',holder:bank.holder||bank.titular||'',number:bank.number||bank.accountNumber||''},amount:Number(amount.toFixed(2)),currency:currencyKey,balanceCurrency:currencyKey,voucher:voucher.name,voucherFile:voucher,status:'Pendiente',createdAt:now(),accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:isAdmin(),balanceCredited:false,balanceRefunded:false,targetType:'REMITENTE'};
+  await firebase.database().ref(DB_PATH+'/deposits/'+id).set(record);state.deposits=state.deposits||{};state.deposits[id]=record;if(typeof markSynced==='function')markSynced(['deposits',id],record);
+  try{if(!isAdmin())await addNotification('Administrador','Nuevo depósito de '+(target.name||target.username)+' por '+fmt(amount,currencyKey)+'. Pendiente; no cambió ningún balance.','deposits',id);if(isReviewer())await addNotification(target.id,'Se registró un depósito de '+fmt(amount,currencyKey)+'. Pendiente de aprobación.','deposits',id)}catch(e){console.warn('Notificación de depósito:',e)}
+  localSave();renderAll();closeModal('depositoModal');toast('Depósito guardado como PENDIENTE. No se cambió ningún balance ni se generó comprobante.','success');
+ }catch(e){console.warn('Guardar depósito:',e);resetFormSubmitState('depositoModal');const code=String(e&&e.code||e&&e.message||'');toast(code.includes('PERMISSION_DENIED')?'Firebase rechazó guardar el depósito por permisos. No se acreditó dinero.':'No se pudo guardar el depósito en Firebase. No se acreditó dinero.','error')}finally{resetFormSubmitState('depositoModal')}
+};
+
+window.approveDeposit=async function(id,status){
+ if(!isReviewer())return toast('Solo Administración o un agente autorizado puede revisar depósitos.','error');if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');if(!['Aprobado','Rechazado','No coincide'].includes(String(status)))return toast('Estado de revisión no válido.','warn');
+ const uid=authUid(),ref=firebase.database().ref(DB_PATH+'/deposits/'+id);let r=state.deposits&&state.deposits[id];if(!r){try{const s=await ref.once('value');r=s.val();if(r){state.deposits=state.deposits||{};state.deposits[id]=r}}catch(e){return toast('No se pudo cargar el depósito desde Firebase.','error')}}if(!r)return toast('No se encontró el depósito.','error');
+ const resume=status==='Aprobado'&&r.status==='Procesando'&&(isAdmin()||r.reviewedByAuthUid===uid)&&r.reviewDecision==='Aprobado';if(String(r.status||'').toLowerCase()!=='pendiente'&&!resume)return toast('El depósito ya fue procesado o está siendo revisado en otra sesión.','warn');
+ const targetId=r.userId||r.remitenteId||r.beneficiaryUserId;let target=state.users&&state.users[targetId];if(!target){try{const s=await firebase.database().ref(DB_PATH+'/users/'+targetId).once('value');target=s.val();if(target)state.users[targetId]=target}catch(_){}}if(!isRemitter(target))return toast('El beneficiario no es un remitente. Ningún balance fue modificado.','error');
+ const amount=Number(r.amount||0),currencyKey=cur(r.currency||r.balanceCurrency||'DOP');if(!Number.isFinite(amount)||amount<=0)return toast('El monto del depósito no es válido.','error');
+ if(status!=='Aprobado'){
+  const reason=String(prompt('Escriba el motivo obligatorio para '+status+':','')||'').trim();if(!reason)return toast('Debe escribir un motivo.','warn');
+  const tx=await ref.transaction(v=>!v||v.status!=='Pendiente'?undefined:Object.assign({},v,{status:status,reviewedAt:now(),reviewedBy:currentUser.username||currentUser.name,reviewedByName:currentUser.name||currentUser.username,reviewedByAuthUid:uid,reviewedByRole:isAdmin()?'Administrador':'Agente',reviewedByStaffId:currentUser.staffId||currentUser.agentCode||'',manualReview:true,reviewReason:reason,commission:0,commissionRate:0,accountingType:'DEPOSITO_CAPITAL'}));
+  if(!tx.committed)return toast('El depósito cambió en otra sesión y no fue modificado.','warn');state.deposits[id]=tx.snapshot.val();try{await addNotification(target.id,'Su depósito fue '+status.toUpperCase()+'. No se acreditó balance. '+reason,'deposits',id)}catch(_){}try{addAudit('Depósito '+status,id)}catch(_){}renderAll();return toast('Depósito '+status+'. Ningún balance cambió.','success');
+ }
+ let claimed=r;
+ if(r.status==='Pendiente'){const claim=await ref.transaction(v=>!v||v.status!=='Pendiente'?undefined:Object.assign({},v,{status:'Procesando',reviewDecision:'Aprobado',processingStartedAt:now(),reviewedAt:now(),reviewedBy:currentUser.username||currentUser.name,reviewedByName:currentUser.name||currentUser.username,reviewedByAuthUid:uid,reviewedByRole:isAdmin()?'Administrador':'Agente',reviewedByStaffId:currentUser.staffId||currentUser.agentCode||'',manualReview:true,reviewReason:'',commission:0,commissionRate:0,accountingType:'DEPOSITO_CAPITAL'}));if(!claim.committed)return toast('El depósito ya fue procesado en otra sesión.','warn');claimed=claim.snapshot.val();state.deposits[id]=claimed}
+ try{
+  const credit=await window.creditDepositToRemitente(id,targetId,amount,currencyKey);if(!credit.user||Math.abs(Number((credit.user.depositCredits||{})[id]||0)-amount)>0.000001||cur((credit.user.depositCreditCurrencies||{})[id]||'DOP')!==currencyKey)throw new Error('CONFIRMACION_CREDITO_NO_COINCIDE');
+  state.deposits[id]=Object.assign({},claimed,{status:'Aprobado',reviewDecision:'Aprobado',reviewedAt:now(),reviewedBy:claimed.reviewedBy||currentUser.username||currentUser.name,reviewedByName:claimed.reviewedByName||currentUser.name||currentUser.username,reviewedByAuthUid:claimed.reviewedByAuthUid||uid,reviewedByRole:claimed.reviewedByRole||(isAdmin()?'Administrador':'Agente'),reviewedByStaffId:claimed.reviewedByStaffId||currentUser.staffId||currentUser.agentCode||'',balanceCredited:true,balanceCreditedAt:now(),balanceAdded:Number(credit.balanceAdded||amount),depositPrincipal:amount,commission:0,commissionRate:0,accountingType:'DEPOSITO_CAPITAL',reviewReason:''});
+  window.generateReceipt('deposits',id);await ref.set(state.deposits[id]);if(state.deposits[id].receipt)await persistGeneratedReceipt('deposits',id,state.deposits[id]);try{await addNotification(target.id,'Depósito aprobado: '+fmt(amount,currencyKey)+' acreditado al remitente. Autorizado por '+state.deposits[id].reviewedByName+'.','deposits',id)}catch(_){}try{addAudit('Aprobar depósito de dinero',id)}catch(_){}lastSyncedState=cloneState(state);localSave();renderAll();if(state.deposits[id].receipt)setTimeout(()=>showReceipt('deposits',id),180);toast('Depósito aprobado. '+fmt(amount,currencyKey)+' acreditado una sola vez a '+(target.name||target.username)+'.','success');
+ }catch(e){console.warn('Aprobación del depósito:',e);if(claimed&&claimed.status==='Procesando'&&claimed.reviewedByAuthUid===uid)try{await ref.transaction(v=>!v||v.status!=='Procesando'||v.reviewedByAuthUid!==uid?undefined:Object.assign({},v,{status:'Pendiente',reviewDecision:null,reviewFailureAt:now(),reviewFailure:String(e&&e.message||'ERROR'),reviewedAt:null,reviewedBy:null,reviewedByName:null,reviewedByAuthUid:null,reviewedByRole:null,reviewedByStaffId:null}))}catch(_){}toast('No se pudo completar la aprobación. Verifique Firebase antes de reintentar; el crédito está protegido contra duplicados.','error')}
+};
+
+const baseReceipt=window.generateReceipt;
+window.generateReceipt=function(collection,id){
+ const receipt=typeof baseReceipt==='function'?baseReceipt.apply(this,arguments):null;if(collection!=='deposits'||!receipt)return receipt;
+ const r=state.deposits&&state.deposits[id];if(!r||String(r.status||'').toLowerCase()!=='aprobado')return null;const u=state.users&&state.users[r.userId]||{},a=state.accounts&&state.accounts[r.accountId]||r.accountSnapshot||{},out=r.receipt||receipt;
+ out.concept='Depósito de dinero';out.type='Depósito de dinero';out.route='Depósito de dinero';out.amount=Number(r.amount||0);out.net=Number(r.amount||0);out.currency=cur(r.currency||r.balanceCurrency||'DOP');out.accountId=r.accountId||'';out.accountBank=a.bank||a.bankName||'';out.accountHolder=a.holder||a.titular||'';out.accountNumber=a.number||a.accountNumber||'';out.beneficiario=u.name||u.username||r.beneficiarioNombre||'Remitente';out.beneficiarioPhone=u.phone||'';out.emittedBy=r.issuerName||r.createdByName||r.username||'';out.issuerRole=r.issuerRole||r.createdByRole||'Remitente';out.issuerStaffId=r.issuerStaffId||r.createdByStaffId||'';out.authorizedBy=r.reviewedByName||r.reviewedBy||'';out.authorizedByRole=r.reviewedByRole||'';out.agentCode=r.reviewedByStaffId||'';out.status='Aprobado';r.receipt=out;state.deposits[id]=r;return out;
+};
+const baseReceiptHtml=window.receiptServiceHtml;
+window.receiptServiceHtml=function(collection,r,t,benName,benPhone){
+ if(collection!=='deposits'&&typeof baseReceiptHtml==='function')return baseReceiptHtml.apply(this,arguments);
+ const rec=r&&r.receipt||{},a=state.accounts&&state.accounts[r&&r.accountId]||r&&r.accountSnapshot||{},issuer=rec.emittedBy||r&&r.createdByName||r&&r.username||'—',ir=rec.issuerRole||r&&r.createdByRole||'Remitente',approver=rec.authorizedBy||r&&r.reviewedByName||r&&r.reviewedBy||'—',ar=rec.authorizedByRole||r&&r.reviewedByRole||'',code=rec.agentCode||r&&r.reviewedByStaffId||'',bank=rec.accountBank||a.bank||a.bankName||'',num=rec.accountNumber||a.number||a.accountNumber||'',beneficiary=rec.beneficiario||benName||r&&r.beneficiarioNombre||'Remitente';
+ return '<div class="receipt-concept"><b>CONCEPTO</b><br>Depósito de dinero<br><b>CUENTA BANCARIA</b><br>'+escapeHtml(bank)+(num?' · '+escapeHtml(num):'')+'<br><b>BENEFICIARIO (REMITENTE)</b><br>'+escapeHtml(beneficiary)+(benPhone?' · '+escapeHtml(benPhone):'')+'<br><b>EMITIDO POR</b><br>'+escapeHtml(issuer)+' · '+escapeHtml(ir)+(rec.issuerStaffId?' · Código '+escapeHtml(rec.issuerStaffId):'')+'<br><b>AUTORIZADO POR</b><br>'+escapeHtml(approver)+(ar?' · '+escapeHtml(ar):'')+(code?' · Código '+escapeHtml(code):'')+'</div>';
+};
+window.renderDeposits=function(){
+ const review=isReviewer(),rows=newestFirst(state.deposits||{}).filter(r=>review||r.userId===currentUser.id),head=document.querySelector('#depTable thead'),body=document.querySelector('#depTable tbody');
+ if(head)head.innerHTML='<tr><th>N.º</th><th>ID</th><th>Remitente beneficiario</th><th>Cuenta bancaria</th><th>Monto / moneda</th><th>Emitido por</th><th>Autorizado por</th><th>Estado</th><th>Comprobante</th><th>Acciones</th></tr>';if(!body)return;
+ body.innerHTML=rows.map((r,i)=>{const a=state.accounts&&state.accounts[r.accountId]||r.accountSnapshot||{},st=String(r.status||'Pendiente'),u=state.users&&state.users[r.userId]||{},ben=u.name||u.username||r.beneficiarioNombre||r.username||'Remitente',issuer=r.createdByName||r.issuerName||r.username||'—',approver=r.reviewedByName||r.reviewedBy||'—',code=r.reviewedByStaffId?' · '+r.reviewedByStaffId:'';
+ const actions=review&&st==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveDeposit(\''+escapeHtml(r.id)+'\',\'Aprobado\')">APROBAR</button><button class="btn btn-danger btn-sm" onclick="approveDeposit(\''+escapeHtml(r.id)+'\',\'Rechazado\')">RECHAZAR</button><button class="btn btn-warning btn-sm" onclick="approveDeposit(\''+escapeHtml(r.id)+'\',\'No coincide\')">NO COINCIDE</button>':'',receipt=st==='Aprobado'?'<button class="btn btn-primary btn-sm" onclick="showReceipt(\'deposits\',\''+escapeHtml(r.id)+'\')">COMPROBANTE</button>':'—';
+ return '<tr><td>'+(i+1)+'</td><td><b>'+escapeHtml(r.id||'—')+'</b></td><td>'+escapeHtml(ben)+'</td><td>'+escapeHtml(a.bank||a.bankName||'')+(a.number?' · '+escapeHtml(a.number):'')+'</td><td>'+escapeHtml(fmt(r.amount,r.currency||r.balanceCurrency||'DOP'))+'</td><td>'+escapeHtml(issuer)+(r.createdByStaffId?' · '+escapeHtml(r.createdByStaffId):'')+'</td><td>'+escapeHtml(approver)+escapeHtml(code)+'</td><td><span class="status '+statusClass(st)+'">'+escapeHtml(st)+'</span></td><td>'+receipt+'</td><td><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord(\'deposits\',\''+escapeHtml(r.id)+'\')">Ver</button>'+actions+'</div></td></tr>';
+ }).join('')||'<tr><td colspan="10" class="muted">No hay depósitos registrados.</td></tr>';
+};
+const baseMiCuenta=window.renderMiCuenta;
+window.renderMiCuenta=function(){
+ if(typeof baseMiCuenta==='function')baseMiCuenta.apply(this,arguments);if(!currentUser)return;const base=document.getElementById('my-account-balance');if(!base)return;let h=document.getElementById('my-account-balance-htg');if(!h){h=document.createElement('div');h.id='my-account-balance-htg';h.className='account-balance';h.style.fontSize='1rem';h.style.marginTop='6px';base.insertAdjacentElement('afterend',h)}const balances=currentUser.balances||{};base.textContent=fmt(currentUser.balance??currentUser.balanceDOP??balances.DOP??0,'DOP');h.textContent=fmt(currentUser.balanceHTG??balances.HTG??0,'HTG');
+};
+const baseRenderAll=window.renderAll;
+if(typeof baseRenderAll==='function')window.renderAll=function(){const r=baseRenderAll.apply(this,arguments);try{if(isAdmin())Promise.resolve(syncAdminApprovers()).catch(()=>{});else if(isAgentUser(currentUser))Promise.resolve(ensureAgentApprover()).catch(()=>{})}catch(_){}return r};
+document.addEventListener('DOMContentLoaded',function(){try{setupDeposit()}catch(e){console.warn('Formulario de depósito:',e)}try{if(isAdmin())Promise.resolve(syncAdminApprovers()).catch(()=>{});else if(isAgentUser(currentUser))Promise.resolve(ensureAgentApprover()).catch(()=>{})}catch(_){}},{once:true});
+try{setupDeposit()}catch(_){}
+window.SENDWAYO_FINANCIAL_AUDIT=function(){const d=Object.values(state.deposits||{});return{firebaseReady:!!firebaseReady,database:'Firebase Realtime Database',activeOfficialBankAccounts:accounts().length,depositPending:d.filter(r=>r.status==='Pendiente').length,depositApproved:d.filter(r=>r.status==='Aprobado').length,currentUserRole:currentUser&&currentUser.role||null,reviewer:isReviewer(),generalTransferCommission:0.08,serviceCommission:0.05,notes:'Confirme permisos y sincronización con cuentas autorizadas antes de manejar dinero real'}};
 })();
 </script>
