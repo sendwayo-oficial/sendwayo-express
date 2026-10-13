@@ -530,7 +530,7 @@ aside{height:100vh;min-height:0;overflow:hidden}
     <div class="card"><div class="card-header"><h3>Cuentas Bancarias y Depósitos</h3><div class="actions"><button class="btn btn-primary admin-only" onclick="openModal('cuentaModal')">Agregar Nuevo</button><button class="btn btn-success" onclick="openModal('depositoModal')">Agregar Depósito</button><button class="btn btn-warning admin-only" onclick="openAdminDepositModal()">Acreditar depósito a Remitente</button></div></div>
     <div class="table-toolbar"><div class="actions"><button class="btn btn-success btn-sm" onclick="exportData('Excel','cuentaTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','cuentaTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','cuentaTable')">CSV</button></div><input class="search-box" placeholder="Buscar banco, titular o cuenta..." oninput="filterTable(this,'cuentaTable')"></div>
     <h4 style="margin:8px 0">Listado de Cuentas Bancarias Oficiales</h4><div class="table-wrap"><table id="cuentaTable"><thead><tr><th>N°</th><th>Banco</th><th>Titular</th><th>Número de Cuenta</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
-    <h4 style="margin:18px 0 8px">Listado de Depósitos Registrados</h4><div class="table-toolbar"><div class="actions"><button class="btn btn-primary btn-sm" onclick="openModal('depositoModal')">Agregar Nuevo</button><button class="btn btn-success btn-sm" onclick="exportData('Excel','depTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','depTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','depTable')">CSV</button></div><input class="search-box" placeholder="Buscar depósito..." oninput="filterTable(this,'depTable')"></div><div class="table-wrap"><table id="depTable"><thead><tr><th>N°</th><th>ID</th><th>Usuario</th><th>Cuenta Destino</th><th>Cantidad RD$</th><th>Crédito cobrado</th><th>Balance acreditado</th><th>Voucher</th><th>Estado</th><th>Factura / Recibo</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+    <h4 style="margin:18px 0 8px">Listado de Depósitos Registrados</h4><div class="table-toolbar"><div class="actions"><button class="btn btn-primary btn-sm" onclick="openModal('depositoModal')">Agregar Nuevo</button><button class="btn btn-success btn-sm" onclick="exportData('Excel','depTable')">Excel</button><button class="btn btn-danger btn-sm" onclick="exportData('PDF','depTable')">PDF</button><button class="btn btn-warning btn-sm" onclick="exportData('CSV','depTable')">CSV</button></div><input class="search-box" placeholder="Buscar depósito..." oninput="filterTable(this,'depTable')"></div><div class="table-wrap"><table id="depTable"><thead><tr><th>N°</th><th>ID</th><th>Usuario</th><th>Cuenta Destino</th><th>Monto / Moneda</th><th>Crédito cobrado</th><th>Balance acreditado</th><th>Voucher</th><th>Estado</th><th>Factura / Recibo</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
   </section>
 
   <section id="view-mi_cuenta" class="view-section">
@@ -640,7 +640,14 @@ aside{height:100vh;min-height:0;overflow:hidden}
 
 <div class="modal" id="creditGrantModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()"><button class="modal-close-x" onclick="closeModal('creditGrantModal')">×</button><h3>Otorgar crédito</h3><div class="form-group"><label>Remitente</label><select id="credit-target" class="form-control"></select></div><div class="form-group"><label>Monto RD$</label><input id="credit-amount" type="number" min="0.01" step="0.01" class="form-control"></div><div class="form-group"><label>Nota</label><textarea id="credit-note" class="form-control" rows="3"></textarea></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('creditGrantModal')">Cerrar</button><button class="btn btn-primary" onclick="saveCreditGrant()">Guardar crédito</button></div></div></div><div class="modal" id="adminBalanceModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()"><button class="modal-close-x" onclick="closeModal('adminBalanceModal')">×</button><h3 id="admin-balance-title">Ajustar balance</h3><div class="info-box">Esta herramienta es exclusiva del Administrador y actualiza directamente Firebase.</div><div class="form-group" style="margin-top:12px"><label>Cuenta</label><select id="admin-balance-target" class="form-control" onchange="refreshAdminBalanceModal()"></select></div><div class="form-group"><label>Opération</label><select id="admin-balance-mode" class="form-control" onchange="refreshAdminBalanceModal()"><option value="set">Acreditar: establecer saldo exacto</option><option value="add">Agregar dinero al balance</option><option value="subtract">Quitar dinero del balance</option></select></div><div class="form-group"><label id="admin-balance-amount-label">Nuevo saldo exacto (RD$)</label><input id="admin-balance-amount" type="number" min="0" step="0.01" class="form-control"></div><div class="muted">Balance actual: <b id="admin-balance-current">RD$ 0.00</b></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" onclick="closeModal('adminBalanceModal')">Cerrar</button><button class="btn btn-primary" onclick="saveAdminBalanceAdjustment()">Guardar en Firebase</button></div></div></div>
 
-<div class="modal" id="depositoModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()"><button class="modal-close-x" onclick="closeModal('depositoModal')">×</button><h3>Agregar Depósito</h3><div id="dep-remitente-wrap" class="form-group admin-only"><label>Remitente al que se acreditará el depósito</label><div class="search-select-wrap"><input id="dep-remitente-search" class="form-control" placeholder="Buscar por nombre, usuario o número..." autocomplete="off" oninput="updateDepositSuggestions()" onfocus="updateDepositSuggestions()"><button type="button" class="plus-btn" title="Buscar remitente" onclick="updateDepositSuggestions()">⌕</button></div><div id="dep-remitente-suggestions" class="env-suggestions"></div><select id="dep-remitente" class="form-control" style="display:none"></select><small class="muted">Escriba y seleccione el Remitente; el depósito se acreditará directamente a su capital.</small></div><div class="form-grid"><div class="form-group"><label>Cuenta Bancaria de Destino</label><select id="dep-cuenta" class="form-control"></select></div><div class="form-group"><label>Cantidad RD$</label><input id="dep-monto" type="number" min="0" class="form-control"></div></div><div class="form-group"><label>Voucher / Comprobante</label><input id="dep-voucher" type="file" class="form-control" accept="image/*,.pdf"></div><div class="muted">Depósito del remitente: PENDIENTE hasta revisión. Al aprobarlo el Administrador, el 100% del depósito se acredita directamente al balance/capital del remitente. No pasa por comisión ni por el balance de la Administración.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" onclick="closeModal('depositoModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarDeposito()">Guardar</button></div></div></div>
+<div class="modal" id="depositoModal" onclick="handleModalBackdropClick(event)"><div class="modal-content" onclick="event.stopPropagation()"><button class="modal-close-x" onclick="closeModal('depositoModal')">×</button><h3>Agregar Depósito</h3>
+<div class="form-group"><label>1. Cuenta bancaria</label><select id="dep-cuenta" class="form-control"><option value="">Seleccione una cuenta bancaria oficial</option></select><small class="muted">Elija una cuenta bancaria oficial ya registrada.</small></div>
+<div class="form-grid"><div class="form-group"><label>2. Monto</label><input id="dep-monto" type="number" min="0" step="0.01" class="form-control" placeholder="Ingrese el monto"></div><div class="form-group"><label>Moneda</label><select id="dep-currency" class="form-control"><option value="DOP">Peso dominicano (RD$)</option><option value="HTG">Gourde haitiano (GDES / HTG)</option></select></div></div>
+<div class="form-group"><label>Emitido por / Operador</label><input id="dep-operador-display" class="form-control" readonly></div>
+<div id="dep-remitente-wrap" class="form-group"><label>Beneficiario: remitente que recibirá el dinero</label><div class="search-select-wrap"><input id="dep-remitente-search" class="form-control" placeholder="Buscar remitente por nombre o código" autocomplete="off" oninput="updateDepositSuggestions()" onfocus="updateDepositSuggestions()"><button type="button" class="plus-btn" title="Buscar remitente" onclick="updateDepositSuggestions()">⌕</button></div><div id="dep-remitente-suggestions" class="env-suggestions"></div><select id="dep-remitente" class="form-control" style="display:none"></select><small class="muted">El beneficiario es siempre el remitente. El agente o administrador es solo el operador/autorizador.</small></div>
+<div class="form-group"><label>Voucher bancario (opcional)</label><input id="dep-voucher" type="file" class="form-control" accept="image/*,.pdf"></div>
+<div class="muted">Guardar crea una solicitud pendiente. No modifica balances, no genera comisión y no emite comprobante hasta la aprobación.</div>
+<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" onclick="closeModal('depositoModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarDeposito()">Guardar</button></div></div></div>
 
 <div class="modal" id="personaModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('personaModal')">×</button><h3 id="persona-title">Registrar Persona</h3><div class="form-grid"><div class="form-group"><label>Nombre y Apellido</label><input id="pers-nombre" class="form-control" oninput="document.getElementById('pers-user').value=normalizeUsername(this.value)"></div><div class="form-group"><label>WhatsApp / Celular</label><div class="phone-wrap"><select id="pers-country" class="form-control"><option value="+1-809">🇩🇴 República Dominicana (+1 809)</option><option value="+509">🇭🇹 Haití (+509)</option><option value="+1-829">🇩🇴 República Dominicana (+1 829)</option><option value="+1-849">🇩🇴 República Dominicana (+1 849)</option><option value="+1">🇺🇸 Estados Unidos (+1)</option><option value="+33">🇫🇷 Francia (+33)</option><option value="+39">🇮🇹 Italia (+39)</option><option value="+34">🇪🇸 España (+34)</option><option value="+1-514">🇨🇦 Canadá (+1 514)</option><option value="+44">🇬🇧 Reino Unido (+44)</option><option value="+49">🇩🇪 Alemania (+49)</option><option value="+27">🇿🇦 Sudáfrica (+27)</option><option value="+55">🇧🇷 Brasil (+55)</option><option value="+57">🇨🇴 Colombia (+57)</option><option value="+58">🇻🇪 Venezuela (+58)</option></select><input id="pers-wsp" class="form-control" inputmode="tel" placeholder="Número sin código"></div><div class="country-hint">Ejemplo Haití: +509.</div></div><div class="form-group"><label>Cédula o Pasaporte</label><input id="pers-doc" class="form-control"></div><div class="form-group"><label>Usuario</label><input id="pers-user" class="form-control" autocomplete="username" readonly></div><div class="form-group"><label>Correo de acceso</label><input id="pers-auth-email" class="form-control" readonly></div><div class="form-group"><label>Contraseña inicial</label><input id="pers-initial-pass" class="form-control" value="12345678" readonly></div><div class="form-group"><label>Estado</label><select id="pers-active" class="form-control"><option value="true">Activo</option><option value="false">Inactivo</option></select></div></div><div class="info-box">ID permanente y no editable. Usuario inicial: nombre.apellido. Contraseña inicial: 12345678. Después de ingresar, el usuario puede cambiar su nombre, usuario y contraseña. Al guardar se prepara automáticamente el mensaje de WhatsApp.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn btn-light" onclick="closeModal('personaModal')">Cerrar</button><button class="btn btn-primary" onclick="guardarPersona()">Guardar y preparar WhatsApp</button></div></div></div>
 
@@ -1349,13 +1356,14 @@ function attachRealtimeListeners(){
    });
  }else if(currentUser?.id){
    const uidv=currentUser.id;
-   bind(root.child('users').child(uidv),'users','user');
-   [['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['deposits','deposits'],['accountWithdrawals','accountWithdrawals'],['commissions','commissions']].forEach(([p,k])=>{
-     bind(root.child(p).orderByChild('userId').equalTo(uidv),k);
-   });
-   // notifications se escucha con el filtro por rol que se instala debajo.
-   bind(root.child('settings'),'settings','replace');
-   bind(root.child('accounts'),'accounts','replace');
+   if(isAgentUser(currentUser)){
+     [['users','users'],['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['deposits','deposits'],['accountWithdrawals','accountWithdrawals'],['accounts','accounts'],['settings','settings']].forEach(([path,key])=>bind(root.child(path),key,'replace'));
+   }else{
+     bind(root.child('users').child(uidv),'users','user');
+     [['beneficiaries','beneficiaries'],['envios','envios'],['recargas','recargas'],['paqueticos','paqueticos'],['pagos','pagos'],['paquetes','paquetes'],['deposits','deposits'],['accountWithdrawals','accountWithdrawals'],['commissions','commissions']].forEach(([p,k])=>bind(root.child(p).orderByChild('userId').equalTo(uidv),k));
+     bind(root.child('settings'),'settings','replace');
+     bind(root.child('accounts'),'accounts','replace');
+   }
  }
  const connRef=firebase.database().ref('.info/connected');
  connRef.off();
@@ -1367,7 +1375,7 @@ function attachRealtimeListeners(){
  // Escuchar el conjunto completo solo para administración. Los demás roles usan una
  // consulta limitada a su propio targetUserId, tal como exigen las reglas de Realtime Database.
  const notificationsRoot=root.child('notifications');
- const notificationRef=isAdmin()
+ const notificationRef=(isAdmin()||isAgentUser(currentUser))
    ? notificationsRoot
    : notificationsRoot.orderByChild('targetUserId').equalTo(String(currentUser?.id||''));
  notificationRef.off();
@@ -1381,7 +1389,7 @@ function attachRealtimeListeners(){
  notificationRef.on('child_added',snap=>{
    const raw=snap.val();if(!raw)return;
    const n={...raw,id:raw.id||snap.key};
-   if(!isAdmin()&&String(n.targetUserId||'')!==String(currentUser?.id||''))return;
+   if(!isAdmin()&&!isAgentUser(currentUser)&&String(n.targetUserId||'')!==String(currentUser?.id||''))return;
    state.notifications=state.notifications||{};
    const existed=!!state.notifications[n.id];
    state.notifications[n.id]=n;
@@ -1707,6 +1715,26 @@ async function loadAuthorizedState(authUser){
    attachRealtimeListeners();
    return;
  }
+ if(isAgentUser(currentUser)){
+   const profileRef=root.child('users').child(currentUser.id);
+   const profileSnap=await profileRef.once('value');
+   const profile=profileSnap.val();
+   if(!profile||!isAgentUser(profile)||profile.active===false)throw new Error('AGENT_PROFILE_NOT_AUTHORIZED');
+   if(profile.authUid&&profile.authUid!==authUser.uid)throw new Error('AGENT_AUTH_UID_MISMATCH');
+   if(!profile.authUid){
+     await profileRef.update({authUid:authUser.uid});
+   }
+   await root.child('agentAuth').child(authUser.uid).set({authUid:authUser.uid,userId:currentUser.id,role:'Agente',active:true,updatedAt:now()});
+   const agentCollections=['users','beneficiaries','accounts','settings','envios','recargas','paqueticos','pagos','paquetes','transacciones','deposits','accountWithdrawals','notifications','requests'];
+   const snapshots=await Promise.race([
+     Promise.all(agentCollections.map(key=>root.child(key).once('value').then(s=>[key,s.val()||{}]))),
+     new Promise((_,reject)=>setTimeout(()=>reject(new Error('STATE_LOAD_TIMEOUT')),15000))
+   ]);
+   for(const [key,value] of snapshots)state[key]={...(state[key]||{}),...(value||{})};
+   lastSyncedState=cloneState(state);
+   attachRealtimeListeners();
+   return;
+ }
  // REMITENTE: cargar solamente su información. Nunca descargar toda la base.
  const uidv=currentUser?.id;
  if(!uidv)throw new Error('PROFILE_NOT_FOUND');
@@ -1809,7 +1837,16 @@ function openBeneficiarioModal(origen='gestion'){
  const celular=document.getElementById('ben-cel');
  setTimeout(()=>{ if(nombre)nombre.focus(); },30);
 }
-function openModal(id){const modal=document.getElementById(id);if(modal){delete modal.dataset.submitting;modal.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='';b.style.opacity=''}});modal.querySelectorAll('select,input,textarea').forEach(el=>{if(!el.hasAttribute('data-hard-disabled')&&!el.hasAttribute('data-system-disabled')){el.disabled=false;el.removeAttribute('disabled');if(!el.hasAttribute('data-readonly'))el.readOnly=false;el.style.pointerEvents='auto';el.style.opacity='1'}});modal.style.pointerEvents='auto';modal.style.display='flex';}if(id==='depositoModal'&&currentUser){let rw=document.getElementById('dep-remitente-wrap'),sel=document.getElementById('dep-remitente');if(rw)rw.style.display=isAdmin()?'block':'none';if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.username||'')+'</option>').join('');const ds=document.getElementById('dep-remitente-search');if(ds)ds.value='';const db=document.getElementById('dep-remitente-suggestions');if(db)db.style.display='none';setTimeout(()=>{if(isAdmin()&&typeof updateDepositSuggestions==='function')updateDepositSuggestions()},80);let ac=document.getElementById('dep-cuenta');if(ac){let accounts=Object.values(state.accounts||{});if(!accounts.length)accounts=[];ac.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+accounts.filter(a=>a.active!==false).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.bank||'')+' — '+escapeHtml(a.number||'')+'</option>').join('')}}if(id==='agentEnvioModal'&&isAgentUser(currentUser)){const a=document.getElementById('agent-current');if(a)a.value=(currentUser.staffId||currentUser.id)+' ('+(currentUser.name||'')+')';const i=document.getElementById('agent-beneficiario-input'),s=document.getElementById('agent-beneficiario-select');if(i)i.value='';if(s)s.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}if(id==='comisionModal'&&currentUser){let wrap=document.getElementById('com-target-wrap');if(wrap)wrap.style.display=isAdmin()?'block':'none';updateCommissionTarget();document.getElementById('com-disp').value=money(currentUser.commission)}if(id==='retiroCuentaModal'&&currentUser)document.getElementById('cuenta-disp').value=money(currentUser.balance)}
+function openModal(id){const modal=document.getElementById(id);if(modal){delete modal.dataset.submitting;modal.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-hard-disabled')){b.disabled=false;b.removeAttribute('disabled');b.style.pointerEvents='';b.style.opacity=''}});modal.querySelectorAll('select,input,textarea').forEach(el=>{if(!el.hasAttribute('data-hard-disabled')&&!el.hasAttribute('data-system-disabled')){el.disabled=false;el.removeAttribute('disabled');if(!el.hasAttribute('data-readonly'))el.readOnly=false;el.style.pointerEvents='auto';el.style.opacity='1'}});modal.style.pointerEvents='auto';modal.style.display='flex';}if(id==='depositoModal'&&currentUser){
+ const rw=document.getElementById('dep-remitente-wrap'),sel=document.getElementById('dep-remitente'),input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions'),operator=document.getElementById('dep-operador-display');
+ const elevated=isAdmin()||isAgentUser(currentUser);if(rw)rw.style.display='block';
+ if(operator){const role=isAdmin()?'Administrador':(isAgentUser(currentUser)?'Agente':'Remitente');operator.value=(currentUser.name||currentUser.username||currentUser.id)+' · '+role+(currentUser.staffId?' · Código: '+currentUser.staffId:'');}
+ if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isRemitenteUser(u)&&u.active!==false).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.staffId||u.username||'')+'</option>').join('');
+ if(input){input.readOnly=!elevated;input.placeholder=elevated?'Buscar remitente por nombre o código':'Su cuenta de remitente';
+ if(elevated){input.value='';if(sel)sel.value='';}else{const me=state.users?.[currentUser.id]||currentUser;if(sel)sel.value=currentUser.id;input.value=(personName(me)||me.username||me.id)+(personPhone(me)?' ('+personPhone(me)+')':'');}}
+ if(box)box.style.display='none';if(elevated)setTimeout(()=>updateDepositSuggestions(),80);setTimeout(()=>ensureDepositAccount(),50);
+}
+if(id==='agentEnvioModal'&&isAgentUser(currentUser)){const a=document.getElementById('agent-current');if(a)a.value=(currentUser.staffId||currentUser.id)+' ('+(currentUser.name||'')+')';const i=document.getElementById('agent-beneficiario-input'),s=document.getElementById('agent-beneficiario-select');if(i)i.value='';if(s)s.value='';if(typeof calcularAgentEnvio==='function')calcularAgentEnvio()}if(id==='comisionModal'&&currentUser){let wrap=document.getElementById('com-target-wrap');if(wrap)wrap.style.display=isAdmin()?'block':'none';updateCommissionTarget();document.getElementById('com-disp').value=money(currentUser.commission)}if(id==='retiroCuentaModal'&&currentUser)document.getElementById('cuenta-disp').value=money(currentUser.balance)}
 document.addEventListener('click',function(ev){
  const m=ev.target?.closest?.('.modal');
  if(m&&ev.target===m){closeModal(m.id)}
@@ -1927,6 +1964,7 @@ function isAdmin(){return !!currentUser && (currentUser.id==='admin' || String(c
 function isAdminUser(user){const u=user||{};return u.id==='admin'||String(u.role||'').trim().toLowerCase()==='administrador'||String(u.username||'').trim().toLowerCase()==='admin'||String(u.authEmail||'').trim().toLowerCase()==='sendwayoexpress@gmail.com'}
 function isAgentUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return ['agente','agent','agentes'].includes(role)||String(u.agentType||'').trim().toUpperCase()==='AGENTE'||String(u.agentScope||'').trim().toUpperCase()==='OPERACIONES'&&String(u.agentPolicy||'').trim().toUpperCase()==='HTI_A_HTI'||!!u.agentKey;}
 function isManagedUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});const role=String(u.role||'').trim().toLowerCase();return !!u&&(['remitente','remitentes'].includes(role)||isAgentUser(u))}
+function isRemitenteUser(userOrId){const u=typeof userOrId==='string'?(state.users?.[userOrId]||{}):(userOrId||{});return !!u&&['remitente','remitentes'].includes(String(u.role||'').trim().toLowerCase())}
 function isOperationalUser(userOrId){return isAdminUser(userOrId)||isManagedUser(userOrId)}
 async function ensureHeraceFleuranvilAgent(){
  if(!isAdmin()||!firebaseReady)return;
@@ -1940,9 +1978,9 @@ async function ensureUniqueAgentIdentity(){if(!isAdmin())return;const users=Obje
 async function createTransaction(collection,fields,amount){
  if(!canTransact()){toast('Su cuenta no tiene permiso para realizar operaciones.','error');['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);return null}
  if(!firebaseReady||!firebase.auth().currentUser){toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);return null}
- const id=uid(collection),amountNumber=Number(amount||0),balanceDebitOverride=Number.isFinite(Number(fields?.balanceDebitOverride))?Number(fields.balanceDebitOverride):amountNumber,creditUsed=0,suppliedCommission=Number.isFinite(Number(fields?.commission))?Number(fields.commission):null,rate=commissionRateFor(collection,{...fields,amount:amountNumber,commission:suppliedCommission}),commissionAmount=suppliedCommission!==null?suppliedCommission:amountNumber*rate;
- const agentMode=isAgentUser(currentUser);const record={id,...fields,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount:amountNumber,commissionRate:amountNumber>0?commissionAmount/amountNumber:rate,commission:commissionAmount,status:'Pendiente',createdAt:now(),balanceDebited:false,balanceRefunded:false,accountingType:'COMERCIAL',commissionSplit:agentMode?'100% PLATAFORMA':'50/50',commissionBeneficiary:agentMode?'PLATAFORMA':'REPARTIDO',agentOperation:agentMode,creditUsed,adminVisible:true,adminInbox:true};
- if(!isAdmin())record.balanceDebited=true;record.balanceDebitOverride=balanceDebitOverride;
+ const amountNumber=Number(amount||0),balanceDebitOverride=Number.isFinite(Number(fields?.balanceDebitOverride))?Number(fields.balanceDebitOverride):amountNumber,reservation=window.__sendwayoBalanceReservation,hasReservation=!!reservation&&reservation.userId===currentUser?.id&&reservation.collection===collection&&Math.abs(Number(reservation.amount||0)-balanceDebitOverride)<0.000001,id=hasReservation?reservation.id:uid(collection),creditUsed=0,suppliedCommission=Number.isFinite(Number(fields?.commission))?Number(fields.commission):null,rate=commissionRateFor(collection,{...fields,amount:amountNumber,commission:suppliedCommission}),commissionAmount=suppliedCommission!==null?suppliedCommission:amountNumber*rate;
+ const agentMode=isAgentUser(currentUser);const record={id,...fields,userId:currentUser.id,username:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid,amount:amountNumber,commissionRate:amountNumber>0?commissionAmount/amountNumber:rate,commission:commissionAmount,status:'Pendiente',createdAt:now(),balanceDebited:false,balanceRefunded:false,accountingType:'COMERCIAL',commissionSplit:agentMode?'100% PLATAFORMA':'50/50',commissionBeneficiary:agentMode?'PLATAFORMA':'REPARTIDO',agentOperation:agentMode,creditUsed,adminVisible:true,adminInbox:true,balanceReservationId:hasReservation?id:null,balanceReservationCurrency:hasReservation?reservation.currency:null};
+ if(!isAdmin())record.balanceDebited=hasReservation;record.balanceDebitOverride=balanceDebitOverride;
  state[collection]=state[collection]||{};state[collection][id]=record;addAudit('Crear '+collection,id);
  try{
    // Guardamos la operación en su nodo propio para que un Remitente pueda
@@ -1952,16 +1990,21 @@ async function createTransaction(collection,fields,amount){
      new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(new Error('SAVE_TIMEOUT'),{code:'SAVE_TIMEOUT'})),12000))
    ]);
    markSynced([collection,id],record);
+   if(hasReservation)window.__sendwayoBalanceReservation=null;
  }catch(e){
    console.warn('Guardar '+collection+':',e);
    const code=e?.code||'';
    const msg=code==='PERMISSION_DENIED'?'Firebase rechazó esta operación por permisos. Hay que actualizar las reglas de Firebase.':code==='SAVE_TIMEOUT'?'Firebase tardó demasiado en guardar. La operación no fue confirmada y no se cerrará el formulario.':'No se pudo guardar la operación en Firebase'+(code?' ('+code+')':'')+'.';
    toast(msg,'error');
    ['envioModal','agentEnvioModal','recargaModal','paquetikoModal','pagoModal','paqueteModal'].forEach(resetFormSubmitState);
-   if(record.balanceDebited){
-     const used=Number(record.creditUsed||0),balanceUsed=Math.max(0,Number(record.balanceDebitOverride ?? (record.amount || 0))-used);
-     if(firebaseReady)await firebase.database().ref(DB_PATH+'/users/'+currentUser.id).transaction(u=>u?{...u,balance:Number(u.balance||0)+balanceUsed,creditOutstanding:Math.max(0,Number(u.creditOutstanding||0)-used)}:undefined);
-     else{currentUser.balance=Number(currentUser.balance||0)+balanceUsed;currentUser.creditOutstanding=Math.max(0,Number(currentUser.creditOutstanding||0)-used);state.users[currentUser.id]=currentUser}
+   if(record.balanceDebited&&record.balanceReservationId){
+     const operationRef=firebase.database().ref(DB_PATH+'/'+collection+'/'+id);let exists=true;
+     try{const snap=await operationRef.once('value');exists=snap.exists()}catch(readError){console.warn('Comprobar resultado del guardado:',readError)}
+     if(!exists){
+      const refunded=await refundTransactionReservation(currentUser.id,record.balanceReservationId,Number(record.balanceDebitOverride??record.amount??0),Number(record.creditUsed||0),String(record.balanceReservationCurrency||'DOP'));
+      if(!refunded)toast('No se confirmó el envío y Firebase no confirmó la devolución del saldo. No lo repita hasta revisar la cuenta.','error');
+     }else toast('Firebase puede haber guardado la operación a pesar del error de respuesta. La reserva se conserva para evitar un doble descuento; revise el historial.','warn');
+     window.__sendwayoBalanceReservation=null;
    }
    delete state[collection][id];localSave();return null;
  }
@@ -2019,27 +2062,51 @@ async function saveCreditGrant(){
  const cid=uid('crd'),ref=firebase.database().ref(DB_PATH+'/users/'+id);
  try{const tx=await ref.transaction(u=>{if(!u||!isManagedUser(u))return undefined;const grants={...(u.creditGrants||{})};return {...u,creditLimit:Number(u.creditLimit||0)+amount,creditGrantedTotal:Number(u.creditGrantedTotal||0)+amount,creditGrants:{...grants,[cid]:{id:cid,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'}}}});if(!tx.committed)return toast('No se pudo guardar el crédito. Verifique que el remitente exista.','error');const updated=tx.snapshot.val(),record={id:cid,userId:id,amount,note,createdAt:now(),createdBy:currentUser.username,status:'Aplicado',type:'CREDITO_OTORGADO'};state.users[id]=updated;state.credits=state.credits||{};state.credits[cid]=record;try{await firebase.database().ref(DB_PATH+'/credits/'+cid).set(record)}catch(e){console.warn('Índice de crédito no disponible:',e)}if(lastSyncedState?.users)lastSyncedState.users[id]=cloneState(updated);localSave();closeModal('creditGrantModal');renderAll();try{await addNotification(id,'Administración le otorgó '+money(amount)+' de crédito. Cupo disponible: '+money(creditInfo(updated).available)+'.','credits',cid)}catch(_){}toast('Crédito otorgado y guardado correctamente.','success')}catch(e){console.warn('saveCreditGrant:',e);toast('No se pudo guardar el crédito en Firebase.','error')}
 }
-async function guardBalance(amount){
- const needed=Number(amount||0);
+async function guardBalance(amount,currency='DOP',collection='envios',transactionId=null){
+ const needed=Number(amount||0),cur=String(currency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+ window.__sendwayoBalanceReservation=null;
  if(needed<=0)return true;
  if(isAdmin())return true;
  if(!currentUser||currentUser.active===false)return toast('La cuenta no está activa.','error');
- if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede realizar una operación sin verificar el saldo.','error');
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede verificar el saldo.','error');
+ const allowed=['envios','recargas','paqueticos','pagos','paquetes'];
+ if(!allowed.includes(collection))return toast('Esta operación no está autorizada para reservar fondos.','error');
+ const reservationId=transactionId||uid(collection),authUid=firebase.auth().currentUser.uid;
+ let insufficient=false,availableAtServer=0;
  try{
   const ref=firebase.database().ref(DB_PATH+'/users/'+currentUser.id);
   const tx=await ref.transaction(u=>{
    if(!u||u.active===false)return undefined;
    const role=String(u.role||'').trim().toLowerCase();
    if(!['remitente','remitentes','agente','agent','agentes'].includes(role))return undefined;
-   const balance=Number(u.balance||0);
-   if(!Number.isFinite(balance)||balance<needed)return undefined;
-   return {...u,balance:balance-needed};
+   const legacyAgentHtg=cur==='HTG'&&isAgentUser(u)&&String(u.balanceCurrency||'').toUpperCase()==='HTG';
+   const field=cur==='HTG'?(legacyAgentHtg?'balance':'balanceHTG'):'balance';
+   const balance=Number(u[field]||0);availableAtServer=balance;
+   if(!Number.isFinite(balance)||balance<needed){insufficient=true;return undefined}
+   const reservations={...(u.balanceReservations||{})},prior=reservations[reservationId];
+   if(prior&&prior.status==='RESERVED')return undefined;
+   reservations[reservationId]={id:reservationId,transactionId:reservationId,collection,currency:cur,amount:needed,authUid,status:'RESERVED',reservedAt:now()};
+   const refunds={...(u.transactionBalanceRefunds||{})};delete refunds[reservationId];
+   return {...u,[field]:Number((balance-needed).toFixed(2)),balanceReservations:reservations,transactionBalanceRefunds:refunds,
+    lastBalanceReservationId:reservationId,lastBalanceReservationCollection:collection,lastBalanceReservationCurrency:cur,lastBalanceReservationAuthUid:authUid};
   });
-  if(!tx.committed){toast('Saldo insuficiente. La operación supera el balance disponible y fue bloqueada.','warn');return false}
+  if(!tx.committed){
+   if(insufficient){
+    const visible=Number(currentUser.balance||0),different=Math.abs(visible-availableAtServer)>0.009;
+    toast('Fondos insuficientes en '+(cur==='HTG'?'gourdes haitianos':'pesos dominicanos')+'. Disponible confirmado por Firebase: '+(cur==='HTG'?htgMoney(availableAtServer):money(availableAtServer))+'; requerido: '+(cur==='HTG'?htgMoney(needed):money(needed))+'.'+(different?' El balance que ves en pantalla no coincide con Firebase.':''),'warn');
+   }else toast('Firebase no confirmó la reserva del balance. No se guardó el envío. Revise permisos y sincronización; no significa necesariamente que falten fondos.','error');
+   return false;
+  }
   const updated=tx.snapshot.val();currentUser={...updated,__creditUsedForOperation:0};state.users[currentUser.id]=updated;
   if(lastSyncedState?.users?.[currentUser.id])lastSyncedState.users[currentUser.id]=cloneState(updated);
+  window.__sendwayoBalanceReservation={id:reservationId,collection,currency:cur,amount:needed,userId:currentUser.id,authUid};
   localSave();return true;
- }catch(e){console.warn('Bloqueo de saldo:',e);toast('No se pudo verificar/actualizar el saldo en Firebase. La operación fue bloqueada.','error');return false}
+ }catch(e){
+  console.warn('Reserva de saldo:',e);
+  const permission=String(e?.code||'').toUpperCase().includes('PERMISSION');
+  toast(permission?'Firebase rechazó el cambio de balance por reglas de seguridad. El mensaje no indica que falte dinero.':'No se pudo confirmar el balance en Firebase; la operación fue bloqueada.','error');
+  return false;
+ }
 }
 function resolveByText(value,collection,fields){let v=String(value||'').trim().toLowerCase();if(!v)return null;return Object.values(collection).find(x=>fields.some(f=>String(x[f]||'').trim().toLowerCase()===v||String(x[f]||'').trim().toLowerCase().includes(v)))?.id||null}
 function normalizeSearchText(v){return String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim()}
@@ -2090,19 +2157,20 @@ function updateEnvioSuggestions(kind){
  box.style.display='block';
 }
 function updateDepositSuggestions(){
- const input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions'),sel=document.getElementById('dep-remitente');if(!input||!box||!sel)return;
- const q=input.value.trim(),nq=normalizeSearchText(q),qd=phoneDigits(q);
- const list=Object.values(state.users||{}).filter(u=>u&&isManagedUser(u)&&u.active!==false).filter(u=>personMatchesQuery(u,q)||normalizeSearchText(u.staffId).includes(nq)).sort((a,b)=>{
-   const ae=nq&&(normalizeSearchText(personName(a))===nq||normalizeSearchText(a.username)===nq||normalizeSearchText(a.staffId)===nq||(qd&&phoneDigits(personPhone(a))===qd));
-   const be=nq&&(normalizeSearchText(personName(b))===nq||normalizeSearchText(b.username)===nq||normalizeSearchText(b.staffId)===nq||(qd&&phoneDigits(personPhone(b))===qd));
-   return Number(be)-Number(ae)||personName(a).localeCompare(personName(b));
+ const input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions'),sel=document.getElementById('dep-remitente');
+ if(!input||!box||!sel||!(isAdmin()||isAgentUser(currentUser)))return;
+ const q=String(input.value||'').trim(),nq=normalizeSearchText(q),qd=phoneDigits(q);
+ const list=Object.values(state.users||{}).filter(u=>isRemitenteUser(u)&&u.active!==false).filter(u=>!q||personMatchesQuery(u,q)||normalizeSearchText(u.staffId).includes(nq)).sort((a,b)=>{
+ const ae=nq&&(normalizeSearchText(personName(a))===nq||normalizeSearchText(a.username)===nq||normalizeSearchText(a.staffId)===nq||(qd&&phoneDigits(personPhone(a))===qd));
+ const be=nq&&(normalizeSearchText(personName(b))===nq||normalizeSearchText(b.username)===nq||normalizeSearchText(b.staffId)===nq||(qd&&phoneDigits(personPhone(b))===qd));
+ return Number(be)-Number(ae)||personName(a).localeCompare(personName(b),'es');
  });
- box.innerHTML=list.map(u=>{const phone=personPhone(u)||u.staffId||'Sin número',name=personName(u)||'Sin nombre';return '<button type="button" class="env-suggestion" onclick="chooseDepositRemitente(\''+escapeHtml(u.id)+'\')"><b>'+escapeHtml(name)+'</b> <span>('+escapeHtml(phone)+')</span></button>'}).join('');
- box.style.display=list.length?'block':'none';
+ box.innerHTML='';list.forEach(u=>{const btn=document.createElement('button');btn.type='button';btn.className='env-suggestion';const b=document.createElement('b');b.textContent=personName(u)||'Sin nombre';btn.appendChild(b);const s=document.createElement('span');s.textContent=' ('+(personPhone(u)||u.staffId||'Sin número')+')';btn.appendChild(s);btn.addEventListener('click',()=>chooseDepositRemitente(u.id));box.appendChild(btn)});box.style.display=list.length?'block':'none';
 }
 function chooseDepositRemitente(id){
- const u=state.users?.[id],sel=document.getElementById('dep-remitente'),input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions');if(!u||!sel||!input)return;
- sel.value=id;input.value=(personName(u)||'Sin nombre')+' ('+(personPhone(u)||u.staffId||'Sin número')+')';if(box)box.style.display='none';
+ const u=state.users?.[id],sel=document.getElementById('dep-remitente'),input=document.getElementById('dep-remitente-search'),box=document.getElementById('dep-remitente-suggestions');
+ if(!u||!isRemitenteUser(u)||!sel||!input)return toast('Seleccione una cuenta de remitente válida.','warn');
+ sel.value=u.id;input.value=(personName(u)||'Sin nombre')+(personPhone(u)?' ('+personPhone(u)+')':'');if(box)box.style.display='none';
 }
 function updateAdminDepositSuggestions(){
  const input=document.getElementById('admin-dep-remitente-search'),box=document.getElementById('admin-dep-remitente-suggestions'),sel=document.getElementById('admin-dep-remitente');if(!input||!box||!sel)return;
@@ -2194,8 +2262,8 @@ async function guardarEnvio(){
  }else if(!c.valid||isOfficialHtiCashRoute(type)&&officialHtiCashFee(amount,type)===null){
    return toast(isOfficialHtiCashRoute(type)?'Para MonCash/NatCash el monto debe estar dentro de la tarifa autorizada.':'Ingrese un monto válido.','warn');
  }
- if(!await guardBalance(amount+(haitiRoute?haitiFee:0)))return;
  if(!beginFormSubmit('envioModal'))return;
+ if(!await guardBalance(amount+(haitiRoute?haitiFee:0),haitiRoute?'HTG':'DOP','envios')){resetFormSubmitState('envioModal');return;}
  const ben=state.beneficiaries[benId],rem=userById(remId),remName=personName(rem),remPhone=personPhone(rem),benName=personName(ben),benPhone=personPhone(ben);
  const id=await createTransaction('envios',{type,route:type,remitenteId:remId,remitente:remName,remitenteNombre:remName,remitentePhone:remPhone,remitenteDoc:rem.doc||rem.document||'',beneficiarioId:benId,beneficiario:benName,beneficiarioNombre:benName,beneficiarioPhone:benPhone,net:haitiRoute?amount:c.net,commission:haitiRoute?haitiFee:c.commission,destination:haitiRoute?amount+haitiFee:c.total,currency:haitiRoute?'HTG':'DOP',balanceCurrency:haitiRoute?'HTG':'DOP',amountHTG:haitiRoute?amount:null,feeHTG:haitiRoute?haitiFee:null,tariffHTG:haitiRoute?haitiFee:null,totalHTG:haitiRoute?amount+haitiFee:null,accountingType:haitiRoute?'HAITI_HAITI_GDES':'COMERCIAL'},amount+(haitiRoute?haitiFee:0));
  if(!id){resetFormSubmitState('envioModal');return;}
@@ -2277,17 +2345,36 @@ async function guardarPersona(){
  }catch(e){console.warn('guardarPersona:',e);delete state.users[id];resetFormSubmitState('personaModal');renderAll();toast('No se creó el remitente porque Firebase no confirmó el registro.','error')}
 }
 async function guardarCuenta(){if(!isAdmin())return toast('Solo el Administrador puede agregar cuentas bancarias.','warn');const bank=document.getElementById('cta-banco')?.value.trim(),holder=document.getElementById('cta-titular')?.value.trim(),number=document.getElementById('cta-numero')?.value.trim();if(!bank||!holder||!number)return toast('Complete banco, titular y número de cuenta.','warn');if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado.','error');const id=uid('cta'),record={id,bank,holder,number,active:true,createdAt:now(),createdBy:currentUser.username,createdByAuthUid:firebase.auth().currentUser.uid};return firebase.database().ref(DB_PATH+'/accounts/'+id).set(record).then(()=>{state.accounts[id]=record;markSynced(['accounts',id],record);localSave();closeModal('cuentaModal');renderAll();toast('Cuenta bancaria agregada por Administración.','success')}).catch(e=>{console.warn('guardarCuenta:',e);toast('No se pudo guardar la cuenta bancaria en Firebase.','error')})}
-async function creditDepositToRemitente(depositId,remitenteId,amount){ if(!isAdmin())throw new Error('ADMIN_REQUIRED');
- const n=Number(amount);if(!depositId||!remitenteId||!Number.isFinite(n)||n<=0)throw new Error('DEPÓSITO_INVÁLIDO');if(!firebaseReady||!firebase.auth().currentUser)throw new Error('FIREBASE_NO_AUTORIZADO');
- const ref=firebase.database().ref(DB_PATH+'/users/'+remitenteId);let result={creditRepaid:0,balanceAdded:0};
- const tx=await ref.transaction(u=>{if(!u||!isManagedUser(u))return undefined;const deposits={...(u.depositCredits||{})};
-  if(deposits[depositId]!==undefined){if(Math.abs(Number(deposits[depositId])-n)<0.000001){result={creditRepaid:Number(u.creditRepayments?.[depositId]||0),balanceAdded:Number(u.depositBalanceAdded?.[depositId]||0)};return u}return undefined}
-  const balanceAdded=n;result={creditRepaid:0,balanceAdded};
-  return {...u,balance:Number(u.balance||0)+balanceAdded,depositCredits:{...deposits,[depositId]:n},creditRepayments:{...(u.creditRepayments||{}),[depositId]:0},depositBalanceAdded:{...(u.depositBalanceAdded||{}),[depositId]:balanceAdded}};
+async function creditDepositToRemitente(depositId,remitenteId,amount,currency='DOP',approver=currentUser){
+ const cur=String(currency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP',n=Number(amount);
+ if(!isAdmin()&&!isAgentUser(currentUser))throw new Error('APPROVER_REQUIRED');
+ if(!depositId||!remitenteId||!Number.isFinite(n)||n<=0)throw new Error('DEPÓSITO_INVÁLIDO');
+ if(!firebaseReady||!firebase.auth().currentUser)throw new Error('FIREBASE_NO_AUTORIZADO');
+ const target=state.users?.[remitenteId];if(!target||!isRemitenteUser(target))throw new Error('BENEFICIARIO_DEBE_SER_REMITENTE');
+ const ref=firebase.database().ref(DB_PATH+'/users/'+remitenteId);let result={balanceAdded:0};
+ const tx=await ref.transaction(u=>{
+  if(!u||!isRemitenteUser(u))return undefined;
+  const credits={...(u.depositCredits||{})},currencies={...(u.depositCurrencies||{})};
+  if(credits[depositId]!==undefined){
+   const oldCur=String(currencies[depositId]||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+   if(Math.abs(Number(credits[depositId])-n)<0.000001&&oldCur===cur){result={balanceAdded:Number(u.depositBalanceAdded?.[depositId]||0)};return u}
+   return undefined;
+  }
+  const field=cur==='HTG'?'balanceHTG':'balance',before=Number(u[field]||0);
+  if(!Number.isFinite(before)||before<0)return undefined;
+  result={balanceAdded:n};
+  return {...u,[field]:Number((before+n).toFixed(2)),depositCredits:{...credits,[depositId]:n},depositCurrencies:{...currencies,[depositId]:cur},
+   creditRepayments:{...(u.creditRepayments||{}),[depositId]:0},depositBalanceAdded:{...(u.depositBalanceAdded||{}),[depositId]:n},
+   lastDepositApprovalId:depositId,lastDepositApprovalByUserId:approver?.id||currentUser?.id||'',
+   lastDepositApprovalAuthUid:firebase.auth().currentUser.uid,lastDepositApprovalAt:now()};
  });
- if(!tx.committed)throw new Error('DEPOSITO_NO_ACREDITADO');const updated=tx.snapshot.val();state.users[remitenteId]=updated;if(currentUser?.id===remitenteId)currentUser=updated;if(lastSyncedState?.users?.[remitenteId])lastSyncedState.users[remitenteId]=cloneState(updated);localSave();return {user:updated,creditRepaid:result.creditRepaid,balanceAdded:result.balanceAdded};
+ if(!tx.committed)throw new Error('DEPOSITO_NO_ACREDITADO');
+ const updated=tx.snapshot.val();
+ if(Number(updated?.depositCredits?.[depositId])!==n||String(updated?.depositCurrencies?.[depositId]||'DOP').toUpperCase()!==cur)throw new Error('DEPOSITO_NO_CONFIRMADO');
+ state.users[remitenteId]=updated;if(currentUser?.id===remitenteId)currentUser=updated;
+ if(lastSyncedState?.users?.[remitenteId])lastSyncedState.users[remitenteId]=cloneState(updated);
+ localSave();return {user:updated,balanceAdded:Number(updated.depositBalanceAdded?.[depositId]||result.balanceAdded),creditRepaid:0,currency:cur};
 }
-
 async function uploadDepositVoucher(file,depositId,userId){
   if(!file)return {name:'Sin archivo',uploaded:false};
   const safeName=String(file.name||'comprobante').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-120);
@@ -2305,62 +2392,41 @@ async function uploadDepositVoucher(file,depositId,userId){
   return {name:safeName,type:file.type||'',size:file.size,url,path,uploaded:true};
 }
 async function guardarDeposito(){
- const _modal=document.getElementById('depositoModal');if(_modal?.dataset.submitting==='1')return;
- const amount=Number(document.getElementById('dep-monto')?.value||0);
- const accountId=document.getElementById('dep-cuenta')?.value||'';
- if(!amount||amount<=0)return toast('Ingrese un monto válido.','warn');
- if(!accountId)return toast('Seleccione una cuenta bancaria oficial.','warn');
- const targetId=isAdmin()?(document.getElementById('dep-remitente')?.value||''):currentUser.id;
- if(!targetId)return toast('Seleccione el remitente al que se acreditará el depósito.','warn');
- const target=state.users?.[targetId];
- if(!target||!isManagedUser(target))return toast('La cuenta seleccionada no es válida.','warn');
+ const modal=document.getElementById('depositoModal');if(modal?.dataset.submitting==='1')return;
+ if(!currentUser||currentUser.active===false)return toast('La cuenta no está activa.','error');
+ if(!canTransact())return toast('Su cuenta no tiene permiso para registrar depósitos.','error');
  if(!firebaseReady||!firebase.auth().currentUser)return toast('La sesión de Firebase no está activa.','error');
- const file=document.getElementById('dep-voucher')?.files?.[0];
- const id=uid('dep'),directAdmin=isAdmin(),createdAt=now();
+ const amount=Number(document.getElementById('dep-monto')?.value||0),accountId=String(document.getElementById('dep-cuenta')?.value||'');
+ const currency=String(document.getElementById('dep-currency')?.value||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+ if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto de depósito válido.','warn');
+ if(!accountId)return toast('Seleccione primero una cuenta bancaria oficial.','warn');
+ const account=state.accounts?.[accountId];if(!account||account.active===false)return toast('La cuenta bancaria seleccionada no está disponible. Actualice el listado de cuentas.','warn');
+ const elevated=isAdmin()||isAgentUser(currentUser),targetId=elevated?String(document.getElementById('dep-remitente')?.value||''):String(currentUser.id);
+ if(!targetId)return toast('Seleccione el remitente beneficiario del depósito.','warn');
+ const target=state.users?.[targetId];if(!target||!isRemitenteUser(target)||target.active===false)return toast('El beneficiario debe ser un remitente activo, no un agente ni la administración.','warn');
+ if(!elevated&&target.id!==currentUser.id)return toast('Un remitente solo puede depositar a su propia cuenta.','warn');
  if(!beginFormSubmit('depositoModal'))return;
- let voucher={name:'Sin archivo',uploaded:false};
+ const id=uid('dep'),createdAt=now(),authUser=firebase.auth().currentUser,operatorRole=isAdmin()?'Administrador':(isAgentUser(currentUser)?'Agente':'Remitente');
+ const record={id,userId:target.id,username:target.username||target.name||target.id,beneficiaryUserId:target.id,beneficiaryName:personName(target)||target.username||target.id,beneficiaryPhone:personPhone(target)||'',
+  createdByUserId:currentUser.id,createdByUsername:currentUser.username||'',createdByName:currentUser.name||currentUser.username||currentUser.id,createdByRole:operatorRole,createdByStaffId:currentUser.staffId||(isAdmin()?'ADMIN':''),
+  createdByAuthUid:authUser.uid,accountId,accountBank:account.bank||account.name||'',accountHolder:account.holder||'',accountNumber:account.number||'',
+  amount,currency,balanceCurrency:currency,voucher:'Sin archivo',voucherFile:{name:'Sin archivo',uploaded:false},status:'Pendiente',createdAt,
+  accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:isAdmin(),balanceCredited:false,balanceRefunded:false,targetType:'REMITENTE'};
  try{
-   if(file)voucher=await uploadDepositVoucher(file,id,target.id);
- }catch(uploadError){
-   console.warn('Voucher depósito:',uploadError);
-   const modal=document.getElementById('depositoModal');
-   if(modal)delete modal.dataset.submitting;
-   const code=uploadError?.message||'';
-   return toast(code==='VOUCHER_TOO_LARGE'?'El comprobante supera 10 MB. Seleccione un archivo más pequeño.':code==='VOUCHER_UPLOAD_TIMEOUT'?'La subida del comprobante tardó demasiado. Revise Internet e inténtelo nuevamente.':'No se pudo subir el comprobante a Firebase Storage. Revise las reglas de Storage e inténtelo nuevamente.','error');
- }
- const record={id,userId:target.id,username:target.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId,amount,voucher:voucher.name,voucherFile:voucher,status:directAdmin?'Aprobado':'Pendiente',createdAt,accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:directAdmin,balanceCredited:false,balanceRefunded:false,targetType:isAgentUser(target)?'AGENTE':'REMITENTE'};
- try{
-   // Remitente: guarda el depósito como PENDIENTE y NO toca el balance.
-   // Administrador: guarda y acredita inmediatamente al balance del Remitente.
-   if(!directAdmin){
-     await firebase.database().ref(DB_PATH+'/deposits/'+id).set(record);
-     state.deposits[id]=record;markSynced(['deposits',id],record);
-     try{
-       await addNotification('Administrador','Nuevo depósito de '+target.name+' por '+money(amount)+' recibido. Está PENDIENTE de aprobación. El balance del remitente no cambia hasta la aprobación. Comisión: RD$0.00.','deposits',id);
-     }catch(e){console.warn('Notificación al Administrador:',e)}
-     localSave();renderAll();
-     toast('Depósito guardado. Queda PENDIENTE de aprobación. El balance no cambia todavía.','success');
-     return;
-   }
-
-   // Administrador: acreditar exactamente una vez mediante transacción atómica.
-   const cr=await creditDepositToRemitente(id,target.id,amount);
-   record.creditRepaid=Number(cr?.creditRepaid||0);record.balanceAdded=Number(cr?.balanceAdded||amount);
-   record.balanceCredited=true;record.balanceCreditedAt=now();record.depositPrincipal=amount;
-   record.reviewedAt=now();record.reviewedBy=currentUser.username;record.manualReview=true;
-   generateReceipt('deposits',id);
-   await firebase.database().ref(DB_PATH+'/deposits/'+id).set(record);
-   state.deposits[id]=record;markSynced(['deposits',id],record);
-   try{await addNotification(target.id,'Depósito procesado por Administración: '+money(amount)+' acreditado directamente al balance del Remitente. Comisión: RD$0.00.','deposits',id)}catch(e){console.warn('Notificación al Remitente:',e)}
-   localSave();renderAll();
-   if(record.receipt)setTimeout(()=>showReceipt('deposits',id),180);
-   toast('Depósito procesado: '+money(amount)+' acreditado directamente al balance del Remitente. Comisión: RD$0.00.','success');
+  const file=document.getElementById('dep-voucher')?.files?.[0];if(file){record.voucherFile=await uploadDepositVoucher(file,id,target.id);record.voucher=record.voucherFile.name||file.name;}
+  await firebase.database().ref(DB_PATH+'/deposits/'+id).set(record);
+  state.deposits=state.deposits||{};state.deposits[id]=record;markSynced(['deposits',id],record);
+  try{await addNotification('Administrador','Nuevo depósito pendiente de '+record.beneficiaryName+' por '+(currency==='HTG'?htgMoney(amount):money(amount))+'. Registrado por '+record.createdByName+' ('+operatorRole+'). No se acreditó balance ni se emitió comprobante.','deposits',id)}catch(e){console.warn('Notificación al Administrador:',e)}
+  if(target.id!==currentUser.id)try{await addNotification(target.id,'Se registró un depósito pendiente a su nombre por '+(currency==='HTG'?htgMoney(amount):money(amount))+'. Se acreditará después de la aprobación.','deposits',id)}catch(e){console.warn('Notificación al remitente:',e)}
+  addAudit('Crear depósito pendiente',id);localSave();renderAll();closeModal('depositoModal');
+  toast('Depósito guardado como PENDIENTE. No cambió ningún balance y todavía no hay comprobante.','success');
  }catch(e){
-   console.warn('guardarDeposito:',e);
-   resetFormSubmitState('depositoModal');
-   toast(e?.code==='PERMISSION_DENIED'?'Firebase rechazó el depósito por permisos.':'No se pudo guardar el depósito en Firebase.','error');
+  console.warn('guardarDeposito:',e);resetFormSubmitState('depositoModal');
+  const code=String(e?.code||e?.message||'');
+  toast(code.includes('PERMISSION')?'Firebase rechazó el depósito por permisos. No se acreditó dinero.':'No se pudo guardar el depósito en Firebase. No se acreditó dinero.','error');
  }
 }
+
 async function guardarRecarga(){
  const modal=document.getElementById('recargaModal');
  if(modal?.dataset.submitting==='1')return;
@@ -2376,8 +2442,8 @@ async function guardarRecarga(){
  const amount=Number(document.getElementById('rec-monto')?.value||0);
  if(!Number.isFinite(amount)||amount<=0)return toast('Ingrese un monto de recarga válido.','warn');
  if(!firebaseReady||!firebase.auth().currentUser)return toast('La sesión de Firebase no está activa. Vuelva a iniciar sesión.','error');
- if(!await guardBalance(amount))return;
  if(!beginFormSubmit('recargaModal'))return;
+ if(!await guardBalance(amount,'DOP','recargas')){resetFormSubmitState('recargaModal');return;}
  try{
    const id=await createTransaction('recargas',{company,phone},amount);
    if(!id){resetFormSubmitState('recargaModal');return;}
@@ -2395,7 +2461,7 @@ async function guardarPaquetico(){
  const company=String(document.getElementById('pkt-comp')?.value||'').trim();
  const allowed=['Claro','Viva','Altice'];
  if(!allowed.some(x=>x.toLowerCase()===company.toLowerCase()))return toast('Seleccione una compañía oficial de Paqueticos.','warn');
- const amount=Number(document.getElementById('pkt-monto').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paquetikoModal'))return;
+ const amount=Number(document.getElementById('pkt-monto').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!beginFormSubmit('paquetikoModal'))return;if(!await guardBalance(amount,'DOP','paqueticos')){resetFormSubmitState('paquetikoModal');return;}
  const id=await createTransaction('paqueticos',{company,phone:document.getElementById('pkt-num').value,plan:document.getElementById('pkt-plan').value},amount);if(!id){resetFormSubmitState('paquetikoModal');return;}closeModal('paquetikoModal');toast('Paquetico guardado y notificado.');
 }
 async function guardarPago(){
@@ -2404,13 +2470,13 @@ async function guardarPago(){
  const company=String(document.getElementById('pag-empresa')?.value||'').trim();
  const official=typeof OFFICIAL_SENDWAYO_SERVICES!=='undefined'&&OFFICIAL_SENDWAYO_SERVICES.some(x=>x.toLowerCase()===company.toLowerCase());
  if(!official)return toast('Seleccione un servicio del catálogo oficial.','warn');
- let amount=Number(document.getElementById('pag-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('pagoModal'))return;
+ let amount=Number(document.getElementById('pag-monto').value);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!beginFormSubmit('pagoModal'))return;if(!await guardBalance(amount,'DOP','pagos')){resetFormSubmitState('pagoModal');return;}
  const id=await createTransaction('pagos',{company,contract:document.getElementById('pag-contrato').value,concepto:document.getElementById('pag-concepto')?.value.trim()||''},amount);if(!id){resetFormSubmitState('pagoModal');return;}closeModal('pagoModal');toast('Pago guardado y notificado.')
 }
 async function guardarPaquete(){
  const _modal=document.getElementById('paqueteModal');if(_modal?.dataset.submitting==='1')return;
  if(!canTransact())return toast('Su cuenta no tiene permiso para realizar operaciones.','error');
- const amount=Number(document.getElementById('paq-costo').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!await guardBalance(amount))return;if(!beginFormSubmit('paqueteModal'))return;
+ const amount=Number(document.getElementById('paq-costo').value||0);if(!amount||amount<=0)return toast('Monto inválido.','warn');if(!beginFormSubmit('paqueteModal'))return;if(!await guardBalance(amount,'DOP','paquetes')){resetFormSubmitState('paqueteModal');return;}
  const id=await createTransaction('paquetes',{type:document.getElementById('paq-tipo').value,weight:document.getElementById('paq-peso').value,description:document.getElementById('paq-desc').value,cost:amount},amount);if(!id){resetFormSubmitState('paqueteModal');return;}closeModal('paqueteModal');toast('Paquete guardado y notificado.');
 }
 function calculateCommissionAvailable(userId){
@@ -2655,15 +2721,20 @@ async function applyTransactionCommissionShare(userId,transactionId,amount){
  const ref=firebase.database().ref(DB_PATH+'/users/'+userId);
  try{const tx=await ref.transaction(u=>{if(!u)return undefined;const applied={...(u.transactionCommissionCredits||{})};if(applied[transactionId]!==undefined)return u;const next={...u,commissionAccrued:Number(u.commissionAccrued||0)+n,transactionCommissionCredits:{...applied,[transactionId]:{id:transactionId,amount:n,creditedAt:now()}}};if(userId==='admin')next.balance=Number(u.balance||0)+n;else next.commission=Number(u.commission||0)+n;return next});if(!tx.committed)return false;state.users[userId]=tx.snapshot.val();if(currentUser?.id===userId)currentUser=state.users[userId];if(lastSyncedState?.users?.[userId])lastSyncedState.users[userId]=cloneState(state.users[userId]);return true}catch(e){console.warn('Aplicar comisión idempotente:',e);return false}
 }
-async function refundTransactionReservation(userId,transactionId,amount,creditUsed){ if(!isAdmin())return false;
- const n=Number(amount||0),used=Math.max(0,Number(creditUsed||0)),balanceUsed=Math.max(0,n-used);if(balanceUsed<=0&&used<=0)return true;if(!firebaseReady||!firebase.auth().currentUser)return false;
+async function refundTransactionReservation(userId,transactionId,amount,creditUsed,currency='DOP'){
+ if(!firebaseReady||!firebase.auth().currentUser)return false;
+ if(!isAdmin()&&String(userId)!==String(currentUser?.id))return false;
+ const n=Number(amount||0),used=Math.max(0,Number(creditUsed||0)),balanceUsed=Math.max(0,n-used),cur=String(currency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+ if(balanceUsed<=0&&used<=0)return true;
  const ref=firebase.database().ref(DB_PATH+'/users/'+userId);
  try{
   const tx=await ref.transaction(u=>{
-   if(!u)return undefined;const refunds={...(u.transactionBalanceRefunds||{})};
-   if(refunds[transactionId]!==undefined)return u;
-   const outstanding=Math.max(0,Number(u.creditOutstanding||0)),next={...u,balance:Number(u.balance||0)+balanceUsed,creditOutstanding:Math.max(0,outstanding-used),transactionBalanceRefunds:{...refunds,[transactionId]:{id:transactionId,balanceRefunded:balanceUsed,creditRepaid:used,refundedAt:now()}}};
-   return next;
+   if(!u)return undefined;
+   const reservations={...(u.balanceReservations||{})},entry=reservations[transactionId],refunds={...(u.transactionBalanceRefunds||{})};
+   if(!entry||entry.status!=='RESERVED'||String(entry.collection||'')===''||String(entry.currency||'DOP').toUpperCase()!==cur||refunds[transactionId]!==undefined)return undefined;
+   const agentHtg=cur==='HTG'&&isAgentUser(u)&&String(u.balanceCurrency||'').toUpperCase()==='HTG',field=cur==='HTG'?(agentHtg?'balance':'balanceHTG'):'balance';
+   reservations[transactionId]={...entry,status:'REFUNDED',refundedAt:now()};
+   return {...u,[field]:Number((Number(u[field]||0)+balanceUsed).toFixed(2)),balanceReservations:reservations,transactionBalanceRefunds:{...refunds,[transactionId]:{id:transactionId,balanceRefunded:balanceUsed,creditRepaid:used,currency:cur,refundedAt:now()}},lastBalanceRefundedReservationId:transactionId};
   });
   if(!tx.committed)return false;state.users[userId]=tx.snapshot.val();if(currentUser?.id===userId)currentUser=state.users[userId];if(lastSyncedState?.users?.[userId])lastSyncedState.users[userId]=cloneState(state.users[userId]);return true;
  }catch(e){console.warn('Devolución idempotente:',e);return false}
@@ -2734,6 +2805,12 @@ async function setTransactionStatus(collection,id,status){
    const updates={[base+'/status']:status,[base+'/estado']:String(status).toLowerCase(),[base+'/reviewedAt']:firebase.database.ServerValue.TIMESTAMP,[base+'/reviewedBy']:currentUser.username,[base+'/manualReview']:true,[base+'/reviewReason']:reviewReason};
    try{await firebase.database().ref(DB_PATH).update(updates)}catch(e){return toast('Firebase rechazó el cambio.','error')}
    state[collection][id]={...r,status,estado:String(status).toLowerCase(),reviewedAt:now(),reviewedBy:currentUser.username,manualReview:true,reviewReason};
+   if(r.balanceDebited&&!r.balanceRefunded&&r.balanceReservationId){
+    const refunded=await refundTransactionReservation(r.userId,r.balanceReservationId,Number(r.balanceDebitOverride??r.amount??0),Number(r.creditUsed||0),String(r.balanceReservationCurrency||r.balanceCurrency||'DOP'));
+    if(!refunded)return toast('El estado cambió, pero Firebase no confirmó la devolución de los fondos. No vuelva a enviar hasta revisar el balance.','error');
+    r={...state[collection][id],balanceRefunded:true,balanceRefundedAt:now()};state[collection][id]=r;
+    try{await firebase.database().ref(base).update({balanceRefunded:true,balanceRefundedAt:firebase.database.ServerValue.TIMESTAMP})}catch(e){console.warn('Marcar devolución:',e)}
+   }
  }
  try{await addNotification(u.id,'Su operación fue '+status.toUpperCase()+'. '+reviewReason,collection,id)}catch(e){}
  renderAll();if(status==='Aprobado'&&r.receipt)setTimeout(()=>showReceipt(collection,id),180);toast('Estado actualizado: '+status,'success');
@@ -2756,74 +2833,45 @@ async function removeDepositCommissionArtifacts(depositId){
 }
 
 async function approveDeposit(id,status){
- if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. La operación financiera no se puede procesar offline.','error');
- if(!isAdmin())return;
- let r=state.deposits?.[id];if(!r||r.status!=='Pendiente')return;
- let reviewReason='';
- if(status!=='Aprobado'){
-   reviewReason=prompt('Escriba el motivo obligatorio para '+status+':',r.reviewReason||'')?.trim()||'';
-   if(!reviewReason)return toast('Debe escribir un motivo.','warn');
+ if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se puede revisar el depósito.','error');
+ if(!isAdmin()&&!isAgentUser(currentUser))return toast('Solo el Administrador o un agente autorizado puede revisar depósitos.','error');
+ if(!['Aprobado','Rechazado','No coincide'].includes(status))return toast('Estado de depósito no permitido.','error');
+ let r=state.deposits?.[id];if(!r){try{const s=await firebase.database().ref(DB_PATH+'/deposits/'+id).once('value');r=s.val();if(r){state.deposits=state.deposits||{};state.deposits[id]=r}}catch(e){return toast('No se pudo cargar el depósito.','error')}}
+ if(!r||r.status!=='Pendiente')return toast('Este depósito ya fue procesado o no está pendiente.','warn');
+ const user=state.users?.[r.userId];if(!user||!isRemitenteUser(user))return toast('El beneficiario debe ser un remitente. No se acreditará a agente ni a administración.','error');
+ const amount=Number(r.amount||0),currency=String(r.currency||r.balanceCurrency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+ if(!Number.isFinite(amount)||amount<=0)return toast('El monto del depósito no es válido.','error');
+ let reason='';if(status!=='Aprobado'){reason=prompt('Escriba el motivo obligatorio para '+status+':',r.reviewReason||'')?.trim()||'';if(!reason)return toast('Debe escribir un motivo.','warn')}
+ const authUser=firebase.auth().currentUser,depRef=firebase.database().ref(DB_PATH+'/deposits/'+id);
+ let claim;try{claim=await depRef.transaction(v=>!v||v.status!=='Pendiente'||v.processingApprovalAuthUid?undefined:{...v,processingApprovalAuthUid:authUser.uid,processingApprovalByUserId:currentUser.id,processingApprovalAt:Date.now()})}catch(e){return toast('Firebase no pudo bloquear esta revisión.','error')}
+ if(!claim.committed)return toast('Otro usuario ya está revisando este depósito o ya fue procesado. Actualice la lista.','warn');
+ r=claim.snapshot.val();
+ try{
+  if(status==='Aprobado'){
+   const cr=await creditDepositToRemitente(id,r.userId,amount,currency,currentUser);
+   if(!cr?.user||Number(cr.user.depositCredits?.[id])!==amount||String(cr.user.depositCurrencies?.[id]||'DOP').toUpperCase()!==currency)throw new Error('Firebase no confirmó el crédito exacto.');
+   r.creditRepaid=0;r.balanceAdded=Number(cr.balanceAdded||amount);r.balanceCredited=true;r.balanceCreditedAt=now();r.depositPrincipal=amount;
+  }
+  r.status=status;r.reviewReason=reason;r.reviewedAt=now();r.reviewedBy=currentUser.username||currentUser.name||currentUser.id;
+  r.reviewedByUserId=currentUser.id;r.reviewedByName=currentUser.name||currentUser.username||currentUser.id;r.reviewedByRole=isAdmin()?'Administrador':'Agente';r.reviewedByStaffId=currentUser.staffId||(isAdmin()?'ADMIN':'');r.reviewedByAuthUid=authUser.uid;r.manualReview=true;
+  delete r.processingApprovalAuthUid;delete r.processingApprovalByUserId;delete r.processingApprovalAt;
+  enforceDepositCapital(r);state.deposits[id]=r;
+  if(status==='Aprobado'){generateReceipt('deposits',id);r=state.deposits[id];state.deposits[id]=r}else{delete r.receipt;state.deposits[id]=r}
+  try{await depRef.set(r)}catch(writeError){console.warn('Persistencia tras revisión:',writeError);const verify=await depRef.once('value'),persisted=verify.val();if(persisted&&persisted.status===status)r=state.deposits[id]=persisted;else throw writeError}
+  if(status==='Aprobado'&&r.receipt){
+   try{await persistGeneratedReceipt('deposits',id,r)}catch(e){console.warn('Guardar comprobante:',e)}
+   try{await addNotification(r.userId,'Depósito aprobado: '+(currency==='HTG'?htgMoney(amount):money(amount))+' acreditado a su balance. El comprobante está disponible.','deposits',id)}catch(e){console.warn('Notificación de depósito:',e)}
+  }else{
+   try{await addNotification(r.userId,'Su depósito fue '+status.toUpperCase()+'. '+reason+' No se acreditó balance ni se generó comprobante.','deposits',id)}catch(e){console.warn('Notificación de depósito:',e)}
+  }
+  addAudit('Depósito '+status,id);lastSyncedState=cloneState(state);localSave();renderAll();
+  if(status==='Aprobado'&&r.receipt)setTimeout(()=>showReceipt('deposits',id),180);
+  toast(status==='Aprobado'?'Depósito aprobado: balance del remitente actualizado y comprobante generado.':'Depósito '+status+'. El balance del remitente no cambió.','success');
+ }catch(e){
+  console.warn('approveDeposit:',e);
+  try{await depRef.transaction(v=>v&&v.status==='Pendiente'&&v.processingApprovalAuthUid===authUser.uid?({...v,processingApprovalAuthUid:null,processingApprovalByUserId:null,processingApprovalAt:null}):undefined)}catch(_){}
+  toast('No se completó la revisión: '+String(e?.message||e)+'. Revise Firebase antes de repetirla.','error');
  }
- const u=state.users?.[r.userId];if(!u)return toast('No se encontró el remitente del depósito.','error');
- const depositAmount=Number(r.amount||0);
- if(!Number.isFinite(depositAmount)||depositAmount<=0)return toast('El monto del depósito no es válido.','error');
-
- // REGLA ÚNICA DE DEPÓSITOS:
- // 1) PENDIENTE = no cambia ningún balance.
- // 2) APROBADO por Administrador = 100% directo al balance/capital del Remitente.
- // 3) Comisión de depósito = RD$0.00; nunca afecta la Administración.
- // 4) Idempotencia obligatoria por depositCredits[depositId]: un mismo depósito no puede volver a sumar.
- if(status==='Aprobado'){
-   if(firebaseReady){
-     try{const cr=await creditDepositToRemitente(id,u.id,depositAmount);
-     const creditedUser=cr?.user;
-     r.creditRepaid=Number(cr?.creditRepaid||0);r.balanceAdded=Number(cr?.balanceAdded||depositAmount);
-     if(!creditedUser||Number(creditedUser.depositCredits?.[id])!==depositAmount)return toast('Firebase no confirmó la acreditación exacta del depósito al balance del remitente.','error')}
-     catch(e){return toast('No se pudo acreditar el 100% del depósito al balance del remitente.','error')}
-   }else{
-     const credits={...(u.depositCredits||{})};
-     if(credits[id]===undefined){u.balance=Number(u.balance||0)+depositAmount;credits[id]=depositAmount;u.depositCredits=credits}
-     // Depósito = CAPITAL/BALANCE DEL REMITENTE. Nunca crea, aumenta ni retiene comisión.
-     delete u.commissionRate;delete u.commissionDeposit;delete u.depositCommission;
-     state.users[u.id]=u;
-   }
-   r=enforceDepositCapital(r);
-   await removeDepositCommissionArtifacts(id);
-   r.balanceCredited=true;r.balanceCreditedAt=r.balanceCreditedAt||now();r.depositPrincipal=depositAmount;
-   r.status='Aprobado';r.reviewedAt=now();r.reviewedBy=currentUser.username;r.manualReview=true;r.reviewReason='';
-   state.deposits[id]=r;
-   try{
-     generateReceipt('deposits',id);r=state.deposits[id];state.deposits[id]=r;
-     await firebase.database().ref(DB_PATH+'/deposits/'+id).set(r);
-     if(r?.receipt){
-       const saved=await persistGeneratedReceipt('deposits',id,r);
-       if(!saved)console.warn('Comprobante de depósito no persistió en Firebase; queda disponible localmente.');
-     }
-   }catch(e){
-     console.warn('Comprobante de depósito:',e);
-     // El depósito ya fue acreditado de forma idempotente. No se debe reportar como rechazado por el recibo.
-   }
-   try{await addNotification(u.id,'Balance de '+u.name+' actualizado: el depósito de '+money(depositAmount)+' fue acreditado directamente a su balance/capital. Comisión: RD$0.00. No afecta el balance ni la comisión del Administrador.','deposits',id)}catch(e){console.warn('Notificación de depósito:',e)}
-   // IMPORTANTE: NO usar persist() aquí. Un depósito no debe pasar por el motor de comisiones ni por un guardado global que pueda tocar otros balances.
-   // El balance del Remitente y el registro del depósito ya fueron escritos directamente en Firebase.
-   lastSyncedState=cloneState(state);
-   localSave();
-   renderAll();
-   if(r.receipt)setTimeout(()=>showReceipt('deposits',id),180);
-   return toast('Balance de '+u.name+' actualizado: '+money(depositAmount)+' acreditado directamente a su balance. Comisión: RD$0.00.','success');
- }
-
- // Rechazado / No coincide: como nunca se acreditó mientras estaba pendiente, no se toca ningún balance.
- if(firebaseReady){
-   const ref=firebase.database().ref(DB_PATH+'/deposits/'+id);
-   const tx=await ref.transaction(v=>!v||v.status!=='Pendiente'?undefined:(()=>{const x={...v,status,reviewedAt:now(),reviewedBy:currentUser.username,manualReview:true,reviewReason,accountingType:'DEPOSITO_CAPITAL'};delete x.commissionRate;delete x.commission;delete x.commissionUser;delete x.commissionAdmin;delete x.commissionSplit;return x})());
-   if(!tx.committed)return toast('El depósito ya fue procesado o cambió en otro dispositivo.','warn');
-   r=tx.snapshot.val();state.deposits[id]=r;
- }else{
-   r=enforceDepositCapital(r);r.status=status;r.reviewedAt=now();r.reviewedBy=currentUser.username;r.manualReview=true;r.reviewReason=reviewReason;state.deposits[id]=r;
- }
- try{await addNotification(u.id,'Su depósito fue '+status.toUpperCase()+'. '+reviewReason+' No se generó comisión.','deposits',id)}catch(e){console.warn('Notificación de depósito:',e)}
- await persist();renderAll();toast('Depósito '+status);
 }
 async function approveRequest(id,status){
  if(!isAdmin())return;
@@ -2851,7 +2899,7 @@ function transactionConcept(collection,r){
  if(collection==='paqueticos')return 'Paquetico '+(r.company||'telefónico')+(r.plan?' - '+r.plan:'');
  if(collection==='pagos')return (r.concepto||r.concept||r.description||('Pago de servicio '+(r.company||'')));
  if(collection==='paquetes')return (r.type==='Envío'?'Envío de paquete':'Recepción de paquete');
- if(collection==='deposits')return 'Depósito bancario';
+ if(collection==='deposits')return 'Depósito de dinero';
  return 'Operación SENDWAYO EXPRESS';
 }
 function receiptSpecificData(collection,r){
@@ -2862,6 +2910,19 @@ function receiptSpecificData(collection,r){
  return {kind:'general',amount:exactAmount,label:'MONTO'};
 }
 function receiptServiceHtml(collection,r,t,benName,benPhone){
+ if(collection==='deposits'){
+  const bank=state.accounts?.[r.accountId]||{},currency=String(r.currency||r.balanceCurrency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+  const issuer=(r.createdByName||r.createdByUsername||r.username||'No registrado')+' ('+(r.createdByRole||'Remitente')+')';
+  const approverName=r.reviewedByName||r.reviewedBy||'No registrado',approverRole=r.reviewedByRole||'',approverCode=r.reviewedByStaffId||'';
+  const authorized=approverName+(approverRole?' ('+approverRole+')':'')+(approverCode?' · Código: '+approverCode:'');
+  const bankLabel=[bank.bank||r.accountBank||'',bank.holder||r.accountHolder||'',bank.number||r.accountNumber||''].filter(Boolean).join(' — ');
+  return '<div class="receipt-concept"><b>CONCEPTO</b><br>Depósito de dinero</div>'+
+   '<div class="receipt-concept"><b>CUENTA BANCARIA</b><br>'+escapeHtml(bankLabel||'Cuenta bancaria oficial')+'</div>'+
+   '<div class="receipt-concept"><b>BENEFICIARIO</b><br>'+escapeHtml(benName||r.beneficiaryName||r.username||'Remitente')+(benPhone?' — '+escapeHtml(benPhone):'')+'</div>'+
+   '<div class="receipt-concept"><b>MONEDA</b><br>'+(currency==='HTG'?'Gourde haitiano (GDES / HTG)':'Peso dominicano (RD$)')+'</div>'+
+   '<div class="receipt-concept"><b>EMITIDO POR</b><br>'+escapeHtml(issuer)+(r.createdByStaffId?' · Código: '+escapeHtml(r.createdByStaffId):'')+'</div>'+
+   '<div class="receipt-concept"><b>AUTORIZADO POR</b><br>'+escapeHtml(authorized)+'</div>';
+ }
  const d=receiptSpecificData(collection,r);
  if(d.kind==='recarga')return '<div class="receipt-concept"><b>RECARGA</b><br>Compañía: '+escapeHtml(d.company)+(d.phone?' — Número: '+escapeHtml(d.phone):'')+'</div>';
  if(d.kind==='paquetico')return '<div class="receipt-concept"><b>PAQUETICO</b><br>Compañía: '+escapeHtml(d.company)+(d.phone?' — Número: '+escapeHtml(d.phone):'')+(d.plan?' — Plan: '+escapeHtml(d.plan):'')+'</div>';
@@ -2892,7 +2953,7 @@ function generateReceipt(collection,id){
  const benPhone=collection==='deposits'||collection==='accountWithdrawals'?(u.phone||''):(r.beneficiarioPhone||r.beneficiaryPhone||'');
  const d=new Date();
  const receiptId=r.receipt?.id||('SW-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0'));
- r.receipt={id:receiptId,date:d.toLocaleDateString('es-DO'),time:d.toLocaleTimeString('es-DO'),business:'SENDWAYO EXPRESS',user:u.name||'',username:u.username||'',staffId:u.staffId||'',role:u.role||'Remitente',concept,type:r.type||concept,route:r.route||r.type||'Según operación',amount:Number(r.amount||r.monto||0),net:Number(r.net||r.amount||r.monto||0),remitente:r.remitenteNombre||r.remitente||u.name||'',remitentePhone:r.remitentePhone||u.phone||'',beneficiario:benName,beneficiarioPhone:benPhone,collection,status:'Aprobado',original:true,contactPhone:'8297676665',contactEmail:'sendwayoexpress@gmail.com'};
+ r.receipt={id:receiptId,date:d.toLocaleDateString('es-DO'),time:d.toLocaleTimeString('es-DO'),business:'SENDWAYO EXPRESS',user:u.name||'',username:u.username||'',staffId:u.staffId||'',role:u.role||'Remitente',concept,type:r.type||concept,route:r.route||r.type||'Según operación',amount:Number(r.amount||r.monto||0),net:Number(r.net||r.amount||r.monto||0),remitente:r.remitenteNombre||r.remitente||u.name||'',remitentePhone:r.remitentePhone||u.phone||'',beneficiario:benName,beneficiarioPhone:benPhone,collection,status:'Aprobado',currency:r.currency||r.balanceCurrency||'DOP',accountId:r.accountId||'',emitidoPor:r.createdByName||r.createdByUsername||r.username||'',autorizadoPor:r.reviewedByName||r.reviewedBy||'',autorizadoPorRol:r.reviewedByRole||'',autorizadorCodigo:r.reviewedByStaffId||'',original:true,contactPhone:'8297676665',contactEmail:'sendwayoexpress@gmail.com'};
  bucket[id]=r;
  return r.receipt;
 }
@@ -2934,7 +2995,7 @@ window.showReceipt=function showReceipt(collection,id){
  const netAmount=Number(r.net??rec.net??r.amount??0);
  const isRdHaiti=/^RD\s*a\s*HTI/i.test(String(r.type||r.route||tipo));
  const displayAmount=isRdHaiti?Number(r.destination??(netAmount*2.10)):amount;
- const displayCurrency=isRdHaiti?'HTG':'RD$';
+ const displayCurrency=collection==='deposits'?(String(r.currency||r.balanceCurrency||'DOP').toUpperCase()==='HTG'?'GDES':'RD$'):(isRdHaiti?'HTG':'RD$');
  const contact=(()=>{const c=state.settings?.contact||{phone:'8297676665',email:'sendwayoexpress@gmail.com'};return c.phone==='829'+'857'+'3043'?{...c,phone:'8297676665'}:c;})();
  const lang=localStorage.getItem('sendwayo_language')||'es';
  const RT={
@@ -2979,7 +3040,7 @@ window.showReceipt=function showReceipt(collection,id){
  document.getElementById('detail-content').innerHTML=html;
  openModal('detailModal');
 }
-function renderMiCuenta(){if(!currentUser)return;document.getElementById('my-account-balance').textContent=money(currentUser.balance);let adminNote=document.getElementById('admin-fund-note');if(adminNote)adminNote.style.display=isAdmin()?'block':'none';let moves=[];newestFirst(state.deposits||{}).filter(r=>r.userId===currentUser.id).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Depósito',amount:r.amount,date:r.createdAt,status:r.status}));newestFirst(state.accountWithdrawals||{}).filter(r=>r.userId===currentUser.id).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Retiro de cuenta',amount:r.amount,date:r.createdAt,status:r.status}));if(isAdmin()){moves=[];newestFirst(state.deposits||{}).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Depósito',amount:r.amount,date:r.createdAt,status:r.status}));newestFirst(state.accountWithdrawals||{}).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Retiro de cuenta',amount:r.amount,date:r.createdAt,status:r.status}))}document.querySelector('#accountMoveTable tbody').innerHTML=moves.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.type)}</td><td>${money(r.amount)}</td><td>${escapeHtml(r.date)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status)}</span></td><td>${actionButtons(r.type==='Depósito'?'deposits':'accountWithdrawals',r.id,r.status)}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">No hay movimientos.</td></tr>'}
+function renderMiCuenta(){if(!currentUser)return;document.getElementById('my-account-balance').innerHTML='<div>'+money(currentUser.balance)+'</div><div style="font-size:.76em;font-weight:600;margin-top:3px;color:#365b86">'+htgMoney(currentUser.balanceHTG||0)+'</div>';let adminNote=document.getElementById('admin-fund-note');if(adminNote)adminNote.style.display=isAdmin()?'block':'none';let moves=[];newestFirst(state.deposits||{}).filter(r=>r.userId===currentUser.id).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Depósito',amount:r.amount,date:r.createdAt,status:r.status}));newestFirst(state.accountWithdrawals||{}).filter(r=>r.userId===currentUser.id).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Retiro de cuenta',amount:r.amount,date:r.createdAt,status:r.status}));if(isAdmin()){moves=[];newestFirst(state.deposits||{}).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Depósito',amount:r.amount,date:r.createdAt,status:r.status}));newestFirst(state.accountWithdrawals||{}).forEach(r=>moves.push({id:r.id,userId:r.userId,username:r.username,type:'Retiro de cuenta',amount:r.amount,date:r.createdAt,status:r.status}))}document.querySelector('#accountMoveTable tbody').innerHTML=moves.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.type)}</td><td>${money(r.amount)}</td><td>${escapeHtml(r.date)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status)}</span></td><td>${actionButtons(r.type==='Depósito'?'deposits':'accountWithdrawals',r.id,r.status)}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">No hay movimientos.</td></tr>'}
 function guardarRetiroCuenta(){
  if(!currentUser)return;
  if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. El retiro financiero no se guardará offline.','error');
@@ -3400,7 +3461,7 @@ function renderGananciasDia(){
 }
 function renderDashboard(){
  scheduleCommissionDayRefresh();
- let u=currentUser;document.getElementById('kpi-balance').textContent=money(u.balance);
+ let u=currentUser;document.getElementById('kpi-balance').textContent=money(u.balance);let balanceCard=document.getElementById('kpi-balance')?.closest('.kpi');if(balanceCard){let h=document.getElementById('kpi-balance-htg');if(!h){const line=document.createElement('div');line.style.cssText='font-size:.7rem;color:#365b86;margin-top:3px';line.innerHTML='Balance GDES: <b id="kpi-balance-htg"></b>';balanceCard.appendChild(line);h=line.querySelector('#kpi-balance-htg')}if(h)h.textContent=htgMoney(u.balanceHTG||0)}
  const hb=document.getElementById('header-balance');if(hb)hb.textContent=money(u.balance);
  document.getElementById('kpi-commission').textContent=money(commissionTotalFor(isAdmin()?'admin':u.id));
  renderGananciasDia();
@@ -3414,7 +3475,7 @@ function renderDashboard(){
  document.getElementById('kpi-transactions').textContent=count;renderDashboardNotifications();renderDailyReports();
 }
 function renderEnvios(){
- let rows=newestFirst(state.envios).filter(r=>isAdmin()||r.userId===currentUser.id).filter(r=>statusFilter==='Todos'||r.status===statusFilter);
+ let rows=newestFirst(state.envios).filter(r=>isAdmin()||isAgentUser(currentUser)||r.userId===currentUser.id).filter(r=>statusFilter==='Todos'||r.status===statusFilter);
  const body=document.querySelector('#enviosTable tbody');if(!body)return;
  if(isAgentUser(currentUser)){
    const agentStatus=function(s){const v=String(s||'Pendiente');return v==='Pendiente'?'EN ATTENTE':v==='Aprobado'?'APPROUVÉ':v==='Rechazado'?'REFUSÉ':v==='No coincide'?'NON CONFORME':v};
@@ -3492,10 +3553,21 @@ function editAccount(id){
  a.bank=prompt('Banco:',a.bank)??a.bank;a.holder=prompt('Titular:',a.holder)??a.holder;a.number=prompt('Número de cuenta:',a.number)??a.number;
  persist();renderAll();toast('Cuenta bancaria actualizada por el Administrador.')
 }
-function renderDeposits(){let rows=newestFirst(state.deposits).filter(r=>isAdmin()||r.userId===currentUser.id);document.querySelector('#depTable tbody').innerHTML=rows.map((r,i)=>{let a=state.accounts[r.accountId],st=r.status||'Pendiente';let adminActions=isAdmin()?'<button class="btn btn-warning btn-sm" onclick="editRecord(\'deposits\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord(\'deposits\',\''+r.id+'\')">Eliminar</button>':'';let reviewActions=isAdmin()&&st==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="approveDeposit(\''+r.id+'\',\'No coincide\')">NO COINCIDE</button>':'';const voucherCell='';
-return '<tr><td>'+(i+1)+'</td><td><b>'+escapeHtml(r.id||'—')+'</b></td><td>'+escapeHtml(r.username)+'</td><td>'+escapeHtml(a?.bank||'')+' - '+escapeHtml(a?.number||'')+'</td><td>'+money(r.amount)+'</td><td>'+money(r.creditRepaid||0)+'</td><td>'+money(r.balanceAdded||0)+'</td><td>'+voucherCell+'</td><td><span class="status '+statusClass(st)+'">'+escapeHtml(st)+'</span></td><td>'+(st==='Aprobado'?'<button class="btn btn-primary btn-sm sw-receipt-btn" data-sendwayo-receipt="1" data-receipt-collection="deposits" data-receipt-id="'+r.id+'" title="Ver comprobante" type="button" onclick="return window.SENDWAYO_FORCE_RECEIPT(\'deposits\',\''+r.id+'\',event)" onpointerup="if(event.pointerType===\'touch\'){event.preventDefault();return window.SENDWAYO_FORCE_RECEIPT(\'deposits\',\''+r.id+'\',event)}">COMPROBANTE</button>':'—')+'</td><td data-record-id="'+r.id+'"><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord(\'deposits\',\''+r.id+'\')">Ver</button>'+adminActions+reviewActions+'</div></td></tr>'}).join('')||'<tr><td colspan="11" class="muted">No hay depósitos.</td></tr>'}
+function renderDeposits(){
+ const rows=newestFirst(state.deposits).filter(r=>isAdmin()||isAgentUser(currentUser)||r.userId===currentUser?.id),tbody=document.querySelector('#depTable tbody');if(!tbody)return;
+ tbody.innerHTML=rows.map((r,i)=>{
+  const account=state.accounts?.[r.accountId]||{},currency=String(r.currency||r.balanceCurrency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP',amount=currency==='HTG'?htgMoney(r.amount):money(r.amount),st=r.status||'Pendiente',recipient=state.users?.[r.userId]||{};
+  const beneficiary=personName(recipient)||r.beneficiaryName||r.username||'Remitente',issuer=(r.createdByName||r.createdByUsername||r.username||'')+(r.createdByStaffId?' · '+r.createdByStaffId:'');
+  const bankLabel=[account.bank||r.accountBank||'',account.number||r.accountNumber||''].filter(Boolean).join(' — ');
+  const adminActions=isAdmin()?'<button class="btn btn-warning btn-sm" onclick="editRecord(\'deposits\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord(\'deposits\',\''+r.id+'\')">Eliminar</button>':'';
+  const reviewActions=(isAdmin()||isAgentUser(currentUser))&&st==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="approveDeposit(\''+r.id+'\',\'No coincide\')">NO COINCIDE</button>':'';
+  const voucher=r.voucherFile?.url?'<a href="'+escapeHtml(r.voucherFile.url)+'" target="_blank" rel="noopener">Ver voucher</a>':'—';
+  const receipt=st==='Aprobado'?'<button class="btn btn-primary btn-sm sw-receipt-btn" data-sendwayo-receipt="1" data-receipt-collection="deposits" data-receipt-id="'+escapeHtml(r.id)+'" type="button" onclick="return window.SENDWAYO_FORCE_RECEIPT(\'deposits\',\''+r.id+'\',event)">COMPROBANTE</button>':'—';
+  return '<tr><td>'+(i+1)+'</td><td><b>'+escapeHtml(r.id||'—')+'</b></td><td>'+escapeHtml(beneficiary)+' <small class="muted">· Emitido por '+escapeHtml(issuer)+'</small></td><td>'+escapeHtml(bankLabel)+'</td><td>'+escapeHtml(amount)+'</td><td>'+money(r.creditRepaid||0)+'</td><td>'+escapeHtml(currency==='HTG'?htgMoney(r.balanceAdded||0):money(r.balanceAdded||0))+'</td><td>'+voucher+'</td><td><span class="status '+statusClass(st)+'">'+escapeHtml(st)+'</span></td><td>'+receipt+'</td><td data-record-id="'+escapeHtml(r.id)+'"><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord(\'deposits\',\''+r.id+'\')">Ver</button>'+adminActions+reviewActions+'</div></td></tr>';
+ }).join('')||'<tr><td colspan="11" class="muted">No hay depósitos.</td></tr>';
+}
 function renderSimple(collection,table,fields){
- let rows=newestFirst(state[collection]).filter(r=>isAdmin()||r.userId===currentUser.id);
+ let rows=newestFirst(state[collection]).filter(r=>isAdmin()||isAgentUser(currentUser)||r.userId===currentUser.id);
  document.querySelector('#'+table+' tbody').innerHTML=rows.map((r,i)=>{let vals=fields.map(f=>f==='amount'||f==='cost'?money(r[f]):escapeHtml(r[f]??'')).join('</td><td>');return `<tr><td>${i+1}</td><td>${vals}</td><td><span class="status ${statusClass(r.status||'Pendiente')}">${escapeHtml(r.status||'Pendiente')}</span></td><td data-record-id="${r.id}">${actionButtons(collection,r.id,r.status||'Pendiente')}</td></tr>`}).join('')||'<tr><td colspan="'+(fields.length+3)+'" class="muted">No hay registros.</td></tr>'
 }
 let commissionStatusFilter='Todos';
@@ -3596,12 +3668,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(document.activeElem
 (function(){
  const _renderDepositsOriginal=renderDeposits;
  renderDeposits=function(){
-   let rows=newestFirst(state.deposits).filter(r=>isAdmin()||r.userId===currentUser.id);
-   document.querySelector('#depTable tbody').innerHTML=rows.map((r,i)=>{
-     let a=state.accounts[r.accountId];
-     let actions=actionButtons('deposits',r.id,r.status||'Pendiente');
-     return '<tr><td>'+ (i+1) +'</td><td>'+escapeHtml(r.username)+'</td><td>'+escapeHtml(a?.bank||'')+' - '+escapeHtml(a?.number||'')+'</td><td>'+money(r.amount)+'</td><td>'+escapeHtml(r.voucher)+'</td><td><span class="status '+statusClass(r.status||'Pendiente')+'">'+escapeHtml(r.status||'Pendiente')+'</span></td><td data-record-id="'+r.id+'">'+actions+'</td></tr>';
-   }).join('')||'<tr><td colspan="7" class="muted">No hay depósitos.</td></tr>';
+   let rows=newestFirst(state.deposits).filter(r=>isAdmin()||isAgentUser(currentUser)||r.userId===currentUser.id);
+   const tbody=document.querySelector('#depTable tbody');if(!tbody)return;
+   tbody.innerHTML=rows.map((r,i)=>{
+     const a=state.accounts?.[r.accountId]||{},currency=String(r.currency||r.balanceCurrency||'DOP').toUpperCase()==='HTG'?'HTG':'DOP';
+     const amount=currency==='HTG'?htgMoney(r.amount):money(r.amount),st=r.status||'Pendiente',u=state.users?.[r.userId]||{};
+     const beneficiary=personName(u)||r.beneficiaryName||r.username||'Remitente',issuer=(r.createdByName||r.createdByUsername||r.username||'')+(r.createdByStaffId?' · '+r.createdByStaffId:'');
+     const bank=[a.bank||r.accountBank||'',a.number||r.accountNumber||''].filter(Boolean).join(' — ');
+     const adminActions=isAdmin()?'<button class="btn btn-warning btn-sm" onclick="editRecord(\'deposits\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" onclick="deleteRecord(\'deposits\',\''+r.id+'\')">Eliminar</button>':'';
+     const review=(isAdmin()||isAgentUser(currentUser))&&st==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="approveDeposit(\''+r.id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="approveDeposit(\''+r.id+'\',\'No coincide\')">NO COINCIDE</button>':'';
+     const voucher=r.voucherFile?.url?'<a href="'+escapeHtml(r.voucherFile.url)+'" target="_blank" rel="noopener">Ver voucher</a>':'—';
+     const receipt=st==='Aprobado'?'<button class="btn btn-primary btn-sm" type="button" onclick="return window.SENDWAYO_FORCE_RECEIPT(\'deposits\',\''+r.id+'\',event)">COMPROBANTE</button>':'—';
+     return '<tr><td>'+(i+1)+'</td><td><b>'+escapeHtml(r.id||'—')+'</b></td><td>'+escapeHtml(beneficiary)+'<small class="muted"> · Emitido por '+escapeHtml(issuer)+'</small></td><td>'+escapeHtml(bank)+'</td><td>'+escapeHtml(amount)+'</td><td>'+money(r.creditRepaid||0)+'</td><td>'+escapeHtml(currency==='HTG'?htgMoney(r.balanceAdded||0):money(r.balanceAdded||0))+'</td><td>'+voucher+'</td><td><span class="status '+statusClass(st)+'">'+escapeHtml(st)+'</span></td><td>'+receipt+'</td><td data-record-id="'+escapeHtml(r.id)+'"><div class="actions"><button class="btn btn-light btn-sm" onclick="viewRecord(\'deposits\',\''+r.id+'\')">Ver</button>'+adminActions+review+'</div></td></tr>';
+   }).join('')||'<tr><td colspan="11" class="muted">No hay depósitos.</td></tr>';
  };
  function viewRecord(collection,id){
  const r=state[collection]?.[id];if(!r)return toast('No se encontró el registro.','error');
@@ -3774,186 +3853,8 @@ function sendwayoFinancialPolicy(){return {depositRate:0,internationalRate:0.10,
 </script>
 <div class="modal" id="adminDepositModal"><div class="modal-content"><button class="modal-close-x" onclick="closeModal('adminDepositModal')">×</button><h3 style="color:#0f2c59;margin-bottom:12px">Asignar depósito directo al Remitente</h3><div class="info-box" style="margin-bottom:12px">Este depósito se acredita directamente al balance/capital del Remitente. <b>No genera comisión</b> y no aumenta el balance administrativo.</div><div class="form-group"><label>Remitente</label><div class="search-select-wrap"><input id="admin-dep-remitente-search" class="form-control" placeholder="Buscar por nombre, usuario o número..." autocomplete="off" oninput="updateAdminDepositSuggestions()" onfocus="updateAdminDepositSuggestions()"><button type="button" class="plus-btn" title="Buscar remitente" onclick="updateAdminDepositSuggestions()">⌕</button></div><div id="admin-dep-remitente-suggestions" class="env-suggestions"></div><select id="admin-dep-remitente" class="form-control" style="display:none"></select></div><div class="form-grid"><div class="form-group"><label>Monto RD$</label><input id="admin-dep-monto" type="number" min="0" step="0.01" class="form-control"></div><div class="form-group"><label>Referencia / nota</label><input id="admin-dep-nota" class="form-control" placeholder="Opcional"></div></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-light" onclick="closeModal('adminDepositModal')">Cerrar</button><button class="btn btn-warning" onclick="guardarDepositoAdministrativo()">Acreditar al balance</button></div></div></div>
 <script>
-function openAdminDepositModal(){if(!isAdmin())return toast('Solo el Administrador puede asignar depósitos directos.','warn');const sel=document.getElementById('admin-dep-remitente');if(sel)sel.innerHTML='<option value="">Seleccione un remitente</option>'+Object.values(state.users||{}).filter(u=>isManagedUser(u)&&u.active!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(u=>'<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name||u.username||u.id)+' — '+escapeHtml(u.staffId||u.username)+'</option>').join('');const si=document.getElementById('admin-dep-remitente-search');if(si)si.value='';const sb=document.getElementById('admin-dep-remitente-suggestions');if(sb)sb.style.display='none';document.getElementById('admin-dep-monto').value='';document.getElementById('admin-dep-nota').value='';openModal('adminDepositModal');setTimeout(()=>{updateAdminDepositSuggestions();document.getElementById('admin-dep-remitente-search')?.focus()},80)}
-async function guardarDepositoAdministrativo(){
- if(!isAdmin())return;
- if(!firebaseReady||!firebase.auth().currentUser)return toast('Firebase no está conectado. No se acreditará dinero offline.','error');
- const targetId=document.getElementById('admin-dep-remitente')?.value,amount=Number(document.getElementById('admin-dep-monto')?.value||0),note=document.getElementById('admin-dep-nota')?.value?.trim()||'',u=state.users?.[targetId];
- if(!u||!isManagedUser(u))return toast('Seleccione una cuenta válida.','warn');
- if(!amount||amount<=0)return toast('Ingrese un monto válido.','warn');
- const id=uid('dep'),deposit={id,userId:u.id,username:u.username,createdByAuthUid:firebase.auth().currentUser.uid,accountId:'ADMIN_DIRECT',amount,voucher:note||'Depósito asignado por Administración',status:'Aprobado',createdAt:now(),accountingType:'DEPOSITO_CAPITAL',commissionRate:0,commission:0,createdByAdmin:true,balanceCredited:false,targetType:'REMITENTE'};
- try{
-   const cr=await creditDepositToRemitente(id,u.id,amount);
-   deposit.creditRepaid=Number(cr?.creditRepaid||0);deposit.balanceAdded=Number(cr?.balanceAdded||0);deposit.balanceCredited=true;deposit.balanceCreditedAt=now();deposit.depositPrincipal=amount;deposit.reviewedAt=now();deposit.reviewedBy=currentUser.username;
-   state.deposits[id]=deposit;generateReceipt('deposits',id);
-   const auditId=uid('a'),audit={id:auditId,user:currentUser.username,action:'Depósito directo asignado por Administrador',detail:id,targetUserId:u.id,amount,creditRepaid:deposit.creditRepaid,balanceAdded:deposit.balanceAdded,createdByAuthUid:firebase.auth().currentUser.uid,createdAt:now()};
-   state.audit=state.audit||{};state.audit[auditId]=audit;
-   await firebase.database().ref(DB_PATH+'/audit/'+auditId).set(audit);
-   await firebase.database().ref(DB_PATH+'/deposits/'+id).set(deposit);
-   if(lastSyncedState){lastSyncedState.users=lastSyncedState.users||{};lastSyncedState.users[u.id]=cloneState(state.users[u.id]);lastSyncedState.deposits=lastSyncedState.deposits||{};lastSyncedState.deposits[id]=cloneState(deposit)}
-   localSave();
-   await addNotification(u.id,'Depósito administrativo de '+money(amount)+' acreditado directamente al balance del Remitente. Comisión: RD$0.00.','deposits',id);
-   closeModal('adminDepositModal');renderAll();toast('Depósito administrativo procesado: '+money(amount)+' acreditado directamente al balance del Remitente. Comisión: RD$0.00.','success');
- }catch(e){console.warn('Depósito administrativo:',e);toast('No se pudo procesar el depósito administrativo en Firebase.','error')}
-}
-
-
-/* SENDWAYO EXPRESS — AUDITORÍA FINANCIERA Y CONTABLE FINAL — 2026-09-23 */
-(function(){
-  'use strict';
-
-  /* 1) Comisión administrativa: incluir correctamente su 50% histórico.
-     Remitentes mantienen comisión separada; Administración la integra en balance. */
-  window.commissionTotalFor = function(userId){
-    const stored=Number(state.users?.[userId]?.commissionAccrued||0);
-    const cols=['envios','recargas','paqueticos','pagos','paquetes'];
-    let derived=0;
-    for(const col of cols){
-      for(const r of Object.values(state[col]||{})){
-        if(!r || r.status!=='Aprobado') continue;
-        let share=0;
-        if(userId==='admin'){
-          share=isAgentUser(r.userId)?Number(r.commissionAdmin ?? r.commission ?? 0):Number(r.commissionAdmin ?? (Number(r.commission||0)*0.5));
-        }else if(r.userId===userId){
-          share=isAgentUser(r.userId)?0:Number(r.commissionUser ?? (Number(r.commission||0)*0.5));
-        }
-        if(Number.isFinite(share) && share>0) derived+=share;
-      }
-    }
-    return Number(Math.max(0,stored,derived).toFixed(2));
-  };
-
-  window.adminBalanceAllowed = function(u,nextBalance){
-    if(!u || u.id!=='admin') return Number(nextBalance)>=-0.000001;
-    const floor=Number(window.commissionTotalFor('admin')||0);
-    return Number(nextBalance)+0.000001>=floor;
-  };
-
-  /* 2) Nunca corregir dinero automáticamente desde el software.
-     Si existe una inconsistencia real, se informa y queda para decisión administrativa. */
-  window.renderAccounting = function(){
-    if(!isAdmin()) return;
-    const admin=state.users?.admin||{};
-    const balance=Number(admin.balance||0);
-    const commission=Number(window.commissionTotalFor('admin')||0);
-    const today=Number(commissionTodayFor('admin')||0);
-    const bonus=Number(adminBonusTotal()||0);
-    let creditOut=0;
-    Object.values(state.users||{}).filter(u=>u?.role==='Remitente').forEach(u=>{
-      creditOut+=Math.max(0,Number(u.creditOutstanding||0));
-    });
-
-    const gap=Number((balance-commission).toFixed(2));
-    const control=document.getElementById('accounting-control');
-    if(control){
-      if(gap<0){
-        control.innerHTML='<b>REVISIÓN REQUERIDA:</b> el Balance de Administración ('+money(balance)+') está por debajo de la Comisión acumulada ('+money(commission)+') por '+money(Math.abs(gap))+'. <b>No se agrega ni se resta dinero automáticamente.</b> Debe existir una decisión administrativa antes de corregir cualquier saldo.';
-        control.style.background='#fff1f2';control.style.color='#991b1b';
-      }else{
-        control.innerHTML='<b>CUADRADO:</b> Balance de Administración ('+money(balance)+') ≥ Comisión acumulada ('+money(commission)+'). La Comisión de hoy ('+money(today)+') forma parte de la Comisión acumulada y las comisiones administrativas acreditadas están integradas en el balance.';
-        control.style.background='#ecfdf3';control.style.color='#166534';
-      }
-    }
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=money(v)};
-    set('acct-admin-balance',balance);set('acct-admin-commission',commission);set('acct-admin-today',today);set('acct-admin-bonus',bonus);set('acct-credit-out',creditOut);
-
-    const q=normalizeSearchText(document.getElementById('accounting-search')?.value||'');
-    const users=[admin,...Object.values(state.users||{}).filter(u=>u?.role==='Remitente')]
-      .filter((u,i,a)=>u&&a.findIndex(x=>x.id===u.id)===i)
-      .filter(u=>!q||normalizeSearchText(u.name).includes(q)||normalizeSearchText(u.username).includes(q)||normalizeSearchText(u.staffId).includes(q));
-    const ab=document.querySelector('#accountingAccountsTable tbody');
-    if(ab)ab.innerHTML=users.map((u,i)=>{
-      const bal=Number(u.balance||0),comm=Number(u.commission||0),hist=Number(window.commissionTotalFor(u.id)||0),cr=Math.max(0,Number(u.creditOutstanding||0));
-      const ctrl=u.id==='admin'?(hist>bal+0.005?'REVISAR':'CUADRADO'):'SEPARADO';
-      const audits=Object.values(state.audit||{}).filter(x=>x&&x.targetUserId===u.id&&Number.isFinite(Number(x.balanceBefore))&&Number.isFinite(Number(x.balanceAfter))).sort((x,y)=>parseSendwayoDate(y.createdAt)-parseSendwayoDate(x.createdAt));
-      const last=audits[0],delta=last?Number(last.balanceAfter)-Number(last.balanceBefore):null;
-      const variation=delta===null?'SIN DATO':delta>0?'AUMENTÓ '+money(delta):delta<0?'DISMINUYÓ '+money(Math.abs(delta)):'SIN CAMBIO';
-      const actions='<div class="actions">'+
-        '<button class="btn btn-light btn-sm" title="Ver" onclick="viewUser(\''+u.id+'\')">Ver</button>'+
-        ''+
-        (isAdmin()?'<button class="btn btn-warning btn-sm" title="Editar perfil" onclick="editUser(\''+u.id+'\')">Editar</button>':'')+
-        '</div>';
-      return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(u.id==='admin'?'ADMINISTRACIÓN':'REMITENTE')+'</td><td>'+escapeHtml(u.id==='admin'?'ADMIN':(u.staffId||u.id))+'</td><td>'+escapeHtml(u.name||u.username||u.id)+'</td><td>'+money(bal)+'</td><td>'+money(comm)+'</td><td>'+money(hist)+'</td><td>'+money(cr)+'</td><td>'+escapeHtml(variation)+'</td><td>'+ctrl+'</td><td>'+actions+'</td></tr>';
-    }).join('')||'<tr><td colspan="11" class="muted">No hay cuentas financieras.</td></tr>';
-
-    const q2=normalizeSearchText(document.getElementById('accounting-movement-search')?.value||''),rows=[];
-    const add=(collection,r,type)=>{
-      if(!r)return;
-      const u=state.users?.[r.userId]||{};
-      rows.push({id:r.id,date:r.reviewedAt||r.balanceSettledAt||r.createdAt||r.date||'',type,person:u.name||r.username||r.userId||'Administración',amount:Number(r.amount||0),commission:Number(r.commission||0),status:r.status||'Registrado',origin:collection});
-    };
-    ['envios','recargas','paqueticos','pagos','paquetes'].forEach(col=>Object.values(state[col]||{}).forEach(r=>add(col,r,col.toUpperCase())));
-    Object.values(state.deposits||{}).forEach(r=>add('deposits',r,'DEPÓSITO'));
-    Object.values(state.accountWithdrawals||{}).forEach(r=>add('accountWithdrawals',r,'RETIRO'));
-    Object.values(state.commissions||{}).forEach(r=>add('commissions',r,'PAGO COMISIÓN'));
-    Object.values(state.credits||{}).forEach(r=>add('credits',r,'CRÉDITO'));
-    Object.values(state.audit||{}).filter(r=>/^Acreditar |^Ajuste administrativo/.test(String(r.action||''))).forEach(r=>add('audit',r,'AJUSTE ADMINISTRATIVO'));
-    rows.sort((a,b)=>parseSendwayoDate(b.date)-parseSendwayoDate(a.date));
-    const mb=document.querySelector('#accountingMovementsTable tbody');
-    if(mb)mb.innerHTML=rows.filter(r=>!q2||normalizeSearchText(r.type).includes(q2)||normalizeSearchText(r.person).includes(q2)||normalizeSearchText(r.id).includes(q2)).slice(0,500).map((r,i)=>{
-      const locked=['Aprobado','Pagado'].includes(String(r.status));
-      const edit=(!locked&&isAdmin())?'<button class="btn btn-warning btn-sm" title="Modificar" onclick="editRecord(\''+r.origin+'\',\''+r.id+'\')">Editar</button>':'<button class="btn btn-warning btn-sm" disabled title="Movimiento cerrado">Editar</button>';
-      const del=(!locked&&isAdmin())?'<button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\''+r.origin+'\',\''+r.id+'\')">Eliminar</button>':'<button class="btn btn-danger btn-sm" disabled title="Movimiento cerrado">Eliminar</button>';
-      return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r.date)+'</td><td>'+escapeHtml(r.type)+'</td><td>'+escapeHtml(r.person)+'</td><td>'+money(r.amount)+'</td><td>'+money(r.commission)+'</td><td>'+escapeHtml(r.status)+'</td><td>'+escapeHtml(r.origin)+'</td><td><div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\''+r.origin+'\',\''+r.id+'\')">Ver</button>'+edit+del+'</div></td></tr>';
-    }).join('')||'<tr><td colspan="9" class="muted">No hay movimientos financieros.</td></tr>';
-  };
-
-  /* 3) Estandarizar Acciones en las páginas que todavía no tenían Descargar. */
-  window.renderBeneficiaries=function(){
-    const rows=newestFirst(state.beneficiaries).filter(b=>isAdmin()||b.userId===currentUser?.id);
-    const body=document.querySelector('#benefTable tbody');if(!body)return;
-    body.innerHTML=rows.map((b,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(b.name||'')+'</td><td>'+escapeHtml(b.phone||'')+'</td><td><span class="status '+statusClass(b.active!==false?'Activo':'Inactivo')+'">'+(b.active!==false?'Activo':'Inactivo')+'</span></td><td><div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\'beneficiaries\',\''+b.id+'\')">Ver</button><button class="btn btn-warning btn-sm" title="Editar" onclick="editBeneficiary(\''+b.id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\'beneficiaries\',\''+b.id+'\')">Eliminar</button></div></td></tr>').join('')||'<tr><td colspan="5" class="muted">No hay beneficiarios.</td></tr>';
-  };
-
-  window.renderAccounts=function(){
-    const rows=Object.values(state.accounts||{});
-    const body=document.querySelector('#cuentaTable tbody');if(!body)return;
-    body.innerHTML=rows.map((a,i)=>{
-      const actions='<div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\'accounts\',\''+a.id+'\')">Ver</button>'+
-        (isAdmin()?'<button class="btn btn-warning btn-sm" title="Editar" onclick="editAccount(\''+a.id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\'accounts\',\''+a.id+'\')">Eliminar</button>':'')+'</div>';
-      return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(a.bank)+'</td><td>'+escapeHtml(a.holder)+'</td><td>'+escapeHtml(a.number)+'</td><td>'+actions+'</td></tr>';
-    }).join('')||'<tr><td colspan="5" class="muted">No hay cuentas bancarias oficiales.</td></tr>';
-    const depSelect=document.getElementById('dep-cuenta');if(depSelect)depSelect.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+rows.filter(a=>a.active!==false).map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.bank)+' - '+escapeHtml(a.number)+' ('+escapeHtml(a.holder)+')</option>').join('');
-  };
-
-  window.personActions=function(u){
-    let a='<button class="btn btn-light btn-sm" title="Ver" onclick="viewUser(\''+u.id+'\')">Ver</button>';
-    if(isAdmin()||u.id===currentUser.id)a+='<button class="btn btn-warning btn-sm" title="Editar" onclick="editUser(\''+u.id+'\')">Editar</button>';
-    if(isAdmin())a+='<button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteUser(\''+u.id+'\')">Eliminar</button>';
-    return '<div class="actions">'+a+'</div>';
-  };
-
-  window.renderCommissions=function(){
-    const rows=newestFirst(state.commissions).filter(r=>isAdmin()||r.userId===currentUser.id).filter(r=>commissionStatusFilter==='Todos'||String(r.status||'Pagado')===commissionStatusFilter);
-    const body=document.querySelector('#comTable tbody');if(!body)return;
-    body.innerHTML=rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r.username)+'</td><td>'+money(r.availableBefore)+'</td><td>'+money(r.amount)+'</td><td>'+escapeHtml(r.date)+'</td><td><span class="status st-Pagado">PAGADO</span></td><td><div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\'commissions\',\''+r.id+'\')">Ver</button>'+ (isAdmin()?'<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\'commissions\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" disabled title="Los pagos de comisión cerrados no se eliminan">Eliminar</button>':'')+'</div></td></tr>').join('')||'<tr><td colspan="7" class="muted">No hay pagos de comisión.</td></tr>';
-  };
-
-  window.renderRequests=function(){
-    const rows=newestFirst(state.requests).filter(r=>isAdmin()||r.createdByAuthUid===firebase.auth().currentUser?.uid).filter(r=>requestFilter==='Todos'||r.status===requestFilter);
-    const body=document.querySelector('#reqTable tbody');if(!body)return;
-    body.innerHTML=rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+escapeHtml(r.phone)+'</td><td>'+escapeHtml(r.doc)+'</td><td>'+escapeHtml(r.type)+'</td><td><span class="status '+statusClass(r.status||'Pendiente')+'">'+escapeHtml(r.status||'Pendiente')+'</span></td><td><div class="actions"><button class="btn btn-light btn-sm" title="Ver" onclick="viewRecord(\'requests\',\''+r.id+'\')">Ver</button>'+(isAdmin()?'<button class="btn btn-warning btn-sm" title="Editar" onclick="editRecord(\'requests\',\''+r.id+'\')">Editar</button><button class="btn btn-danger btn-sm" title="Eliminar" onclick="deleteRecord(\'requests\',\''+r.id+'\')">Eliminar</button>':'')+(isAdmin()&&r.status==='Pendiente'?'<button class="btn btn-success btn-sm" onclick="approveRequest(\''+r.id+'\',\'Aprobado\')">APROBADO</button><button class="btn btn-danger btn-sm" onclick="approveRequest(\''+r.id+'\',\'Rechazado\')">RECHAZADO</button><button class="btn btn-warning btn-sm" onclick="approveRequest(\''+r.id+'\',\'No coincide\')">NO COINCIDE</button>':'')+'</div></td></tr>').join('')||'<tr><td colspan="7" class="muted">No hay solicitudes.</td></tr>';
-  };
-
-  /* 4) Contabilidad de Bonos: la administración los registra; el código no inventa bonos. */
-  const originalSaveCreditGrant=window.saveCreditGrant;
-  window.saveCreditGrant=originalSaveCreditGrant;
-  window.downloadBonusRecord=function(id){
-    const r=bonusRecords().find(x=>x.id===id);if(!r)return toast('No se encontró el bono.','error');
-    downloadRecordFromObject('bonos',id,r);
-  };
-  window.downloadRecordFromObject=function(collection,id,r){
-    const blob=new Blob([JSON.stringify({sistema:'SENDWAYO EXPRESS',coleccion:collection,exportadoEn:now(),registro:r},null,2)],{type:'application/json;charset=utf-8'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SENDWAYO_'+collection+'_'+id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  };
-
-  /* 5) No se crean registros monetarios de prueba. */
-  window.ensureAllRemittersStartAtZero=async function(){return false};
-  window.ensureAdminStartAtZero=async function(){return false};
-})();
-
-
-/* SENDWAYO — gestión limpia de Agentes (una sola implementación). */
+function openAdminDepositModal(){openModal('depositoModal')}
+async function guardarDepositoAdministrativo(){return toast('Use Agregar Depósito y espere la aprobación. No se acredita dinero directamente.','warn')}
 function openAgentCreate(){
   if(typeof isAdmin!=='function'||!isAdmin())return toast('Solo el Administrador puede agregar un Agente.','warn');
   let m=document.getElementById('sw-agent-create-modal');
@@ -4238,10 +4139,10 @@ async function swSaveTransactionEdit(collection,id,resubmit){
 }
 async function swResubmitTransaction(collection,id){
   const r=state[collection]?.[id];if(!r||r.userId!==currentUser?.id||r.status!=='No coincide')return false;
-  if(!await guardBalance(Number(r.amount||0)))return false;
-  r.status='Pendiente';r.reviewReason='';r.reviewedAt='';r.reviewedBy='';r.manualReview=false;r.balanceDebited=true;r.balanceRefunded=false;r.balanceRefundedAt=null;r.creditUsed=Number(currentUser.__creditUsedForOperation||0);r.resubmittedAt=now();
+  if(!await guardBalance(Number(r.balanceDebitOverride??r.amount??0),String(r.balanceReservationCurrency||r.balanceCurrency||'DOP'),collection,id))return false;
+  const pendingReservation=window.__sendwayoBalanceReservation;r.status='Pendiente';r.reviewReason='';r.reviewedAt='';r.reviewedBy='';r.manualReview=false;r.balanceDebited=true;r.balanceRefunded=false;r.balanceRefundedAt=null;r.balanceReservationId=pendingReservation?.id||id;r.balanceReservationCurrency=pendingReservation?.currency||r.balanceCurrency||'DOP';r.creditUsed=Number(currentUser.__creditUsedForOperation||0);r.resubmittedAt=now();
   const src=sendwayoRecordSource(collection,id,r);
-  await firebase.database().ref(src.path).set(r);window.addNotification('Administrador','Operación corregida y reenviada para revisión: '+id,collection,id);state[collection][id]=r;if(src.collection!==collection){state[src.collection]=state[src.collection]||{};state[src.collection][id]={...r,_sourceCollection:src.collection}}localSave();closeModal('swTransactionEditModal');renderAll();toast('Datos corregidos y reenviados al Administrador.','success');return true;
+  await firebase.database().ref(src.path).set(r);window.__sendwayoBalanceReservation=null;window.addNotification('Administrador','Operación corregida y reenviada para revisión: '+id,collection,id);state[collection][id]=r;if(src.collection!==collection){state[src.collection]=state[src.collection]||{};state[src.collection][id]={...r,_sourceCollection:src.collection}}localSave();closeModal('swTransactionEditModal');renderAll();toast('Datos corregidos y reenviados al Administrador.','success');return true;
 }
 window.resubmitTransaction=swResubmitTransaction;
 window.editRecord=function(collection,id){const r=state[collection]?.[id];if(!r)return;if(!isAdmin()&&r.status!=='No coincide')return toast('Esta operación no se puede modificar en este estado.','warn');return swShowCorrectTransactionModal(collection,id)};
@@ -6146,8 +6047,8 @@ document.addEventListener('click',function(ev){
     if(k!=='DEPOSITO'&&!ben)return toast('Sélectionnez un bénéficiaire valide.','warn');
     const balanceDelta=k==='DEPOSITO'?amount:-(amount+f);
     const requiredDebit=k==='DEPOSITO'?amount:amount+f;
-    if(!await guardBalance(requiredDebit))return;
     if(!beginFormSubmit('agentEnvioModal'))return;
+    if(!await guardBalance(requiredDebit,'HTG','envios')){resetFormSubmitState('agentEnvioModal');return;}
     try{
       const id=await createTransaction('envios',{
         type,route:type,operation,operationKey:k,currency:'HTG',balanceCurrency:'HTG',
@@ -7400,34 +7301,14 @@ function activeAccounts(){
   }catch(e){return []}
 }
 function ensureDepositAccount(){
-  var sel=document.getElementById('dep-cuenta');
-  if(!sel)return;
-  var accounts=activeAccounts();
-  var current=sel.value;
-  sel.innerHTML='';
-  if(current&&accounts.some(function(a){return a.id===current})){
-    sel.value=current;
-  }else if(accounts[0]){
-    var opt=document.createElement('option');
-    opt.value=accounts[0].id;
-    opt.textContent='Cuenta bancaria oficial registrada';
-    sel.appendChild(opt);
-    sel.value=accounts[0].id;
-  }else{
-    var empty=document.createElement('option');
-    empty.value='';
-    empty.textContent='No hay cuenta bancaria registrada';
-    sel.appendChild(empty);
-  }
-  var modal=sel.closest('.modal');
-  if(modal&&!modal.querySelector('.sendwayo-deposit-account-notice')){
-    var label=sel.parentElement&&sel.parentElement.querySelector('label');
-    if(label)label.textContent='Cuenta bancaria de destino';
-    var note=document.createElement('div');
-    note.className='sendwayo-deposit-account-notice muted';
-    note.textContent=accounts.length?'Cuenta bancaria oficial registrada. Los datos bancarios solo están disponibles en «Agregar cuentas».':'No hay cuenta bancaria registrada. Administración debe agregarla en «Agregar cuentas».';
-    sel.parentElement.appendChild(note);
-  }
+ const sel=document.getElementById('dep-cuenta');if(!sel)return [];
+ const accounts=Object.values(state.accounts||{}).filter(a=>a&&a.active!==false),current=sel.value;
+ sel.innerHTML='<option value="">Seleccione una cuenta bancaria oficial</option>'+accounts.map(a=>{
+ const id=String(a.id||''),bank=String(a.bank||a.name||'Cuenta bancaria'),holder=String(a.holder||''),number=String(a.number||''),label=[bank,holder,number].filter(Boolean).join(' — ');
+ return '<option value="'+escapeHtml(id)+'">'+escapeHtml(label||bank)+'</option>';
+ }).join('');
+ if(current&&accounts.some(a=>String(a.id)===String(current)))sel.value=current;else sel.value='';
+ return accounts;
 }
 function bankManagementToggle(force){
   var view=document.getElementById('view-cuentas_depositos');
