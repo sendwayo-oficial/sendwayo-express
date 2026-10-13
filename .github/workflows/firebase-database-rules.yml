@@ -56,36 +56,67 @@ jobs:
           console.log('Configuración validada: Hosting sendwayo-express-app-101; Realtime Database sendwayo-express.');
           NODE
 
-      - name: Preparar credencial de cuenta de servicio
+      - name: Preparar credenciales de Firebase
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         shell: bash
         run: |
-          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
-            echo "::error::Falta el secreto FIREBASE_SERVICE_ACCOUNT en GitHub. Añade el JSON de una cuenta de servicio de Firebase/Google Cloud en Settings > Secrets and variables > Actions. No pegues la clave en el código ni en el chat."
+          set -euo pipefail
+
+          # Preferir la cuenta de servicio. Permitir FIREBASE_TOKEN como respaldo
+          # para repositorios que ya tengan ese secreto configurado.
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT:-}" ]; then
+            CREDENTIAL_FILE="$RUNNER_TEMP/firebase-service-account.json"
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$CREDENTIAL_FILE"
+            chmod 600 "$CREDENTIAL_FILE"
+
+            node - "$CREDENTIAL_FILE" <<'NODE'
+            const fs = require('node:fs');
+            const key = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+            if (key.type !== 'service_account' || key.project_id !== 'sendwayo-express' || !key.client_email || !key.private_key) {
+              throw new Error('FIREBASE_SERVICE_ACCOUNT no es una clave válida de cuenta de servicio para sendwayo-express.');
+            }
+            console.log('Credencial de cuenta de servicio validada.');
+            NODE
+
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDENTIAL_FILE" >> "$GITHUB_ENV"
+            echo "FIREBASE_AUTH_MODE=service-account" >> "$GITHUB_ENV"
+            echo "Autenticación Firebase configurada mediante cuenta de servicio."
+          elif [ -n "${FIREBASE_TOKEN:-}" ]; then
+            echo "FIREBASE_AUTH_MODE=token" >> "$GITHUB_ENV"
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT no está configurado; se utilizará el secreto FIREBASE_TOKEN existente como respaldo."
+          else
+            echo "::error::No hay credenciales de despliegue configuradas. Añade FIREBASE_SERVICE_ACCOUNT (JSON de cuenta de servicio) o FIREBASE_TOKEN en Settings > Secrets and variables > Actions. No pegues claves privadas en el código ni en el chat."
             exit 1
           fi
-          CREDENTIAL_FILE="$RUNNER_TEMP/firebase-service-account.json"
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$CREDENTIAL_FILE"
-          chmod 600 "$CREDENTIAL_FILE"
-          node - "$CREDENTIAL_FILE" <<'NODE'
-          const fs = require('node:fs');
-          const key = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-          if (key.type !== 'service_account' || key.project_id !== 'sendwayo-express' || !key.client_email || !key.private_key) {
-            throw new Error('FIREBASE_SERVICE_ACCOUNT no es una clave de cuenta de servicio válida para sendwayo-express.');
-          }
-          console.log('Credencial de servicio validada para el proyecto esperado.');
-          NODE
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDENTIAL_FILE" >> "$GITHUB_ENV"
 
       - name: Instalar Firebase CLI
         run: npm install --global firebase-tools
 
       - name: Publicar el sitio en el dominio de prueba de Firebase
-        run: firebase deploy --only hosting --project sendwayo-express-app-101 --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
+            firebase deploy --only hosting --project sendwayo-express-app-101 --non-interactive --token "$FIREBASE_TOKEN"
+          else
+            firebase deploy --only hosting --project sendwayo-express-app-101 --non-interactive
+          fi
 
       - name: Publicar las reglas de Realtime Database del backend
-        run: firebase deploy --only database --project sendwayo-express --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
+            firebase deploy --only database --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
+          else
+            firebase deploy --only database --project sendwayo-express --non-interactive
+          fi
 
       - name: Eliminar credencial temporal
         if: always()
