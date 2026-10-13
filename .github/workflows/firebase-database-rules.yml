@@ -56,21 +56,35 @@ jobs:
           console.log('Configuración validada para Firebase: sendwayo-express');
           NODE
 
-      - name: Comprobar credencial de despliegue
+      - name: Preparar credencial de cuenta de servicio
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         shell: bash
         run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "::error::Falta el secreto FIREBASE_TOKEN en GitHub. Añádelo en Settings > Secrets and variables > Actions > New repository secret. No coloques el token en el código."
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::Falta el secreto FIREBASE_SERVICE_ACCOUNT en GitHub. Añade el JSON de una cuenta de servicio de Firebase/Google Cloud en Settings > Secrets and variables > Actions. No pegues la clave en el código ni en el chat."
             exit 1
           fi
-          echo "Credencial FIREBASE_TOKEN disponible."
+          CREDENTIAL_FILE="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$CREDENTIAL_FILE"
+          chmod 600 "$CREDENTIAL_FILE"
+          node - "$CREDENTIAL_FILE" <<'NODE'
+          const fs = require('node:fs');
+          const key = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (key.type !== 'service_account' || key.project_id !== 'sendwayo-express' || !key.client_email || !key.private_key) {
+            throw new Error('FIREBASE_SERVICE_ACCOUNT no es una clave de cuenta de servicio válida para sendwayo-express.');
+          }
+          console.log('Credencial de servicio validada para el proyecto esperado.');
+          NODE
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDENTIAL_FILE" >> "$GITHUB_ENV"
 
       - name: Instalar Firebase CLI
         run: npm install --global firebase-tools
 
       - name: Publicar aplicación y reglas de Realtime Database
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only hosting,database --project sendwayo-express --token "$FIREBASE_TOKEN" --non-interactive
+        run: firebase deploy --only hosting,database --project sendwayo-express --non-interactive
+
+      - name: Eliminar credencial temporal
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/firebase-service-account.json"
