@@ -1097,42 +1097,110 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
 </script>
 <script>
 (function(){
-  function getReqs(){try{return JSON.parse(localStorage.getItem("sendwayo_public_requests")||"[]")}catch(e){return[]}}
-  function render(){
-    try{
-      if(window.__swWelcomePanelHidden)return;
-      var session=JSON.parse(localStorage.getItem("sendwayo_authenticated_user")||"null");
-      if(!session||session.role!=="admin") return;
-      var old=document.getElementById("sendwayo-public-request-admin"); if(old)old.remove();
-      var reqs=getReqs(), pending=reqs.filter(function(x){return x.estado==="Pendiente"});
-      var box=document.createElement("div"); box.id="sendwayo-public-request-admin";
-      box.style.cssText="position:fixed;left:272px;right:auto;top:82px;bottom:12px;z-index:100000;max-width:430px;width:min(430px,calc(100vw - 292px));background:#fff;border:2px solid #0a245e;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);padding:12px;font-family:system-ui,sans-serif;max-height:calc(100vh - 94px);overflow:auto";
-      box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#0a245e">📋 Solicitudes de bienvenida ('+pending.length+')</b><button id="swpr-close" style="border:0;background:#f3f4f6;border-radius:8px;padding:4px 8px">✕</button></div>'+
-        (pending.length?pending.map(function(x){return '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:9px;margin-top:8px;font-size:11px"><b>'+String(x.tipo||"").replace(/</g,"&lt;")+'</b><br>'+String(x.nombre||"").replace(/</g,"&lt;")+' · '+String(x.telefono||"").replace(/</g,"&lt;")+'<br>'+String(x.email||"").replace(/</g,"&lt;")+' · Usuario: '+String(x.usuario||"—").replace(/</g,"&lt;")+' · '+String(x.ciudad||"").replace(/</g,"&lt;")+'<br><span style="color:#6b7280">'+String(x.detalle||"").replace(/</g,"&lt;")+'</span><div style="display:flex;gap:6px;margin-top:7px"><button data-ok="'+x.id+'" style="flex:1;background:#166534;color:#fff;border:0;border-radius:7px;padding:6px;font-weight:700">Aprobar</button><button data-no="'+x.id+'" style="flex:1;background:#b91c1c;color:#fff;border:0;border-radius:7px;padding:6px;font-weight:700">Rechazar</button></div></div>'}).join(""):'<div style="font-size:11px;color:#6b7280;margin-top:8px">No hay solicitudes pendientes.</div>');
-      document.body.appendChild(box);
-      box.querySelector("#swpr-close").onclick=function(){window.__swWelcomePanelHidden=true;box.remove()};
-      box.querySelectorAll("[data-ok]").forEach(function(b){b.onclick=function(){update(b.getAttribute("data-ok"),"Aprobado")}});
-      box.querySelectorAll("[data-no]").forEach(function(b){b.onclick=function(){update(b.getAttribute("data-no"),"Rechazado")}});
-    }catch(e){console.error(e)}
+(function(){
+  'use strict';
+  let rows = [];
+  let stopRequests = null;
+  let boundCloud = null;
+  let watchingAuth = false;
+
+  const safeText = value => String(value == null ? '' : value);
+  const esc = value => safeText(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function removePanel() {
+    const panel = document.getElementById('sendwayo-public-request-admin');
+    if (panel) panel.remove();
   }
-  function update(id,state){var all=getReqs();var item=all.find(function(x){return x.id===id});if(!item)return;item.estado=state;item.reviewedAt=Date.now();localStorage.setItem("sendwayo_public_requests",JSON.stringify(all));
-    if(state==="Aprobado" && (item.tipo==="remitente" || item.tipo==="agente")){
-      try{
-        var users=loadSendwayoUsers(), role=item.tipo==="agente"?"agent":"remitente", digits=String(item.telefono||"").replace(/\D/g,"");
-        var code=(role==="agent"?"AG-":"REM-")+String(users.filter(function(u){return u.role===role}).length+1).padStart(3,"0");
-        var email=item.email||""; var username=String(item.usuario||"").trim();
-        users.push({role:role,name:item.nombre,id:code,code:code,username:username,identifiers:[item.nombre,code,email,digits,username].filter(Boolean),passwordHash:item.passwordHash||undefined,password:item.passwordHash?undefined:digits,phone:digits,email:email,status:"Activo",balance:0,balanceDOP:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0});
-        saveSendwayoUsers(users);
-        alert("Solicitud aprobada. Se creó el usuario "+code+". Contraseña inicial: número de teléfono.");
-      }catch(e){alert("La solicitud fue aprobada, pero no se pudo crear automáticamente el usuario.")}
+  function unlisten() {
+    if (stopRequests) { try { stopRequests(); } catch (_) {} stopRequests = null; }
+    rows = [];
+    removePanel();
+  }
+  function render() {
+    const api = window.__sendwayoApi || {};
+    if (String(api.role || '').toLowerCase() !== 'admin' || window.__swWelcomePanelHidden) {
+      removePanel();
+      return;
     }
-    render();
+    const pending = rows.filter(row => String(row.status || row.estado || 'Pendiente').toLowerCase() === 'pendiente');
+    let panel = document.getElementById('sendwayo-public-request-admin');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'sendwayo-public-request-admin';
+      panel.style.cssText = 'position:fixed;left:272px;right:auto;top:82px;bottom:12px;z-index:100000;max-width:430px;width:min(430px,calc(100vw - 292px));background:#fff;border:2px solid #0a245e;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);padding:12px;font-family:system-ui,sans-serif;max-height:calc(100vh - 94px);overflow:auto';
+      document.body.appendChild(panel);
+    }
+    panel.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#0a245e">📋 Solicitudes públicas (' + pending.length + ')</b><button id="swpr-close" style="border:0;background:#f3f4f6;border-radius:8px;padding:4px 8px">✕</button></div>' +
+      (pending.length ? pending.map(function(row) {
+        return '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:9px;margin-top:8px;font-size:11px">' +
+          '<b>' + esc(row.typeLabel || row.type || 'Solicitud') + '</b><br>' +
+          esc(row.displayName || row.nombre || '') + ' · ' + esc(row.phone || row.telefono || '') + '<br>' +
+          esc(row.email || '') + ' · ' + esc(row.city || row.ciudad || '') + '<br>' +
+          '<span style="color:#6b7280;white-space:pre-wrap">' + esc(row.detail || row.detalle || '') + '</span>' +
+          '<div style="display:flex;gap:6px;margin-top:7px">' +
+          '<button data-swp-action="attend" data-swp-id="' + esc(row.id) + '" style="flex:1;background:#166534;color:#fff;border:0;border-radius:7px;padding:6px;font-weight:700">Marcar atendida</button>' +
+          '<button data-swp-action="reject" data-swp-id="' + esc(row.id) + '" style="flex:1;background:#b91c1c;color:#fff;border:0;border-radius:7px;padding:6px;font-weight:700">Rechazar</button>' +
+          '</div></div>';
+      }).join('') : '<div style="font-size:11px;color:#6b7280;margin-top:8px">No hay solicitudes públicas pendientes.</div>');
+    panel.querySelector('#swpr-close').onclick = function() {
+      window.__swWelcomePanelHidden = true;
+      removePanel();
+    };
+    panel.querySelectorAll('[data-swp-action]').forEach(function(button) {
+      button.onclick = async function() {
+        const cloud = window.sendwayoCloud;
+        const id = button.getAttribute('data-swp-id');
+        const status = button.getAttribute('data-swp-action') === 'attend' ? 'Atendida' : 'Rechazado';
+        if (!cloud || !cloud.ready || typeof cloud.reviewPublicRequest !== 'function') {
+          alert('Firebase no está disponible. No se cambió el estado de la solicitud.');
+          return;
+        }
+        button.disabled = true;
+        try {
+          await cloud.reviewPublicRequest({ id, status });
+          rows = rows.map(row => String(row.id) === String(id) ? Object.assign({}, row, { status }) : row);
+          render();
+        } catch (error) {
+          button.disabled = false;
+          alert(error && error.message ? error.message : 'No se pudo actualizar la solicitud en Firebase.');
+        }
+      };
+    });
   }
-  window.__sendwayoRenderWelcomeRequests=render;
-  function boot(){render();if(!window.__swPublicReqTimer)window.__swPublicReqTimer=setInterval(render,3000)}
-  if(document.readyState!=="loading")boot();else document.addEventListener("DOMContentLoaded",boot);
-})();
-</script>
+  async function bindCloud() {
+    const cloud = window.sendwayoCloud;
+    if (!cloud || !cloud.ready || !cloud.auth || typeof cloud.auth.onAuthStateChanged !== 'function' || boundCloud === cloud) return;
+    boundCloud = cloud;
+    cloud.auth.onAuthStateChanged(async function(user) {
+      unlisten();
+      if (!user) return;
+      try {
+        const profile = await cloud.getProfile();
+        if (!profile || !['admin','administrador'].includes(String(profile.role || '').trim().toLowerCase())) return;
+        if (typeof cloud.listenAdminPublicRequests !== 'function') {
+          console.error('SENDWAYO: falta el listener Firebase para solicitudes públicas.');
+          return;
+        }
+        stopRequests = cloud.listenAdminPublicRequests(function(nextRows) {
+          rows = Array.isArray(nextRows) ? nextRows : [];
+          render();
+        });
+      } catch (error) {
+        console.error('SENDWAYO: no se pudieron sincronizar las solicitudes públicas.', error);
+        removePanel();
+      }
+    });
+  }
+  window.__sendwayoRenderWelcomeRequests = function() {
+    window.__swWelcomePanelHidden = false;
+    bindCloud();
+    render();
+  };
+  window.addEventListener('sendwayo:cloud-ready', bindCloud);
+  window.addEventListener('sendwayo:auth-changed', bindCloud);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindCloud, { once: true });
+  else bindCloud();
+})();</script>
 
 <script>
 (function(){
