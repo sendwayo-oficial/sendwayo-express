@@ -1150,11 +1150,11 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
     if(role==='admin'||role==='agent'){let f=document.getElementById('sw-v6-floating-transfer');if(!f){f=document.createElement('button');f.id='sw-v6-floating-transfer';f.textContent='💸 Pago de transferencia';f.style.cssText='position:fixed;right:18px;bottom:78px;z-index:6000;background:#0a245e;color:#fff;border:2px solid #d4af37;border-radius:999px;padding:11px 15px;font-weight:900;box-shadow:0 10px 30px #0003';f.onclick=()=>window.__sendwayoTransferPageV19?window.__sendwayoTransferPageV19():paymentTransfer();document.body.appendChild(f)}}
   }
   function suggestions(){
-    const all=users(); const bens=read('sendwayo_beneficiaries',[]); if(Array.isArray(bens))all.push(...bens.map(x=>({id:x.id,name:[x.nombre,x.apellido].filter(Boolean).join(' '),phone:x.phone||x.telefono||'',role:'beneficiario'})));
+    const all=typeof window.__sendwayoGlobalPeople==='function'?window.__sendwayoGlobalPeople():users();
     document.querySelectorAll('input:not([data-sw-suggest])').forEach(inp=>{
       const meta=((inp.placeholder||'')+' '+(inp.name||'')+' '+(inp.id||'')).toLowerCase();if(!/(benefici|cliente|remitente|agente|telefono|teléfono|phone|buscar|búsqueda|busqueda|destinat)/i.test(meta))return;inp.dataset.swSuggest='1';const box=document.createElement('div');box.style.cssText='position:fixed;z-index:1000000;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 30px #0002;max-height:240px;overflow:auto;display:none';document.body.appendChild(box);
       const place=()=>{const r=inp.getBoundingClientRect();box.style.left=r.left+'px';box.style.top=(r.bottom+4)+'px';box.style.width=Math.max(r.width,280)+'px'};
-      inp.addEventListener('input',()=>{const q=inp.value.toLowerCase().trim();if(!q){box.style.display='none';return}const hits=all.filter(u=>[u.name,u.phone,u.id,u.email,u.code].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,8);box.innerHTML=hits.map(u=>'<button type="button" style="display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-bottom:1px solid #eee;font-size:12px"><b>'+String(u.phone||u.id||'')+'</b> <span>('+String(u.name||'')+')</span></button>').join('');if(!hits.length){box.style.display='none';return}place();box.style.display='block';[...box.querySelectorAll('button')].forEach((b,i)=>b.onclick=()=>{const u=hits[i];inp.value=(u.phone||u.id||'')+' ('+(u.name||'')+')';inp.dataset.selectedId=u.id||'';box.style.display='none';inp.dispatchEvent(new Event('change',{bubbles:true}))})});window.addEventListener('resize',place);window.addEventListener('scroll',place,true);
+      inp.addEventListener('input',()=>{if(inp.dataset.swSuggestionApplying==='1')return;const q=inp.value.toLowerCase().trim();if(!q){box.style.display='none';return}const hits=all.filter(u=>window.__sendwayoSuggestionMatches?window.__sendwayoSuggestionMatches(u,q):[u.name,u.phone,u.id,u.email,u.code].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,8);box.innerHTML=hits.map(u=>'<button type="button" style="display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-bottom:1px solid #eee;font-size:12px"><b>'+String(u.phone||u.id||'')+'</b> <span>('+String(u.name||'')+')</span></button>').join('');if(!hits.length){box.style.display='none';return}place();box.style.display='block';[...box.querySelectorAll('button')].forEach((b,i)=>b.onclick=()=>{const u=hits[i];if(window.__sendwayoApplySuggestion)window.__sendwayoApplySuggestion(inp,u);else{inp.value=(u.phone||u.id||'')+' ('+(u.name||'')+')';inp.dispatchEvent(new Event('change',{bubbles:true}))}box.style.display='none'})});window.addEventListener('resize',place);window.addEventListener('scroll',place,true);
     });
   }
   function interceptAdminButtons(){ /* sustituido por el manejador monetario unificado V19 */ }
@@ -1194,16 +1194,7 @@ window.addEventListener('storage',e=>{if(KEYS.has(e.key)||String(e.key||'').star
 if(BC)BC.onmessage=e=>{if(e.data?.key)sync(e.data.key)};
 window.addEventListener('sendwayo-realtime-sync',()=>{sync('realtime')});
 
-function allPeople(){
-  let out=[];
-  for(const k of ['sendwayo_users','sendwayo_beneficiaries']){const a=read(k,[]);if(Array.isArray(a))out.push(...a)}
-  const t=read('sendwayo_transactions',[]);
-  if(Array.isArray(t))for(const x of t){
-    if(x.beneficiario||x.beneficiarioId||x.telefono||x.phone)out.push({name:x.beneficiario||x.beneficiarioNombre||'',phone:x.telefono||x.phone||'',id:x.beneficiarioId||'',code:x.beneficiarioCode||''});
-    if(x.remitente||x.remitenteId)out.push({name:x.remitente||x.remitenteNombre||'',phone:x.remitentePhone||'',id:x.remitenteId||'',code:x.remitenteCode||''});
-  }
-  const seen=new Set();return out.filter(u=>{const key=String(u.phone||u.code||u.id||u.name||'').toLowerCase()+'|'+String(u.name||'').toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true});
-}
+function allPeople(){return typeof window.__sendwayoGlobalPeople==='function'?window.__sendwayoGlobalPeople():[]}
 let sugBox=null,sugInput=null;
 function installSuggestions(){
  document.querySelectorAll('input').forEach(inp=>{
@@ -1212,15 +1203,16 @@ function installSuggestions(){
   if(!/(benefici|remitent|agente|cliente|destinat|tel[eé]fono|phone|buscar|b[uú]squeda|nombre|c[oó]digo|identific|usuario)/i.test(meta))return;
   inp.dataset.swV18Suggest='1';
   inp.addEventListener('input',()=>{
+   if(inp.dataset.swSuggestionApplying==='1')return;
    const q=inp.value.trim().toLowerCase();if(!q){if(sugBox){sugBox.remove();sugBox=null}return}
-   const hits=allPeople().filter(u=>[u.name,u.phone,u.code,u.id,u.email].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,10);
+   const hits=allPeople().filter(u=>window.__sendwayoSuggestionMatches?window.__sendwayoSuggestionMatches(u,q):[u.name,u.phone,u.code,u.id,u.email].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,10);
    if(sugBox){sugBox.remove();sugBox=null}if(!hits.length)return;
    sugInput=inp;sugBox=document.createElement('div');sugBox.id='sw-v18-suggestions';
    sugBox.style.cssText='position:fixed;z-index:300000;background:#fff;border:2px solid #0a245e;border-radius:10px;box-shadow:0 16px 50px rgba(0,0,0,.22);max-height:280px;overflow:auto;min-width:280px';
    const r=inp.getBoundingClientRect();sugBox.style.left=r.left+'px';sugBox.style.top=(r.bottom+4)+'px';sugBox.style.width=Math.max(r.width,300)+'px';
    sugBox.innerHTML=hits.map((u,i)=>'<button type="button" data-i="'+i+'" style="display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid #edf0f4;background:#fff;color:#0f172a"><b>'+esc(u.phone||u.code||u.id||'')+'</b> <span>('+esc(u.name||'')+')</span></button>').join('');
    document.body.appendChild(sugBox);
-   sugBox.querySelectorAll('button').forEach((b,i)=>b.onclick=()=>{const u=hits[i];inp.value=(u.phone||u.code||u.id||'')+' ('+(u.name||'')+')';inp.dataset.selectedId=u.id||u.code||u.phone||'';inp.dataset.selectedName=u.name||'';if(sugBox){sugBox.remove();sugBox=null}inp.dispatchEvent(new Event('change',{bubbles:true}));inp.dispatchEvent(new Event('input',{bubbles:true}))});
+   sugBox.querySelectorAll('button').forEach((b,i)=>b.onclick=()=>{const u=hits[i];if(sugBox){sugBox.remove();sugBox=null}if(window.__sendwayoApplySuggestion)window.__sendwayoApplySuggestion(inp,u);else{inp.value=(u.phone||u.code||u.id||'')+' ('+(u.name||'')+')';inp.dispatchEvent(new Event('change',{bubbles:true}));inp.dispatchEvent(new Event('input',{bubbles:true}))}});
   });
  });
 }
@@ -2068,4 +2060,5 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
 })();
 </script>
 
+<script src="./scripts/sendwayo-global-suggestions-v32.js"></script>
 </body></html>
