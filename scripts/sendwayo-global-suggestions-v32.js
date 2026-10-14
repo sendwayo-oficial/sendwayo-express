@@ -143,7 +143,7 @@
   window.addEventListener('sendwayo:duplicate-contact', e => {
     const name = text(e.detail?.name);
     const message = name
-      ? 'Este número ya está registrado en el sistema como ' + name + '. Se usará el contacto existente; revisa la sugerencia antes de guardar.'
+      ? 'Este número ya está registrado en el sistema como ' + name + '. La relación de beneficiario se guardó; comprueba el nombre, ya que este número existe en el directorio compartido.'
       : 'Este número ya está registrado en el sistema. Revisa y selecciona la sugerencia existente antes de guardar.';
     let box = document.getElementById('sw-v32-duplicate-contact');
     if (!box) {
