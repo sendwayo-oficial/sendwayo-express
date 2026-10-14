@@ -241,7 +241,9 @@ function loadSendwayoUsers(){
 
   const defaults=makeSendwayoDefaultUsers();
   try{
-    const saved=JSON.parse(localStorage.getItem(SENDWAYO_USER_STORE)||"[]");
+    const loaded=JSON.parse(localStorage.getItem(SENDWAYO_USER_STORE)||"[]");
+    const saved=Array.isArray(loaded)?loaded.map(row=>{const clean={...row};delete clean.password;delete clean.pass;delete clean.plainPassword;return clean}):[];
+    if(JSON.stringify(saved)!==JSON.stringify(loaded))localStorage.setItem(SENDWAYO_USER_STORE,JSON.stringify(saved));
     const map=new Map(saved.map(x=>[`${x.role}|${x.name}|${x.id||""}`,x]));
     const merged=defaults.map(d=>{
       const old=map.get(`${d.role}|${d.name}|${d.id||""}`)||{};
@@ -259,7 +261,7 @@ function loadSendwayoUsers(){
     return [...cleanMerged,...extras];
   }catch(e){return defaults}
 }
-function saveSendwayoUsers(users){try{localStorage.setItem(SENDWAYO_USER_STORE,JSON.stringify(users))}catch(e){}
+function saveSendwayoUsers(users){try{const safe=(Array.isArray(users)?users:[]).map(row=>{const clean={...row};delete clean.password;delete clean.pass;delete clean.plainPassword;return clean});localStorage.setItem(SENDWAYO_USER_STORE,JSON.stringify(safe))}catch(e){}
 }
 function UserProfileModal({user,onClose,onSave}){
   const [password,setPassword]=y.useState("");
