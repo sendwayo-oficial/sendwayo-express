@@ -28,7 +28,7 @@
     renumberAll();
     if (!window.__sendwayoSidebarNumberObserver && document.documentElement) {
       window.__sendwayoSidebarNumberObserver = new MutationObserver(() => renumberAll());
-      window.__sendwayoSidebarNumberObserver.observe(document.documentElement, { childList: true, subtree: true });
+      window.__sendwayoSidebarNumberObserver.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
