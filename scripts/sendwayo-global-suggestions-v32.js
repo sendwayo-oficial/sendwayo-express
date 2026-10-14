@@ -34,24 +34,11 @@
     return { id, code, name, phone, email, aliases, role: text(row.role || row.rol || fallbackRole), raw: row };
   }
   function collect() {
-    const out = [...sharedContacts];
-    const api = window.__sendwayoApi;
-    if (api && typeof api.dataFor === 'function') {
-      for (const key of DATASETS) {
-        try { safeArray(api.dataFor(key)).forEach(row => { const p = normalize(row, key); if (p) out.push(p); }); }
-        catch (err) { console.warn('SENDWAYO suggestions: dataset unavailable', key, err); }
-      }
-    }
-    // Compatibilidad con registros históricos; la lista viva de Firebase tiene prioridad.
-    for (const key of ['sendwayo_users','sendwayo_beneficiaries','sendwayo_transactions','sendwayo_remitters','sendwayo_agents']) {
-      try {
-        const rows = JSON.parse(localStorage.getItem(key) || '[]');
-        safeArray(rows).forEach(row => { const p = normalize(row, key); if (p) out.push(p); });
-      } catch (_) {}
-    }
+    // Fuente oficial única: el directorio compartido que escucha Firebase.
+    // No usar listas de demostración, arrays iniciales ni localStorage para sugerencias globales.
     const seen = new Set();
-    return out.filter(p => {
-      const key = (digits(p.phone) || lower(p.code) || lower(p.id) || lower(p.email) || lower(p.name)) + '|' + lower(p.name);
+    return safeArray(sharedContacts).filter(p => {
+      const key = (canonicalPhone(p.phone) || lower(p.code) || lower(p.id) || lower(p.name)) + '|' + lower(p.name);
       if (!key || seen.has(key)) return false;
       seen.add(key);
       return true;
