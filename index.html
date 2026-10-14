@@ -955,34 +955,166 @@ if(document.readyState==="loading"){
 window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMethod, parseBeneficiario};
 })();
 </script>
-<script>
+<script id="sendwayo-v32-credit-admin-live">
 (function(){
-  function session(){try{return JSON.parse(localStorage.getItem("sendwayo_authenticated_user")||"null")}catch(e){return null}}
-  function admin(){const s=session();return s&&s.role==="admin"}
-  function data(){try{return JSON.parse(localStorage.getItem("sendwayo_credit_requests")||"[]")}catch(e){return[]}}
-  function save(a){localStorage.setItem("sendwayo_credit_requests",JSON.stringify(a))}
-  function balances(){try{return JSON.parse(localStorage.getItem("sendwayo_balances")||"{}")}catch(e){return{}}}
-  function saveBalances(b){localStorage.setItem("sendwayo_balances",JSON.stringify(b))}
-  function render(){
-    const s=session(); if(!s||s.role!=="admin") return;
-    let old=document.getElementById("sendwayo-credit-admin"); if(old) old.remove();
-    const req=data().filter(x=>x.status!=="Pagado");
-    const box=document.createElement("div"); box.id="sendwayo-credit-admin"; box.style.cssText="display:none;position:fixed;left:272px;top:82px;z-index:9998;font-family:Arial,sans-serif";
-    const btn=document.createElement("button"); btn.textContent="💳 Créditos pendientes ("+req.filter(x=>x.status==="Pendiente").length+")"; btn.style.cssText="background:#0a245e;color:#fff;border:2px solid #ffc300;border-radius:12px;padding:10px 14px;font-weight:900;box-shadow:0 8px 25px #0003;cursor:pointer";
-    btn.onclick=()=>open(req); box.appendChild(btn); document.body.appendChild(box);
+  'use strict';
+  let stopRequests=null;
+  let currentProfile=null;
+  let requests=[];
+  let modal=null;
+  let button=null;
+  let attachedAuth=null;
+  const cloud=()=>window.sendwayoCloud;
+  const roleName=p=>String(p?.role||'').trim().toLowerCase();
+  const safeText=v=>String(v==null?'':v);
+  const currencyLabel=c=>['HTG','GDES'].includes(String(c||'').toUpperCase())?'HTG':'RD$';
+
+  function ensureEntry(){
+    let wrap=document.getElementById('sendwayo-credit-admin');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id='sendwayo-credit-admin';
+      wrap.style.cssText='display:none;position:fixed;left:280px;top:86px;z-index:120010;font-family:Arial,sans-serif';
+      button=document.createElement('button');
+      button.type='button';
+      button.style.cssText='border:0;border-radius:11px;padding:10px 13px;background:#0a245e;color:#fff;font-weight:900;box-shadow:0 8px 25px #0003';
+      button.onclick=openQueue;
+      wrap.appendChild(button);
+      document.body.appendChild(wrap);
+    }else button=wrap.querySelector('button');
+    return wrap;
   }
-  function open(req){
-    const modal=document.createElement("div"); modal.style.cssText="position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;padding:15px";
-    const card=document.createElement("div"); card.style.cssText="background:#fff;width:min(760px,96vw);max-height:85vh;overflow:auto;border-radius:16px;padding:18px";
-    card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;color:#0a245e">Solicitudes de crédito</h2><button id="cx" style="font-size:20px">✕</button></div><div id="crrows" style="margin-top:12px"></div>';
-    modal.appendChild(card);document.body.appendChild(modal);card.querySelector('#cx').onclick=()=>modal.remove();
-    const rows=card.querySelector('#crrows');
-    if(!req.length){rows.innerHTML='<p>No hay créditos pendientes.</p>';return}
-    req.forEach(r=>{const d=document.createElement('div');d.style.cssText='border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:10px';d.innerHTML=`<b>${r.userName||r.userId}</b><br>Monto: <b>${Number(r.amount||0).toLocaleString()} ${r.currency||'RD$'}</b><br>Motivo: ${r.reason||''}<br>Estado: <b>${r.status}</b><div style="margin-top:8px;display:flex;gap:8px"><button data-ok style="background:#16a34a;color:#fff;border:0;padding:7px 12px;border-radius:8px;font-weight:800">Aprobar</button><button data-no style="background:#dc2626;color:#fff;border:0;padding:7px 12px;border-radius:8px;font-weight:800">Rechazar</button></div>`;rows.appendChild(d);d.querySelector('[data-ok]').onclick=()=>approve(r.id);d.querySelector('[data-no]').onclick=()=>reject(r.id)})
+  function updateEntry(){
+    const wrap=ensureEntry();
+    if(!button)return;
+    const pending=requests.filter(r=>String(r.status||r.estado||'').toLowerCase()==='pendiente').length;
+    button.textContent='💳 Créditos pendientes ('+pending+')';
+    wrap.style.display=currentProfile&&roleName(currentProfile)==='admin'?'block':'none';
   }
-  function approve(id){const a=data(),r=a.find(x=>x.id===id);if(!r)return;const b=balances();b.remitentes=b.remitentes||{};b.agentes=b.agentes||{};const key=r.userId;const isH=(r.currency||'RD$')==='HTG';if(r.userRole==='remitente'){const u=b.remitentes[key]||{};if(isH)u.balanceHTG=Number(u.balanceHTG||0)+Number(r.amount||0);else u.balanceDOP=Number(u.balanceDOP||u.balance||0)+Number(r.amount||0);b.remitentes[key]=u}else{const u=b.agentes[key]||{};if(isH)u.balanceHTG=Number(u.balanceHTG||0)+Number(r.amount||0);else u.balanceDOP=Number(u.balanceDOP||0)+Number(r.amount||0);b.agentes[key]=u}r.status='Aprobado';r.approvedAt=Date.now();save(a);saveBalances(b);alert('Crédito aprobado y agregado al balance.');location.reload()}
-  function reject(id){const a=data(),r=a.find(x=>x.id===id);if(!r)return;r.status='Rechazado';r.rejectedAt=Date.now();save(a);alert('Crédito rechazado.');location.reload()}
-  const old=window.__sendwayoCreditAdminTimer; if(old)clearInterval(old); setTimeout(render,700); window.__sendwayoCreditAdminTimer=setInterval(render,1500);
+  function closeQueue(){if(modal){modal.remove();modal=null}}
+  function addText(parent,tag,text,className){
+    const el=document.createElement(tag);
+    el.textContent=safeText(text);
+    if(className)el.className=className;
+    parent.appendChild(el);
+    return el;
+  }
+  function openQueue(){
+    if(roleName(currentProfile)!=='admin'){
+      alert('Solo administración puede revisar solicitudes de crédito.');
+      return;
+    }
+    closeQueue();
+    modal=document.createElement('div');
+    modal.id='sendwayo-credit-review-modal';
+    modal.style.cssText='position:fixed;inset:0;z-index:120020;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.70);font-family:Arial,sans-serif';
+    const card=document.createElement('section');
+    card.style.cssText='width:min(820px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 20px 70px #0005';
+    const head=document.createElement('div');
+    head.style.cssText='display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding-bottom:12px';
+    addText(head,'h2','Solicitudes de crédito — revisión administrativa','font-weight-900 text-lg');
+    const close=document.createElement('button');
+    close.type='button';close.textContent='Cerrar ✕';
+    close.style.cssText='padding:7px 11px;border:0;border-radius:8px;background:#f3f4f6;font-weight:800';
+    close.onclick=closeQueue;head.appendChild(close);card.appendChild(head);
+    const list=document.createElement('div');list.id='sendwayo-credit-review-list';list.style.marginTop='12px';card.appendChild(list);
+    modal.appendChild(card);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeQueue()});
+    document.body.appendChild(modal);
+    renderRows(list);
+  }
+  async function decide(req,action,card,approveButton,rejectButton){
+    const c=cloud();
+    if(roleName(currentProfile)!=='admin'||!c?.ready||typeof c.reviewBalanceCredit!=='function'){
+      alert('Firebase no está disponible o tu rol no tiene autorización. No se modificó ningún balance.');
+      return;
+    }
+    const verb=action==='approve'?'aprobar y acreditar':'rechazar';
+    if(!confirm('¿Deseas '+verb+' la solicitud '+req.id+' de '+req.amount+' '+currencyLabel(req.currencyCode||req.currency)+'?'))return;
+    const reason=String(prompt(action==='approve'?'Motivo de aprobación (opcional):':'Motivo del rechazo (opcional):','')||'').trim();
+    if(approveButton)approveButton.disabled=true;
+    if(rejectButton)rejectButton.disabled=true;
+    try{
+      const result=await c.reviewBalanceCredit({requestId:req.id,action,reason});
+      if(!result||!result.ok)throw new Error('El servidor no confirmó la decisión. Verifica el estado antes de volver a intentarlo.');
+      alert(action==='approve'
+        ?'Solicitud aprobada en Firebase. El balance se acreditó una sola vez y quedó registrado en el libro contable.'
+        :'Solicitud rechazada en Firebase. No se modificó ningún balance.');
+    }catch(err){
+      console.error('SENDWAYO: balance credit decision not confirmed',err);
+      alert(err?.message||'No se pudo resolver la solicitud. No asumas que el balance cambió.');
+      if(approveButton)approveButton.disabled=false;
+      if(rejectButton)rejectButton.disabled=false;
+    }
+  }
+  function renderRows(list){
+    list.replaceChildren();
+    const pending=requests.filter(r=>String(r.status||r.estado||'').toLowerCase()==='pendiente');
+    if(!pending.length){
+      addText(list,'p','No hay solicitudes de crédito pendientes.','text-sm text-gray-600');
+      return;
+    }
+    pending.forEach(req=>{
+      const row=document.createElement('article');
+      row.style.cssText='border:1px solid #d1d5db;border-radius:12px;padding:13px;margin-bottom:10px;background:#fff';
+      const title=document.createElement('div');
+      title.style.cssText='display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap';
+      addText(title,'strong',safeText(req.requesterName||req.userName||req.requesterUid||'Usuario')+' · '+safeText(req.requesterRole||req.userRole||''));
+      addText(title,'strong',Number(req.amount||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+currencyLabel(req.currencyCode||req.currency));
+      row.appendChild(title);
+      addText(row,'div','Motivo: '+safeText(req.reason||'—'),'text-sm text-gray-700 mt-2');
+      addText(row,'div','Estado: Pendiente · '+safeText(req.id),'text-xs text-gray-500 mt-1');
+      if(req.requesterRole==='agent'){
+        addText(row,'div','Destino: fondo operativo de agentes en HTG/GDES; no es balance personal.','text-xs text-gray-600 mt-1');
+      }
+      const actions=document.createElement('div');
+      actions.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:11px';
+      const approve=document.createElement('button');
+      approve.type='button';approve.textContent='Aprobar y acreditar';
+      approve.style.cssText='border:0;border-radius:8px;padding:8px 12px;background:#15803d;color:white;font-weight:800';
+      const reject=document.createElement('button');
+      reject.type='button';reject.textContent='Rechazar';
+      reject.style.cssText='border:0;border-radius:8px;padding:8px 12px;background:#b91c1c;color:white;font-weight:800';
+      approve.onclick=()=>decide(req,'approve',row,approve,reject);
+      reject.onclick=()=>decide(req,'reject',row,approve,reject);
+      actions.append(approve,reject);row.appendChild(actions);list.appendChild(row);
+    });
+  }
+  function stopLive(){
+    if(stopRequests){try{stopRequests()}catch(_){}stopRequests=null}
+    requests=[];
+    currentProfile=null;
+    updateEntry();
+    closeQueue();
+  }
+  async function bindUser(user){
+    stopLive();
+    if(!user)return;
+    const c=cloud();
+    if(!c?.ready||typeof c.getProfile!=='function')return;
+    try{
+      const profile=await c.getProfile();
+      if(!c.auth?.currentUser||c.auth.currentUser.uid!==user.uid)return;
+      currentProfile=profile;
+      if(roleName(profile)==='admin'&&typeof c.listenAdminBalanceCreditRequests==='function'){
+        stopRequests=c.listenAdminBalanceCreditRequests(rows=>{
+          requests=Array.isArray(rows)?rows:[];
+          updateEntry();
+          const existing=document.getElementById('sendwayo-credit-review-list');
+          if(existing)renderRows(existing);
+        });
+      }
+      updateEntry();
+    }catch(err){console.error('SENDWAYO: could not bind live credit queue',err)}
+  }
+  function boot(){
+    const c=cloud();
+    if(!c?.ready||!c.auth||typeof c.auth.onAuthStateChanged!=='function'||attachedAuth===c.auth)return;
+    attachedAuth=c.auth;
+    c.auth.onAuthStateChanged(user=>{void bindUser(user)});
+  }
+  window.addEventListener('sendwayo:cloud-ready',boot);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
 <script>
