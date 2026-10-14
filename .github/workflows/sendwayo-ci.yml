@@ -31,5 +31,7 @@ jobs:
           grep -q "listenSharedContacts" index.html
           grep -q "syncContactDirectory" index.html
           grep -q 'scripts/sendwayo-global-suggestions-v32.js' index.html
+          grep -q 'scripts/sendwayo-sidebar-numbering-v32.js' index.html
           node --check scripts/sendwayo-global-suggestions-v32.js
-          echo "SENDWAYO Firebase and global-contact integration markers OK"
+          node --check scripts/sendwayo-sidebar-numbering-v32.js
+          echo "SENDWAYO Firebase, global contacts and sidebar numbering markers OK"
