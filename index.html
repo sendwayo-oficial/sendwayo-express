@@ -503,11 +503,24 @@ r("button",{onClick:()=>setRequestType("recarga"),className:"border-2 rounded-2x
 ]}),requestType&&u("div",{className:"mt-3 border rounded-xl p-3 bg-white shadow-sm",children:[u("div",{className:"font-black text-[12px]",children:"Formulario de solicitud: "+requestType}),u("div",{className:"text-[10px] text-gray-600 mt-1",children:"Complete sus datos. La solicitud llegará al administrador para aprobación o rechazo."}),r(PublicRequestForm,{requestType,onClose:()=>setRequestType("")}),r("button",{onClick:()=>setShowLogin(true),className:"mt-2 w-full bg-gray-100 text-[#0a245e] rounded-lg px-4 py-2 text-[11px] font-black",children:"Ya tengo una cuenta / Ingresar"})]}),u("div",{className:"mt-5 border rounded-xl overflow-hidden",children:u("div",{className:"bg-[#0a245e] text-white text-center py-2.5 text-[11px] font-bold",children:"Todos nuestros servicios y productos de SENDWAYO EXPRESS"})}),u("div",{className:"mt-5 bg-[#0a245e] text-white rounded-xl px-4 py-3 text-center text-[10px] font-bold",children:[u("div",{className:"text-[#FFC300] font-black",children:"CONTACTARNOS"})," WhatsApp / Téléphone: 8297676665 - E-mail: sendwayoexpress@gmail.com"]})]})]});
 }
 
-const SENDWAYO_SUGGESTIONS=[...new Set([
-  ...cm.flatMap(a=>{const n=`${a.name||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\D/g,"");return [n,`${p} (${n})`,makeSendwayoEmail(a.name,a.last),p,a.id]}),
-  ...sm.flatMap(a=>{const n=`${a.first||""} ${a.last||""}`.trim(),p=String(a.phone||"").replace(/\D/g,"");return [n,`${p} (${n})`,makeSendwayoEmail(a.first,a.last),p,a.id]}),
-  "8493727884 (DANIA SAINTHILAIRE)","DANIA SAINTHILAIRE","daniasainthilaire@gmail.com","EDITA ALBERTO","8299644061 (EDITA ALBERTO)","editaalberto@gmail.com","8092703291 (NENES NENES)","NENES NENES","nenesnenes@gmail.com","8292155657 (FLEURANVIL Herace)","FLEURANVIL Herace","fleuranvilherace@gmail.com","fleuranvil@gmail.com","8494783078 (WILNORD HILAIRSAINT)","WILNORD HILAIRSAINT","wilnordhilairsaint@gmail.com","RENETTE Elissaint","41242170","MANITA JOSEPH","33761163"
-])];
+function getSendwayoSuggestions(){
+  // No hardcoded/default contact seeds: suggest only contacts from the shared Firebase directory.
+  const people=typeof window.__sendwayoGlobalPeople==="function"?window.__sendwayoGlobalPeople():[];
+  const values=[];
+  for(const person of Array.isArray(people)?people:[]){
+    const phone=String(person.phone||"").trim();
+    const name=String(person.name||person.displayName||"").trim();
+    if(name)values.push(name);
+    if(phone)values.push(phone);
+    if(phone&&name)values.push(phone+" ("+name+")");
+    for(const alias of Array.isArray(person.aliases)?person.aliases:[]){
+      const value=String(alias||"").trim();
+      if(value)values.push(value);
+      if(phone&&value)values.push(phone+" ("+value+")");
+    }
+  }
+  return [...new Set(values)].filter(Boolean).slice(0,5000);
+}
 
 function installSendwayoSuggestions(){
   const ensure=()=>{
@@ -521,14 +534,22 @@ function installSendwayoSuggestions(){
       }
     });
     dl.innerHTML="";
-    [...new Set(SENDWAYO_SUGGESTIONS)].forEach(v=>{
+    [...new Set(getSendwayoSuggestions())].forEach(v=>{
       const option=document.createElement("option");option.value=v;dl.appendChild(option);
     });
   };
   ensure();
   if(!window.__sendwayoSuggestionObserver){
-    window.__sendwayoSuggestionObserver=new MutationObserver(ensure);
-    window.__sendwayoSuggestionObserver.observe(document.getElementById("root"),{childList:true,subtree:true});
+    const root=document.getElementById("root");
+    if(root){
+      window.__sendwayoSuggestionObserver=new MutationObserver(ensure);
+      window.__sendwayoSuggestionObserver.observe(root,{childList:true,subtree:true});
+    }
+  }
+  window.__sendwayoRefreshLegacyDatalist=ensure;
+  if(!window.__sendwayoLegacySuggestionBound){
+    window.__sendwayoLegacySuggestionBound=true;
+    window.addEventListener("sendwayo:shared-contacts-updated",ensure);
   }
 }
 setTimeout(installSendwayoSuggestions,0);
