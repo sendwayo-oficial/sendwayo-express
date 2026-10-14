@@ -85,6 +85,7 @@
   }
   function announceContactsChanged() {
     window.dispatchEvent(new CustomEvent('sendwayo:shared-contacts-updated', { detail: { count: sharedContacts.length } }));
+    try { window.__sendwayoRefreshLegacyDatalist?.(); } catch (err) { console.warn('[SENDWAYO] No se pudo actualizar el datalist compartido.', err); }
   }
   function bindCloud() {
     const cloud = window.sendwayoCloud;
