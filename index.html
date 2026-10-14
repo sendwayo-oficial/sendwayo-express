@@ -1154,7 +1154,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
     document.querySelectorAll('input:not([data-sw-suggest])').forEach(inp=>{
       const meta=((inp.placeholder||'')+' '+(inp.name||'')+' '+(inp.id||'')).toLowerCase();if(!/(benefici|cliente|remitente|agente|telefono|teléfono|phone|buscar|búsqueda|busqueda|destinat)/i.test(meta))return;inp.dataset.swSuggest='1';const box=document.createElement('div');box.style.cssText='position:fixed;z-index:1000000;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 30px #0002;max-height:240px;overflow:auto;display:none';document.body.appendChild(box);
       const place=()=>{const r=inp.getBoundingClientRect();box.style.left=r.left+'px';box.style.top=(r.bottom+4)+'px';box.style.width=Math.max(r.width,280)+'px'};
-      inp.addEventListener('input',()=>{if(inp.dataset.swSuggestionApplying==='1')return;const q=inp.value.toLowerCase().trim();if(!q){box.style.display='none';return}const hits=all.filter(u=>window.__sendwayoSuggestionMatches?window.__sendwayoSuggestionMatches(u,q):[u.name,u.phone,u.id,u.email,u.code].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,8);box.innerHTML=hits.map(u=>'<button type="button" style="display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-bottom:1px solid #eee;font-size:12px"><b>'+String(u.phone||u.id||'')+'</b> <span>('+String(u.name||'')+')</span></button>').join('');if(!hits.length){box.style.display='none';return}place();box.style.display='block';[...box.querySelectorAll('button')].forEach((b,i)=>b.onclick=()=>{const u=hits[i];if(window.__sendwayoApplySuggestion)window.__sendwayoApplySuggestion(inp,u);else{inp.value=(u.phone||u.id||'')+' ('+(u.name||'')+')';inp.dispatchEvent(new Event('change',{bubbles:true}))}box.style.display='none'})});window.addEventListener('resize',place);window.addEventListener('scroll',place,true);
+      inp.addEventListener('input',()=>{if(inp.dataset.swSuggestionApplying==='1')return;const q=inp.value.toLowerCase().trim();if(!q){box.style.display='none';return}const hits=all.filter(u=>window.__sendwayoSuggestionMatches?window.__sendwayoSuggestionMatches(u,q):[u.name,u.phone,u.id,u.email,u.code].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,8);const exact=window.__sendwayoExactPhoneMatch?window.__sendwayoExactPhoneMatch(q,hits):null;box.innerHTML=(exact?'<div style="padding:8px 10px;background:#fff7ed;color:#9a3412;font-size:11px;font-weight:900;border-bottom:1px solid #fed7aa">⚠ Este número ya está registrado. Selecciona el contacto existente.</div>':'')+hits.map(u=>'<button type="button" style="display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-bottom:1px solid #eee;font-size:12px"><b>'+String(u.phone||u.id||'')+'</b> <span>('+String(u.name||'')+')</span></button>').join('');if(!hits.length){box.style.display='none';return}place();box.style.display='block';[...box.querySelectorAll('button')].forEach((b,i)=>b.onclick=()=>{const u=hits[i];if(window.__sendwayoApplySuggestion)window.__sendwayoApplySuggestion(inp,u);else{inp.value=(u.phone||u.id||'')+' ('+(u.name||'')+')';inp.dispatchEvent(new Event('change',{bubbles:true}))}box.style.display='none'})});window.addEventListener('resize',place);window.addEventListener('scroll',place,true);
     });
   }
   function interceptAdminButtons(){ /* sustituido por el manejador monetario unificado V19 */ }
@@ -1714,10 +1714,19 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     savePackage: invoke('savePackage'),
     updatePackageStatus: invoke('updatePackageStatus'),
     updatePackageDetails: invoke('updatePackageDetails'),
-    saveBeneficiary: invoke('saveBeneficiary'),
+    saveBeneficiary: async payload => {
+      const result = await invoke('saveBeneficiary')(payload);
+      if (result?.duplicateContact && !result?.repeated) event('sendwayo:duplicate-contact', { name: result.existingName || '', phone: payload?.phone || '' });
+      return result;
+    },
     deleteBeneficiary: invoke('deleteBeneficiary'),
+    syncContactDirectory: invoke('syncContactDirectory'),
     listenMyBeneficiaries: callback => { if (!auth.currentUser) throw new Error('Inicia sesión para consultar beneficiarios.'); const uid=auth.currentUser.uid; return onSnap(db.collection('beneficiaries').where('createdByUid','==',uid).where('active','==',true), snap=>callback(snap.docs.map(serial)), 'my-beneficiaries'); },
     listenAdminBeneficiaries: callback => { if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('beneficiaries').where('active','==',true), snap=>callback(snap.docs.map(serial)), 'admin-beneficiaries'); },
+    listenSharedContacts: callback => {
+      if (!auth.currentUser) throw new Error('Inicia sesión para consultar las sugerencias compartidas.');
+      return onSnap(db.collection('contactDirectory').where('active', '==', true), snap => callback(snap.docs.map(serial)), 'shared-contact-directory');
+    },
     saveReconciliation: invoke('saveReconciliation'),
     cancelReconciliation: invoke('cancelReconciliation'),
     listenAdminReconciliations: callback => { if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('reconciliations'), snap => callback(snap.docs.map(serial).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))), 'admin-reconciliations'); },
