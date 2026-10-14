@@ -265,23 +265,52 @@ function loadSendwayoUsers(){
 function saveSendwayoUsers(users){try{const safe=(Array.isArray(users)?users:[]).map(row=>{const clean={...row};delete clean.password;delete clean.pass;delete clean.plainPassword;return clean});localStorage.setItem(SENDWAYO_USER_STORE,JSON.stringify(safe))}catch(e){}
 }
 function UserProfileModal({user,onClose,onSave}){
-  const [password,setPassword]=y.useState("");
-  const [confirm,setConfirm]=y.useState("");
   const [photo,setPhoto]=y.useState(user?.photo||"");
   const [message,setMessage]=y.useState("");
+  const [busy,setBusy]=y.useState(false);
   const fileRef=y.useRef(null);
-  const choosePhoto=(e)=>{
+  const choosePhoto=e=>{
     const file=e.target.files&&e.target.files[0];if(!file)return;
     const reader=new FileReader();
-    reader.onload=()=>{setPhoto(String(reader.result||""));setMessage("Foto cargada. Guarda los cambios.")};
+    reader.onload=()=>{setPhoto(String(reader.result||""));setMessage("Foto cargada. Guarda para aplicarla a esta sesión.")};
     reader.readAsDataURL(file);
   };
-  const save=async()=>{
-    if(password&&password.length<6){setMessage("La contraseña debe tener al menos 6 caracteres.");return}
-    if(password!==confirm){setMessage("Las contraseñas no coinciden.");return}
-    try{const passwordHash=password?await hashSendwayoPassword(password):undefined;if(password&&!passwordHash){setMessage("No se pudo proteger la contraseña. Abra el sistema desde HTTPS.");return}onSave({password:password?undefined:undefined,passwordHash:passwordHash||user?.passwordHash,photo});setPassword("");setConfirm("");setMessage("Cambios guardados correctamente.")}catch(e){setMessage("No se pudieron guardar los cambios en este dispositivo.")}
+  const save=()=>{
+    try{onSave({photo});setMessage("Foto de perfil actualizada.");}
+    catch(e){setMessage("No se pudo actualizar la foto.")};
   };
-  return r("div",{className:"fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-3 sm:p-4",children:u("div",{className:"bg-white rounded-xl w-full max-w-[420px] max-h-[92vh] overflow-y-auto shadow-2xl border",children:[u("div",{className:"bg-[#0a245e] text-white px-4 py-3 flex items-center justify-between",children:[u("div",{className:"font-black text-[14px]",children:"Mi perfil"}),r("button",{onClick:onClose,className:"w-8 h-8 rounded-full bg-white/10",children:"✕"})]}),u("div",{className:"p-4 space-y-4",children:[u("div",{className:"flex items-center gap-3",children:[r("div",{className:"w-16 h-16 rounded-full bg-gray-100 border overflow-hidden flex items-center justify-center text-2xl",children:photo?r("img",{src:photo,alt:"Foto de perfil",className:"w-full h-full object-cover"}):"👤"}),u("div",{className:"min-w-0",children:[r("div",{className:"font-black text-[15px] truncate",children:user?.name||""}),r("div",{className:"text-[11px] text-gray-500",children:[user?.role||"",user?.id?` · ${user.id}`:"", " · ", user?.identifier||""]}),r("button",{onClick:()=>fileRef.current?.click(),className:"mt-2 bg-gray-100 border rounded-lg px-3 py-1.5 text-[11px] font-bold",children:"Subir foto de perfil"}),r("input",{ref:fileRef,type:"file",accept:"image/*",onChange:choosePhoto,className:"hidden"})]})]}),u("div",{className:"border rounded-lg p-3 space-y-3",children:[u("div",{children:[r("label",{className:"text-[11px] font-bold text-gray-700",children:"Nueva contraseña"}),r("input",{type:"password",value:password,onChange:e=>setPassword(e.target.value),autoComplete:"new-password",placeholder:"Dejar vacío para no cambiar",className:"mt-1 w-full border rounded-lg px-3 py-2.5 text-[13px]"})]}),u("div",{children:[r("label",{className:"text-[11px] font-bold text-gray-700",children:"Confirmar contraseña"}),r("input",{type:"password",value:confirm,onChange:e=>setConfirm(e.target.value),autoComplete:"new-password",placeholder:"Repetir nueva contraseña",className:"mt-1 w-full border rounded-lg px-3 py-2.5 text-[13px]"})]}),message&&r("div",{className:"text-[11px] font-bold text-[#0a245e] bg-blue-50 border border-blue-200 rounded-lg p-2",children:message})]}),r("button",{onClick:save,className:"w-full bg-[#0a245e] text-white py-2.5 rounded-lg font-black",children:"Guardar cambios"})]})]})});
+  const resetPassword=async()=>{
+    if(busy)return;
+    const email=String(user?.email||"").trim();
+    if(!email.includes("@")){setMessage("No hay un correo de Firebase vinculado a esta cuenta. Pide a administración que revise el perfil.");return}
+    const cloud=window.sendwayoCloud;
+    if(!cloud?.ready||typeof cloud.sendPasswordResetEmail!=="function"){setMessage("Firebase no está disponible. No se envió ningún enlace.");return}
+    setBusy(true);
+    try{await cloud.sendPasswordResetEmail(email);setMessage("Se envió un enlace seguro de restablecimiento al correo vinculado.");}
+    catch(e){setMessage(e?.message||"No se pudo enviar el enlace de restablecimiento.");}
+    finally{setBusy(false)}
+  };
+  return r("div",{className:"fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-3 sm:p-4",children:u("div",{className:"bg-white rounded-xl w-full max-w-[420px] max-h-[92vh] overflow-y-auto shadow-2xl border",children:[
+    u("div",{className:"bg-[#0a245e] text-white px-4 py-3 flex items-center justify-between",children:[u("div",{className:"font-black text-[14px]",children:"Mi perfil"}),r("button",{onClick:onClose,className:"w-8 h-8 rounded-full bg-white/10",children:"✕"})]}),
+    u("div",{className:"p-4 space-y-4",children:[
+      u("div",{className:"flex items-center gap-3",children:[
+        r("div",{className:"w-16 h-16 rounded-full bg-gray-100 border overflow-hidden flex items-center justify-center text-2xl",children:photo?r("img",{src:photo,alt:"Foto de perfil",className:"w-full h-full object-cover"}):"👤"}),
+        u("div",{className:"min-w-0",children:[
+          u("div",{className:"font-black text-[15px] truncate",children:user?.name||""}),
+          u("div",{className:"text-[11px] text-gray-500",children:[user?.role||"",user?.id?" · "+user.id:""," · ",user?.email||""]}),
+          r("button",{onClick:()=>fileRef.current?.click(),className:"mt-2 bg-gray-100 border rounded-lg px-3 py-1.5 text-[11px] font-bold",children:"Subir foto de perfil"}),
+          r("input",{ref:fileRef,type:"file",accept:"image/*",onChange:choosePhoto,className:"hidden"})
+        ]})
+      ]}),
+      u("div",{className:"border rounded-lg p-3 space-y-2",children:[
+        u("div",{className:"font-black text-[12px] text-[#0a245e]",children:"Seguridad de la cuenta"}),
+        u("div",{className:"text-[11px] text-gray-600",children:"La contraseña se gestiona en Firebase Authentication. No se guarda ni se muestra en el perfil."}),
+        r("button",{onClick:resetPassword,disabled:busy,className:"w-full bg-gray-100 border px-3 py-2.5 rounded-lg text-[11px] font-bold",children:busy?"Enviando enlace…":"Enviar enlace para restablecer mi contraseña"})
+      ]}),
+      message&&u("div",{className:"text-[11px] font-bold text-[#0a245e] bg-blue-50 border border-blue-200 rounded-lg p-2",children:message}),
+      r("button",{onClick:save,className:"w-full bg-[#0a245e] text-white py-2.5 rounded-lg font-black",children:"Guardar foto"})
+    ]})
+  ]})});
 }
 async function hashSendwayoPassword(value){
   try{
@@ -1917,7 +1946,18 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     adminCreateAccount: invoke('adminCreateAccount'),
     updateProfileDetails: invoke('updateProfileDetails'),
     deactivateProfile: invoke('deactivateProfile'),
-    sendPasswordResetEmail: async email => { if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); await auth.sendPasswordResetEmail(String(email).trim()); return { ok: true }; },
+    sendPasswordResetEmail: async email => {
+      if (!auth.currentUser) throw new Error('Inicia sesión antes de restablecer la contraseña.');
+      const target = String(email || '').trim().toLowerCase();
+      if (!target || !target.includes('@')) throw new Error('No hay un correo válido para restablecer.');
+      if (target !== String(auth.currentUser.email || '').trim().toLowerCase()) {
+        const p = await profile();
+        const r = String(p?.role || '').trim().toLowerCase();
+        if (!['admin','administrador'].includes(r)) throw new Error('Solo administración puede enviar un restablecimiento a otra cuenta.');
+      }
+      await auth.sendPasswordResetEmail(target);
+      return { ok: true };
+    },
     submitOperation: invoke('submitOperation'),
     reviewOperation: invoke('reviewOperation'),
     requestBalanceCredit: invoke('requestBalanceCredit'),
