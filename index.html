@@ -1654,6 +1654,14 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar perfiles.');
     return onSnap(db.collection('profiles'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-profiles');
   }
+  function listenAssignableRemitters(callback) {
+    if (!auth.currentUser) throw new Error('Inicia sesión para consultar los remitentes autorizados.');
+    return onSnap(
+      db.collection('profiles').where('role', '==', 'remitente').where('status', 'in', ['active', 'approved', 'aprobado', 'activo']),
+      snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))),
+      'active-remitters-for-operations'
+    );
+  }
   function listenSystemBalance(callback, target = 'admin') {
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar el balance administrativo.');
     if (!['admin', 'operations'].includes(String(target))) throw new Error('Destino de balance administrativo no permitido.');
@@ -1748,7 +1756,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     saveReconciliation: invoke('saveReconciliation'),
     cancelReconciliation: invoke('cancelReconciliation'),
     listenAdminReconciliations: callback => { if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('reconciliations'), snap => callback(snap.docs.map(serial).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))), 'admin-reconciliations'); },
-    listenMyOperations, listenAdminOperations, listenAgentReviewQueue, listenAccount, listenAllAccounts, listenAllProfiles, listenSystemBalance, listenNotifications,
+    listenMyOperations, listenAdminOperations, listenAgentReviewQueue, listenAccount, listenAllAccounts, listenAllProfiles, listenAssignableRemitters, listenSystemBalance, listenNotifications,
     listenBankAccounts, listenAllBankAccounts, listenMyPackages, listenAdminPackages,
     listenReceipts, listenAdminReceipts, listenWelcomeRequests, listenMyWelcomeRequest,
     markNotificationRead: async (notificationId) => {
