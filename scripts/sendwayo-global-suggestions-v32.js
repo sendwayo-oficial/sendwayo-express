@@ -11,6 +11,13 @@
   const safeArray = v => Array.isArray(v) ? v : [];
   const text = v => String(v == null ? '' : v).trim();
   const digits = v => text(v).replace(/\D/g, '');
+  const canonicalPhone = v => {
+    let d = digits(v);
+    if (d.startsWith('009') && d.length > 10) d = d.slice(2);
+    if (d.startsWith('1') && d.length === 11) d = d.slice(1);
+    if (d.startsWith('509') && d.length === 11) d = d.slice(3);
+    return d;
+  };
   const lower = v => text(v).toLocaleLowerCase('es');
   function normalize(row, fallbackRole) {
     if (!row || typeof row !== 'object') return null;
@@ -55,9 +62,9 @@
     if (!q) return false;
     const fields = [person.name, person.phone, person.code, person.id, person.email, ...safeArray(person.aliases)];
     if (fields.some(v => lower(v).includes(q))) return true;
-    const qDigits = digits(q);
+    const qDigits = canonicalPhone(q);
     return qDigits.length >= 2 && [person.phone, person.code, person.id].some(v => {
-      const d = digits(v);
+      const d = canonicalPhone(v);
       return d && d.includes(qDigits);
     });
   }
@@ -152,10 +159,10 @@
     box._timer = setTimeout(() => { box.style.display = 'none'; }, 6500);
   });
   function exactPhoneMatch(query, people) {
-    const q = digits(query);
+    const q = canonicalPhone(query);
     if (q.length < 7) return null;
     return safeArray(people).find(p => {
-      const pDigits = digits(p.phone);
+      const pDigits = canonicalPhone(p.phone);
       return pDigits.length >= 7 && pDigits === q;
     }) || null;
   }
