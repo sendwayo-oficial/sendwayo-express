@@ -24,13 +24,12 @@ jobs:
           for(const code of blocks){n++;try{new Function(code)}catch(e){console.error('Inline script #'+n+' invalido:',e.message);process.exit(1)}}
           console.log('Inline JavaScript OK:',n,'bloques');
           NODE
-      - name: Check critical hardening markers
+      - name: Validate shared Firebase contact integration
         run: |
-          if grep -q 'SW_POINT_A_RECOVERY_REDIRECT' index.html; then
-            grep -q 'https://sendwayo-express-app-101.web.app/' index.html
-            echo "SENDWAYO recovery redirect target OK"
-            exit 0
-          fi
-          grep -q 'sendwayo-professional-hardening' index.html
-          grep -q 'ganancias-dia-card' index.html
-          echo "SENDWAYO critical markers OK"
+          grep -q "sendwayoCloud = Object.freeze" index.html
+          grep -q "submitOperation: invoke('submitOperation')" index.html
+          grep -q "listenSharedContacts" index.html
+          grep -q "syncContactDirectory" index.html
+          grep -q 'scripts/sendwayo-global-suggestions-v32.js' index.html
+          node --check scripts/sendwayo-global-suggestions-v32.js
+          echo "SENDWAYO Firebase and global-contact integration markers OK"
