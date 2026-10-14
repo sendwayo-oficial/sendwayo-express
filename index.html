@@ -1704,11 +1704,13 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
   function listenAllAccounts(callback) {
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar las cuentas.');
-    return onSnap(db.collection('accounts'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-accounts');
+    return onSnap(db.collection('accounts'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))
+      .filter(row => row.active !== false && String(row.status || '').toLowerCase() !== 'inactive')), 'all-accounts');
   }
   function listenAllProfiles(callback) {
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar perfiles.');
-    return onSnap(db.collection('profiles'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-profiles');
+    return onSnap(db.collection('profiles'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))
+      .filter(row => ['active','approved','aprobado','activo'].includes(String(row.status || '').toLowerCase()))), 'all-profiles');
   }
   function listenAssignableRemitters(callback) {
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar los remitentes autorizados.');
