@@ -297,28 +297,43 @@ function PublicRequestForm({requestType,onClose}){
   const [msg,setMsg]=y.useState("");
   const submit=async()=>{
     if(!form.nombre.trim()||!form.telefono.trim()){setMsg("Nombre y celular son obligatorios.");return}
-    let passwordHash="";
-    if(needsAccount){
-      const username=form.usuario.trim();
-      if(username.length<4){setMsg("El usuario debe tener al menos 4 caracteres.");return}
-      if(!/^[^\s]{4,64}$/.test(username)){setMsg("El usuario no debe contener espacios.");return}
-      if(form.password.length<6){setMsg("La contraseña debe tener al menos 6 caracteres.");return}
-      if(form.password!==form.confirmPassword){setMsg("Las contraseñas no coinciden.");return}
-      const known=loadSendwayoUsers().some(u=>(u.identifiers||[]).some(id=>String(id).trim().toLowerCase()===username.toLowerCase())||String(u.username||"").toLowerCase()===username.toLowerCase());
-      if(known){setMsg("Ese usuario ya está registrado. Elija otro.");return}
-      passwordHash=await hashSendwayoPassword(form.password);
-      if(!passwordHash){setMsg("No se pudo proteger la contraseña en este navegador. Abra el sistema desde HTTPS después de subirlo a Firebase Hosting.");return}
-    }
+    const cloud=window.sendwayoCloud;
+    if(!cloud?.ready){setMsg("Firebase no está disponible. No se guardó la solicitud; inténtalo de nuevo cuando haya conexión.");return}
     try{
-      const key="sendwayo_public_requests";
-      const all=JSON.parse(localStorage.getItem(key)||"[]");
-      const req={id:`SOL-${Date.now()}`,tipo:requestType,nombre:form.nombre.trim(),telefono:form.telefono.trim(),email:form.email.trim(),ciudad:form.ciudad.trim(),detalle:form.detalle.trim(),estado:"Pendiente",createdAt:Date.now()};
-      if(needsAccount){req.usuario=form.usuario.trim();req.passwordHash=passwordHash;req.detalle=[req.detalle,`Solicitud de acceso como ${requestType}. Usuario elegido: ${req.usuario}.`].filter(Boolean).join(" ")}
-      localStorage.setItem(key,JSON.stringify([req,...all]));
-      setMsg(needsAccount?"Solicitud enviada. El administrador debe aprobarla antes de habilitar el acceso.":"Solicitud enviada al administrador correctamente.");
-      setForm({nombre:"",telefono:"",email:"",ciudad:"",detalle:"",usuario:"",password:null,confirmPassword:""});
-      window.dispatchEvent(new CustomEvent("sendwayo-public-request"));
-    }catch(e){setMsg("No se pudo guardar la solicitud en este dispositivo.")}
+      if(needsAccount){
+        const email=form.email.trim().toLowerCase();
+        const username=form.usuario.trim();
+        if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setMsg("Para crear una cuenta real de SENDWAYO, el correo electrónico es obligatorio.");return}
+        if(username.length<4||!/^[^\s]{4,64}$/.test(username)){setMsg("El usuario debe tener al menos 4 caracteres y no contener espacios.");return}
+        if(!form.password||form.password.length<6){setMsg("La contraseña debe tener al menos 6 caracteres.");return}
+        if(form.password!==form.confirmPassword){setMsg("Las contraseñas no coinciden.");return}
+        if(typeof cloud.register!=="function"){setMsg("El registro de Firebase no está disponible. No se creó ninguna cuenta.");return}
+        const result=await cloud.register({
+          email,
+          password:form.password,
+          displayName:form.nombre.trim(),
+          phone:form.telefono.trim(),
+          username,
+          requestedRole:requestType==="agente"?"agent":"remitente"
+        });
+        setMsg(result?.message||"Solicitud enviada a Firebase. El administrador debe aprobar el perfil antes de activar el acceso.");
+      }else{
+        if(typeof cloud.submitPublicRequest!=="function"){setMsg("No está disponible el servicio seguro de solicitudes. No se guardó nada.");return}
+        const result=await cloud.submitPublicRequest({
+          tipo:requestType,
+          nombre:form.nombre.trim(),
+          telefono:form.telefono.trim(),
+          email:form.email.trim(),
+          ciudad:form.ciudad.trim(),
+          detalle:form.detalle.trim()
+        });
+        setMsg(result?.message||"Tu solicitud fue enviada a administración y quedó pendiente de atención.");
+      }
+      setForm({nombre:"",telefono:"",email:"",ciudad:"",detalle:"",usuario:"",password:"",confirmPassword:""});
+    }catch(err){
+      console.error("SENDWAYO: public Firebase request failed",err);
+      setMsg(err?.message||"No se pudo registrar la solicitud en Firebase. No se guardó en este dispositivo.");
+    }
   };
   const field=(key,placeholder,type="text",autoComplete="off")=>r("input",{value:form[key],onChange:e=>setForm({...form,[key]:e.target.value}),placeholder,className:"w-full border rounded-lg px-3 py-2.5 text-[12px]",type,autoComplete});
   return u("div",{className:"mt-3 space-y-2",children:[
