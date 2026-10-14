@@ -14,16 +14,30 @@ jobs:
           node-version: 20
       - name: Validate Firebase rules JSON
         run: node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('database.rules.json OK')"
-      - name: Validate inline JavaScript
+      - name: Validate inline JavaScript with file/line diagnostics
+        shell: bash
         run: |
-          node <<'NODE'
-          const fs=require('fs');
-          const html=fs.readFileSync('index.html','utf8');
-          const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
-          let n=0;
-          for(const code of blocks){n++;try{new Function(code)}catch(e){console.error('Inline script #'+n+' invalido:',e.message);process.exit(1)}}
-          console.log('Inline JavaScript OK:',n,'bloques');
-          NODE
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          blocks = re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script\s*>', html, re.I)
+          count = 0
+          for i, code in enumerate(blocks, 1):
+              if not code.strip():
+                  continue
+              Path(f'/tmp/sendwayo-inline-{i}.js').write_text(code, encoding='utf-8')
+              count += 1
+          if count == 0:
+              raise SystemExit('No inline JavaScript blocks found')
+          print(f'Extracted {count} inline JavaScript blocks')
+          PY
+          for f in /tmp/sendwayo-inline-*.js; do
+            [ -f "$f" ] || continue
+            echo "Checking $f"
+            node --check "$f"
+          done
       - name: Validate shared Firebase contact integration
         run: |
           grep -q "sendwayoCloud = Object.freeze" index.html
