@@ -1941,6 +1941,11 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       }
     },
     submitPublicRequest: async payload => (await callable('submitPublicRequest')(payload)).data,
+    reviewPublicRequest: invoke('reviewPublicRequest'),
+    listenAdminPublicRequests: callback => {
+      if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
+      return onSnap(db.collection('publicRequests').orderBy('createdAtMs', 'desc'), snap => callback(snap.docs.map(serial)), 'admin-public-requests');
+    },
     getProfile: profile,
     resolveOrBootstrapProfile: invoke('resolveOrBootstrapProfile'),
     adminCreateAccount: invoke('adminCreateAccount'),
