@@ -1,0 +1,159 @@
+name: SENDWAYO — Diagnose legacy login data (read only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-legacy-firebase-login.yml"
+  workflow_dispatch:
+    inputs:
+      confirm_project:
+        description: "Read-only inspection of legacy Firebase project sendwayo-express"
+        required: true
+        type: choice
+        options:
+          - "CANCEL"
+          - "DIAGNOSE sendwayo-express"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sendwayo-legacy-login-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    name: Check legacy Firebase Authentication and Realtime Database (no writes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      EXPECTED_PROJECT: sendwayo-express
+      CONFIRM_PROJECT: ${{ inputs.confirm_project }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate the legacy service account
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$CONFIRM_PROJECT" != "DIAGNOSE sendwayo-express" ]; then
+            echo "::error::Diagnostic cancelled because the exact legacy project was not confirmed."
+            exit 1
+          fi
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::This repository does not have FIREBASE_SERVICE_ACCOUNT configured; nothing was accessed or changed."
+            exit 1
+          fi
+          node - <<'NODE'
+          const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+          if (key.type !== 'service_account' || key.project_id !== process.env.EXPECTED_PROJECT || !key.private_key || !key.client_email) {
+            console.error('BLOCKED: the credential is not a service-account key for the legacy project.');
+            process.exit(2);
+          }
+          console.log('Legacy project credential verified. Values are not printed.');
+          NODE
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Firebase CLI and Admin SDK in a temporary directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global firebase-tools
+          mkdir -p "$RUNNER_TEMP/sendwayo-legacy-diagnostic"
+          npm install --prefix "$RUNNER_TEMP/sendwayo-legacy-diagnostic" firebase-admin
+
+      - name: Read legacy Authentication and users branch without logging personal data
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEY_FILE="$RUNNER_TEMP/legacy-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$KEY_FILE" >> "$GITHUB_ENV"
+          export GOOGLE_APPLICATION_CREDENTIALS="$KEY_FILE"
+          firebase database:get /sendwayo_express_v2/users --project "$EXPECTED_PROJECT" --json > "$RUNNER_TEMP/legacy-users.json"
+          LEGACY_USERS_FILE="$RUNNER_TEMP/legacy-users.json" KEY_FILE="$KEY_FILE" node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const admin = require(path.join(process.env.RUNNER_TEMP || '/tmp', 'sendwayo-legacy-diagnostic/node_modules/firebase-admin'));
+          const key = JSON.parse(fs.readFileSync(process.env.KEY_FILE, 'utf8'));
+          admin.initializeApp({ credential: admin.credential.cert(key), projectId: process.env.EXPECTED_PROJECT });
+
+          const root = JSON.parse(fs.readFileSync(process.env.LEGACY_USERS_FILE, 'utf8'));
+          const users = root && typeof root === 'object' && root.sendwayo_express_v2
+            ? root.sendwayo_express_v2.users
+            : root;
+          const rows = users && typeof users === 'object' ? Object.entries(users).filter(([, value]) => value && typeof value === 'object') : [];
+          const byRole = { admin: 0, agent: 0, remitente: 0, other: 0 };
+          let active = 0, withAuthUid = 0, withAuthEmail = 0, withUsername = 0;
+          let adminRecordExists = false, adminHasAuthUid = false, adminHasAuthEmail = false;
+          const normalizeRole = v => {
+            const role = String(v || '').trim().toLowerCase();
+            if (['admin','administrador'].includes(role)) return 'admin';
+            if (['agent','agente'].includes(role)) return 'agent';
+            if (['remitente','sender','remitter'].includes(role)) return 'remitente';
+            return 'other';
+          };
+          for (const [id, row] of rows) {
+            const role = normalizeRole(row.role || row.rol || (id === 'admin' ? 'admin' : ''));
+            byRole[role]++;
+            if (row.active !== false && row.disabled !== true && !['inactive','disabled','inactivo'].includes(String(row.status || '').toLowerCase())) active++;
+            if (String(row.authUid || '').trim()) withAuthUid++;
+            if (String(row.authEmail || row.email || '').includes('@')) withAuthEmail++;
+            if (String(row.username || '').trim()) withUsername++;
+            if (id.toLowerCase() === 'admin' || role === 'admin' || String(row.authEmail || row.email || '').trim().toLowerCase() === 'sendwayoexpress@gmail.com') {
+              adminRecordExists = true;
+              adminHasAuthUid = Boolean(String(row.authUid || '').trim());
+              adminHasAuthEmail = Boolean(String(row.authEmail || row.email || '').includes('@'));
+            }
+          }
+          async function main() {
+            const auth = admin.auth();
+            const listed = await auth.listUsers(1000);
+            let authCount = listed.users.length, token = listed.pageToken;
+            while (token) {
+              const page = await auth.listUsers(1000, token);
+              authCount += page.users.length;
+              token = page.pageToken;
+            }
+            let adminAuthExists = false, adminAuthDisabled = null;
+            try {
+              const u = await auth.getUserByEmail('sendwayoexpress@gmail.com');
+              adminAuthExists = true;
+              adminAuthDisabled = Boolean(u.disabled);
+            } catch (err) {
+              if (err?.code !== 'auth/user-not-found') throw err;
+            }
+            console.log('READ-ONLY LEGACY LOGIN DIAGNOSTIC');
+            console.log('Legacy Firebase project verified: ' + process.env.EXPECTED_PROJECT);
+            console.log('Firebase Authentication users: ' + authCount);
+            console.log('Realtime Database user records: ' + rows.length);
+            console.log('Legacy records by role: ' + JSON.stringify(byRole));
+            console.log('Records marked active by stored status: ' + active);
+            console.log('Records with Firebase Auth UID: ' + withAuthUid);
+            console.log('Records with an email for Firebase Auth: ' + withAuthEmail);
+            console.log('Records with username field: ' + withUsername);
+            console.log('Legacy admin user record exists: ' + (adminRecordExists ? 'yes' : 'no'));
+            console.log('Legacy admin record has Auth UID: ' + (adminHasAuthUid ? 'yes' : 'no'));
+            console.log('Legacy admin record has Auth email: ' + (adminHasAuthEmail ? 'yes' : 'no'));
+            console.log('Admin Authentication account exists: ' + (adminAuthExists ? 'yes' : 'no'));
+            console.log('Admin Authentication account disabled: ' + (adminAuthDisabled === null ? 'not applicable' : (adminAuthDisabled ? 'yes' : 'no')));
+            console.log('No user names, email addresses, passwords, balances, or record content was printed. No data was written.');
+          }
+          main().catch(err => {
+            console.error('Legacy read-only diagnostic failed:', err?.code || err?.message || 'unknown');
+            process.exit(1);
+          });
+          NODE
+
+      - name: Remove temporary credentials and diagnostic data
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/legacy-service-account.json" "$RUNNER_TEMP/legacy-users.json"
+          rm -rf "$RUNNER_TEMP/sendwayo-legacy-diagnostic"
