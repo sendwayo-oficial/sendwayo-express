@@ -861,11 +861,7 @@ function init(){
   enforceRBAC();
   installBeneficiaryAutocomplete();
   // Re-ejecutar cada 1.5s para SPA
-  setInterval(()=>{
-    enforceRBAC();
-    ensurePlatformWatermark();
-    installBeneficiaryAutocomplete();
-  },1500);
+  setInterval(()=>{ enforceRBAC(); ensurePlatformWatermark(); installBeneficiaryAutocomplete(); },5000);
 }
 
 if(document.readyState==="loading"){
@@ -905,7 +901,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   }
   function approve(id){const a=data(),r=a.find(x=>x.id===id);if(!r)return;const b=balances();b.remitentes=b.remitentes||{};b.agentes=b.agentes||{};const key=r.userId;const isH=(r.currency||'RD$')==='HTG';if(r.userRole==='remitente'){const u=b.remitentes[key]||{};if(isH)u.balanceHTG=Number(u.balanceHTG||0)+Number(r.amount||0);else u.balanceDOP=Number(u.balanceDOP||u.balance||0)+Number(r.amount||0);b.remitentes[key]=u}else{const u=b.agentes[key]||{};if(isH)u.balanceHTG=Number(u.balanceHTG||0)+Number(r.amount||0);else u.balanceDOP=Number(u.balanceDOP||0)+Number(r.amount||0);b.agentes[key]=u}r.status='Aprobado';r.approvedAt=Date.now();save(a);saveBalances(b);alert('Crédito aprobado y agregado al balance.');location.reload()}
   function reject(id){const a=data(),r=a.find(x=>x.id===id);if(!r)return;r.status='Rechazado';r.rejectedAt=Date.now();save(a);alert('Crédito rechazado.');location.reload()}
-  const old=window.__sendwayoCreditAdminTimer; if(old)clearInterval(old); setTimeout(render,700); window.__sendwayoCreditAdminTimer=setInterval(render,1500);
+  const old=window.__sendwayoCreditAdminTimer; if(old)clearInterval(old); setTimeout(render,700); window.__sendwayoCreditAdminTimer=setInterval(render,5000);
 })();
 </script>
 <script>
@@ -942,7 +938,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
     render();
   }
   window.__sendwayoRenderWelcomeRequests=render;
-  function boot(){render();if(!window.__swPublicReqTimer)window.__swPublicReqTimer=setInterval(render,3000)}
+  function boot(){render();if(!window.__swPublicReqTimer)window.__swPublicReqTimer=setInterval(render,5000)}
   if(document.readyState!=="loading")boot();else document.addEventListener("DOMContentLoaded",boot);
 })();
 </script>
@@ -1033,7 +1029,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   }
  }
  function run(){addHero();compactLanguage();roleSummary();depositFormUX()}
- const mo=new MutationObserver(run);mo.observe(document.documentElement,{childList:true,subtree:true});setInterval(run,1200);
+ const mo=new MutationObserver(run);mo.observe(document.documentElement,{childList:true,subtree:true});setInterval(run,5000);
 })();
 </script>
 <script>
@@ -1166,7 +1162,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   // Never call this layer before the app has authenticated.
   installSync();interceptAdminButtons();
   const boot=()=>{addNav();suggestions();setTimeout(()=>{addNav();suggestions()},1200)};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(()=>{addNav();suggestions()},1800);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(()=>{addNav();suggestions()},5000);
 })();
 </script>
 \n<script id="sendwayo-v18-fusion-sync">
@@ -1289,7 +1285,7 @@ function ensureTransferButton(){
 }
 /* Reemplaza únicamente handlers administrativos defectuosos; no toca la pantalla principal. */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b||!isAdmin())return;const t=(b.innerText||'').trim();if(/^(Ajustar\s+(balance|balance|comisi[oó]n)(\s+(htg|dop|rd\$))?|Acreditar\s+(balance|comisi[oó]n|bono|cr[eé]dito)(\s+(htg|dop|rd\$))?)$/i.test(t)){e.preventDefault();e.stopImmediatePropagation();adminAdjust(b)}},true);
-function boot(){installSuggestions();ensureTransferButton();setTimeout(()=>{installSuggestions();ensureTransferButton()},1000);setInterval(()=>{installSuggestions();ensureTransferButton()},1800)}
+function boot(){installSuggestions();ensureTransferButton();setTimeout(()=>{installSuggestions();ensureTransferButton()},1000);setInterval(()=>{installSuggestions();ensureTransferButton()},5000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
@@ -1320,7 +1316,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   make('sw-v19-welcome-nav','Solicitudes de bienvenida','📋',()=>{window.__swWelcomePanelHidden=false;window.__sendwayoRenderWelcomeRequests?.();setTimeout(()=>{const box=document.getElementById('sendwayo-public-request-admin');if(box){box.style.left='272px';box.style.right='auto';box.style.top='82px';box.style.bottom='12px';box.scrollIntoView({behavior:'smooth',block:'nearest'})}else alert('No hay solicitudes de bienvenida pendientes.')},80)});
  }
  function boot(){walletModal();rechargePresets();adminSideLinks()}
- const mo=new MutationObserver(boot);if(document.documentElement)mo.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(boot,1500);
+ const mo=new MutationObserver(boot);if(document.documentElement)mo.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(boot,5000);
 })();
 </script>
 
