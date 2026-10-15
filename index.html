@@ -1697,7 +1697,8 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       legacyId: String(legacyId),
       accountId: String(record.accountId || legacyId),
       code: record.code || record.staffId || legacyId,
-      email: record.authEmail || record.email || user?.email || '',
+      email: user?.email || record.authEmail || record.email || '',
+      storedAuthEmail: String(record.authEmail || record.email || '').trim().toLowerCase(),
       phone: record.phone || record.telefono || ''
     };
   }
@@ -1750,7 +1751,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         cachedLegacyProfile = legacyProfile;
         const key = String(legacyProfile.rtdbUserKey || legacyProfile.id || '');
         const currentEmail = String(legacyUser.email || '').trim().toLowerCase();
-        const storedEmail = String(legacyProfile.authEmail || legacyProfile.email || '').trim().toLowerCase();
+        const storedEmail = String(legacyProfile.storedAuthEmail || legacyProfile.authEmail || legacyProfile.email || '').trim().toLowerCase();
         // Vincula el UID solo cuando el correo autenticado coincide con el correo ya guardado.
         // No modifica nombre, rol, contraseña, balance, comisión ni movimientos.
         if (key && currentEmail && currentEmail === storedEmail && !legacyProfile.authUid) {
@@ -2146,9 +2147,20 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       record.commission = 0; record.commissionTotal = 0; record.commissionRate = 0;
       record.beneficiary = ''; record.beneficiaryPhone = '';
     }
-    await legacyRtdb.ref(legacyPath(collection + '/' + id)).set(record);
+    const operationRef = legacyRtdb.ref(legacyPath(collection + '/' + id));
+    const write = await operationRef.transaction(current => current || record, undefined, false);
+    const saved = write && write.snapshot && write.snapshot.val();
+    if (!write || !saved) throw legacyError('Firebase no confirmó el registro de la operación.');
+    if (!write.committed) {
+      const sameRequest = String(saved.createdByAuthUid || '') === String(legacyAuth.currentUser.uid)
+        && legacyMoney(saved.amount || 0) === amount
+        && String(saved.userId || '') === userId
+        && String(saved.type || saved.category || '') === String(record.type || record.category || '');
+      if (!sameRequest) throw legacyError('El identificador ya corresponde a otra operación. No se modificó ningún registro.');
+      return { id, operationId: id, status: saved.status || saved.estado || 'Pendiente', collection, record: saved, alreadyExists: true };
+    }
     try { await legacySendNotification('admin', 'Nueva solicitud pendiente: ' + record.type + ' · ' + amount + ' ' + currency, collection, id); } catch (_) {}
-    return { id, operationId: id, status: 'Pendiente', collection, record };
+    return { id, operationId: id, status: 'Pendiente', collection, record: saved };
   }
   async function legacyUpdateUserFinancial(userKey, operationId, amount, currency, commissionShare, mode) {
     const ref = legacyRtdb.ref(legacyPath('users/' + userKey));
