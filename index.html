@@ -437,7 +437,7 @@ function AuthGate(){
       setError(window.sendwayoFirebaseError || "No se pudo cargar la configuración completa de Firebase del Punto A. Abre la versión publicada en HTTPS y verifica el Hosting; no se aceptará un acceso local.");return;
     }
     setLoginBusy(true);
-    const withLoginTimeout=promise=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),20000))]);
+    const withLoginTimeout=promise=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),15000))]);
     try{
       let email=value;
       let matchesForLogin=[];
@@ -2800,9 +2800,10 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       };
       add(email);
       for (const value of (Array.isArray(extraEmails) ? extraEmails : [])) add(value);
+      // Mantener el acceso ágil: probar primero los correos explícitos y limitar alias automáticos.
       for (const seed of [...candidates]) {
         const local = seed.split('@')[0];
-        if (local) {
+        if (local && candidates.length < 6) {
           add(local + '@gmail.com');
           add(local + '@sendwayoexpress.com');
         }
@@ -2811,30 +2812,42 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         if (/betina|lindor/.test(local)) add('betinalindor@gmail.com');
         if (/herace|fleuranvil/.test(local)) { add('heraceherace@gmail.com'); add('fleuranvilherace@gmail.com'); }
         if (/admin|sendwayoexpress/.test(local)) add(LEGACY_ADMIN_EMAIL);
+        if (candidates.length >= 8) break;
       }
+      const tryAuth = (authInstance, candidate) => Promise.race([
+        authInstance.signInWithEmailAndPassword(candidate, password),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('La validación de acceso tardó demasiado. Revise la conexión e intente de nuevo.')), 6500))
+      ]);
       authExchangeInProgress = true;
       let legacyError = null;
       let modernError = null;
       try {
-        // Primero se valida la cuenta que ya existe en Firebase Authentication y RTDB.
-        await auth.signOut().catch(() => {});
-        await legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
-        for (const candidate of candidates) {
+        await Promise.race([
+          auth.signOut().catch(() => {}),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+        await Promise.race([
+          legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {}),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+        for (const candidate of candidates.slice(0, 4)) {
           try {
-            const credential = await legacyAuth.signInWithEmailAndPassword(candidate, password);
+            const credential = await tryAuth(legacyAuth, candidate);
             cachedLegacyProfile = null;
             return credential.user;
           } catch (err) {
             legacyError = err;
+            if (err?.message?.includes('tardó demasiado')) break;
           }
         }
-        // Compatibilidad secundaria para cuentas creadas únicamente en el proyecto moderno.
-        for (const candidate of candidates) {
+        // Segundo proyecto: solo los mismos candidatos principales, sin una espera indefinida.
+        for (const candidate of candidates.slice(0, 3)) {
           try {
-            const credential = await auth.signInWithEmailAndPassword(candidate, password);
+            const credential = await tryAuth(auth, candidate);
             return credential.user;
           } catch (err) {
             modernError = err;
+            if (err?.message?.includes('tardó demasiado')) break;
           }
         }
         throw legacyError || modernError || new Error('No se pudieron validar las credenciales.');
