@@ -1699,6 +1699,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       code: record.code || record.staffId || legacyId,
       email: user?.email || record.authEmail || record.email || '',
       storedAuthEmail: String(record.authEmail || record.email || '').trim().toLowerCase(),
+      storedAuthEmails: [record.authEmail, record.email].map(v => String(v || '').trim().toLowerCase()).filter(Boolean),
       phone: record.phone || record.telefono || ''
     };
   }
@@ -1751,13 +1752,16 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         cachedLegacyProfile = legacyProfile;
         const key = String(legacyProfile.rtdbUserKey || legacyProfile.id || '');
         const currentEmail = String(legacyUser.email || '').trim().toLowerCase();
-        const storedEmail = String(legacyProfile.storedAuthEmail || legacyProfile.authEmail || legacyProfile.email || '').trim().toLowerCase();
-        // Vincula el UID solo cuando el correo autenticado coincide con el correo ya guardado.
+        const storedEmails = Array.isArray(legacyProfile.storedAuthEmails)
+          ? legacyProfile.storedAuthEmails
+          : [legacyProfile.storedAuthEmail, legacyProfile.authEmail, legacyProfile.email].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+        // Vincula el UID solo cuando uno de los correos ya guardados coincide exactamente.
         // No modifica nombre, rol, contraseña, balance, comisión ni movimientos.
-        if (key && currentEmail && currentEmail === storedEmail && !legacyProfile.authUid) {
+        if (key && currentEmail && storedEmails.includes(currentEmail) && !legacyProfile.authUid) {
           try {
             await legacyRtdb.ref(legacyPath('users/' + key)).transaction(row => {
-              if (!row || row.authUid || String(row.authEmail || row.email || '').trim().toLowerCase() !== currentEmail) return;
+              const rowEmails = row ? [row.authEmail, row.email].map(v => String(v || '').trim().toLowerCase()).filter(Boolean) : [];
+              if (!row || row.authUid || !rowEmails.includes(currentEmail)) return;
               return { ...row, authUid: legacyUser.uid };
             }, undefined, false);
           } catch (err) {
