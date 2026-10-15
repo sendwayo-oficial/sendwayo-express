@@ -80,9 +80,12 @@ jobs:
           LEGACY_USERS_FILE="$RUNNER_TEMP/legacy-users.json" KEY_FILE="$KEY_FILE" node - <<'NODE'
           const fs = require('fs');
           const path = require('path');
-          const admin = require(path.join(process.env.RUNNER_TEMP || '/tmp', 'sendwayo-legacy-diagnostic/node_modules/firebase-admin'));
+          const sdkPath = path.join(process.env.RUNNER_TEMP || '/tmp', 'sendwayo-legacy-diagnostic/node_modules/firebase-admin');
+          const { initializeApp, cert } = require(path.join(sdkPath, 'app'));
+          const { getAuth } = require(path.join(sdkPath, 'auth'));
           const key = JSON.parse(fs.readFileSync(process.env.KEY_FILE, 'utf8'));
-          admin.initializeApp({ credential: admin.credential.cert(key), projectId: process.env.EXPECTED_PROJECT });
+          const app = initializeApp({ credential: cert(key), projectId: process.env.EXPECTED_PROJECT });
+          const auth = getAuth(app);
 
           const root = JSON.parse(fs.readFileSync(process.env.LEGACY_USERS_FILE, 'utf8'));
           const users = root && typeof root === 'object' && root.sendwayo_express_v2
@@ -113,7 +116,6 @@ jobs:
             }
           }
           async function main() {
-            const auth = admin.auth();
             const listed = await auth.listUsers(1000);
             let authCount = listed.users.length, token = listed.pageToken;
             while (token) {
