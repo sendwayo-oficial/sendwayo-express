@@ -6,10 +6,11 @@
       ".read": false,
       ".write": false,
       "users": {
-        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'authUid' && query.equalTo === auth.uid) || (query.orderByChild === 'authEmail' && query.equalTo === auth.token.email) || (query.orderByChild === 'username' && query.equalTo === auth.token.email) || (query.orderByChild === 'staffId' && query.equalTo === auth.token.email))) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
+        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'authUid' && query.equalTo === auth.uid) || (query.orderByChild === 'authEmail' && query.equalTo === auth.token.email) || (query.orderByChild === 'email' && query.equalTo === auth.token.email) || (query.orderByChild === 'username' && query.equalTo === auth.token.email) || (query.orderByChild === 'staffId' && query.equalTo === auth.token.email))) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
         ".indexOn": [
           "authUid",
-          "authEmail"
+          "authEmail",
+          "email"
         ],
         "$uid": {
           ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || data.child('authUid').val() === auth.uid)) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
