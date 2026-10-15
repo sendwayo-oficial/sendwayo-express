@@ -540,7 +540,11 @@ function AuthGate(){
         if(saved?.uid===authUser.uid&&saved.expiresAt&&saved.expiresAt<=Date.now()){
           await cloud?.signOut?.();clearLocal();if(live)setUser(null);return;
         }
-        let profile=await cloud.getProfile();
+        // Evita que una lectura de Firebase deje congelada para siempre la pantalla de acceso.
+        let profile=await Promise.race([
+          cloud.getProfile(),
+          new Promise((_,reject)=>setTimeout(()=>reject(new Error("La consulta del perfil tardó demasiado; vuelva a iniciar sesión.")),12000))
+        ]);
         if(!profile && typeof cloud.resolveOrBootstrapProfile==="function" && !cloud.isLegacyUser?.(authUser.uid)){
           const resolution=await cloud.resolveOrBootstrapProfile();
           profile=resolution?.profile || await cloud.getProfile();
@@ -1775,14 +1779,21 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     const usersRef = legacyRtdb.ref('sendwayo_express_v2/users');
     const readFirst = async (query) => {
       try {
-        const snap = await query.once('value');
+        const snap = await Promise.race([
+          query.once('value'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera al consultar perfiles')), 3500))
+        ]);
         const value = snap.val();
         if (!value || typeof value !== 'object') return null;
         const rows = Array.isArray(value) ? value.map((row, i) => [String(i), row]) : Object.entries(value);
-        const found = rows.find(([, row]) => row && (
-          String(row.authUid || '') === String(user.uid)
-          || String(row.authEmail || row.email || '').trim().toLowerCase() === String(user.email || '').trim().toLowerCase()
-        ));
+        const email = String(user.email || '').trim().toLowerCase();
+        const found = rows.find(([, row]) => {
+          if (!row || typeof row !== 'object') return false;
+          if (String(row.authUid || '') === String(user.uid)) return true;
+          const emails = [row.authEmail, row.email, row.authEmailLegacy, row.legacyAuthEmail, row.username, row.login, row.identifier]
+            .map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+          return !!email && emails.includes(email);
+        });
         return found ? mapLegacyProfile(found[1], found[0], user) : null;
       } catch (err) {
         console.warn('[SENDWAYO] Perfil legado no disponible por esta clave:', err?.code || 'error');
@@ -1799,6 +1810,28 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       if (profile) return profile;
       profile = await readFirst(usersRef.orderByChild('username').equalTo(email));
       if (profile) return profile;
+      // Respaldo para cuentas antiguas cuyos correos están guardados bajo campos alternativos.
+      // La lectura es solo de consulta; no modifica roles, contraseñas ni datos financieros.
+      try {
+        const snap = await Promise.race([
+          usersRef.once('value'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera al consultar perfiles')), 3500))
+        ]);
+        const value = snap.val();
+        const rows = value && typeof value === 'object'
+          ? (Array.isArray(value) ? value.map((row, i) => [String(i), row]) : Object.entries(value))
+          : [];
+        const found = rows.find(([, row]) => {
+          if (!row || typeof row !== 'object') return false;
+          if (String(row.authUid || '') === String(user.uid)) return true;
+          const emails = [row.authEmail, row.email, row.authEmailLegacy, row.legacyAuthEmail, row.username, row.login, row.identifier]
+            .map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+          return !!email && emails.includes(email);
+        });
+        if (found) return mapLegacyProfile(found[1], found[0], user);
+      } catch (err) {
+        console.warn('[SENDWAYO] Búsqueda de respaldo de perfil no disponible:', err?.code || err?.message || 'error');
+      }
       if (email === 'sendwayoexpress@gmail.com') {
         try {
           const snap = await usersRef.child('admin').once('value');
