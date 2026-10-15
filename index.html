@@ -1629,6 +1629,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
   const callable = functions.httpsCallable.bind(functions);
   const invoke = (name) => async (payload = {}) => {
+    if (legacyAuth.currentUser) return legacyInvoke(name, payload);
     if (!auth.currentUser) throw new Error('Debes iniciar sesión con correo y contraseña.');
     const response = await callable(name)(payload);
     return response.data;
@@ -2487,6 +2488,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
 
   function listenMyOperations(callback) {
+    if (legacyAuth.currentUser) return legacyWatchOperations(false, callback);
     const user = auth.currentUser;
     if (!user) throw new Error('Inicia sesión antes de escuchar transacciones.');
     // Cada consulta conserva su propio conjunto. Un mismo documento puede coincidir
@@ -2504,10 +2506,12 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     return () => { stops.forEach(stop => stop()); byQuery.clear(); };
   }
   function listenAdminOperations(callback) {
+    if (legacyAuth.currentUser) return legacyWatchOperations(true, callback);
     if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
     return onSnap(db.collection('transactions'), snap => callback(snap.docs.map(serial).sort((a, b) => Number(b.createdAtMs || b.createdAt?.toMillis?.() || 0) - Number(a.createdAtMs || a.createdAt?.toMillis?.() || 0))), 'admin-transactions');
   }
   function listenAccount(accountId, callback) {
+    if (legacyAuth.currentUser) return legacyListenAccount(accountId, callback);
     if (!auth.currentUser || !accountId) throw new Error('Falta sesión o identificador de cuenta.');
     return onSnap(db.collection('accounts').doc(String(accountId)), snap => {
       // Si el perfil está aprobado pero aún no existe el documento de saldo,
@@ -2517,14 +2521,17 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     }, `account:${accountId}`);
   }
   function listenAllAccounts(callback) {
+    if (legacyAuth.currentUser) return legacyListenAccounts(callback, false);
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar las cuentas.');
     return onSnap(db.collection('accounts'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-accounts');
   }
   function listenAllProfiles(callback) {
+    if (legacyAuth.currentUser) return legacyListenAccounts(callback, true);
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar perfiles.');
     return onSnap(db.collection('profiles'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-profiles');
   }
   function listenSystemBalance(callback, target = 'admin') {
+    if (legacyAuth.currentUser) return legacyListenSystemBalance(callback, target);
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar el balance administrativo.');
     if (!['admin', 'operations'].includes(String(target))) throw new Error('Destino de balance administrativo no permitido.');
     return onSnap(db.collection('systemBalances').doc(String(target)), snap => {
@@ -2532,41 +2539,50 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     }, `system-balance:${target}`);
   }
   function listenNotifications(callback) {
+    if (legacyAuth.currentUser) return legacyListenNotifications(callback);
     if (!auth.currentUser) throw new Error('Inicia sesión para recibir notificaciones.');
     const uid = auth.currentUser.uid;
     return onSnap(db.collection('notifications').doc(uid).collection('items'), snap => callback(snap.docs.map(serial).sort((a, b) => Number(b.createdAt?.toMillis?.() || 0) - Number(a.createdAt?.toMillis?.() || 0))), 'notifications');
   }
   function listenReceipts(callback) {
+    if (legacyAuth.currentUser) return legacyListenReceipts(false, callback);
     if (!auth.currentUser) throw new Error('Inicia sesión para ver comprobantes.');
     const uid = auth.currentUser.uid;
     return onSnap(db.collection('receipts').where('recipientUids', 'array-contains', uid), snap => callback(snap.docs.map(serial).sort((a, b) => Number(b.approvedAt?.toMillis?.() || 0) - Number(a.approvedAt?.toMillis?.() || 0))), 'receipts');
   }
   function listenBankAccounts(callback) {
+    if (legacyAuth.currentUser) return legacyListenBankAccounts(callback);
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar cuentas bancarias oficiales.');
     return onSnap(db.collection('bankAccounts').where('active', '==', true), snap => callback(snap.docs.map(serial)), 'active-bank-accounts');
   }
   function listenAllBankAccounts(callback) {
+    if (legacyAuth.currentUser) return legacyListenBankAccounts(callback);
     if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
     return onSnap(db.collection('bankAccounts'), snap => callback(snap.docs.map(serial)), 'admin-bank-accounts');
   }
   function listenMyPackages(callback) {
+    if (legacyAuth.currentUser) return legacyListenPackages(false, callback);
     if (!auth.currentUser) throw new Error('Inicia sesión para consultar paquetes.');
     const uid = auth.currentUser.uid;
     return onSnap(db.collection('packages').where('createdByUid', '==', uid), snap => callback(snap.docs.map(serial).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))), 'my-packages');
   }
   function listenAdminPackages(callback) {
+    if (legacyAuth.currentUser) return legacyListenPackages(true, callback);
     if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
     return onSnap(db.collection('packages'), snap => callback(snap.docs.map(serial).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))), 'admin-packages');
   }
   function listenAdminReceipts(callback) {
+    if (legacyAuth.currentUser) return legacyListenReceipts(true, callback);
     if (!auth.currentUser) throw new Error('Inicia sesión como administrador para consultar comprobantes.');
     return onSnap(db.collection('receipts'), snap => callback(snap.docs.map(serial).sort((a, b) => Number(b.approvedAt?.toMillis?.() || 0) - Number(a.approvedAt?.toMillis?.() || 0))), 'admin-receipts');
   }
   function listenWelcomeRequests(callback) {
+    if (legacyAuth.currentUser) return legacyListenRequests(true, callback, false);
     if (!auth.currentUser) throw new Error('Inicia sesión como administrador.');
     return onSnap(db.collection('registrationRequests').where('status', '==', 'Pendiente'), snap => callback(snap.docs.map(serial)), 'welcome-requests');
   }
   function listenMyWelcomeRequest(callback) {
+    if (legacyAuth.currentUser) return legacyListenRequests(false, rows => callback(rows[0] || null), true);
     if (!auth.currentUser) throw new Error('Inicia sesión.');
     const uid = auth.currentUser.uid;
     return onSnap(db.collection('registrationRequests').doc(uid), snap => callback(snap.exists ? serial(snap) : null), 'my-welcome-request');
@@ -2585,41 +2601,51 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     ready: true, auth: authBridge, db,
     isLegacyUser: (uid) => Boolean(!auth.currentUser && legacyAuth.currentUser && legacyAuth.currentUser.uid === uid),
     signIn: async (email, password, extraEmails = []) => {
+      if (!password) throw new Error('Escriba la contraseña.');
       const candidates = [];
       const add = value => {
         const clean = String(value || '').trim().toLowerCase();
         if (clean && clean.includes('@') && !candidates.includes(clean)) candidates.push(clean);
       };
       add(email);
-      for (const candidate of (Array.isArray(extraEmails) ? extraEmails : [])) add(candidate);
-      for (const candidate of [...candidates]) {
-        const local = candidate.split('@')[0];
+      for (const value of (Array.isArray(extraEmails) ? extraEmails : [])) add(value);
+      for (const seed of [...candidates]) {
+        const local = seed.split('@')[0];
         if (local) {
           add(local + '@gmail.com');
           add(local + '@sendwayoexpress.com');
         }
-        if (/dania|sainthilaire/.test(local)) add('daniasaithilaire@gmail.com');
-        if (/edita|alberto/.test(local)) add('editaalberto@gmail.com');
+        if (/dania|sainthilaire/.test(local)) { add('daniasaithilaire@gmail.com'); add('daniasainthilaire@gmail.com'); }
+        if (/edita|alberto/.test(local)) { add('editaalberto@gmail.com'); add('edita.alberto@gmail.com'); }
         if (/betina|lindor/.test(local)) add('betinalindor@gmail.com');
-        if (/herace|fleuranvil/.test(local)) add('heraceherace@gmail.com');
-        if (/admin|sendwayoexpress/.test(local)) add('sendwayoexpress@gmail.com');
+        if (/herace|fleuranvil/.test(local)) { add('heraceherace@gmail.com'); add('fleuranvilherace@gmail.com'); }
+        if (/admin|sendwayoexpress/.test(local)) add(LEGACY_ADMIN_EMAIL);
       }
       authExchangeInProgress = true;
-      let modernError = null, legacyError = null, modernUser = null, legacyUser = null;
+      let legacyError = null;
+      let modernError = null;
       try {
+        // Primero se valida la cuenta que ya existe en Firebase Authentication y RTDB.
+        await auth.signOut().catch(() => {});
+        await legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         for (const candidate of candidates) {
-          if (!modernUser) {
-            try { modernUser = (await auth.signInWithEmailAndPassword(candidate, password)).user; }
-            catch (err) { modernError = err; }
+          try {
+            const credential = await legacyAuth.signInWithEmailAndPassword(candidate, password);
+            cachedLegacyProfile = null;
+            return credential.user;
+          } catch (err) {
+            legacyError = err;
           }
-          if (!legacyUser) {
-            try { legacyUser = (await legacyAuth.signInWithEmailAndPassword(candidate, password)).user; }
-            catch (err) { legacyError = err; }
-          }
-          if (modernUser && legacyUser) break;
         }
-        if (modernUser) return modernUser;
-        if (legacyUser) return legacyUser;
+        // Compatibilidad secundaria para cuentas creadas únicamente en el proyecto moderno.
+        for (const candidate of candidates) {
+          try {
+            const credential = await auth.signInWithEmailAndPassword(candidate, password);
+            return credential.user;
+          } catch (err) {
+            modernError = err;
+          }
+        }
         throw legacyError || modernError || new Error('No se pudieron validar las credenciales.');
       } finally {
         authExchangeInProgress = false;
@@ -2653,16 +2679,20 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     updatePackageDetails: invoke('updatePackageDetails'),
     saveBeneficiary: invoke('saveBeneficiary'),
     deleteBeneficiary: invoke('deleteBeneficiary'),
-    listenMyBeneficiaries: callback => { if (!auth.currentUser) throw new Error('Inicia sesión para consultar beneficiarios.'); const uid=auth.currentUser.uid; return onSnap(db.collection('beneficiaries').where('createdByUid','==',uid).where('active','==',true), snap=>callback(snap.docs.map(serial)), 'my-beneficiaries'); },
-    listenAdminBeneficiaries: callback => { if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('beneficiaries').where('active','==',true), snap=>callback(snap.docs.map(serial)), 'admin-beneficiaries'); },
+    listenMyBeneficiaries: callback => { if (legacyAuth.currentUser) return legacyListenBeneficiaries(false, callback); if (!auth.currentUser) throw new Error('Inicia sesión para consultar beneficiarios.'); const uid=auth.currentUser.uid; return onSnap(db.collection('beneficiaries').where('createdByUid','==',uid).where('active','==',true), snap=>callback(snap.docs.map(serial)), 'my-beneficiaries'); },
+    listenAdminBeneficiaries: callback => { if (legacyAuth.currentUser) return legacyListenBeneficiaries(true, callback); if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('beneficiaries').where('active','==',true), snap=>callback(snap.docs.map(serial)), 'admin-beneficiaries'); },
     saveReconciliation: invoke('saveReconciliation'),
     cancelReconciliation: invoke('cancelReconciliation'),
-    listenAdminReconciliations: callback => { if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('reconciliations'), snap => callback(snap.docs.map(serial).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))), 'admin-reconciliations'); },
+    listenAdminReconciliations: callback => { if (legacyAuth.currentUser) return legacyListenReconciliations(callback); if (!auth.currentUser) throw new Error('Inicia sesión como administrador.'); return onSnap(db.collection('reconciliations'), snap => callback(snap.docs.map(serial).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))), 'admin-reconciliations'); },
     listenMyOperations, listenAdminOperations, listenAccount, listenAllAccounts, listenAllProfiles, listenSystemBalance, listenNotifications,
     listenBankAccounts, listenAllBankAccounts, listenMyPackages, listenAdminPackages,
     listenReceipts, listenAdminReceipts, listenWelcomeRequests, listenMyWelcomeRequest,
     markNotificationRead: async (notificationId) => {
-      // The client may mark its own notice read; status/amount fields are never edited here.
+      // El usuario solo marca sus propias notificaciones como leídas.
+      if (legacyAuth.currentUser) {
+        await legacyRtdb.ref(legacyPath('notifications/' + notificationId)).update({ read: true, readAtMs: legacyNow() });
+        return;
+      }
       const uid = auth.currentUser?.uid;
       if (!uid) throw new Error('Inicia sesión.');
       await db.collection('notifications').doc(uid).collection('items').doc(notificationId).update({ read: true, readAt: firebase.firestore.FieldValue.serverTimestamp() });
