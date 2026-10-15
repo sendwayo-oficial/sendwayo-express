@@ -165,6 +165,7 @@ function oa({currentUser,onLogout,onProfileUpdate}){const role=currentUser?.role
     const candidates=[];
     const add=value=>{const v=String(value||"").trim().toLowerCase();if(v.includes("@")&&!candidates.includes(v))candidates.push(v)};
     add(lower);
+    if(lower==="sendwayexpress@gmail.com")add("sendwayoexpress@gmail.com");
     matches.forEach(u=>[u.authEmail,u.legacyAuthEmail,u.authEmailLegacy,u.email].forEach(add));
     if(normalized){add(normalized+"@gmail.com");add(normalized+"@sendwayoexpress.com")}
     if(["admin","administrador","sendwayoexpress"].includes(normalized))add("sendwayoexpress@gmail.com");
