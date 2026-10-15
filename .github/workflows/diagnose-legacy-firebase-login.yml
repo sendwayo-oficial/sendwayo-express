@@ -24,9 +24,9 @@ concurrency:
 
 jobs:
   diagnose:
-    name: Check legacy Firebase Authentication and Realtime Database (no writes)
+    name: Check legacy Authentication and Realtime Database without writes
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     env:
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       EXPECTED_PROJECT: sendwayo-express
@@ -55,105 +55,108 @@ jobs:
           console.log('Legacy project credential verified. Values are not printed.');
           NODE
 
-      - uses: actions/setup-node@v4
+      - name: Authenticate read-only diagnostic to Google Cloud
+        uses: google-github-actions/auth@v3
         with:
-          node-version: "22"
+          project_id: sendwayo-express
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Install Firebase CLI and Admin SDK in a temporary directory
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: sendwayo-express
+
+      - name: Inspect Authentication and Realtime Database using read-only APIs
         shell: bash
         run: |
           set -euo pipefail
-          npm install --global firebase-tools
-          mkdir -p "$RUNNER_TEMP/sendwayo-legacy-diagnostic"
-          npm install --prefix "$RUNNER_TEMP/sendwayo-legacy-diagnostic" firebase-admin
-
-      - name: Read legacy Authentication and users branch without logging personal data
-        shell: bash
-        run: |
-          set -euo pipefail
-          KEY_FILE="$RUNNER_TEMP/legacy-service-account.json"
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$KEY_FILE"
-          chmod 600 "$KEY_FILE"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$KEY_FILE" >> "$GITHUB_ENV"
-          export GOOGLE_APPLICATION_CREDENTIALS="$KEY_FILE"
-          firebase database:get /sendwayo_express_v2/users --project "$EXPECTED_PROJECT" --json > "$RUNNER_TEMP/legacy-users.json"
-          NODE_PATH="$RUNNER_TEMP/sendwayo-legacy-diagnostic/node_modules" LEGACY_USERS_FILE="$RUNNER_TEMP/legacy-users.json" KEY_FILE="$KEY_FILE" node - <<'NODE'
-          const fs = require('fs');
-          const { initializeApp, cert } = require('firebase-admin/app');
-          const { getAuth } = require('firebase-admin/auth');
-          const key = JSON.parse(fs.readFileSync(process.env.KEY_FILE, 'utf8'));
-          const app = initializeApp({ credential: cert(key), projectId: process.env.EXPECTED_PROJECT });
-          const auth = getAuth(app);
-
-          const root = JSON.parse(fs.readFileSync(process.env.LEGACY_USERS_FILE, 'utf8'));
-          const users = root && typeof root === 'object' && root.sendwayo_express_v2
-            ? root.sendwayo_express_v2.users
-            : root;
-          const rows = users && typeof users === 'object' ? Object.entries(users).filter(([, value]) => value && typeof value === 'object') : [];
-          const byRole = { admin: 0, agent: 0, remitente: 0, other: 0 };
-          let active = 0, withAuthUid = 0, withAuthEmail = 0, withUsername = 0;
-          let adminRecordExists = false, adminHasAuthUid = false, adminHasAuthEmail = false;
-          const normalizeRole = v => {
-            const role = String(v || '').trim().toLowerCase();
-            if (['admin','administrador'].includes(role)) return 'admin';
-            if (['agent','agente'].includes(role)) return 'agent';
-            if (['remitente','sender','remitter'].includes(role)) return 'remitente';
+          ACCESS_TOKEN="$(gcloud auth print-access-token)" node - <<'NODE'
+          const token = process.env.ACCESS_TOKEN;
+          const projectId = process.env.EXPECTED_PROJECT;
+          if (!token) throw new Error('Google Cloud access token was not available.');
+          async function getJson(url) {
+            const response = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+            const body = await response.text();
+            let data;
+            try { data = JSON.parse(body); } catch { data = { raw: body.slice(0, 300) }; }
+            if (!response.ok) {
+              const reason = data?.error?.status || data?.error?.message || ('HTTP_' + response.status);
+              throw new Error('Read-only Firebase API failed: ' + reason);
+            }
+            return data;
+          }
+          const normalizeRole = value => {
+            const role = String(value || '').trim().toLowerCase();
+            if (['admin', 'administrador'].includes(role)) return 'admin';
+            if (['agent', 'agente'].includes(role)) return 'agent';
+            if (['remitente', 'sender', 'remitter'].includes(role)) return 'remitente';
             return 'other';
           };
-          for (const [id, row] of rows) {
-            const role = normalizeRole(row.role || row.rol || (id === 'admin' ? 'admin' : ''));
-            byRole[role]++;
-            if (row.active !== false && row.disabled !== true && !['inactive','disabled','inactivo'].includes(String(row.status || '').toLowerCase())) active++;
-            if (String(row.authUid || '').trim()) withAuthUid++;
-            if (String(row.authEmail || row.email || '').includes('@')) withAuthEmail++;
-            if (String(row.username || '').trim()) withUsername++;
-            if (id.toLowerCase() === 'admin' || role === 'admin' || String(row.authEmail || row.email || '').trim().toLowerCase() === 'sendwayoexpress@gmail.com') {
-              adminRecordExists = true;
-              adminHasAuthUid = Boolean(String(row.authUid || '').trim());
-              adminHasAuthEmail = Boolean(String(row.authEmail || row.email || '').includes('@'));
-            }
-          }
           async function main() {
-            const listed = await auth.listUsers(1000);
-            let authCount = listed.users.length, token = listed.pageToken;
-            while (token) {
-              const page = await auth.listUsers(1000, token);
-              authCount += page.users.length;
-              token = page.pageToken;
-            }
-            let adminAuthExists = false, adminAuthDisabled = null;
-            try {
-              const u = await auth.getUserByEmail('sendwayoexpress@gmail.com');
-              adminAuthExists = true;
-              adminAuthDisabled = Boolean(u.disabled);
-            } catch (err) {
-              if (err?.code !== 'auth/user-not-found') throw err;
+            const project = await getJson('https://cloudresourcemanager.googleapis.com/v1/projects/' + encodeURIComponent(projectId));
+            const number = String(project.projectNumber || '');
+            if (!number) throw new Error('Google Cloud did not return a project number.');
+            const dbs = await getJson('https://firebasedatabase.googleapis.com/v1beta/projects/' + number + '/locations/-/instances');
+            const instances = Array.isArray(dbs.instances) ? dbs.instances : [];
+            if (!instances.length) throw new Error('No Realtime Database instances were returned for the legacy project.');
+            const preferred = instances.find(x => x.databaseUrl && /default|sendwayo/i.test(x.name || x.databaseUrl)) || instances.find(x => x.databaseUrl);
+            if (!preferred?.databaseUrl) throw new Error('The Realtime Database instance did not include a database URL.');
+            const dbBase = String(preferred.databaseUrl).replace(/\/$/, '');
+            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, pageToken = '';
+            do {
+              const qs = new URLSearchParams({ maxResults: '1000' });
+              if (pageToken) qs.set('nextPageToken', pageToken);
+              const page = await getJson('https://identitytoolkit.googleapis.com/v1/projects/' + encodeURIComponent(projectId) + '/accounts:batchGet?' + qs.toString());
+              const rows = Array.isArray(page.users) ? page.users : [];
+              authUsers += rows.length;
+              for (const user of rows) {
+                if (String(user.email || '').trim().toLowerCase() === 'sendwayoexpress@gmail.com') {
+                  adminAuthExists = true;
+                  adminAuthDisabled = Boolean(user.disabled);
+                }
+              }
+              pageToken = page.nextPageToken || '';
+            } while (pageToken);
+
+            const usersValue = await getJson(dbBase + '/sendwayo_express_v2/users.json');
+            const records = usersValue && typeof usersValue === 'object' && !Array.isArray(usersValue)
+              ? Object.entries(usersValue).filter(([, value]) => value && typeof value === 'object')
+              : [];
+            const byRole = { admin: 0, agent: 0, remitente: 0, other: 0 };
+            let active = 0, withAuthUid = 0, withAuthEmail = 0, withUsername = 0;
+            let adminRecordExists = false, adminHasAuthUid = false, adminHasAuthEmail = false;
+            for (const [id, row] of records) {
+              const role = normalizeRole(row.role || row.rol || (id.toLowerCase() === 'admin' ? 'admin' : ''));
+              byRole[role]++;
+              if (row.active !== false && row.disabled !== true && !['inactive', 'disabled', 'inactivo'].includes(String(row.status || '').toLowerCase())) active++;
+              if (String(row.authUid || '').trim()) withAuthUid++;
+              if (String(row.authEmail || row.email || '').includes('@')) withAuthEmail++;
+              if (String(row.username || '').trim()) withUsername++;
+              if (id.toLowerCase() === 'admin' || role === 'admin' || String(row.authEmail || row.email || '').trim().toLowerCase() === 'sendwayoexpress@gmail.com') {
+                adminRecordExists = true;
+                adminHasAuthUid = Boolean(String(row.authUid || '').trim());
+                adminHasAuthEmail = Boolean(String(row.authEmail || row.email || '').includes('@'));
+              }
             }
             console.log('READ-ONLY LEGACY LOGIN DIAGNOSTIC');
-            console.log('Legacy Firebase project verified: ' + process.env.EXPECTED_PROJECT);
-            console.log('Firebase Authentication users: ' + authCount);
-            console.log('Realtime Database user records: ' + rows.length);
+            console.log('Legacy Firebase project verified: ' + projectId);
+            console.log('Realtime Database instances found: ' + instances.length);
+            console.log('Firebase Authentication users: ' + authUsers);
+            console.log('Realtime Database user records: ' + records.length);
             console.log('Legacy records by role: ' + JSON.stringify(byRole));
             console.log('Records marked active by stored status: ' + active);
             console.log('Records with Firebase Auth UID: ' + withAuthUid);
-            console.log('Records with an email for Firebase Auth: ' + withAuthEmail);
+            console.log('Records with email for Firebase Auth: ' + withAuthEmail);
             console.log('Records with username field: ' + withUsername);
             console.log('Legacy admin user record exists: ' + (adminRecordExists ? 'yes' : 'no'));
             console.log('Legacy admin record has Auth UID: ' + (adminHasAuthUid ? 'yes' : 'no'));
             console.log('Legacy admin record has Auth email: ' + (adminHasAuthEmail ? 'yes' : 'no'));
             console.log('Admin Authentication account exists: ' + (adminAuthExists ? 'yes' : 'no'));
             console.log('Admin Authentication account disabled: ' + (adminAuthDisabled === null ? 'not applicable' : (adminAuthDisabled ? 'yes' : 'no')));
-            console.log('No user names, email addresses, passwords, balances, or record content was printed. No data was written.');
+            console.log('No emails beyond the admin existence check, usernames, passwords, balances, or record content were printed. No data was written.');
           }
           main().catch(err => {
-            console.error('Legacy read-only diagnostic failed:', err?.code || err?.message || 'unknown');
+            console.error('Legacy read-only diagnostic failed:', err?.message || 'unknown');
             process.exit(1);
           });
           NODE
-
-      - name: Remove temporary credentials and diagnostic data
-        if: always()
-        shell: bash
-        run: |
-          rm -f "$RUNNER_TEMP/legacy-service-account.json" "$RUNNER_TEMP/legacy-users.json"
-          rm -rf "$RUNNER_TEMP/sendwayo-legacy-diagnostic"
