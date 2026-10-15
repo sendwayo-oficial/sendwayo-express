@@ -1599,7 +1599,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   let authExchangeInProgress = false;
   const authBridgeSubscribers = new Set();
   let lastAuthBridgeKey = null;
-  const selectedAuthUser = () => auth.currentUser || legacyAuth.currentUser || null;
+  const selectedAuthUser = () => legacyAuth.currentUser || auth.currentUser || null;
   function emitAuthBridge(force = false) {
     if (authExchangeInProgress) return;
     const user = selectedAuthUser();
@@ -1666,7 +1666,9 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     const legacyId = record.legacyId || record.accountId || record.staffId || record.code || record.id || recordId || '';
     return {
       uid: user?.uid || record.authUid || String(recordId),
+      rtdbUserKey: String(recordId),
       ...record,
+      rtdbUserKey: String(recordId),
       role,
       status,
       name,
@@ -1716,20 +1718,774 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     }
     return null;
   }
+  let cachedLegacyProfile = null;
   async function profile() {
+    const legacyUser = legacyAuth.currentUser;
+    if (legacyUser) {
+      const legacyProfile = await readLegacyProfile(legacyUser);
+      if (legacyProfile) {
+        cachedLegacyProfile = legacyProfile;
+        return legacyProfile;
+      }
+    }
     const modernUser = auth.currentUser;
     if (modernUser) {
       try {
         const snap = await db.collection('profiles').doc(modernUser.uid).get();
         if (snap.exists) return { uid: modernUser.uid, ...snap.data() };
       } catch (err) {
-        console.info('[SENDWAYO] Perfil del proyecto nuevo no disponible; usando el registro de la cuenta existente.');
+        console.info('[SENDWAYO] El perfil de Firestore no está disponible; se usa el perfil existente si puede leerse.');
       }
     }
-    const legacyUser = legacyAuth.currentUser || (!modernUser ? selectedAuthUser() : null);
-    if (legacyUser) return await readLegacyProfile(legacyUser);
     return null;
   }
+
+  const LEGACY_ROOT = 'sendwayo_express_v2';
+  const LEGACY_OPERATION_COLLECTIONS = ['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals', 'commissions', 'credits'];
+  const LEGACY_ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const legacyNow = () => Date.now();
+  const legacyPath = (path) => LEGACY_ROOT + '/' + String(path || '').replace(/^\/+/, '');
+  const legacyRootRef = () => legacyRtdb.ref(LEGACY_ROOT);
+  const legacyUserKey = () => {
+    const p = cachedLegacyProfile;
+    return String(p && (p.rtdbUserKey || p.legacyId || p.id) || (legacyAuth.currentUser && legacyAuth.currentUser.email && legacyAuth.currentUser.email.toLowerCase() === LEGACY_ADMIN_EMAIL ? 'admin' : ''));
+  };
+  const legacyIsAdmin = () => {
+    const p = cachedLegacyProfile || {};
+    return !!legacyAuth.currentUser && (
+      String(legacyAuth.currentUser.email || '').trim().toLowerCase() === LEGACY_ADMIN_EMAIL ||
+      ['admin', 'administrador'].includes(String(p.role || '').trim().toLowerCase()) ||
+      String(p.rtdbUserKey || p.id || '').toLowerCase() === 'admin'
+    );
+  };
+  const legacyRole = () => String((cachedLegacyProfile || {}).role || '').trim().toLowerCase();
+  const legacyIsAgent = () => ['agent', 'agente'].includes(legacyRole());
+  const legacyIsRemitter = () => ['remitente', 'remittente', 'sender', 'remitter'].includes(legacyRole());
+  const legacyNum = value => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const legacyMoney = value => Math.round((legacyNum(value) + Number.EPSILON) * 100) / 100;
+  function legacyError(message, code) {
+    const e = new Error(message);
+    if (code) e.code = code;
+    return e;
+  }
+  function legacyWatch(query, callback, label, mapper) {
+    const handler = snap => {
+      const value = snap && typeof snap.val === 'function' ? snap.val() : null;
+      callback(typeof mapper === 'function' ? mapper(value, snap) : value);
+    };
+    const cancel = err => {
+      console.error('[SENDWAYO] Lectura RTDB falló (' + label + '):', err && (err.code || err.message) || err);
+      event('sendwayo:cloud-error', { label, message: String(err && err.message || 'No se pudo sincronizar con la base de datos existente.') });
+    };
+    query.on('value', handler, cancel);
+    const stop = () => {
+      try { query.off('value', handler); } catch (_) {}
+      cleanUnsubscribers.delete(stop);
+    };
+    cleanUnsubscribers.add(stop);
+    return stop;
+  }
+  function legacyRows(value, collection) {
+    if (!value || typeof value !== 'object') return [];
+    return Object.entries(value).filter(([, row]) => row && typeof row === 'object').map(([id, row]) => legacyOperationRow(id, row, collection));
+  }
+  function legacyOperationRow(id, row, collection) {
+    const data = row || {};
+    const typeByCollection = {
+      envios: 'Envío', recargas: 'Recarga', paqueticos: 'Paquetico',
+      pagos: 'Pago de factura/servicio', paquetes: 'Paquete',
+      deposits: 'Depósito', accountWithdrawals: 'Retiro',
+      commissions: 'Movimiento de comisión', credits: 'Crédito'
+    };
+    const createdAt = data.createdAtMs || data.createdAt || data.timestamp || data.date || 0;
+    const status = data.status || data.estado || 'Pendiente';
+    return {
+      ...data, id: String(data.id || id), operationId: String(data.id || id),
+      _legacyCollection: collection, collection,
+      type: data.type || data.category || typeByCollection[collection] || 'Operación',
+      category: data.category || data.type || typeByCollection[collection] || 'Operación',
+      status, estado: status,
+      createdAtMs: typeof createdAt === 'number' ? createdAt : (Date.parse(createdAt) || 0),
+      timestamp: typeof createdAt === 'number' ? createdAt : (Date.parse(createdAt) || 0),
+      ownerUid: data.ownerUid || data.ownerAuthUid || data.createdByAuthUid || '',
+      ownerLegacyId: data.ownerLegacyId || data.ownerId || data.userId || data.remitenteId || '',
+      ownerName: data.ownerName || data.createdByName || data.remitenteNombre || data.remitente || data.username || '',
+      routeFull: data.routeFull || data.route || data.type || typeByCollection[collection] || 'Operación',
+      beneficiary: data.beneficiary || data.beneficiario || data.beneficiarioNombre || '',
+      beneficiaryPhone: data.beneficiaryPhone || data.beneficiarioPhone || data.telefonoBeneficiario || '',
+      receiptId: data.receiptId || data.comprobanteId || (data.receipt && data.receipt.id) || '',
+      currency: String(data.currency || data.balanceCurrency || data.currencyCode || 'DOP').toUpperCase(),
+      receivedCurrency: String(data.receivedCurrency || data.currencyCode || data.currency || 'DOP').toUpperCase()
+    };
+  }
+  function legacyProfileKey() {
+    return legacyUserKey() || String((legacyAuth.currentUser || {}).uid || '');
+  }
+  function legacyWatchOperations(isAdmin, callback) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión con la cuenta existente.');
+    if (isAdmin && !legacyIsAdmin()) throw new Error('Acceso exclusivo del administrador.');
+    const ownKey = legacyProfileKey();
+    const byCollection = new Map();
+    const stops = LEGACY_OPERATION_COLLECTIONS.map(collection => {
+      let query = legacyRtdb.ref(legacyPath(collection));
+      if (!isAdmin) query = query.orderByChild('userId').equalTo(ownKey);
+      return legacyWatch(query, rows => {
+        byCollection.set(collection, Array.isArray(rows) ? rows : legacyRows(rows, collection));
+        const merged = [];
+        for (const [name, values] of byCollection.entries()) {
+          const list = Array.isArray(values) ? values : legacyRows(values, name);
+          for (const item of list) merged.push(item._legacyCollection ? item : legacyOperationRow(item.id, item, name));
+        }
+        const seen = new Map();
+        for (const record of merged) seen.set(record._legacyCollection + '|' + record.id, record);
+        callback([...seen.values()].sort((a, b) => legacyNum(b.createdAtMs) - legacyNum(a.createdAtMs)));
+      }, 'operaciones:' + collection, value => legacyRows(value, collection));
+    });
+    return () => stops.forEach(stop => stop());
+  }
+  function legacyAccountRow(key, raw) {
+    const row = raw || {};
+    const name = row.displayName || row.name || row.fullName || row.nombre || row.username || row.email || key;
+    const legacyId = String(row.id || row.legacyId || row.accountId || key);
+    return {
+      ...row, uid: String(row.authUid || row.uid || key), rtdbUserKey: String(key),
+      id: legacyId, legacyId, accountId: String(row.accountId || legacyId),
+      code: String(row.code || row.staffId || legacyId),
+      displayName: name, name,
+      email: String(row.authEmail || row.email || ''),
+      phone: String(row.phone || row.telefono || ''),
+      role: row.role || row.rol || '',
+      status: row.status || (row.active === false ? 'inactive' : 'active'),
+      active: row.active !== false && row.disabled !== true,
+      balance: legacyNum(row.balanceDOP ?? row.balance ?? 0),
+      balanceDOP: legacyNum(row.balanceDOP ?? row.balance ?? 0),
+      balanceHTG: legacyNum(row.balanceHTG ?? 0),
+      commission: legacyNum(row.commissionDOP ?? row.commission ?? 0),
+      commissionDOP: legacyNum(row.commissionDOP ?? row.commission ?? 0),
+      commissionHTG: legacyNum(row.commissionHTG ?? 0),
+      commissionAccrued: legacyNum(row.commissionAccrued ?? row.commission ?? 0)
+    };
+  }
+  function legacyListenAccounts(callback, profilesOnly) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    if (!legacyIsAdmin()) {
+      const key = legacyProfileKey();
+      const ref = legacyRtdb.ref(legacyPath('users/' + key));
+      return legacyWatch(ref, value => {
+        const row = value ? legacyAccountRow(key, value) : null;
+        callback(row ? [row] : []);
+      }, 'cuenta-propia', value => value);
+    }
+    return legacyWatch(legacyRtdb.ref(legacyPath('users')), value => {
+      const rows = value && typeof value === 'object' ? Object.entries(value).map(([key, row]) => legacyAccountRow(key, row)) : [];
+      callback(profilesOnly ? rows : rows);
+    }, profilesOnly ? 'perfiles' : 'cuentas', value => value);
+  }
+  function legacyListenAccount(accountId, callback) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    const key = legacyProfileKey();
+    const ref = legacyRtdb.ref(legacyPath('users/' + key));
+    return legacyWatch(ref, value => {
+      if (!value) return callback(null);
+      const row = legacyAccountRow(key, value);
+      callback({
+        uid: row.uid, legacyId: row.legacyId, accountId: row.accountId,
+        balance: row.balanceDOP, balanceDOP: row.balanceDOP, balanceHTG: row.balanceHTG,
+        commission: row.commissionDOP + row.commissionHTG,
+        commissionDOP: row.commissionDOP, commissionHTG: row.commissionHTG,
+        commissionAccrued: row.commissionAccrued
+      });
+    }, 'balance-propio', value => value);
+  }
+  function legacyListenSystemBalance(callback, target) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    const who = String(target || 'admin');
+    if (who === 'operations') {
+      if (!legacyIsAdmin()) {
+        callback({ balanceDOP: 0, balanceHTG: 0, commissionDOP: 0, commissionHTG: 0 });
+        return () => {};
+      }
+      return legacyWatch(legacyRtdb.ref(legacyPath('agentCapital')), value => {
+        const row = value || {};
+        callback({ ...row, balanceHTG: legacyNum(row.balanceHTG ?? row.balance), balanceDOP: legacyNum(row.balanceDOP), commissionDOP: 0, commissionHTG: 0 });
+      }, 'balance-operaciones', value => value);
+    }
+    if (!legacyIsAdmin() && legacyProfileKey() !== 'admin') {
+      callback({ balanceDOP: 0, balanceHTG: 0, commissionDOP: 0, commissionHTG: 0 });
+      return () => {};
+    }
+    return legacyWatch(legacyRtdb.ref(legacyPath('users/admin')), value => {
+      const row = value || {};
+      callback({
+        ...row,
+        balanceDOP: legacyNum(row.balanceDOP ?? row.balance),
+        balanceHTG: legacyNum(row.balanceHTG),
+        commissionDOP: legacyNum(row.commissionDOP ?? row.commission),
+        commissionHTG: legacyNum(row.commissionHTG)
+      });
+    }, 'balance-administrativo', value => value);
+  }
+  function legacyListenNotifications(callback) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión para recibir notificaciones.');
+    const key = legacyProfileKey();
+    const query = legacyIsAdmin() ? legacyRtdb.ref(legacyPath('notifications')) :
+      legacyRtdb.ref(legacyPath('notifications')).orderByChild('targetUserId').equalTo(key);
+    return legacyWatch(query, value => {
+      let rows = value && typeof value === 'object' ? Object.entries(value).map(([id, item]) => ({
+        ...item, id: String(item.id || id),
+        message: item.message || item.msg || '',
+        title: item.title || '',
+        targetUserId: item.targetUserId || item.targetId || item.userId || '',
+        createdAtMs: legacyNum(item.createdAtMs || item.createdAt || item.timestamp),
+        section: item.section || item.collection || 'dashboard',
+        operationId: item.operationId || item.recordId || '',
+        transactionId: item.transactionId || item.recordId || '',
+        read: !!item.read
+      })) : [];
+      rows = rows.sort((a, b) => b.createdAtMs - a.createdAtMs);
+      callback(rows);
+    }, 'notificaciones', value => value);
+  }
+  function legacyListenBankAccounts(callback) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    return legacyWatch(legacyRtdb.ref(legacyPath('accounts')), value => {
+      const rows = value && typeof value === 'object' ? Object.entries(value).map(([id, row]) => ({ ...row, id: String(row.id || id), active: row.active !== false })) : [];
+      callback(rows);
+    }, 'cuentas-bancarias', value => value);
+  }
+  function legacyListenPackages(isAdmin, callback) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    const key = legacyProfileKey();
+    const query = isAdmin ? legacyRtdb.ref(legacyPath('paquetes')) :
+      legacyRtdb.ref(legacyPath('paquetes')).orderByChild('userId').equalTo(key);
+    return legacyWatch(query, value => callback(legacyRows(value, 'paquetes')), 'paquetes', value => value);
+  }
+  function legacyListenBeneficiaries(isAdmin, callback) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    if (isAdmin) {
+      return legacyWatch(legacyRtdb.ref(legacyPath('beneficiaries')), value => {
+        const rows = value && typeof value === 'object' ? Object.entries(value).map(([id, row]) => ({ ...row, id: String(row.id || id) })).filter(row => row.active !== false) : [];
+        callback(rows);
+      }, 'beneficiarios-admin', value => value);
+    }
+    const key = legacyProfileKey();
+    return legacyWatch(legacyRtdb.ref(legacyPath('beneficiaries')).orderByChild('userId').equalTo(key), value => {
+      const rows = value && typeof value === 'object' ? Object.entries(value).map(([id, row]) => ({ ...row, id: String(row.id || id) })).filter(row => row.active !== false) : [];
+      callback(rows);
+    }, 'beneficiarios-propios', value => value);
+  }
+  function legacyListenReceipts(isAdmin, callback) {
+    return legacyWatchOperations(isAdmin, rows => callback(rows.filter(row => row.receipt || row.receiptId || row.comprobanteId).map(row => ({
+      ...row,
+      receiptId: row.receiptId || row.comprobanteId || (row.receipt && row.receipt.id) || row.id,
+      approvedAtMs: legacyNum(row.approvedAt || row.reviewedAt || row.createdAtMs),
+      receipt: row.receipt || null
+    }))));
+  }
+  function legacyListenRequests(isAdmin, callback, onlyOwn) {
+    if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    const key = legacyProfileKey();
+    let query = legacyRtdb.ref(legacyPath('requests'));
+    if (!isAdmin || onlyOwn) query = query.orderByChild('createdByAuthUid').equalTo(legacyAuth.currentUser.uid);
+    return legacyWatch(query, value => {
+      const rows = value && typeof value === 'object' ? Object.entries(value).map(([id, row]) => ({ ...row, id: String(row.id || id) })) : [];
+      callback(rows);
+    }, 'solicitudes', value => value);
+  }
+  function legacyListenReconciliations(callback) {
+    if (!legacyAuth.currentUser || !legacyIsAdmin()) throw new Error('Inicia sesión como administrador.');
+    return legacyWatch(legacyRtdb.ref(legacyPath('requests')), value => {
+      const rows = value && typeof value === 'object' ? Object.entries(value)
+        .map(([id, row]) => ({ ...row, id: String(row.id || id) }))
+        .filter(row => String(row.type || row.category || '').toLowerCase() === 'reconciliation') : [];
+      callback(rows.sort((a, b) => legacyNum(b.createdAtMs || b.createdAt) - legacyNum(a.createdAtMs || a.createdAt)));
+    }, 'conciliaciones', value => value);
+  }
+  async function legacyGetUserKey(target) {
+    const value = String(target || '');
+    if (!value) throw legacyError('No se identificó la cuenta destinataria.');
+    if (value === 'admin') return 'admin';
+    if (value === 'operations') return 'agentCapital';
+    const ownKey = legacyProfileKey();
+    const p = cachedLegacyProfile || {};
+    if ([ownKey, String(p.id || ''), String(p.legacyId || ''), String(p.uid || ''), String(p.accountId || '')].includes(value)) return ownKey;
+    const direct = await legacyRtdb.ref(legacyPath('users/' + value)).once('value');
+    if (direct.exists()) return value;
+    if (!legacyIsAdmin()) throw legacyError('No se permite modificar otra cuenta.');
+    const all = await legacyRtdb.ref(legacyPath('users')).once('value');
+    const values = all.val() || {};
+    const found = Object.entries(values).find(([key, row]) => row && [key, row.id, row.legacyId, row.accountId, row.code, row.staffId, row.authUid, row.authEmail, row.email].some(x => String(x || '') === value));
+    if (!found) throw legacyError('No se encontró la cuenta solicitada.');
+    return found[0];
+  }
+  async function legacyFindOperation(operationId) {
+    const id = String(operationId || '');
+    if (!id) throw legacyError('Falta el identificador de la operación.');
+    for (const collection of LEGACY_OPERATION_COLLECTIONS) {
+      const snap = await legacyRtdb.ref(legacyPath(collection + '/' + id)).once('value');
+      if (snap.exists()) return { collection, id, record: snap.val() || {} };
+    }
+    throw legacyError('No se encontró la operación en la base existente.');
+  }
+  async function legacySendNotification(targetUserId, message, collection, recordId) {
+    const id = 'NTF-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+    const notification = {
+      id, targetUserId: String(targetUserId || 'admin'),
+      message: String(message || ''), msg: String(message || ''),
+      title: 'SENDWAYO EXPRESS', section: collection || 'dashboard',
+      collection: collection || '', recordId: recordId || '',
+      operationId: recordId || '', createdAt: legacyNow(), createdAtMs: legacyNow(),
+      createdByAuthUid: (legacyAuth.currentUser || {}).uid || '',
+      read: false
+    };
+    await legacyRtdb.ref(legacyPath('notifications/' + id)).set(notification);
+    return id;
+  }
+  function legacyCollectionForOperation(operation) {
+    const type = String(operation.type || operation.category || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (/deposit|deposito|depósito/.test(type)) return 'deposits';
+    if (/retiro|withdraw/.test(type)) return 'accountWithdrawals';
+    if (/recarga|top.?up/.test(type)) return 'recargas';
+    if (/paquetico|paquet/.test(type)) return 'paqueticos';
+    if (/factura|servicio|pago/.test(type)) return 'pagos';
+    if (/paquete/.test(type)) return 'paquetes';
+    return 'envios';
+  }
+  async function legacySubmitOperation(payload) {
+    if (!legacyAuth.currentUser) throw legacyError('La sesión con Firebase no está activa. Inicia sesión de nuevo.');
+    const source = payload && payload.operation && typeof payload.operation === 'object' ? payload.operation : (payload || {});
+    const amount = legacyMoney(source.amount);
+    if (!(amount > 0)) throw legacyError('El monto debe ser mayor que cero.');
+    const currencyText = String(source.currency || source.balanceCurrency || 'DOP').toUpperCase();
+    const currency = ['HTG', 'GDES'].includes(currencyText) ? 'HTG' : 'DOP';
+    const collection = legacyCollectionForOperation(source);
+    const isDeposit = collection === 'deposits';
+    const profileKey = legacyProfileKey();
+    const typeRole = legacyRole();
+    if (legacyIsAgent() && (!/HT\s*->\s*HT|HTI\s*->\s*HTI|HAITI\s*(A|TO)\s*HAITI/i.test(String(source.route || source.routeFull || '')) || currency !== 'HTG')) {
+      throw legacyError('Los agentes solo pueden registrar operaciones Haití a Haití en HTG/GDES.');
+    }
+    if (legacyIsAgent() && !isDeposit && !['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes'].includes(collection)) {
+      throw legacyError('El tipo de operación no está disponible para agentes.');
+    }
+    const requestedOwner = source.targetUserId || source.ownerId || source.remitenteId || source.userId || profileKey;
+    const userId = legacyIsAdmin() && requestedOwner ? String(requestedOwner) : profileKey;
+    const id = String(source.id || source.idempotencyKey || ('SW-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9)));
+    const serviceType = /recarga|paquetico|factura|servicio|pago/i.test(String(source.type || source.category || ''));
+    const agent = legacyIsAgent();
+    const rate = isDeposit || agent ? 0 : (serviceType ? 0.05 : 0.08);
+    const commission = isDeposit ? 0 : legacyMoney(amount * rate);
+    const record = {
+      ...source, id, operationId: id,
+      type: source.type || source.category || 'Envío',
+      category: source.category || source.type || 'Envío',
+      route: source.route || 'RD->RD',
+      routeFull: source.routeFull || source.route || source.type || 'Envío',
+      method: source.method || source.provider || '',
+      provider: source.provider || source.method || '',
+      amount, currency, balanceCurrency: currency,
+      commission, commissionTotal: commission, commissionRate: rate,
+      commissionSplit: agent ? '100% PLATAFORMA' : (isDeposit ? '0%' : '50/50'),
+      commissionBeneficiary: agent ? 'PLATAFORMA' : (isDeposit ? 'NINGUNO' : 'REPARTIDO'),
+      userId, username: (cachedLegacyProfile || {}).username || legacyAuth.currentUser.email || '',
+      ownerRole: legacyIsAdmin() && source.ownerRole ? source.ownerRole : typeRole,
+      ownerId: userId, ownerLegacyId: userId,
+      ownerName: source.ownerName || source.remitente || (cachedLegacyProfile || {}).name || '',
+      createdByRole: typeRole, createdByUserId: profileKey,
+      createdByAuthUid: legacyAuth.currentUser.uid,
+      createdByName: (cachedLegacyProfile || {}).name || legacyAuth.currentUser.email || '',
+      ownerUid: legacyAuth.currentUser.uid,
+      status: 'Pendiente', estado: 'pendiente',
+      createdAt: legacyNow(), createdAtMs: legacyNow(), timestamp: legacyNow(),
+      balanceDebited: false, balanceSettled: false, balanceRefunded: false,
+      adminVisible: true, adminInbox: true,
+      accountingType: isDeposit ? 'DEPOSITO_CAPITAL' : 'COMERCIAL'
+    };
+    if (isDeposit) {
+      record.commission = 0; record.commissionTotal = 0; record.commissionRate = 0;
+      record.beneficiary = ''; record.beneficiaryPhone = '';
+    }
+    await legacyRtdb.ref(legacyPath(collection + '/' + id)).set(record);
+    try { await legacySendNotification('admin', 'Nueva solicitud pendiente: ' + record.type + ' · ' + amount + ' ' + currency, collection, id); } catch (_) {}
+    return { id, operationId: id, status: 'Pendiente', collection, record };
+  }
+  async function legacyUpdateUserFinancial(userKey, operationId, amount, currency, commissionShare, mode) {
+    const ref = legacyRtdb.ref(legacyPath('users/' + userKey));
+    let insufficient = false;
+    const tx = await ref.transaction(user => {
+      if (!user || typeof user !== 'object') return;
+      const settlements = { ...(user.transactionSettlements || {}) };
+      const old = settlements[operationId];
+      if (old) return user;
+      const isHTG = String(currency || 'DOP').toUpperCase() === 'HTG';
+      const balanceField = isHTG ? 'balanceHTG' : 'balance';
+      const before = legacyNum(isHTG ? user.balanceHTG : (user.balanceDOP ?? user.balance));
+      const debit = mode === 'credit' ? 0 : legacyMoney(amount);
+      if (mode !== 'credit' && before < debit) { insufficient = true; return; }
+      const after = mode === 'credit' ? before : legacyMoney(before - debit);
+      let next = { ...user, [balanceField]: after, transactionSettlements: { ...settlements, [operationId]: { id: operationId, amount: debit, currency: isHTG ? 'HTG' : 'DOP', before, after, at: legacyNow() } } };
+      if (!isHTG) next.balanceDOP = after;
+      if (commissionShare > 0) {
+        const credits = { ...(next.transactionCommissionCredits || {}) };
+        if (credits[operationId] === undefined) {
+          const field = isHTG ? 'commissionHTG' : 'commission';
+          const commissionBefore = legacyNum(isHTG ? next.commissionHTG : (next.commissionDOP ?? next.commission));
+          next[field] = legacyMoney(commissionBefore + commissionShare);
+          if (isHTG) next.commissionAccruedHTG = legacyMoney(legacyNum(next.commissionAccruedHTG) + commissionShare);
+          else { next.commissionDOP = next[field]; next.commissionAccrued = legacyMoney(legacyNum(next.commissionAccrued) + commissionShare); }
+          credits[operationId] = { id: operationId, amount: commissionShare, currency: isHTG ? 'HTG' : 'DOP', creditedAt: legacyNow() };
+          next.transactionCommissionCredits = credits;
+        }
+      }
+      return next;
+    }, undefined, false);
+    const fresh = tx && tx.snapshot && tx.snapshot.val();
+    if (!tx || !tx.committed && !(fresh && fresh.transactionSettlements && fresh.transactionSettlements[operationId])) {
+      if (insufficient) throw legacyError('Balance insuficiente para cubrir el monto y la comisión.', 'BALANCE_INSUFFICIENT');
+      throw legacyError('Firebase no confirmó el movimiento de balance.');
+    }
+    if (insufficient) throw legacyError('Balance insuficiente para cubrir el monto y la comisión.', 'BALANCE_INSUFFICIENT');
+    return fresh;
+  }
+  async function legacyCreditDeposit(operationId, userKey, amount, currency) {
+    const ref = legacyRtdb.ref(legacyPath('users/' + userKey));
+    const tx = await ref.transaction(user => {
+      if (!user || typeof user !== 'object') return;
+      const credits = { ...(user.depositCredits || {}) };
+      if (credits[operationId] !== undefined) return user;
+      const isHTG = String(currency || 'DOP').toUpperCase() === 'HTG';
+      const field = isHTG ? 'balanceHTG' : 'balance';
+      const before = legacyNum(isHTG ? user.balanceHTG : (user.balanceDOP ?? user.balance));
+      const after = legacyMoney(before + amount);
+      const next = { ...user, [field]: after, depositCredits: { ...credits, [operationId]: legacyMoney(amount) }, depositCurrencies: { ...(user.depositCurrencies || {}), [operationId]: isHTG ? 'HTG' : 'DOP' }, depositCreditedAt: legacyNow() };
+      if (!isHTG) next.balanceDOP = after;
+      return next;
+    }, undefined, false);
+    const fresh = tx && tx.snapshot && tx.snapshot.val();
+    if (!tx || (!tx.committed && !(fresh && fresh.depositCredits && fresh.depositCredits[operationId] === legacyMoney(amount)))) throw legacyError('Firebase no confirmó el depósito.');
+    return fresh;
+  }
+  async function legacyReviewOperation(payload) {
+    if (!legacyAuth.currentUser) throw legacyError('Inicia sesión.');
+    const operationId = String(payload.operationId || payload.id || '');
+    const found = await legacyFindOperation(operationId);
+    const collection = found.collection, record = found.record, id = found.id;
+    const action = String(payload.action || '').toLowerCase();
+    const status = action === 'approve' || action === 'approved' ? 'Aprobado' :
+      action === 'reject' || action === 'rejected' ? 'Rechazado' :
+      action === 'no_match' || action === 'nomatch' ? 'No Coincide' : '';
+    if (!status) throw legacyError('La decisión seleccionada no es válida.');
+    if (!legacyIsAdmin() && !(legacyIsAgent() && collection === 'deposits')) throw legacyError('No tienes permiso para revisar esta operación.');
+    if (String(record.status || record.estado || '').toLowerCase() !== 'pendiente') {
+      if (String(record.status || '').toLowerCase() === status.toLowerCase()) return { id, status, alreadyProcessed: true };
+      throw legacyError('Esta operación ya fue procesada. Actualiza la lista antes de intentarlo otra vez.');
+    }
+    const amount = legacyMoney(record.amount || record.monto || 0);
+    const currency = String(record.currency || record.balanceCurrency || 'DOP').toUpperCase() === 'HTG' ? 'HTG' : 'DOP';
+    let reason = String(payload.reason || '').trim();
+    if (status !== 'Aprobado' && !reason) reason = status === 'Rechazado' ? 'Rechazado por administración' : 'Requiere corrección';
+    const userKey = String(record.userId || record.targetUserId || '');
+    const userSnap = await legacyRtdb.ref(legacyPath('users/' + userKey)).once('value');
+    const user = userSnap.val();
+    if (!user) throw legacyError('No se encontró el remitente de la operación.');
+    let commission = 0, userShare = 0, adminShare = 0, debit = 0;
+    if (status === 'Aprobado') {
+      if (collection === 'deposits') {
+        if (!legacyIsRemitter() && !legacyIsAdmin() && !legacyIsAgent()) throw legacyError('El depósito solo puede acreditarse a un remitente.');
+        if (!legacyIsAdmin() && !legacyIsAgent()) throw legacyError('Solo administración o agente autorizado puede aprobar el depósito.');
+        await legacyCreditDeposit(id, userKey, amount, currency);
+      } else if (collection === 'accountWithdrawals') {
+        debit = amount;
+        await legacyUpdateUserFinancial(userKey, id, debit, currency, 0, 'debit');
+      } else {
+        const agentOperation = legacyIsAgent() || user.role === 'agent' || user.role === 'Agente';
+        commission = agentOperation ? 0 : legacyMoney(record.commissionTotal ?? record.commission ?? record.comision ?? amount * (/recarga|paquetico|factura|servicio|pago/i.test(String(record.type || record.category || '')) ? 0.05 : 0.08));
+        userShare = agentOperation ? 0 : legacyMoney(commission / 2);
+        adminShare = legacyMoney(commission - userShare);
+        const settlementAlreadyApplied = !!((user.transactionSettlements || {})[id]);
+        debit = record.balanceDebited ? 0 : legacyMoney(amount + commission);
+        await legacyUpdateUserFinancial(userKey, id, debit, currency, userShare, debit === 0 ? 'credit' : 'debit');
+        if (adminShare > 0) await legacyUpdateUserFinancial('admin', id, 0, currency, adminShare, 'credit');
+      }
+    }
+    const reviewedAt = legacyNow();
+    const updates = {};
+    const base = legacyPath(collection + '/' + id);
+    updates[base + '/status'] = status;
+    updates[base + '/estado'] = status.toLowerCase();
+    updates[base + '/reviewedAt'] = reviewedAt;
+    updates[base + '/approvedAt'] = status === 'Aprobado' ? reviewedAt : null;
+    updates[base + '/reviewedBy'] = (cachedLegacyProfile || {}).username || (cachedLegacyProfile || {}).name || 'ADMIN';
+    updates[base + '/reviewedByName'] = (cachedLegacyProfile || {}).name || 'ADMIN';
+    updates[base + '/reviewedByAuthUid'] = legacyAuth.currentUser.uid;
+    updates[base + '/reviewReason'] = status === 'Aprobado' ? '' : reason;
+    updates[base + '/commissionTotal'] = commission;
+    updates[base + '/commissionUser'] = userShare;
+    updates[base + '/commissionAdmin'] = adminShare;
+    updates[base + '/balanceSettled'] = status === 'Aprobado';
+    updates[base + '/balanceSettledAt'] = status === 'Aprobado' ? reviewedAt : null;
+    updates[base + '/manualReview'] = true;
+    if (status === 'Aprobado') {
+      updates[base + '/receiptId'] = record.receiptId || ('SW-' + new Date(reviewedAt).toISOString().replace(/[-:TZ.]/g, '').slice(0, 14) + '-' + id.slice(-5));
+      const ledgerSnap = await legacyRtdb.ref(legacyPath('ledger/' + id)).once('value');
+      if (!ledgerSnap.exists()) {
+        updates[legacyPath('ledger/' + id)] = {
+          id, recordId: id, sourceCollection: collection, sourceId: id,
+          ledgerLocked: true, ledgerEvent: 'APROBACION',
+          userId: userKey, amount, currency, commission, commissionUser: userShare, commissionAdmin: adminShare,
+          debit, reviewedByAuthUid: legacyAuth.currentUser.uid, createdAt: reviewedAt
+        };
+      }
+    }
+    await legacyRtdb.ref().update(updates);
+    if (status === 'Aprobado') {
+      const receipt = {
+        id: record.receiptId || updates[base + '/receiptId'],
+        date: new Date(reviewedAt).toLocaleDateString('es-DO'),
+        time: new Date(reviewedAt).toLocaleTimeString('es-DO'),
+        business: 'SENDWAYO EXPRESS', concept: record.type || record.category || collection,
+        type: record.type || record.category || collection, route: record.routeFull || record.route || '',
+        amount, net: legacyMoney(amount - commission), currency,
+        remitente: record.ownerName || record.remitente || user.name || '',
+        remitentePhone: record.ownerPhone || user.phone || '',
+        beneficiario: record.beneficiary || record.beneficiario || user.name || '',
+        beneficiarioPhone: record.beneficiaryPhone || '',
+        collection, status: 'Aprobado',
+        autorizadorCodigo: (cachedLegacyProfile || {}).code || (cachedLegacyProfile || {}).staffId || ''
+      };
+      try { await legacyRtdb.ref(legacyPath(collection + '/' + id + '/receipt')).set(receipt); } catch (_) {}
+      try { await legacySendNotification(userKey, 'Su operación fue APROBADA.', collection, id); } catch (_) {}
+    } else {
+      try { await legacySendNotification(userKey, 'Su operación fue ' + status.toUpperCase() + '. ' + reason, collection, id); } catch (_) {}
+    }
+    return { id, status, receiptId: record.receiptId || updates[base + '/receiptId'] || null };
+  }
+  async function legacyAdjustAccount(payload) {
+    if (!legacyAuth.currentUser || !legacyIsAdmin()) throw legacyError('Solo administración puede ajustar balances y comisiones.');
+    const target = String(payload.uid || '');
+    const kind = String(payload.kind || 'balance').toLowerCase();
+    const currency = String(payload.currency || 'DOP').toUpperCase() === 'HTG' ? 'HTG' : 'DOP';
+    const value = legacyMoney(payload.value);
+    if (!Number.isFinite(Number(payload.value)) || value < 0) throw legacyError('El importe del ajuste no es válido.');
+    const reason = String(payload.reason || '').trim();
+    if (!reason) throw legacyError('El motivo del ajuste es obligatorio.');
+    const key = String(payload.idempotencyKey || payload.id || ('ADJ-' + Date.now()));
+    const targetKey = await legacyGetUserKey(target);
+    const ref = legacyRtdb.ref(legacyPath('users/' + targetKey));
+    let result = null;
+    const tx = await ref.transaction(user => {
+      if (!user || typeof user !== 'object') return;
+      const applied = { ...(user.sendwayoAdjustments || {}) };
+      if (applied[key]) { result = applied[key]; return user; }
+      const isCommission = kind.includes('commission') || kind.includes('comision');
+      const field = isCommission ? (currency === 'HTG' ? 'commissionHTG' : 'commission') : (currency === 'HTG' ? 'balanceHTG' : 'balance');
+      const before = legacyNum(user[field] ?? (currency === 'DOP' && !isCommission ? user.balanceDOP : 0));
+      const after = payload.mode === 'increment' ? legacyMoney(before + value) : value;
+      const patch = { ...user, [field]: after, sendwayoAdjustments: { ...applied, [key]: { id: key, before, after, currency, kind, reason, createdAt: legacyNow() } } };
+      if (!isCommission && currency === 'DOP') patch.balanceDOP = after;
+      if (isCommission && currency === 'DOP') {
+        patch.commissionDOP = after;
+        patch.commissionAccrued = after;
+      }
+      result = { id: key, before, after, currency, kind, reason, uid: targetKey };
+      return patch;
+    }, undefined, false);
+    const snapshot = tx && tx.snapshot && tx.snapshot.val();
+    if (!tx || (!tx.committed && !(snapshot && snapshot.sendwayoAdjustments && snapshot.sendwayoAdjustments[key]))) throw legacyError('Firebase no confirmó el ajuste.');
+    if (!result && snapshot && snapshot.sendwayoAdjustments) result = snapshot.sendwayoAdjustments[key];
+    try {
+      await legacyRtdb.ref(legacyPath('audit/' + key)).set({ id: key, action: 'Ajuste de ' + kind, createdByAuthUid: legacyAuth.currentUser.uid, createdAt: legacyNow(), amount: value, currency, reason, targetUserId: targetKey });
+    } catch (_) {}
+    return result || {};
+  }
+  async function legacyPayCommission(payload) {
+    if (!legacyAuth.currentUser) throw legacyError('Inicia sesión.');
+    const targetUid = String(payload.targetUid || legacyProfileKey());
+    const targetKey = await legacyGetUserKey(targetUid);
+    const amount = legacyMoney(payload.amount);
+    const currency = String(payload.currency || 'DOP').toUpperCase() === 'HTG' ? 'HTG' : 'DOP';
+    const id = String(payload.idempotencyKey || ('COM-' + Date.now()));
+    if (!(amount > 0)) throw legacyError('El importe debe ser mayor que cero.');
+    if (!legacyIsAdmin() && (legacyIsAgent() || targetKey !== legacyProfileKey())) throw legacyError('Solo puede mover su propia comisión; los agentes no tienen comisión.');
+    const userRef = legacyRtdb.ref(legacyPath('users/' + targetKey));
+    const tx = await userRef.transaction(user => {
+      if (!user || typeof user !== 'object') return;
+      if (legacyIsAgent()) throw legacyError('Los agentes no tienen comisión personal.');
+      const payments = { ...(user.commissionPayments || {}) };
+      if (payments[id]) return user;
+      const comField = currency === 'HTG' ? 'commissionHTG' : 'commission';
+      const balField = currency === 'HTG' ? 'balanceHTG' : 'balance';
+      const commission = legacyNum(user[comField] ?? (currency === 'DOP' ? user.commissionDOP : 0));
+      if (commission < amount) throw legacyError('La comisión disponible es insuficiente.');
+      const balance = legacyNum(user[balField] ?? (currency === 'DOP' ? user.balanceDOP : 0));
+      const result = { id, amount, currency, remaining: legacyMoney(commission - amount), balance: legacyMoney(balance + amount) };
+      payments[id] = { ...result, at: legacyNow(), by: legacyAuth.currentUser.uid };
+      const next = { ...user, [comField]: result.remaining, [balField]: result.balance, commissionPayments: payments };
+      if (currency === 'DOP') { next.commissionDOP = result.remaining; next.balanceDOP = result.balance; }
+      return next;
+    }, undefined, false);
+    const fresh = tx && tx.snapshot && tx.snapshot.val();
+    const payment = fresh && fresh.commissionPayments && fresh.commissionPayments[id];
+    if (!tx || (!tx.committed && !payment)) throw legacyError('Firebase no confirmó el movimiento de comisión.');
+    const result = payment || {};
+    try {
+      await legacyRtdb.ref(legacyPath('commissions/' + id)).set({
+        id, userId: targetKey, amount, currency, accountingType: 'COMISION_PAGADA',
+        status: 'Aprobado', createdByAuthUid: legacyAuth.currentUser.uid,
+        createdByUserId: legacyProfileKey(), createdAt: legacyNow(), targetUserId: targetKey
+      });
+    } catch (_) {}
+    return result;
+  }
+  async function legacySaveBankAccount(payload) {
+    if (!legacyAuth.currentUser || !legacyIsAdmin()) throw legacyError('Solo administración puede gestionar cuentas bancarias.');
+    const id = String(payload.id || payload.idempotencyKey || ('BANK-' + Date.now()));
+    const record = { id, bank: String(payload.bank || payload.banco || '').trim(), number: String(payload.number || payload.numero || '').trim(), holder: String(payload.holder || payload.titular || 'SENDWAYO EXPRESS').trim(), active: true, updatedAt: legacyNow(), createdByAuthUid: legacyAuth.currentUser.uid };
+    if (!record.bank || !record.number) throw legacyError('Banco y número de cuenta son obligatorios.');
+    await legacyRtdb.ref(legacyPath('accounts/' + id)).set(record);
+    return record;
+  }
+  async function legacySavePackage(payload, edit) {
+    if (!legacyAuth.currentUser) throw legacyError('Inicia sesión.');
+    const id = String(payload.id || payload.tracking || ('SW-PQ-' + Date.now()));
+    if (edit && !legacyIsAdmin()) throw legacyError('Solo administración puede modificar los datos de un paquete.');
+    const profileKey = legacyProfileKey();
+    const weight = legacyNum(payload.weight ?? payload.peso);
+    const cost = legacyMoney(payload.cost ?? payload.declaredCost ?? payload.costo);
+    if (!(weight > 0) || !String(payload.sender || payload.remitente || '').trim() || !String(payload.origin || payload.origen || '').trim() || !String(payload.destination || payload.destino || '').trim()) throw legacyError('Remitente, peso, origen y destino son obligatorios.');
+    const record = {
+      ...payload, id, tracking: String(payload.tracking || id),
+      sender: String(payload.sender || payload.remitente).trim(),
+      weight, origin: String(payload.origin || payload.origen).trim(), destination: String(payload.destination || payload.destino).trim(),
+      cost, declaredCost: cost, packageType: payload.packageType || payload.tipo || 'Envio',
+      amount: cost > 0 ? cost : weight, commission: 0, currency: 'DOP',
+      userId: profileKey, ownerUid: legacyAuth.currentUser.uid,
+      createdByAuthUid: legacyAuth.currentUser.uid, createdByUserId: profileKey,
+      createdAt: legacyNum(payload.createdAt) || legacyNow(), createdAtMs: legacyNow(),
+      status: payload.status || 'Pendiente'
+    };
+    if (edit) await legacyRtdb.ref(legacyPath('paquetes/' + id)).update(record);
+    else await legacyRtdb.ref(legacyPath('paquetes/' + id)).set(record);
+    return record;
+  }
+  async function legacySaveBeneficiary(payload) {
+    if (!legacyAuth.currentUser) throw legacyError('Inicia sesión.');
+    const id = String(payload.id || payload.idempotencyKey || ('BEN-' + Date.now()));
+    const key = legacyProfileKey();
+    const record = {
+      ...payload, id,
+      firstName: String(payload.firstName || '').trim(), lastName: String(payload.lastName || '').trim(),
+      name: [payload.firstName, payload.lastName].filter(Boolean).join(' ').trim(),
+      phone: String(payload.phone || '').trim(), country: payload.country || 'RD',
+      code: String(payload.code || ''),
+      userId: key, ownerAuthUid: legacyAuth.currentUser.uid,
+      createdByUid: legacyAuth.currentUser.uid, active: true,
+      createdAtMs: legacyNow()
+    };
+    if (!record.firstName || !record.phone) throw legacyError('Nombre y teléfono del beneficiario son obligatorios.');
+    await legacyRtdb.ref(legacyPath('beneficiaries/' + id)).set(record);
+    return record;
+  }
+  async function legacySaveReconciliation(payload) {
+    if (!legacyAuth.currentUser || !legacyIsAdmin()) throw legacyError('Solo administración puede registrar conciliaciones.');
+    const id = String(payload.id || payload.idempotencyKey || ('REC-' + Date.now()));
+    const record = { ...payload, id, type: 'reconciliation', name: String(payload.concept || payload.name || 'Conciliación'), phone: '', status: 'Pendiente', createdByAuthUid: legacyAuth.currentUser.uid, createdAt: legacyNow(), createdAtMs: legacyNow() };
+    await legacyRtdb.ref(legacyPath('requests/' + id)).set(record);
+    return record;
+  }
+  async function legacyInvoke(name, payload) {
+    switch (name) {
+      case 'submitOperation': return legacySubmitOperation(payload);
+      case 'reviewOperation': return legacyReviewOperation(payload);
+      case 'resubmitOperation': {
+        const id = String(payload.operationId || payload.id || '');
+        const found = await legacyFindOperation(id);
+        if (String(found.record.status || '') !== 'No Coincide') throw legacyError('Solo puede corregirse una operación marcada No Coincide.');
+        const corrected = { ...(found.record || {}), ...(payload.operation || payload.changes || {}), id: String(payload.newOperationId || ('SW-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8))), resubmittedFrom: id };
+        delete corrected.reviewReason; delete corrected.reviewedAt; delete corrected.approvedAt; delete corrected.receipt;
+        return legacySubmitOperation({ operation: corrected });
+      }
+      case 'deleteRejectedOperation': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede eliminar operaciones rechazadas.');
+        const found = await legacyFindOperation(payload.operationId || payload.id);
+        if (!['rechazado', 'rejected'].includes(String(found.record.status || '').toLowerCase())) throw legacyError('Solo se puede eliminar una operación rechazada.');
+        await legacyRtdb.ref(legacyPath(found.collection + '/' + found.id)).remove();
+        return { id: found.id, deleted: true };
+      }
+      case 'adjustAccount': return legacyAdjustAccount(payload);
+      case 'payCommission': return legacyPayCommission(payload);
+      case 'saveBankAccount': return legacySaveBankAccount(payload);
+      case 'deleteBankAccount': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede eliminar cuentas bancarias.');
+        await legacyRtdb.ref(legacyPath('accounts/' + String(payload.id || ''))).remove();
+        return { id: payload.id, deleted: true };
+      }
+      case 'savePackage': return legacySavePackage(payload, false);
+      case 'updatePackageDetails': return legacySavePackage(payload, true);
+      case 'updatePackageStatus': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede cambiar el estado de paquetes.');
+        const id = String(payload.id || payload.packageId || '');
+        if (!id) throw legacyError('Falta el identificador del paquete.');
+        const status = String(payload.status || '');
+        if (!status) throw legacyError('Falta el estado del paquete.');
+        const patch = { status, updatedAt: legacyNow(), updatedByAuthUid: legacyAuth.currentUser.uid };
+        await legacyRtdb.ref(legacyPath('paquetes/' + id)).update(patch);
+        return { id, ...patch };
+      }
+      case 'saveBeneficiary': return legacySaveBeneficiary(payload);
+      case 'deleteBeneficiary': {
+        const id = String(payload.id || '');
+        if (!id) throw legacyError('Falta el identificador del beneficiario.');
+        const ref = legacyRtdb.ref(legacyPath('beneficiaries/' + id));
+        if (!legacyIsAdmin()) {
+          const snap = await ref.once('value');
+          if (!snap.exists() || String((snap.val() || {}).ownerAuthUid || '') !== legacyAuth.currentUser.uid) throw legacyError('No puedes eliminar este beneficiario.');
+        }
+        await ref.remove();
+        return { id, deleted: true };
+      }
+      case 'saveReconciliation': return legacySaveReconciliation(payload);
+      case 'cancelReconciliation': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede cancelar conciliaciones.');
+        const id = String(payload.id || payload.reconciliationId || '');
+        await legacyRtdb.ref(legacyPath('requests/' + id)).remove();
+        return { id, cancelled: true };
+      }
+      case 'reviewRegistration': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede revisar registros.');
+        const id = String(payload.requestId || payload.id || '');
+        const status = String(payload.status || (payload.action === 'approve' ? 'Aprobado' : 'Rechazado'));
+        await legacyRtdb.ref(legacyPath('requests/' + id)).update({ status, reviewedAt: legacyNow(), reviewedByAuthUid: legacyAuth.currentUser.uid });
+        return { id, status };
+      }
+      case 'linkUserToAccount': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede vincular cuentas.');
+        const target = await legacyGetUserKey(payload.userId || payload.targetUid || payload.uid);
+        const patch = {};
+        if (payload.authUid) patch.authUid = payload.authUid;
+        if (payload.email || payload.authEmail) patch.authEmail = String(payload.authEmail || payload.email).trim().toLowerCase();
+        patch.updatedAt = legacyNow();
+        await legacyRtdb.ref(legacyPath('users/' + target)).update(patch);
+        return { id: target, ...patch };
+      }
+      case 'importLegacyAccounts': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede importar cuentas.');
+        const snap = await legacyRtdb.ref(legacyPath('users')).once('value');
+        const value = snap.val() || {};
+        return { imported: Object.keys(value).length, source: 'sendwayo_express_v2/users', alreadyInUse: true };
+      }
+      case 'approveLegacyBalanceMigration': {
+        if (!legacyIsAdmin()) throw legacyError('Solo administración puede aprobar migraciones de balances.');
+        return { approved: false, message: 'Las cuentas y balances existentes ya se leen desde Realtime Database; no se aplicó ninguna migración duplicada.' };
+      }
+      default:
+        throw legacyError('La acción "' + name + '" todavía no tiene un controlador compatible con la base de datos existente.');
+    }
+  }
+
   function listenMyOperations(callback) {
     const user = auth.currentUser;
     if (!user) throw new Error('Inicia sesión antes de escuchar transacciones.');
