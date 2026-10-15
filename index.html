@@ -437,6 +437,7 @@ function AuthGate(){
       setError(window.sendwayoFirebaseError || "No se pudo cargar la configuración completa de Firebase del Punto A. Abre la versión publicada en HTTPS y verifica el Hosting; no se aceptará un acceso local.");return;
     }
     setLoginBusy(true);
+    const withLoginTimeout=promise=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),20000))]);
     try{
       let email=value;
       let matchesForLogin=[];
@@ -476,11 +477,11 @@ function AuthGate(){
       if(!email||!email.includes("@")){
         setError("No se encontró un correo asociado. Ingrese el correo registrado o el nombre de usuario exacto.");return;
       }
-      const authUser=await Promise.race([cloud.signIn(email,password,matchesForLogin),new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),20000))]);
-      let profile=await cloud.getProfile();
+      const authUser=await withLoginTimeout(cloud.signIn(email,password,matchesForLogin));
+      let profile=await withLoginTimeout(cloud.getProfile());
       if(!profile && typeof cloud.resolveOrBootstrapProfile==="function" && !cloud.isLegacyUser?.(authUser.uid)){
-        const resolution=await cloud.resolveOrBootstrapProfile();
-        profile=resolution?.profile || await cloud.getProfile();
+        const resolution=await withLoginTimeout(cloud.resolveOrBootstrapProfile());
+        profile=resolution?.profile || await withLoginTimeout(cloud.getProfile());
       }
       const profileRole=String(profile?.role||"").trim().toLowerCase();
       const role=({admin:"admin",administrador:"admin",remitente:"remitente",agent:"agent",agente:"agent"})[profileRole]||null;
