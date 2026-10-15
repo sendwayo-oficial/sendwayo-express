@@ -53,7 +53,13 @@ function timerDelays(source) {
   }
   return delays;
 }
-const fastTimers = timerDelays(html).filter(x => x.ms > 0 && x.ms < 5000);
+const fastTimers = timerDelays(html).filter(x => {
+  if (!(x.ms > 0 && x.ms < 5000)) return false;
+  // A one-second clock refresh updates only the displayed time; it is not a DOM-repair poller.
+  const fragment = source.slice(x.at, x.at + 140).replace(/\s+/g, ' ');
+  const clockOnly = x.ms === 1000 && /setInterval\(\(\)\s*=>\s*v\(new Date\),\s*1000\)/.test(fragment);
+  return !clockOnly;
+});
 if (fastTimers.length) {
   errors.push('Temporizador repetitivo de alta frecuencia (' + fastTimers.map(x => x.ms + ' ms').join(', ') + '): sustituir sondeo frecuente por eventos/estado.');
 }
