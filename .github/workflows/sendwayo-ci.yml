@@ -31,6 +31,7 @@ jobs:
             echo "SENDWAYO recovery redirect target OK"
             exit 0
           fi
-          grep -q 'sendwayo-professional-hardening' index.html
-          grep -q 'ganancias-dia-card' index.html
-          echo "SENDWAYO critical markers OK"
+          grep -q 'SENDWAYO_LEGACY_FIREBASE_CONFIG' index.html
+          grep -q 'balanceDOP' index.html
+          grep -q 'SENDWAYO EXPRESS — Plataforma oficial' index.html
+          echo "SENDWAYO official fusion and balance markers OK"
