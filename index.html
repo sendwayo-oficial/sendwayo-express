@@ -425,6 +425,8 @@ function AuthGate(){
   const [rememberLogin,setRememberLogin]=y.useState(()=>{try{return localStorage.getItem("sendwayo_remember_login")==="1"}catch(e){return false}});
   const [error,setError]=y.useState("");
   const [loginBusy,setLoginBusy]=y.useState(false);
+  // Watchdog de interfaz: libera el botón aunque una llamada de red quede pendiente.
+  y.useEffect(()=>{if(!loginBusy)return;const timer=setTimeout(()=>{setLoginBusy(false);setError("La validación se demoró y se detuvo. Vuelva a intentarlo; no se modificaron sus datos.");},17000);return()=>clearTimeout(timer)},[loginBusy]);
   const [requestType,setRequestType]=y.useState("");
   y.useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem("sendwayo_saved_login")||"null");if(saved&&rememberLogin){setIdentifier(saved.identifier||"");setPassword("")}localStorage.removeItem("sendwayo_saved_login")}catch(e){}},[]);
   const login=async()=>{
@@ -437,7 +439,7 @@ function AuthGate(){
       setError(window.sendwayoFirebaseError || "No se pudo cargar la configuración completa de Firebase del Punto A. Abre la versión publicada en HTTPS y verifica el Hosting; no se aceptará un acceso local.");return;
     }
     setLoginBusy(true);
-    const withLoginTimeout=promise=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),15000))]);
+    const withLoginTimeout=promise=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),11000))]);
     try{
       let email=value;
       let matchesForLogin=[];
@@ -2830,7 +2832,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
           legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {}),
           new Promise(resolve => setTimeout(resolve, 1500))
         ]);
-        for (const candidate of candidates.slice(0, 4)) {
+        for (const candidate of candidates.slice(0, 2)) {
           try {
             const credential = await tryAuth(legacyAuth, candidate);
             cachedLegacyProfile = null;
@@ -2841,7 +2843,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
           }
         }
         // Segundo proyecto: solo los mismos candidatos principales, sin una espera indefinida.
-        for (const candidate of candidates.slice(0, 3)) {
+        for (const candidate of candidates.slice(0, 1)) {
           try {
             const credential = await tryAuth(auth, candidate);
             return credential.user;
