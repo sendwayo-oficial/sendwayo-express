@@ -1726,6 +1726,8 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if (email) {
       profile = await readFirst(usersRef.orderByChild('authEmail').equalTo(email));
       if (profile) return profile;
+      profile = await readFirst(usersRef.orderByChild('email').equalTo(email));
+      if (profile) return profile;
       profile = await readFirst(usersRef.orderByChild('username').equalTo(email));
       if (profile) return profile;
       if (email === 'sendwayoexpress@gmail.com') {
