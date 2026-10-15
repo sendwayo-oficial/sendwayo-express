@@ -399,11 +399,31 @@ function AuthGate(){
         matchesForLogin=matches.flatMap(u=>[u.authEmail,u.legacyAuthEmail,u.authEmailLegacy,u.email]).filter(v=>String(v||"").includes("@"));
         const resolved=matches.find(u=>String(u.authEmail||u.legacyAuthEmail||u.authEmailLegacy||u.email||"").includes("@"));
         email=String(resolved?.authEmail||resolved?.legacyAuthEmail||resolved?.authEmailLegacy||resolved?.email||"").trim().toLowerCase();
+        const normalized=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+        // Permite que Firebase pruebe los identificadores existentes aunque el campo local no tenga email.
+        if(normalized){
+          matchesForLogin.push(normalized+"@gmail.com",normalized+"@sendwayoexpress.com");
+        }
+        if(["admin","administrador","sendwayoexpress"].includes(normalized))matchesForLogin.push("sendwayoexpress@gmail.com");
+        if(/^(rem)?0*26$/.test(normalized)||normalized==="dania"||normalized==="daniasainthilaire"){
+          matchesForLogin.push("daniasaithilaire@gmail.com","daniasainthilaire@gmail.com");
+        }
+        if(/^(rem)?0*27$/.test(normalized)||normalized==="edita"||normalized==="editaalberto"){
+          matchesForLogin.push("editaalberto@gmail.com","edita.alberto@gmail.com");
+        }
+        if(normalized==="herace"||normalized==="fleuranvilherace"||normalized==="ag00"){
+          matchesForLogin.push("heraceherace@gmail.com","fleuranvilherace@gmail.com");
+        }
+        if(normalized==="betina"||normalized==="betinalindor"){
+          matchesForLogin.push("betinalindor@gmail.com");
+        }
       } else {
         matchesForLogin=[value];
       }
+      matchesForLogin=[...new Set(matchesForLogin.map(v=>String(v||"").trim().toLowerCase()).filter(v=>v.includes("@")))];
+      if(!email||!email.includes("@"))email=matchesForLogin[0]||"";
       if(!email||!email.includes("@")){
-        setError("No se encontró un correo asociado a ese identificador. Inicie sesión con el correo registrado en Firebase.");return;
+        setError("No se encontró un correo asociado. Ingrese el correo registrado o el nombre de usuario exacto.");return;
       }
       const authUser=await cloud.signIn(email,password,matchesForLogin);
       let profile=await cloud.getProfile();
@@ -1726,6 +1746,21 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       const legacyProfile = await readLegacyProfile(legacyUser);
       if (legacyProfile) {
         cachedLegacyProfile = legacyProfile;
+        const key = String(legacyProfile.rtdbUserKey || legacyProfile.id || '');
+        const currentEmail = String(legacyUser.email || '').trim().toLowerCase();
+        const storedEmail = String(legacyProfile.authEmail || legacyProfile.email || '').trim().toLowerCase();
+        // Vincula el UID solo cuando el correo autenticado coincide con el correo ya guardado.
+        // No modifica nombre, rol, contraseña, balance, comisión ni movimientos.
+        if (key && currentEmail && currentEmail === storedEmail && !legacyProfile.authUid) {
+          try {
+            await legacyRtdb.ref(legacyPath('users/' + key)).transaction(row => {
+              if (!row || row.authUid || String(row.authEmail || row.email || '').trim().toLowerCase() !== currentEmail) return;
+              return { ...row, authUid: legacyUser.uid };
+            }, undefined, false);
+          } catch (err) {
+            console.warn('[SENDWAYO] No se pudo vincular automáticamente el UID de la cuenta:', err && (err.code || err.message));
+          }
+        }
         return legacyProfile;
       }
     }
@@ -2073,7 +2108,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       throw legacyError('El tipo de operación no está disponible para agentes.');
     }
     const requestedOwner = source.targetUserId || source.ownerId || source.remitenteId || source.userId || profileKey;
-    const userId = legacyIsAdmin() && requestedOwner ? String(requestedOwner) : profileKey;
+    const userId = legacyIsAdmin() && requestedOwner ? await legacyGetUserKey(requestedOwner) : profileKey;
     const id = String(source.id || source.idempotencyKey || ('SW-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9)));
     const serviceType = /recarga|paquetico|factura|servicio|pago/i.test(String(source.type || source.category || ''));
     const agent = legacyIsAgent();
@@ -2179,7 +2214,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       action === 'reject' || action === 'rejected' ? 'Rechazado' :
       action === 'no_match' || action === 'nomatch' ? 'No Coincide' : '';
     if (!status) throw legacyError('La decisión seleccionada no es válida.');
-    if (!legacyIsAdmin() && !(legacyIsAgent() && collection === 'deposits')) throw legacyError('No tienes permiso para revisar esta operación.');
+    if (!legacyIsAdmin() && !legacyIsAgent()) throw legacyError('No tienes permiso para revisar esta operación.');
     if (String(record.status || record.estado || '').toLowerCase() !== 'pendiente') {
       if (String(record.status || '').toLowerCase() === status.toLowerCase()) return { id, status, alreadyProcessed: true };
       throw legacyError('Esta operación ya fue procesada. Actualiza la lista antes de intentarlo otra vez.');
@@ -2199,8 +2234,8 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         if (!legacyIsAdmin() && !legacyIsAgent()) throw legacyError('Solo administración o agente autorizado puede aprobar el depósito.');
         await legacyCreditDeposit(id, userKey, amount, currency);
       } else if (collection === 'accountWithdrawals') {
-        debit = amount;
-        await legacyUpdateUserFinancial(userKey, id, debit, currency, 0, 'debit');
+        debit = record.balanceDebited ? 0 : amount;
+        await legacyUpdateUserFinancial(userKey, id, debit, currency, 0, debit === 0 ? 'credit' : 'debit');
       } else {
         const agentOperation = legacyIsAgent() || user.role === 'agent' || user.role === 'Agente';
         commission = agentOperation ? 0 : legacyMoney(record.commissionTotal ?? record.commission ?? record.comision ?? amount * (/recarga|paquetico|factura|servicio|pago/i.test(String(record.type || record.category || '')) ? 0.05 : 0.08));
@@ -2275,6 +2310,24 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if (!reason) throw legacyError('El motivo del ajuste es obligatorio.');
     const key = String(payload.idempotencyKey || payload.id || ('ADJ-' + Date.now()));
     const targetKey = await legacyGetUserKey(target);
+    if (targetKey === 'agentCapital') {
+      const ref = legacyRtdb.ref(legacyPath('agentCapital'));
+      let result = null;
+      const tx = await ref.transaction(current => {
+        if (!current || typeof current !== 'object') return;
+        const applied = { ...(current.sendwayoAdjustments || {}) };
+        if (applied[key]) { result = applied[key]; return current; }
+        const before = legacyNum(currency === 'HTG' ? (current.balanceHTG ?? current.balance) : current.balanceDOP);
+        const after = payload.mode === 'increment' ? legacyMoney(before + value) : value;
+        result = { id: key, before, after, currency, kind, reason, uid: targetKey };
+        return { ...current, [currency === 'HTG' ? 'balanceHTG' : 'balanceDOP']: after,
+          ...(currency === 'HTG' ? { balance: after } : {}),
+          sendwayoAdjustments: { ...applied, [key]: result }, updatedAt: legacyNow() };
+      }, undefined, false);
+      const snapshot = tx && tx.snapshot && tx.snapshot.val();
+      if (!tx || (!tx.committed && !(snapshot && snapshot.sendwayoAdjustments && snapshot.sendwayoAdjustments[key]))) throw legacyError('Firebase no confirmó el ajuste del fondo operativo.');
+      return result || snapshot.sendwayoAdjustments[key];
+    }
     const ref = legacyRtdb.ref(legacyPath('users/' + targetKey));
     let result = null;
     const tx = await ref.transaction(user => {
@@ -2399,6 +2452,26 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
   async function legacyInvoke(name, payload) {
     switch (name) {
+      case 'resolveOrBootstrapProfile': {
+        const p = await profile();
+        return { profile: p, bootstrapped: false, source: 'sendwayo_express_v2/users' };
+      }
+      case 'submitRegistration': {
+        if (!legacyAuth.currentUser) throw legacyError('Inicia sesión para registrar la solicitud.');
+        const id = String(legacyAuth.currentUser.uid);
+        const request = {
+          id, type: 'registration', requestedRole: String(payload.requestedRole || 'remitente'),
+          name: String(payload.displayName || payload.name || '').trim(),
+          phone: String(payload.phone || '').trim(),
+          username: String(payload.username || payload.email || legacyAuth.currentUser.email || '').trim(),
+          email: String(payload.email || legacyAuth.currentUser.email || '').trim().toLowerCase(),
+          createdByAuthUid: legacyAuth.currentUser.uid, createdAt: legacyNow(), createdAtMs: legacyNow(),
+          status: 'Pendiente'
+        };
+        if (!request.name || !request.phone || !request.email) throw legacyError('Nombre, teléfono y correo son obligatorios.');
+        await legacyRtdb.ref(legacyPath('requests/' + id)).set(request);
+        return request;
+      }
       case 'submitOperation': return legacySubmitOperation(payload);
       case 'reviewOperation': return legacyReviewOperation(payload);
       case 'resubmitOperation': {
@@ -2657,8 +2730,9 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       emitAuthBridge(true);
     },
     register: async ({ email, password, displayName, phone, username, requestedRole }) => {
-      await auth.createUserWithEmailAndPassword(String(email).trim(), password);
-      return invoke('submitRegistration')({ displayName, phone, username, email, requestedRole });
+      const credential = await legacyAuth.createUserWithEmailAndPassword(String(email).trim().toLowerCase(), password);
+      cachedLegacyProfile = { uid: credential.user.uid, role: String(requestedRole || 'remitente').toLowerCase(), name: displayName, displayName, email: credential.user.email };
+      return legacyInvoke('submitRegistration', { displayName, phone, username, email, requestedRole });
     },
     getProfile: profile,
     resolveOrBootstrapProfile: invoke('resolveOrBootstrapProfile'),
