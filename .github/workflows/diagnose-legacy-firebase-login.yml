@@ -77,12 +77,10 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$KEY_FILE" >> "$GITHUB_ENV"
           export GOOGLE_APPLICATION_CREDENTIALS="$KEY_FILE"
           firebase database:get /sendwayo_express_v2/users --project "$EXPECTED_PROJECT" --json > "$RUNNER_TEMP/legacy-users.json"
-          LEGACY_USERS_FILE="$RUNNER_TEMP/legacy-users.json" KEY_FILE="$KEY_FILE" node - <<'NODE'
+          NODE_PATH="$RUNNER_TEMP/sendwayo-legacy-diagnostic/node_modules" LEGACY_USERS_FILE="$RUNNER_TEMP/legacy-users.json" KEY_FILE="$KEY_FILE" node - <<'NODE'
           const fs = require('fs');
-          const path = require('path');
-          const sdkPath = path.join(process.env.RUNNER_TEMP || '/tmp', 'sendwayo-legacy-diagnostic/node_modules/firebase-admin');
-          const { initializeApp, cert } = require(path.join(sdkPath, 'app'));
-          const { getAuth } = require(path.join(sdkPath, 'auth'));
+          const { initializeApp, cert } = require('firebase-admin/app');
+          const { getAuth } = require('firebase-admin/auth');
           const key = JSON.parse(fs.readFileSync(process.env.KEY_FILE, 'utf8'));
           const app = initializeApp({ credential: cert(key), projectId: process.env.EXPECTED_PROJECT });
           const auth = getAuth(app);
