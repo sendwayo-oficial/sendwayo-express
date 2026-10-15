@@ -56,7 +56,7 @@ function timerDelays(source) {
 const fastTimers = timerDelays(html).filter(x => {
   if (!(x.ms > 0 && x.ms < 5000)) return false;
   // A one-second clock refresh updates only the displayed time; it is not a DOM-repair poller.
-  const fragment = source.slice(x.at, x.at + 140).replace(/\s+/g, ' ');
+  const fragment = html.slice(x.at, x.at + 140).replace(/\s+/g, ' ');
   const clockOnly = x.ms === 1000 && /setInterval\(\(\)\s*=>\s*v\(new Date\),\s*1000\)/.test(fragment);
   return !clockOnly;
 });
