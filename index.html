@@ -998,6 +998,8 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
       if(!session||session.role!=="admin") return;
       var old=document.getElementById("sendwayo-public-request-admin"); if(old)old.remove();
       var reqs=getReqs(), pending=reqs.filter(function(x){return x.estado==="Pendiente"});
+      /* No mostrar panel vacío de solicitudes al entrar. */
+      if(!pending.length){var empty=document.getElementById("sendwayo-public-request-admin");if(empty)empty.remove();return;}
       var box=document.createElement("div"); box.id="sendwayo-public-request-admin";
       box.style.cssText="position:fixed;left:272px;right:auto;top:82px;bottom:12px;z-index:100000;max-width:430px;width:min(430px,calc(100vw - 292px));background:#fff;border:2px solid #0a245e;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);padding:12px;font-family:system-ui,sans-serif;max-height:calc(100vh - 94px);overflow:auto";
       box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#0a245e">📋 Solicitudes de bienvenida ('+pending.length+')</b><button id="swpr-close" style="border:0;background:#f3f4f6;border-radius:8px;padding:4px 8px">✕</button></div>'+
@@ -1066,6 +1068,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
  function sess(){try{return JSON.parse(localStorage.getItem("sendwayo_authenticated_user")||"null")}catch(e){return null}}
  function bal(){try{return JSON.parse(localStorage.getItem("sendwayo_balances")||"{}")}catch(e){return {}}}
  function money(n,c){return Number(n||0).toLocaleString("fr-FR",{minimumFractionDigits:2})+" "+c}
+ const swFixStyle=document.createElement("style");swFixStyle.id="sendwayo-crisp-login-fix";swFixStyle.textContent="html,body,#root{filter:none!important;-webkit-filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}#root .blur-sm,#root .blur,#root .backdrop-blur,#root .backdrop-blur-sm{filter:none!important;-webkit-filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}#root form input{filter:none!important;opacity:1!important}";document.head.appendChild(swFixStyle);
  function addHero(){return;
   const root=document.getElementById("root");if(!root||document.getElementById("sendwayo-welcome-hero"))return;
   const txt=root.innerText||"";if(!txt.includes("Quiero ser remitente")||txt.includes("Tabla Natcash"))return;
@@ -1232,7 +1235,7 @@ window.__sendwayoRBAC = {getAllowedPages, enforceRBAC, ALLOWED_PAGES, cleanMetho
   }
   function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
   function addNav(){if(!session())return;const role=session().role;if(document.getElementById('sw-v6-payment-transfer'))return;const b=document.createElement('button');b.id='sw-v6-payment-transfer';b.textContent='💸 Pago de transferencia';b.style.cssText='width:100%;text-align:left;padding:11px 16px;background:transparent;color:#ffd84d;border:0;font-weight:900;cursor:pointer';b.onclick=()=>window.__sendwayoTransferPageV19?window.__sendwayoTransferPageV19():paymentTransfer();const side=document.querySelector('#sidebar .overflow-y-auto');if(side)side.appendChild(b);const mobile=document.querySelector('#sidebar-overlay .flex-1.overflow-y-auto');if(mobile){const m=b.cloneNode(true);m.id='sw-v6-payment-transfer-mobile';m.onclick=()=>window.__sendwayoTransferPageV19?window.__sendwayoTransferPageV19():paymentTransfer();mobile.appendChild(m)}
-    if(role==='admin'||role==='agent'){let f=document.getElementById('sw-v6-floating-transfer');if(!f){f=document.createElement('button');f.id='sw-v6-floating-transfer';f.textContent='💸 Pago de transferencia';f.style.cssText='position:fixed;right:18px;bottom:78px;z-index:6000;background:#0a245e;color:#fff;border:2px solid #d4af37;border-radius:999px;padding:11px 15px;font-weight:900;box-shadow:0 10px 30px #0003';f.onclick=()=>window.__sendwayoTransferPageV19?window.__sendwayoTransferPageV19():paymentTransfer();document.body.appendChild(f)}}
+    const floating=document.getElementById("sw-v6-floating-transfer");if(floating)floating.remove();
   }
   function suggestions(){
     const all=users(); const bens=read('sendwayo_beneficiaries',[]); if(Array.isArray(bens))all.push(...bens.map(x=>({id:x.id,name:[x.nombre,x.apellido].filter(Boolean).join(' '),phone:x.phone||x.telefono||'',role:'beneficiario'})));
