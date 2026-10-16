@@ -1,3 +1,4 @@
+# Diagnostic rerun requested 2026-10-16: read-only check only; no credentials or financial records are changed.
 name: SENDWAYO — Diagnose legacy login data (read only)
 # Forced read-only login audit requested on 2026-10-16; inspect account/profile alignment only, never write credentials or financial data.
 
