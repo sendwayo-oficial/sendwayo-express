@@ -2811,7 +2811,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
           legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {}),
           new Promise(resolve => setTimeout(resolve, 250))
         ]);
-        for (const candidate of candidates.slice(0, 2)) {
+        for (const candidate of candidates) {
           try {
             const credential = await tryAuth(candidate);
             cachedLegacyProfile = null;
