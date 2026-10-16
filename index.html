@@ -1648,23 +1648,18 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
 </script>
 
 <!-- SENDWAYO OFICIAL: SDK Firebase desde CDN público y un solo proyecto de datos. -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-app.js"></script>
+<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-auth.js"></script>
+<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-firestore.js"></script>
+<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-functions.js"></script>
+<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-database.js"></script>
+<script src="https://sendwayo-express-app-101.web.app/__/firebase/init.js"></script>
 <script>
-  /* Proyecto oficial único: las cuentas, perfiles y saldos existentes permanecen en sendwayo-express. */
-  window.SENDWAYO_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDvnBbSRqtGsBlIiX_hJXrtj2Drl_nlDT0",
-    authDomain: "sendwayo-express.firebaseapp.com",
-    databaseURL: "https://sendwayo-express-default-rtdb.firebaseio.com",
-    projectId: "sendwayo-express",
-    storageBucket: "sendwayo-express.firebasestorage.app",
-    messagingSenderId: "191723694148",
-    appId: "1:191723694148:web:ca19828cb8fb566a67b411",
-    measurementId: "G-9RL875KYH9"
-  };
+  /* SENDWAYO: usar la configuración completa del proyecto donde están las cuentas actuales. */
+  window.SENDWAYO_FIREBASE_CONFIG =
+    (window.firebase && window.firebase.apps && window.firebase.apps.length &&
+     window.firebase.app().options.apiKey && window.firebase.app().options.projectId)
+      ? window.firebase.app().options : null;
   window.SENDWAYO_LEGACY_FIREBASE_CONFIG = window.SENDWAYO_FIREBASE_CONFIG;
 </script>
 <script >
