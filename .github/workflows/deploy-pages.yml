@@ -59,7 +59,9 @@ jobs:
           grep -Fq "window.location.replace('../')" /tmp/sendwayo-stage2.html
           grep -Fq "firebase.initializeApp(options, 'sendwayoLegacy')" /tmp/sendwayo-stage2.html
           grep -Fq "auth = legacyApp.auth()" /tmp/sendwayo-stage2.html
-          echo "PASS Stage 2 uses the official Auth instance and opens the platform"
+          grep -Fq "db = legacyApp.firestore()" /tmp/sendwayo-stage2.html
+          grep -Fq "rtdb = legacyApp.database()" /tmp/sendwayo-stage2.html
+          echo "PASS Stage 2 uses the official authenticated Firebase services and opens the platform"
 
           curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}/" -o /tmp/sendwayo-root.html
           grep -Fq 'SENDWAYO EXPRESS' /tmp/sendwayo-root.html
