@@ -1650,22 +1650,15 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
 })();
 </script>
 
-<!-- SENDWAYO FUSIÓN A+B: SDK compatible cargado desde el Firebase de Punto A. -->
-<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-app.js"></script>
-<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-auth.js"></script>
-<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-firestore.js"></script>
-<script src="https://sendwayo-express-app-101.web.app/__/firebase/8.10.1/firebase-functions.js"></script>
+<!-- SENDWAYO OFICIAL: SDK Firebase desde CDN público y un solo proyecto de datos. -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://sendwayo-express-app-101.web.app/__/firebase/init.js"></script>
 <script>
-  /* No inventar una configuración parcial: usar únicamente la configuración completa de Punto A. */
-  window.SENDWAYO_FIREBASE_CONFIG = (window.firebase && window.firebase.apps && window.firebase.apps.length && window.firebase.app().options.apiKey && window.firebase.app().options.projectId)
-    ? window.firebase.app().options
-    : null;
-</script>
-<script>
-  /* Proyecto que conserva las cuentas y contraseñas ya existentes. */
-  window.SENDWAYO_LEGACY_FIREBASE_CONFIG = {
+  /* Proyecto oficial único: las cuentas, perfiles y saldos existentes permanecen en sendwayo-express. */
+  window.SENDWAYO_FIREBASE_CONFIG = {
     apiKey: "AIzaSyDvnBbSRqtGsBlIiX_hJXrtj2Drl_nlDT0",
     authDomain: "sendwayo-express.firebaseapp.com",
     databaseURL: "https://sendwayo-express-default-rtdb.firebaseio.com",
@@ -1675,6 +1668,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     appId: "1:191723694148:web:ca19828cb8fb566a67b411",
     measurementId: "G-9RL875KYH9"
   };
+  window.SENDWAYO_LEGACY_FIREBASE_CONFIG = window.SENDWAYO_FIREBASE_CONFIG;
 </script>
 <script >
 /* SENDWAYO V25: cliente Firebase compat para app HTML clásica.
@@ -1865,24 +1859,8 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       const legacyProfile = await readLegacyProfile(legacyUser);
       if (legacyProfile) {
         cachedLegacyProfile = legacyProfile;
-        const key = String(legacyProfile.rtdbUserKey || legacyProfile.id || '');
-        const currentEmail = String(legacyUser.email || '').trim().toLowerCase();
-        const storedEmails = Array.isArray(legacyProfile.storedAuthEmails)
-          ? legacyProfile.storedAuthEmails
-          : [legacyProfile.storedAuthEmail, legacyProfile.authEmail, legacyProfile.email].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
-        // Vincula el UID solo cuando uno de los correos ya guardados coincide exactamente.
-        // No modifica nombre, rol, contraseña, balance, comisión ni movimientos.
-        if (key && currentEmail && storedEmails.includes(currentEmail) && !legacyProfile.authUid) {
-          try {
-            await legacyRtdb.ref(legacyPath('users/' + key)).transaction(row => {
-              const rowEmails = row ? [row.authEmail, row.email].map(v => String(v || '').trim().toLowerCase()).filter(Boolean) : [];
-              if (!row || row.authUid || !rowEmails.includes(currentEmail)) return;
-              return { ...row, authUid: legacyUser.uid };
-            }, undefined, false);
-          } catch (err) {
-            console.warn('[SENDWAYO] No se pudo vincular automáticamente el UID de la cuenta:', err && (err.code || err.message));
-          }
-        }
+        // No escribir ni vincular campos automáticamente durante el inicio de sesión.
+        // La autenticación devuelve el perfil existente sin esperar ninguna transacción de base de datos.
         return legacyProfile;
       }
     }
