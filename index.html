@@ -1786,12 +1786,30 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   async function readLegacyProfile(user) {
     if (!user || !user.uid) return null;
     const usersRef = legacyRtdb.ref('sendwayo_express_v2/users');
+    const email = String(user.email || '').trim().toLowerCase();
+    const onceWithTimeout = (query, timeoutMs = 1800) => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Tiempo de espera al consultar perfiles')), timeoutMs);
+      Promise.resolve().then(() => query.once('value')).then(
+        snap => { clearTimeout(timer); resolve(snap); },
+        err => { clearTimeout(timer); reject(err); }
+      );
+    });
+    // El administrador se consulta primero por su ruta oficial; antes se llegaba
+    // aquí después de varias búsquedas y esta lectura no tenía límite de espera.
+    if (email === 'sendwayoexpress@gmail.com') {
+      try {
+        const adminSnap = await onceWithTimeout(usersRef.child('admin'), 1800);
+        if (adminSnap.exists()) {
+          const adminProfile = mapLegacyProfile(adminSnap.val(), 'admin', user);
+          if (adminProfile) return adminProfile;
+        }
+      } catch (err) {
+        console.warn('[SENDWAYO] Consulta directa del perfil administrativo no disponible:', err?.code || err?.message || 'error');
+      }
+    }
     const readFirst = async (query) => {
       try {
-        const snap = await Promise.race([
-          query.once('value'),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera al consultar perfiles')), 3500))
-        ]);
+        const snap = await onceWithTimeout(query, 1800);
         const value = snap.val();
         if (!value || typeof value !== 'object') return null;
         const rows = Array.isArray(value) ? value.map((row, i) => [String(i), row]) : Object.entries(value);
@@ -1811,7 +1829,6 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     };
     let profile = await readFirst(usersRef.orderByChild('authUid').equalTo(user.uid));
     if (profile) return profile;
-    const email = String(user.email || '').trim().toLowerCase();
     if (email) {
       profile = await readFirst(usersRef.orderByChild('authEmail').equalTo(email));
       if (profile) return profile;
@@ -1822,10 +1839,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       // Respaldo para cuentas antiguas cuyos correos están guardados bajo campos alternativos.
       // La lectura es solo de consulta; no modifica roles, contraseñas ni datos financieros.
       try {
-        const snap = await Promise.race([
-          usersRef.once('value'),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera al consultar perfiles')), 3500))
-        ]);
+        const snap = await onceWithTimeout(usersRef.once('value'), 2200);
         const value = snap.val();
         const rows = value && typeof value === 'object'
           ? (Array.isArray(value) ? value.map((row, i) => [String(i), row]) : Object.entries(value))
@@ -1840,14 +1854,6 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         if (found) return mapLegacyProfile(found[1], found[0], user);
       } catch (err) {
         console.warn('[SENDWAYO] Búsqueda de respaldo de perfil no disponible:', err?.code || err?.message || 'error');
-      }
-      if (email === 'sendwayoexpress@gmail.com') {
-        try {
-          const snap = await usersRef.child('admin').once('value');
-          if (snap.exists()) return mapLegacyProfile(snap.val(), 'admin', user);
-        } catch (err) {
-          console.warn('[SENDWAYO] Perfil administrativo legado no disponible:', err?.code || 'error');
-        }
       }
     }
     return null;
