@@ -303,6 +303,11 @@
         }
         password.value = '';
       } catch (error) {
+        // If Firebase authenticated but profile validation failed or timed out, clear that session.
+        if (auth && auth.currentUser) {
+          try { await timed(auth.signOut(), 4000, 'El cierre después de una validación fallida'); }
+          catch (signOutError) { console.warn('[SENDWAYO etapa 2] no se pudo limpiar la sesión fallida:', signOutError && signOutError.code ? signOutError.code : 'error'); }
+        }
         console.error('[SENDWAYO etapa 2] error de inicio de sesión:', error && error.code ? error.code : 'error');
         showLoginView();
         showAlert(firebaseMessage(error));
