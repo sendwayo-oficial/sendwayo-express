@@ -2798,8 +2798,9 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       };
       add(email);
       for (const value of (Array.isArray(extraEmails) ? extraEmails : [])) add(value);
-      // Build a bounded candidate list; the primary callers put registered and known aliases first.
-      for (const seed of [...candidates]) {
+      // Do not guess alternate email addresses when the user supplied a real email.
+      // For username/phone sign-in, only candidates explicitly resolved by the login form are tried.
+      if (!String(email || '').includes('@')) for (const seed of [...candidates]) {
         const local = seed.split('@')[0];
         if (local && candidates.length < 8) {
           add(local + '@gmail.com');
