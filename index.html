@@ -1806,7 +1806,9 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       const timer = setTimeout(() => reject(new Error('Profile lookup timed out')), timeoutMs);
       Promise.resolve().then(() => query.once('value')).then(snapshot => {
         clearTimeout(timer);
-        const profile = findMatchingProfile(snapshot, key);
+        const profile = key === 'admin' && snapshot.exists()
+          ? mapLegacyProfile(snapshot.val(), 'admin', user)
+          : findMatchingProfile(snapshot, key);
         if (profile) resolve(profile);
         else reject(new Error('Profile not found for query'));
       }, err => {
