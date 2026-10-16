@@ -39,3 +39,20 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Smoke-test published SENDWAYO stage pages
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          BASE_URL="${PAGE_URL%/}"
+          curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}/etapa-1/" -o /tmp/sendwayo-stage1.html
+          grep -Fq 'SENDWAYO EXPRESS' /tmp/sendwayo-stage1.html
+          grep -Fq 'assets/sendwayo-logo-real.jpg' /tmp/sendwayo-stage1.html
+          echo "PASS Stage 1 published HTML is reachable"
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}/etapa-2/" -o /tmp/sendwayo-stage2.html
+          grep -Fq 'SENDWAYO EXPRESS — Acceso seguro' /tmp/sendwayo-stage2.html
+          grep -Fq 'auth.signInWithEmailAndPassword(email, pass)' /tmp/sendwayo-stage2.html
+          grep -Fq 'auth.sendPasswordResetEmail(email)' /tmp/sendwayo-stage2.html
+          echo "PASS Stage 2 published Firebase login page is reachable"
