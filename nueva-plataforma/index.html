@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102d52"><title>SENDWAYO EXPRESS</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#17283d;background:#f3f6fa}*{box-sizing:border-box}body{margin:0;min-height:100vh}header{background:#102d52;color:white;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}header strong{font-size:1.15rem;letter-spacing:.04em}.wrap{max-width:980px;margin:28px auto;padding:0 16px}.panel{background:#fff;border:1px solid #dce4ee;border-radius:16px;padding:22px;box-shadow:0 8px 30px #17365b0d}.login{max-width:440px;margin:30px auto}.muted{color:#607087;font-size:.94rem}label{display:block;font-weight:600;margin:15px 0 6px}input,select,button{font:inherit;width:100%;padding:12px;border:1px solid #cbd6e4;border-radius:9px}button{background:#1758a6;color:white;border:0;font-weight:700;margin-top:16px;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.secondary{background:#eaf0f7;color:#173452}.error{color:#9b1c1c;background:#fff0f0;border-radius:8px;padding:10px;margin-top:12px}.success{color:#14532d;background:#eefbf1;border-radius:8px;padding:10px;margin-top:12px}.hidden{display:none!important}.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:18px}.tile{border:1px solid #dce4ee;border-radius:12px;padding:16px;background:#fbfdff}.tile b{display:block;margin-bottom:6px}.top-actions{display:flex;gap:8px;align-items:center}.top-actions button{width:auto;margin:0;padding:9px 12px}@media(max-width:520px){header{align-items:flex-start;flex-direction:column}.wrap{margin:18px auto}.panel{padding:17px}}
+</style>
+</head>
+<body>
+<header><strong>SENDWAYO EXPRESS</strong><span>Transferencias · Depósitos · Retiros · Servicios</span></header>
+<main class="wrap">
+<section id="login" class="panel login">
+<h1>Iniciar sesión</h1><p class="muted">Acceso seguro para administración, agentes y remitentes.</p>
+<form id="loginForm"><label for="email">Correo o usuario</label><input id="email" name="email" type="text" autocomplete="username" required>
+<label for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" required>
+<button id="enter" type="submit">Entrar</button><button class="secondary" id="reset" type="button">Recuperar acceso por correo</button>
+<div id="message" aria-live="polite"></div></form>
+</section>
+<section id="dashboard" class="hidden">
+<div class="panel"><div class="top-actions" style="justify-content:space-between"><div><h1 id="welcome">SENDWAYO EXPRESS</h1><p id="role" class="muted"></p></div><button id="logout" style="width:auto">Cerrar sesión</button></div>
+<p id="notice" class="muted">Sesión autenticada. Los módulos financieros se habilitarán únicamente cuando Firebase confirme los permisos y la sincronización.</p>
+<div class="tiles" id="modules"></div></div>
+</section>
+</main>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://sendwayo-express.web.app/__/firebase/init.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id), login=$('login'), dash=$('dashboard'), form=$('loginForm'), btn=$('enter'), msg=$('message');
+let auth=null, db=null, busy=false;
+function showMessage(text,kind='error'){msg.className=kind;msg.textContent=text;}
+function configReady(){return !!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.app().options.apiKey&&firebase.app().options.projectId);}
+function friendlyError(e){const c=e&&e.code||'';if(c.includes('invalid-email'))return 'El correo no tiene un formato válido.';if(c.includes('user-not-found')||c.includes('wrong-password')||c.includes('invalid-credential'))return 'El acceso fue rechazado por Firebase. Verifique usuario y contraseña o use recuperación por correo.';if(c.includes('too-many-requests'))return 'Demasiados intentos. Espere un momento e inténtelo otra vez.';if(c.includes('network-request-failed'))return 'No hay conexión estable. Compruebe Internet e inténtelo otra vez.';return 'No se pudo iniciar sesión ('+(c||'error de Firebase')+'). '+((e&&e.message)||'');}
+function modules(role){const all=[['Solicitudes','Depósitos, envíos y retiros'],['Pago de transferencia','Seguimiento de pagos'],['Recargas y servicios','Recargas, paqueticos y facturas'],['Historial','Operaciones y comprobantes']];if(role==='admin')all.push(['Usuarios y permisos','Administración de cuentas'],['Cuentas bancarias','Cuentas para depósitos'],['Auditoría','Registro de cambios']);return all;}
+function renderModules(role){$('modules').innerHTML='';modules(role==='admin'?'admin':'user').forEach(m=>{const el=document.createElement('div');el.className='tile';const b=document.createElement('b');b.textContent=m[0];const p=document.createElement('span');p.className='muted';p.textContent=m[1];el.append(b,p);$('modules').append(el)});}
+async async function enterDashboard(user){login.classList.add('hidden');dash.classList.remove('hidden');$('welcome').textContent='Bienvenido a SENDWAYO EXPRESS';const roleText='Sesión autenticada · '+(user.email||'cuenta verificada');$('role').textContent=roleText;$('modules').innerHTML='';$('notice').textContent='Verificando perfil y permisos. Las operaciones financieras siguen bloqueadas hasta validar la configuración.';function paint(role){$('role').textContent=roleText+(role?' · Rol: '+role:' · perfil pendiente de validar');$('modules').innerHTML='';modules(role==='admin'?'admin':'user').forEach(m=>{const el=document.createElement('div');el.className='tile';const b=document.createElement('b');b.textContent=m[0];const p=document.createElement('span');p.className='muted';p.textContent=m[1];el.append(b,p);$('modules').append(el)});}if(!db){paint('');$('notice').textContent='Sesión autenticada, pero la base de datos no está disponible. No se habilitaron acciones financieras.';return;}try{let snap=await db.ref('usuarios/'+user.uid).once('value');let profile=snap.val();if(!profile&&user.email){const matches=await db.ref('usuarios').orderByChild('email').equalTo(user.email).once('value');matches.forEach(x=>{if(!profile)profile=x.val();});}if(!profile&&user.email){const matches=await db.ref('usuarios').orderByChild('correo').equalTo(user.email).once('value');matches.forEach(x=>{if(!profile)profile=x.val();});}const role=String(profile&&(profile.rol||profile.role)||'').trim().toLowerCase();paint(role);if(!profile){$('notice').textContent='Firebase autenticó la cuenta, pero no se encontró un perfil asociado. Acceso financiero bloqueado; se requiere corregir la vinculación del perfil.';}else{$('notice').textContent='Perfil localizado. Esta base de trabajo aún no ejecuta operaciones financieras reales.';}}catch(e){paint('');$('notice').textContent='Sesión autenticada, pero no se pudieron validar los permisos en Firebase. No se habilitaron acciones financieras.';}}
+if(!configReady()){showMessage('Firebase no está inicializado en este alojamiento. Inicio de sesión desactivado para proteger las cuentas.');btn.disabled=true;}else{auth=firebase.auth();try{db=firebase.database();}catch(e){}auth.onAuthStateChanged(user=>{if(user)enterDashboard(user);else{dash.classList.add('hidden');login.classList.remove('hidden');}});}
+form.addEventListener('submit',async e=>{e.preventDefault();if(busy)return;if(!configReady()){showMessage('Firebase no está configurado. No se aceptarán accesos locales.');return;}const identifier=$('email').value.trim(),password=$('password').value;if(!identifier||!password)return;busy=true;btn.disabled=true;btn.textContent='Verificando acceso…';showMessage('Conectando con Firebase…','success');try{let email=identifier;if(!identifier.includes('@')){const s=await db.ref('usuarios').orderByChild('usuario').equalTo(identifier).once('value');let found=null;s.forEach(x=>{const p=x.val()||{};if(p.email)found=p.email;});if(!found)throw Object.assign(new Error('No se encontró un correo asociado a ese usuario.'),{code:'auth/user-not-found'});email=found;}await auth.signInWithEmailAndPassword(email,password);showMessage('Acceso confirmado.','success');}catch(err){showMessage(friendlyError(err));}finally{busy=false;btn.disabled=false;btn.textContent='Entrar';}});
+$('reset').addEventListener('click',async()=>{const value=$('email').value.trim();if(!value||!value.includes('@')){showMessage('Escriba primero el correo electrónico de la cuenta para solicitar recuperación.');return;}if(!configReady())return;try{await auth.sendPasswordResetEmail(value);showMessage('Si el correo está registrado y habilitado, Firebase enviará instrucciones de recuperación. Revise también spam.','success');}catch(e){showMessage(friendlyError(e));}});
+$('logout').addEventListener('click',()=>auth&&auth.signOut());
+})();
+</script>
+</body></html>
