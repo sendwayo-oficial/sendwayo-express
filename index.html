@@ -167,12 +167,13 @@ function oa({currentUser,onLogout,onProfileUpdate}){const role=currentUser?.role
     add(lower);
     if(lower==="sendwayexpress@gmail.com")add("sendwayoexpress@gmail.com");
     matches.forEach(u=>[u.authEmail,u.legacyAuthEmail,u.authEmailLegacy,u.email].forEach(add));
-    if(normalized){add(normalized+"@gmail.com");add(normalized+"@sendwayoexpress.com")}
+    // Prefer known account aliases before guessing username@gmail.com variants.
     if(["admin","administrador","sendwayoexpress"].includes(normalized))add("sendwayoexpress@gmail.com");
     if(/dania|sainthilaire/.test(normalized)){add("daniasaithilaire@gmail.com");add("daniasainthilaire@gmail.com")}
     if(/edita|alberto/.test(normalized)){add("editaalberto@gmail.com");add("edita.alberto@gmail.com")}
     if(/herace|fleuranvil/.test(normalized)){add("heraceherace@gmail.com");add("fleuranvilherace@gmail.com")}
     if(/betina|lindor/.test(normalized))add("betinalindor@gmail.com");
+    if(normalized){add(normalized+"@gmail.com");add(normalized+"@sendwayoexpress.com")}
     if(!candidates.length){K("No se encontró un correo asociado a ese usuario.");return}
     const authUser=await cloud.signIn(candidates[0],pass,candidates);
     const profile=await cloud.getProfile();
@@ -448,43 +449,35 @@ function AuthGate(){
     });
     try{
       let email=value;
-      let matchesForLogin=[];
-      if(!value.includes("@")){
-        const digits=raw.replace(/\D/g,"");
-        const matches=users.filter(u=>{
-          const values=[...(u.identifiers||[]),u.id,u.code,u.legacyId,u.accountId,u.phone,u.telefono,u.username,u.email,u.authEmail,u.legacyAuthEmail,u.authEmailLegacy]
-            .filter(Boolean).map(v=>String(v).trim().toLowerCase());
-          return values.includes(value)||(digits&&String(u.phone||u.telefono||"").replace(/\D/g,"")===digits);
-        });
-        matchesForLogin=matches.flatMap(u=>[u.authEmail,u.legacyAuthEmail,u.authEmailLegacy,u.email]).filter(v=>String(v||"").includes("@"));
-        const resolved=matches.find(u=>String(u.authEmail||u.legacyAuthEmail||u.authEmailLegacy||u.email||"").includes("@"));
-        email=String(resolved?.authEmail||resolved?.legacyAuthEmail||resolved?.authEmailLegacy||resolved?.email||"").trim().toLowerCase();
-        const normalized=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
-        // Permite que Firebase pruebe los identificadores existentes aunque el campo local no tenga email.
-        if(normalized){
-          matchesForLogin.push(normalized+"@gmail.com",normalized+"@sendwayoexpress.com");
-        }
-        if(["admin","administrador","sendwayoexpress"].includes(normalized))matchesForLogin.push("sendwayoexpress@gmail.com");
-        if(/^(rem)?0*26$/.test(normalized)||normalized==="dania"||normalized==="daniasainthilaire"){
-          matchesForLogin.push("daniasaithilaire@gmail.com","daniasainthilaire@gmail.com");
-        }
-        if(/^(rem)?0*27$/.test(normalized)||normalized==="edita"||normalized==="editaalberto"){
-          matchesForLogin.push("editaalberto@gmail.com","edita.alberto@gmail.com");
-        }
-        if(normalized==="herace"||normalized==="fleuranvilherace"||normalized==="ag00"){
-          matchesForLogin.push("heraceherace@gmail.com","fleuranvilherace@gmail.com");
-        }
-        if(normalized==="betina"||normalized==="betinalindor"){
-          matchesForLogin.push("betinalindor@gmail.com");
-        }
-      } else {
-        matchesForLogin=[value];
-      }
-      matchesForLogin=[...new Set(matchesForLogin.map(v=>String(v||"").trim().toLowerCase()).filter(v=>v.includes("@")))];
-      if(!email||!email.includes("@"))email=matchesForLogin[0]||"";
-      if(!email||!email.includes("@")){
-        setError("No se encontró un correo asociado. Ingrese el correo registrado o el nombre de usuario exacto.");return;
-      }
+    let matchesForLogin=[];
+    if(!value.includes("@")){
+      const digits=raw.replace(/\D/g,"");
+      const matches=users.filter(u=>{
+        const values=[...(u.identifiers||[]),u.id,u.code,u.legacyId,u.accountId,u.phone,u.telefono,u.username,u.email,u.authEmail,u.legacyAuthEmail,u.authEmailLegacy]
+          .filter(Boolean).map(v=>String(v).trim().toLowerCase());
+        return values.includes(value)||(digits&&String(u.phone||u.telefono||"").replace(/\D/g,"")===digits);
+      });
+      const storedEmails=matches.flatMap(u=>[u.authEmail,u.legacyAuthEmail,u.authEmailLegacy,u.email]).filter(v=>String(v||"").includes("@"));
+      const resolved=matches.find(u=>String(u.authEmail||u.legacyAuthEmail||u.authEmailLegacy||u.email||"").includes("@"));
+      email=String(resolved?.authEmail||resolved?.legacyAuthEmail||resolved?.authEmailLegacy||resolved?.email||"").trim().toLowerCase();
+      const normalized=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+      const preferredEmails=[];
+      if(["admin","administrador","sendwayoexpress"].includes(normalized))preferredEmails.push("sendwayoexpress@gmail.com");
+      if(/^(rem)?0*26$/.test(normalized)||normalized==="dania"||normalized==="daniasainthilaire")preferredEmails.push("daniasaithilaire@gmail.com","daniasainthilaire@gmail.com");
+      if(/^(rem)?0*27$/.test(normalized)||normalized==="edita"||normalized==="editaalberto")preferredEmails.push("editaalberto@gmail.com","edita.alberto@gmail.com");
+      if(normalized==="herace"||normalized==="fleuranvilherace"||normalized==="ag00")preferredEmails.push("heraceherace@gmail.com","fleuranvilherace@gmail.com");
+      if(normalized==="betina"||normalized==="betinalindor")preferredEmails.push("betinalindor@gmail.com");
+      const guessedEmails=normalized?[normalized+"@gmail.com",normalized+"@sendwayoexpress.com"]:[];
+      // Primero direcciones guardadas y alias conocidos; nunca probar guessedEmails antes que la cuenta real.
+      matchesForLogin=[...new Set([...storedEmails,...preferredEmails,...guessedEmails].map(v=>String(v||"").trim().toLowerCase()).filter(v=>v.includes("@")))];
+    } else {
+      matchesForLogin=[value];
+    }
+    matchesForLogin=[...new Set([email,...matchesForLogin].map(v=>String(v||"").trim().toLowerCase()).filter(v=>v.includes("@")))];
+    if(!email||!email.includes("@"))email=matchesForLogin[0]||"";
+    if(!email||!email.includes("@")){
+      setError("No se encontró un correo asociado. Ingrese el correo registrado o el nombre de usuario exacto.");return;
+    }
       const authUser=await withLoginTimeout(cloud.signIn(email,password,matchesForLogin));
       let profile=await withLoginTimeout(cloud.getProfile());
       if(!profile && typeof cloud.resolveOrBootstrapProfile==="function" && !cloud.isLegacyUser?.(authUser.uid)){
@@ -1869,6 +1862,13 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         // La autenticación devuelve el perfil existente sin esperar ninguna transacción de base de datos.
         return legacyProfile;
       }
+      // Same official Firebase project: support existing Firestore profiles too, using the authenticated UID.
+      try {
+        const snap = await db.collection('profiles').doc(legacyUser.uid).get();
+        if (snap.exists) return { uid: legacyUser.uid, ...snap.data() };
+      } catch (err) {
+        console.info('[SENDWAYO] El perfil de Firestore no está disponible para esta cuenta.');
+      }
     }
     const modernUser = auth.currentUser;
     if (modernUser) {
@@ -2799,10 +2799,10 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       };
       add(email);
       for (const value of (Array.isArray(extraEmails) ? extraEmails : [])) add(value);
-      // Mantener el acceso ágil: probar primero los correos explícitos y limitar alias automáticos.
+      // Build a bounded candidate list; the primary callers put registered and known aliases first.
       for (const seed of [...candidates]) {
         const local = seed.split('@')[0];
-        if (local && candidates.length < 6) {
+        if (local && candidates.length < 8) {
           add(local + '@gmail.com');
           add(local + '@sendwayoexpress.com');
         }
@@ -2811,45 +2811,35 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         if (/betina|lindor/.test(local)) add('betinalindor@gmail.com');
         if (/herace|fleuranvil/.test(local)) { add('heraceherace@gmail.com'); add('fleuranvilherace@gmail.com'); }
         if (/admin|sendwayoexpress/.test(local)) add(LEGACY_ADMIN_EMAIL);
-        if (candidates.length >= 8) break;
+        if (candidates.length >= 10) break;
       }
-      const tryAuth = (authInstance, candidate) => Promise.race([
-        authInstance.signInWithEmailAndPassword(candidate, password),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('La validación de acceso tardó demasiado. Revise la conexión e intente de nuevo.')), 3500))
+      const tryAuth = candidate => Promise.race([
+        legacyAuth.signInWithEmailAndPassword(candidate, password),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('La validación de acceso tardó demasiado. Revise la conexión e intente de nuevo.')), 2200))
       ]);
       authExchangeInProgress = true;
-      let legacyError = null;
-      let modernError = null;
+      let lastError = null;
       try {
         await Promise.race([
           auth.signOut().catch(() => {}),
-          new Promise(resolve => setTimeout(resolve, 500))
+          new Promise(resolve => setTimeout(resolve, 250))
         ]);
         await Promise.race([
           legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {}),
-          new Promise(resolve => setTimeout(resolve, 500))
+          new Promise(resolve => setTimeout(resolve, 250))
         ]);
-        for (const candidate of candidates.slice(0, 2)) {
+        for (const candidate of candidates.slice(0, 3)) {
           try {
-            const credential = await tryAuth(legacyAuth, candidate);
+            const credential = await tryAuth(candidate);
             cachedLegacyProfile = null;
             return credential.user;
           } catch (err) {
-            legacyError = err;
+            lastError = err;
             if (err?.message?.includes('tardó demasiado')) break;
           }
         }
-        // Segundo proyecto: solo los mismos candidatos principales, sin una espera indefinida.
-        for (const candidate of candidates.slice(0, 1)) {
-          try {
-            const credential = await tryAuth(auth, candidate);
-            return credential.user;
-          } catch (err) {
-            modernError = err;
-            if (err?.message?.includes('tardó demasiado')) break;
-          }
-        }
-        throw legacyError || modernError || new Error('No se pudieron validar las credenciales.');
+        // This is one Firebase project; the second local Auth instance would repeat the same identity lookup.
+        throw lastError || new Error('No se pudieron validar las credenciales.');
       } finally {
         authExchangeInProgress = false;
         emitAuthBridge(true);
