@@ -426,7 +426,7 @@ function AuthGate(){
   const [error,setError]=y.useState("");
   const [loginBusy,setLoginBusy]=y.useState(false);
   // Watchdog de interfaz: libera el botón aunque una llamada de red quede pendiente.
-  y.useEffect(()=>{if(!loginBusy)return;const timer=setTimeout(()=>{setLoginBusy(false);setError("La validación se demoró y se detuvo. Vuelva a intentarlo; no se modificaron sus datos.");},17000);return()=>clearTimeout(timer)},[loginBusy]);
+  y.useEffect(()=>{if(!loginBusy)return;const timer=setTimeout(()=>{window.__sendwayoInteractiveLogin=false;setLoginBusy(false);setError("La validación se demoró y se detuvo. Vuelva a intentarlo; no se modificaron sus datos.");},13000);return()=>clearTimeout(timer)},[loginBusy]);
   const [requestType,setRequestType]=y.useState("");
   y.useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem("sendwayo_saved_login")||"null");if(saved&&rememberLogin){setIdentifier(saved.identifier||"");setPassword("")}localStorage.removeItem("sendwayo_saved_login")}catch(e){}},[]);
   const login=async()=>{
@@ -439,6 +439,7 @@ function AuthGate(){
       setError(window.sendwayoFirebaseError || "No se pudo cargar la configuración completa de Firebase del Punto A. Abre la versión publicada en HTTPS y verifica el Hosting; no se aceptará un acceso local.");return;
     }
     setLoginBusy(true);
+    window.__sendwayoInteractiveLogin = true;
     const withLoginTimeout=promise=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión de acceso tardó demasiado. Comprueba internet y vuelve a intentarlo.")),11000))]);
     try{
       let email=value;
@@ -489,7 +490,7 @@ function AuthGate(){
       const role=({admin:"admin",administrador:"admin",remitente:"remitente",agent:"agent",agente:"agent"})[profileRole]||null;
       const status=String(profile?.status||"").trim().toLowerCase();
       if(!profile||!role||!["active","approved","aprobado","activo"].includes(status)){
-        await cloud.signOut().catch(()=>{});
+        await Promise.race([Promise.resolve().then(()=>cloud.signOut()).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,1200))]);
         setError(profile&&status.includes("pend")?"Tu solicitud sigue pendiente de aprobación del administrador.":"Esta cuenta no tiene un perfil SENDWAYO activo y autorizado. Solicita la vinculación o aprobación del administrador.");return;
       }
       const session={uid:authUser.uid,role,name:profile.displayName||profile.name||authUser.displayName||authUser.email,
@@ -505,6 +506,7 @@ function AuthGate(){
       console.error("SENDWAYO: Firebase Authentication login failed",err);
       setError(err?.code==="auth/invalid-credential"||err?.code==="auth/wrong-password"||err?.code==="auth/user-not-found"?"Correo o contraseña incorrectos.":(err?.message||"No se pudo validar la cuenta en Firebase."));
     } finally {
+      window.__sendwayoInteractiveLogin = false;
       setLoginBusy(false);
     }
   };
@@ -535,27 +537,33 @@ function AuthGate(){
     let live=true;
     const cloud=window.sendwayoCloud;
     const clearLocal=()=>{try{localStorage.removeItem("sendwayo_authenticated_user")}catch(e){}};
+    const safeSignOut=()=>Promise.race([Promise.resolve().then(()=>cloud?.signOut?.()).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,1000))]);
     const acceptAuthUser=async authUser=>{
       if(!authUser){clearLocal();if(live)setUser(null);if(live)setAuthReady(true);return;}
+      // El inicio interactivo valida credenciales y perfil en un solo flujo; no iniciar una segunda lectura aquí.
+      if(window.__sendwayoInteractiveLogin){if(live)setAuthReady(true);return;}
       try{
         const saved=JSON.parse(localStorage.getItem("sendwayo_authenticated_user")||"null");
         if(saved?.uid===authUser.uid&&saved.expiresAt&&saved.expiresAt<=Date.now()){
-          await cloud?.signOut?.();clearLocal();if(live)setUser(null);return;
+          await safeSignOut();clearLocal();if(live)setUser(null);return;
         }
-        // Evita que una lectura de Firebase deje congelada para siempre la pantalla de acceso.
-        let profile=await Promise.race([
-          cloud.getProfile(),
-          new Promise((_,reject)=>setTimeout(()=>reject(new Error("La consulta del perfil tardó demasiado; vuelva a iniciar sesión.")),12000))
-        ]);
+        // Todas las lecturas de restauración tienen un límite común para liberar la pantalla.
+        const restoreDeadline=Date.now()+9000;
+        const restoreWithTimeout=(promise,message,maxMs=6000)=>new Promise((resolve,reject)=>{
+          const remaining=Math.max(1,Math.min(maxMs,restoreDeadline-Date.now()));
+          const timer=setTimeout(()=>reject(new Error(message)),remaining);
+          Promise.resolve(promise).then(value=>{clearTimeout(timer);resolve(value)},err=>{clearTimeout(timer);reject(err)});
+        });
+        let profile=await restoreWithTimeout(cloud.getProfile(),"La consulta del perfil tardó demasiado; vuelva a iniciar sesión.",6000);
         if(!profile && typeof cloud.resolveOrBootstrapProfile==="function" && !cloud.isLegacyUser?.(authUser.uid)){
-          const resolution=await cloud.resolveOrBootstrapProfile();
-          profile=resolution?.profile || await cloud.getProfile();
+          const resolution=await restoreWithTimeout(cloud.resolveOrBootstrapProfile(),"La vinculación del perfil tardó demasiado.",4000);
+          profile=resolution?.profile || await restoreWithTimeout(cloud.getProfile(),"La consulta del perfil tardó demasiado.",3000);
         }
         const rawRole=String(profile?.role||"").trim().toLowerCase();
         const role=({admin:"admin",administrador:"admin",remitente:"remitente",agent:"agent",agente:"agent"})[rawRole]||null;
         const status=String(profile?.status||"").trim().toLowerCase();
         if(!profile||!role||!["active","approved","aprobado","activo"].includes(status)){
-          await cloud.signOut?.();clearLocal();if(live)setUser(null);return;
+          await safeSignOut();clearLocal();if(live)setUser(null);return;
         }
         const safeSession={uid:authUser.uid,role,name:profile.displayName||profile.name||authUser.displayName||authUser.email,
           id:profile.legacyId||profile.accountId||profile.code||authUser.uid,code:profile.code||profile.legacyId||profile.accountId||authUser.uid,
@@ -565,7 +573,7 @@ function AuthGate(){
         if(live)setUser(safeSession);
       }catch(err){
         console.error("SENDWAYO: no se pudo restaurar sesión Firebase",err);
-        try{await cloud?.signOut?.()}catch(e){}
+        try{await safeSignOut()}catch(e){}
         clearLocal();if(live)setUser(null);
       }finally{
         if(live){try{document.documentElement.classList.add("sendwayo-react-ready")}catch(e){}setAuthReady(true)}
