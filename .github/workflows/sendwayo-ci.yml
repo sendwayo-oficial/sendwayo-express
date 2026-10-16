@@ -24,46 +24,11 @@ jobs:
           for(const code of blocks){n++;try{new Function(code)}catch(e){console.error('Inline script #'+n+' invalido:',e.message);process.exit(1)}}
           console.log('Inline JavaScript OK:',n,'bloques');
           NODE
-      - name: Validate new Stage 1 foundation
+      - name: Ensure separate-platform routes are not bundled into the existing app
         run: |
-          node <<'NODE'
-          const fs=require('fs');
-          const html=fs.readFileSync('etapa-1/index.html','utf8');
-          const checks=[
-            ['official SENDWAYO EXPRESS brand',html.includes('SENDWAYO EXPRESS')],
-            ['official logo file exists',html.includes('../assets/sendwayo-logo-real.jpg') && fs.existsSync('assets/sendwayo-logo-real.jpg')],
-            ['mobile responsive layout',/@media\s*\(max-width:\s*720px\)/.test(html)],
-            ['no credential fields or simulated login',!/<input|<form|<script|localStorage/i.test(html)],
-            ['clear warning before Firebase auth exists',/no escribas tu contraseña/i.test(html)],
-          ];
-          let failed=false;
-          for(const [label,ok] of checks){console.log((ok?'PASS ':'FAIL ')+label);if(!ok)failed=true;}
-          if(failed)process.exit(1);
-          NODE
-      - name: Validate Stage 2 Firebase login client
-        run: |
-          node <<'NODE'
-          const fs=require('fs');
-          const html=fs.readFileSync('etapa-2/index.html','utf8');
-          const checks=[
-            ['official SENDWAYO EXPRESS brand',html.includes('SENDWAYO EXPRESS')],
-            ['official logo file exists',html.includes('../assets/sendwayo-logo-real.jpg') && fs.existsSync('assets/sendwayo-logo-real.jpg')],
-            ['expected Firebase project guarded',html.includes("EXPECTED_PROJECT = 'sendwayo-express'")],
-            ['real Firebase email/password authentication',html.includes('auth.signInWithEmailAndPassword(email, pass)')],
-            ['password recovery uses Firebase',html.includes('auth.sendPasswordResetEmail(email)')],
-            ['existing profile is read before access',html.includes('async function readProfile(user)') && html.includes('await completeLogin(credential.user)')],
-            ['active authorized profile required',html.includes("profile.status !== 'active'")],
-            ['login and profile lookups have deadlines',html.includes('SESSION_TIMEOUT_MS = 12000') && html.includes('PROFILE_TIMEOUT_MS = 5500')],
-            ['no password is persisted in local storage',!(/localStorage\.(?:setItem|set)\([^\n]*(?:password|pass)/i.test(html))],
-            ['financial labels prohibited in the new login view',!(/\bcapital\b|comisi[oó]n\s+pendiente/i.test(html))],
-            ['responsive phone layout',/@media\(max-width:760px\)/.test(html)],
-          ];
-          const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
-          let failed=false;
-          for(const [label,ok] of checks){console.log((ok?'PASS ':'FAIL ')+label);if(!ok)failed=true;}
-          for(const [i,code] of blocks.entries()){try{new Function(code);console.log('PASS inline JS syntax block '+(i+1));}catch(e){console.error('FAIL inline JS syntax block '+(i+1)+': '+e.message);failed=true;}}
-          if(failed)process.exit(1);
-          NODE
+          test ! -e etapa-1/index.html
+          test ! -e etapa-2/index.html
+          echo "PASS Existing SENDWAYO deployment does not contain the separate platform routes"
       - name: Validate functional requirements contract
         run: |
           node <<'NODE'
