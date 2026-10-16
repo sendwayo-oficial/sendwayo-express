@@ -423,6 +423,8 @@ function AuthGate(){
   const [users,setUsers]=y.useState(()=>loadSendwayoUsers());
   const [user,setUser]=y.useState(null);
    const [authReady,setAuthReady]=y.useState(false);
+  // WATCHDOG DE ACCESO: nunca dejar la plataforma congelada si Firebase tarda en emitir el primer estado.
+  y.useEffect(()=>{const timer=setTimeout(()=>{try{document.documentElement.classList.add("sendwayo-react-ready")}catch(e){}setAuthReady(true)},7000);return()=>clearTimeout(timer)},[]);
    const [showLogin,setShowLogin]=y.useState(false);
   const [identifier,setIdentifier]=y.useState("");
   const [password,setPassword]=y.useState("");
