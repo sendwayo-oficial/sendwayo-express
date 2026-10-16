@@ -60,3 +60,15 @@ jobs:
           grep -Fq "firebase.initializeApp(options, 'sendwayoLegacy')" /tmp/sendwayo-stage2.html
           grep -Fq "auth = legacyApp.auth()" /tmp/sendwayo-stage2.html
           echo "PASS Stage 2 uses the official Auth instance and opens the platform"
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}/" -o /tmp/sendwayo-root.html
+          grep -Fq 'SENDWAYO EXPRESS' /tmp/sendwayo-root.html
+          grep -Fq 'Tarifas locales Haití - Haití' /tmp/sendwayo-root.html
+          grep -Fq 'Balance RD' /tmp/sendwayo-root.html
+          grep -Fq 'Balance HTG' /tmp/sendwayo-root.html
+          grep -Fq 'Comisión RD' /tmp/sendwayo-root.html
+          grep -Fq 'Comisión HTG' /tmp/sendwayo-root.html
+          grep -Fq 'Ganancia de Hoy en RD' /tmp/sendwayo-root.html
+          grep -Fq 'Ganancia de Hoy en HTG' /tmp/sendwayo-root.html
+          grep -Fq 'SENDWAYO EXPRESS logo' /tmp/sendwayo-root.html
+          echo "PASS Official dashboard includes branding, six metrics and local Haiti tariff navigation"
