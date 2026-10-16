@@ -247,26 +247,6 @@
       $('dashboard').hidden = true;
       $('login-view').hidden = false;
     }
-    function openOfficialApp(user, profile, rawIdentifier) {
-      // The verification page and the official app share the same Firebase origin/project.
-      // Persist only non-secret session metadata; never copy or store the password.
-      const session = {
-        uid: user.uid,
-        role: profile.role,
-        name: profile.name,
-        id: profile.id,
-        code: profile.code,
-        legacyId: profile.id,
-        identifier: String(rawIdentifier || user.email || profile.email || ''),
-        phone: profile.phone || '',
-        email: String(user.email || profile.email || ''),
-        expiresAt: Date.now() + 45 * 60 * 1000
-      };
-      try { localStorage.setItem('sendwayo_authenticated_user', JSON.stringify(session)); }
-      catch (error) { console.warn('[SENDWAYO] No se pudo guardar el resumen local de sesión; Firebase conserva la sesión autenticada.', error); }
-      // Open the actual platform root, where its existing menu, logo and Firebase-backed panels live.
-      window.location.replace('../');
-    }
     async function verifyAuthenticatedUser(user) {
       if (currentProfileTask && currentProfileTask.uid === user.uid) return currentProfileTask.promise;
       const promise = timed(readProfile(user), SESSION_TIMEOUT_MS, 'La comprobación del perfil');
@@ -291,6 +271,7 @@
         await timed(auth.signOut(), 4000, 'El cierre de la sesión inactiva');
         throw new Error('La cuenta existe, pero su estado no permite el acceso. Contacta al administrador.');
       }
+      showVerified(user, profile);
       return profile;
     }
     function normalizeIdentifier(raw) {
@@ -313,16 +294,14 @@
       if (!auth || !db || !rtdb) { showAlert('Firebase no se ha cargado correctamente en esta página. No se intentará un acceso local.'); return; }
       setBusy(true, 'Validando en Firebase…');
       try {
-        await timed(auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL), 3500, 'La persistencia segura de sesión');
         const credential = await timed(auth.signInWithEmailAndPassword(email, pass), SESSION_TIMEOUT_MS, 'El inicio de sesión');
-        const profile = await completeLogin(credential.user);
+        await completeLogin(credential.user);
         if (remember.checked) {
           try { localStorage.setItem('sendwayo_stage2_identifier', raw); } catch (_) {}
         } else {
           try { localStorage.removeItem('sendwayo_stage2_identifier'); } catch (_) {}
         }
         password.value = '';
-        openOfficialApp(credential.user, profile, raw);
       } catch (error) {
         // If Firebase authenticated but profile validation failed or timed out, clear that session.
         if (auth && auth.currentUser) {
@@ -383,7 +362,7 @@
           if (profile && profile.status === 'pending') showAlert('La cuenta está pendiente de aprobación.');
           else showAlert('No se encontró un perfil SENDWAYO activo para esta sesión. Inicia sesión con una cuenta autorizada.');
         } else {
-          openOfficialApp(user, profile, user.email || profile.email);
+          showVerified(user, profile);
         }
       } catch (error) {
         console.error('[SENDWAYO etapa 2] no se pudo restaurar sesión:', error && error.code ? error.code : 'error');
@@ -407,14 +386,9 @@
           showAlert('La configuración cargada no corresponde al proyecto Firebase autorizado.');
           return;
         }
-        // Match the named Auth instance used by the official root application.
-        // Firebase sessions are scoped by app name, so using DEFAULT here would not
-        // authenticate the existing SENDWAYO app even with the same email/password.
-        const legacyApp = firebase.apps.find(app => app.name === 'sendwayoLegacy')
-          || firebase.initializeApp(options, 'sendwayoLegacy');
-        auth = legacyApp.auth();
-        db = legacyApp.firestore();
-        rtdb = legacyApp.database();
+        auth = firebase.auth();
+        db = firebase.firestore();
+        rtdb = firebase.database();
         if (typeof auth.setPersistence === 'function') {
           auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
             console.warn('[SENDWAYO etapa 2] no se pudo ajustar la persistencia:', error && error.code ? error.code : 'error');
