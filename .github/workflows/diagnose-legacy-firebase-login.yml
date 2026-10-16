@@ -1,5 +1,5 @@
 name: SENDWAYO — Diagnose legacy login data (read only)
-# Forced current-project audit requested on 2026-10-15; this workflow remains read-only.
+# Forced read-only login audit requested on 2026-10-16; inspect account/profile alignment only, never write credentials or financial data.
 
 on:
   push:
