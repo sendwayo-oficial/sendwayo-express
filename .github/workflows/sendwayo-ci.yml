@@ -40,6 +40,29 @@ jobs:
           for(const [label,ok] of checks){console.log((ok?'PASS ':'FAIL ')+label);if(!ok)failed=true;}
           if(failed)process.exit(1);
           NODE
+      - name: Validate functional requirements contract
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p='docs/ESPECIFICACION-FUNCIONAL-SENDWAYO.md';
+          const doc=fs.readFileSync(p,'utf8');
+          const required=[
+            'Balance RD$','Balance HTG','Comisión RD$','Comisión HTG',
+            'Ganancia de Hoy en RD$','Ganancia de Hoy en HTG',
+            'Tarifas locales Haití - Haití','Cuentas Bancarias Oficiales',
+            'Informaciones secretas','Pago de transferencia',
+            'Aprobado','Rechazado','No coincide',
+            '50% de la comisión','Los agentes no reciben comisión personal',
+            '10 remitentes de prueba','marca de agua repetida nueve veces',
+            'Etapa 2 — Autenticación','Etapa 6 — Revisión final y publicación'
+          ];
+          let failed=false;
+          for(const term of required){const ok=doc.includes(term);console.log((ok?'PASS ':'FAIL ')+term);if(!ok)failed=true;}
+          const menu=(doc.match(/^\d+\. /gm)||[]).length;
+          console.log((menu===22?'PASS ':'FAIL ')+ '22 menu modules (found '+menu+')');
+          if(menu!==22)failed=true;
+          if(failed)process.exit(1);
+          NODE
       - name: Check critical hardening markers
         run: |
           if grep -q 'SW_POINT_A_RECOVERY_REDIRECT' index.html; then
