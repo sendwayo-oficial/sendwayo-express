@@ -413,8 +413,8 @@
         const legacyApp = firebase.apps.find(app => app.name === 'sendwayoLegacy')
           || firebase.initializeApp(options, 'sendwayoLegacy');
         auth = legacyApp.auth();
-        db = firebase.firestore();
-        rtdb = firebase.database();
+        db = legacyApp.firestore();
+        rtdb = legacyApp.database();
         if (typeof auth.setPersistence === 'function') {
           auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
             console.warn('[SENDWAYO etapa 2] no se pudo ajustar la persistencia:', error && error.code ? error.code : 'error');
