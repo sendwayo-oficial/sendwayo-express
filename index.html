@@ -433,7 +433,7 @@ function AuthGate(){
   const [error,setError]=y.useState("");
   const [loginBusy,setLoginBusy]=y.useState(false);
   // Watchdog de interfaz: libera el botón aunque una llamada de red quede pendiente.
-  y.useEffect(()=>{if(!loginBusy)return;const timer=setTimeout(()=>{window.__sendwayoInteractiveLogin=false;setLoginBusy(false);setError("La validación se demoró y se detuvo. Vuelva a intentarlo; no se modificaron sus datos.");},16000);return()=>clearTimeout(timer)},[loginBusy]);
+  y.useEffect(()=>{if(!loginBusy)return;const timer=setTimeout(()=>{window.__sendwayoInteractiveLogin=false;setLoginBusy(false);setError("El acceso no respondió en 11 segundos. Se liberó el botón; revise la conexión e inténtelo otra vez.");},11000);return()=>clearTimeout(timer)},[loginBusy]);
   const [requestType,setRequestType]=y.useState("");
   y.useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem("sendwayo_saved_login")||"null");if(saved&&rememberLogin){setIdentifier(saved.identifier||"");setPassword("")}localStorage.removeItem("sendwayo_saved_login")}catch(e){}},[]);
   const login=async()=>{
@@ -447,7 +447,7 @@ function AuthGate(){
     }
     setLoginBusy(true);
     window.__sendwayoInteractiveLogin = true;
-    const loginDeadline=Date.now()+15000;
+    const loginDeadline=Date.now()+10000;
     const withLoginTimeout=promise=>new Promise((resolve,reject)=>{
       const remaining=Math.max(1,loginDeadline-Date.now());
       const timer=setTimeout(()=>reject(new Error("La validación de acceso superó el tiempo permitido. Comprueba la conexión y vuelve a intentarlo.")),remaining);
@@ -2795,10 +2795,15 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         if (/admin|sendwayoexpress/.test(local)) add(LEGACY_ADMIN_EMAIL);
         if (candidates.length >= 10) break;
       }
-      const tryAuth = candidate => Promise.race([
-        legacyAuth.signInWithEmailAndPassword(candidate, password),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('La validación de acceso tardó demasiado. Revise la conexión e intente de nuevo.')), 6000))
-      ]);
+      const authDeadline = Date.now() + 8000;
+      const tryAuth = candidate => {
+        const remaining = Math.max(1, Math.min(4500, authDeadline - Date.now()));
+        let timer;
+        return Promise.race([
+          legacyAuth.signInWithEmailAndPassword(candidate, password),
+          new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('La validación de acceso tardó demasiado. Revise la conexión e intente de nuevo.')), remaining); })
+        ]).finally(() => clearTimeout(timer));
+      };
       authExchangeInProgress = true;
       let lastError = null;
       try {
