@@ -407,7 +407,12 @@
           showAlert('La configuración cargada no corresponde al proyecto Firebase autorizado.');
           return;
         }
-        auth = firebase.auth();
+        // Match the named Auth instance used by the official root application.
+        // Firebase sessions are scoped by app name, so using DEFAULT here would not
+        // authenticate the existing SENDWAYO app even with the same email/password.
+        const legacyApp = firebase.apps.find(app => app.name === 'sendwayoLegacy')
+          || firebase.initializeApp(options, 'sendwayoLegacy');
+        auth = legacyApp.auth();
         db = firebase.firestore();
         rtdb = firebase.database();
         if (typeof auth.setPersistence === 'function') {

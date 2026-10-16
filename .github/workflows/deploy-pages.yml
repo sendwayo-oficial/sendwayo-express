@@ -57,4 +57,6 @@ jobs:
           grep -Fq 'auth.sendPasswordResetEmail(email)' /tmp/sendwayo-stage2.html
           grep -Fq "openOfficialApp(credential.user, profile, raw)" /tmp/sendwayo-stage2.html
           grep -Fq "window.location.replace('../')" /tmp/sendwayo-stage2.html
-          echo "PASS Stage 2 Firebase login bridges into the official platform"
+          grep -Fq "firebase.initializeApp(options, 'sendwayoLegacy')" /tmp/sendwayo-stage2.html
+          grep -Fq "auth = legacyApp.auth()" /tmp/sendwayo-stage2.html
+          echo "PASS Stage 2 uses the official Auth instance and opens the platform"
