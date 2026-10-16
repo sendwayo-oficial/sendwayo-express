@@ -55,7 +55,7 @@ jobs:
             ['active authorized profile required',html.includes("profile.status !== 'active'")],
             ['login and profile lookups have deadlines',html.includes('SESSION_TIMEOUT_MS = 12000') && html.includes('PROFILE_TIMEOUT_MS = 5500')],
             ['no password is persisted in local storage',!(/localStorage\.(?:setItem|set)\([^\n]*(?:password|pass)/i.test(html))],
-            ['financial labels prohibited in the new login view',!(/capital|comisión\s+pendiente/i.test(html))],
+            ['financial labels prohibited in the new login view',!(/\bcapital\b|comisi[oó]n\s+pendiente/i.test(html))],
             ['responsive phone layout',/@media\(max-width:760px\)/.test(html)],
           ];
           const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
