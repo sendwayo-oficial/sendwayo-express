@@ -2820,9 +2820,10 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       authExchangeInProgress = true;
       let lastError = null;
       try {
+        // Start from a clean client session in both local Auth instances of this same official project.
         await Promise.race([
-          auth.signOut().catch(() => {}),
-          new Promise(resolve => setTimeout(resolve, 250))
+          Promise.all([auth.signOut().catch(() => {}), legacyAuth.signOut().catch(() => {})]),
+          new Promise(resolve => setTimeout(resolve, 400))
         ]);
         await Promise.race([
           legacyAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {}),
