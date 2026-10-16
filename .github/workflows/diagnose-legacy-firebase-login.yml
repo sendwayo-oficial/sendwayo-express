@@ -103,7 +103,8 @@ jobs:
             const preferred = instances.find(x => x.databaseUrl && /default|sendwayo/i.test(x.name || x.databaseUrl)) || instances.find(x => x.databaseUrl);
             if (!preferred?.databaseUrl) throw new Error('The Realtime Database instance did not include a database URL.');
             const dbBase = String(preferred.databaseUrl).replace(/\/$/, '');
-            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, pageToken = '';
+            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, adminAuthUid = '', pageToken = '';
+            const authUserEmails = new Set(), authUserUids = new Set();
             do {
               const qs = new URLSearchParams({ maxResults: '1000' });
               if (pageToken) qs.set('nextPageToken', pageToken);
@@ -111,9 +112,13 @@ jobs:
               const rows = Array.isArray(page.users) ? page.users : [];
               authUsers += rows.length;
               for (const user of rows) {
-                if (String(user.email || '').trim().toLowerCase() === 'sendwayoexpress@gmail.com') {
+                const userEmail = String(user.email || '').trim().toLowerCase();
+                if (userEmail) authUserEmails.add(userEmail);
+                if (String(user.localId || '').trim()) authUserUids.add(String(user.localId));
+                if (userEmail === 'sendwayoexpress@gmail.com') {
                   adminAuthExists = true;
                   adminAuthDisabled = Boolean(user.disabled);
+                  adminAuthUid = String(user.localId || '');
                 }
               }
               pageToken = page.nextPageToken || '';
@@ -125,20 +130,36 @@ jobs:
               : [];
             const byRole = { admin: 0, agent: 0, remitente: 0, other: 0 };
             let active = 0, withAuthUid = 0, withAuthEmail = 0, withUsername = 0;
+            let recordsMatchingAnAuthEmail = 0, recordsWithAuthUidInAuth = 0;
             let adminRecordExists = false, adminHasAuthUid = false, adminHasAuthEmail = false;
+            let adminEmailMatchesAuth = false, adminUidMatchesAuth = false, duplicateProfileEmailRecords = 0;
+            const profileEmailFrequency = new Map();
             for (const [id, row] of records) {
               const role = normalizeRole(row.role || row.rol || (id.toLowerCase() === 'admin' ? 'admin' : ''));
               byRole[role]++;
               if (row.active !== false && row.disabled !== true && !['inactive', 'disabled', 'inactivo'].includes(String(row.status || '').toLowerCase())) active++;
-              if (String(row.authUid || '').trim()) withAuthUid++;
+              const uid = String(row.authUid || '').trim();
+              if (uid) {
+                withAuthUid++;
+                if (authUserUids.has(uid)) recordsWithAuthUidInAuth++;
+              }
               if (String(row.authEmail || row.email || '').includes('@')) withAuthEmail++;
               if (String(row.username || '').trim()) withUsername++;
-              if (id.toLowerCase() === 'admin' || role === 'admin' || String(row.authEmail || row.email || '').trim().toLowerCase() === 'sendwayoexpress@gmail.com') {
+              const rowEmails = [row.authEmail, row.email, row.authEmailLegacy, row.legacyAuthEmail, row.username, row.login, row.identifier]
+                .map(v => String(v || '').trim().toLowerCase()).filter(v => v.includes('@'));
+              const authMatchedEmails = [...new Set(rowEmails.filter(v => authUserEmails.has(v)))];
+              if (authMatchedEmails.length) recordsMatchingAnAuthEmail++;
+              for (const email of new Set(rowEmails)) profileEmailFrequency.set(email, (profileEmailFrequency.get(email) || 0) + 1);
+              const isAdmin = id.toLowerCase() === 'admin' || role === 'admin' || rowEmails.includes('sendwayoexpress@gmail.com');
+              if (isAdmin) {
                 adminRecordExists = true;
-                adminHasAuthUid = Boolean(String(row.authUid || '').trim());
-                adminHasAuthEmail = Boolean(String(row.authEmail || row.email || '').includes('@'));
+                adminHasAuthUid = Boolean(uid);
+                adminHasAuthEmail = Boolean(rowEmails.some(v => v.includes('@')));
+                adminEmailMatchesAuth = rowEmails.includes('sendwayoexpress@gmail.com') && authUserEmails.has('sendwayoexpress@gmail.com');
+                adminUidMatchesAuth = Boolean(uid && authUserUids.has(uid) && uid === adminAuthUid);
               }
             }
+            duplicateProfileEmailRecords = [...profileEmailFrequency.values()].filter(count => count > 1).length;
             console.log('READ-ONLY LEGACY LOGIN DIAGNOSTIC');
             console.log('Legacy Firebase project verified: ' + projectId);
             console.log('Realtime Database instances found: ' + instances.length);
@@ -149,12 +170,17 @@ jobs:
             console.log('Records with Firebase Auth UID: ' + withAuthUid);
             console.log('Records with email for Firebase Auth: ' + withAuthEmail);
             console.log('Records with username field: ' + withUsername);
+            console.log('Database profiles whose stored email matches a Firebase Auth account: ' + recordsMatchingAnAuthEmail);
+            console.log('Database profile UIDs present in Firebase Authentication: ' + recordsWithAuthUidInAuth);
+            console.log('Duplicate email values shared across multiple profile records: ' + duplicateProfileEmailRecords);
             console.log('Legacy admin user record exists: ' + (adminRecordExists ? 'yes' : 'no'));
             console.log('Legacy admin record has Auth UID: ' + (adminHasAuthUid ? 'yes' : 'no'));
             console.log('Legacy admin record has Auth email: ' + (adminHasAuthEmail ? 'yes' : 'no'));
             console.log('Admin Authentication account exists: ' + (adminAuthExists ? 'yes' : 'no'));
             console.log('Admin Authentication account disabled: ' + (adminAuthDisabled === null ? 'not applicable' : (adminAuthDisabled ? 'yes' : 'no')));
-            console.log('No emails beyond the admin existence check, usernames, passwords, balances, or record content were printed. No data was written.');
+            console.log('Admin profile email matches Authentication email: ' + (adminEmailMatchesAuth ? 'yes' : 'no'));
+            console.log('Admin profile UID matches Authentication UID: ' + (adminUidMatchesAuth ? 'yes' : 'no'));
+            console.log('No emails beyond the admin existence check, UIDs, usernames, passwords, balances, or record content were printed. No data was written.');
           }
           main().catch(err => {
             console.error('Legacy read-only diagnostic failed:', err?.message || 'unknown');
