@@ -258,7 +258,7 @@ function makeSendwayoDefaultUsers(){
   sm.forEach((a, idx)=>{
     const code = `AG-${String(idx+1).padStart(3,"0")}`;
     const full=`${a.first||""} ${a.last||""}`.trim();
-    const email = makeSendwayoEmail(a.first,a.last);
+    const email = a.email || makeSendwayoEmail(a.first,a.last);
     const phoneDigits = String(a.phone||"").replace(/\D/g,"");
     const ids=[full,email,phoneDigits,a.phone,code,a.id,`${a.first||""}${a.last||""}`.toLowerCase()];
     if(a.name==="FLEURANVIL Herace"){ids.push("heraceherace@gmail.com","fleuranvilherace@gmail.com","HERACE","FLEURANVIL HERACE","8292155657","ID65734482","AG-00");}
@@ -266,14 +266,13 @@ function makeSendwayoDefaultUsers(){
   });
   // REMITENTES con formato REM-001 - mapeo estricto sin duplicar telefonos de agentes
   cm.forEach((a, idx)=>{
-    const code = `REM-${String(idx+1).padStart(3,"0")}`;
+    const code = a.codeId || `REM-${String(idx+1).padStart(3,"0")}`;
     const full=`${a.name||""} ${a.last||""}`.trim();
-    const email = makeSendwayoEmail(a.name,a.last);
-    // Generar telefono unico para evitar colision con AG-001 (8292155657)
-    const uniquePhone = `829 215 ${String(5800+idx).padStart(4,"0")}`;
-    const phoneDigits = uniquePhone.replace(/\D/g,"");
-    const ids=[full,email,phoneDigits,uniquePhone,code,a.id,`${a.name||""}${a.last||""}`.toLowerCase()];
-    users.push({role:"remitente",name:full,id:code,code:code,legacyId:a.id,identifiers:[...new Set(ids.filter(Boolean))],password:null,phone:uniquePhone,email:email,balance:0,balanceDOP:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,commissionRate:0.5});
+    const email = a.email || makeSendwayoEmail(a.name,a.last);
+    const phone = a.phone || "";
+    const phoneDigits = phone.replace(/\D/g,"");
+    const ids=[...(a.identifiers||[]),full,email,phoneDigits,phone,code,a.id,a.legacyId,`${a.name||""}${a.last||""}`.toLowerCase()];
+    users.push({role:"remitente",name:full,id:code,code:code,legacyId:a.legacyId||a.id,identifiers:[...new Set(ids.filter(Boolean))],password:null,phone,email,balance:Number(a.balance||0),balanceDOP:Number(a.balanceDOP||a.balance||0),balanceHTG:Number(a.balanceHTG||0),commission:0,commissionDOP:0,commissionHTG:0,commissionRate:0.5});
   });
   if(typeof extraRemitentes!=="undefined"){
     extraRemitentes.forEach((a, idx)=>{
