@@ -505,7 +505,22 @@ function AuthGate(){
       setUser(session);setPassword("");setError("");
     }catch(err){
       console.error("SENDWAYO: Firebase Authentication login failed",err);
-      setError(err?.code==="auth/invalid-credential"||err?.code==="auth/wrong-password"||err?.code==="auth/user-not-found"?"Correo o contraseña incorrectos.":(err?.message||"No se pudo validar la cuenta en Firebase."));
+      // Evita dejar una sesión Firebase válida pero sin sesión SENDWAYO si la consulta del perfil expiró.
+      try { await cloud?.signOut?.(); } catch (signOutError) { console.warn("[SENDWAYO] No se pudo limpiar la sesión tras un acceso fallido.", signOutError); }
+      const code=String(err?.code||"");
+      const messages={
+        "auth/invalid-credential":"Firebase rechazó las credenciales. Verifique el correo registrado y la contraseña; esta respuesta por sí sola no permite distinguir cuál de los dos es incorrecto.",
+        "auth/wrong-password":"La contraseña no coincide con la cuenta de Firebase.",
+        "auth/user-not-found":"No existe una cuenta de Firebase con ese correo.",
+        "auth/invalid-email":"El correo no tiene un formato válido.",
+        "auth/user-disabled":"La cuenta de Firebase está deshabilitada. Administración debe revisar su estado.",
+        "auth/too-many-requests":"Firebase limitó temporalmente los intentos. Espere antes de volver a intentarlo.",
+        "auth/network-request-failed":"No se pudo conectar con Firebase. Revise la conexión y vuelva a intentar.",
+        "auth/unauthorized-domain":"El dominio de esta página no está autorizado en Firebase Authentication.",
+        "auth/operation-not-allowed":"El método de acceso por correo y contraseña no está habilitado en Firebase Authentication.",
+        "auth/invalid-api-key":"La clave de configuración de Firebase no es válida para este proyecto."
+      };
+      setError(messages[code] || (code ? "Firebase no completó el acceso ("+code+"). Revise la configuración de Auth y el perfil asociado; no se cambiaron cuentas ni contraseñas." : (err?.message||"No se pudo validar la cuenta en Firebase.")));
     } finally {
       window.__sendwayoInteractiveLogin = false;
       setLoginBusy(false);
