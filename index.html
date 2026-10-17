@@ -2347,7 +2347,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if (status === 'Aprobado') {
       if (collection === 'deposits') {
         if (!legacyIsRemitter() && !legacyIsAdmin() && !legacyIsAgent()) throw legacyError('El depósito solo puede acreditarse a un remitente.');
-        if (!legacyIsAdmin() && !legacyIsAgent()) throw legacyError('Solo administración o agente autorizado puede aprobar el depósito.');
+        if (!legacyIsAdmin()) throw legacyError('Solo el administrador puede aprobar depósitos.');
         await legacyCreditDeposit(id, userKey, amount, currency);
       } else if (collection === 'accountWithdrawals') {
         debit = record.balanceDebited ? 0 : amount;
