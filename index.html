@@ -284,9 +284,7 @@ function makeSendwayoDefaultUsers(){
       users.push({role:"remitente",name:full,id:code,code:code,legacyId:a.id,identifiers:[...new Set(ids.filter(Boolean))],password:null,phone:phone,email:email,balance:0,balanceDOP:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,commissionRate:0.5});
     });
   }
-  // Usuarios criticos con codigos RM especificos
-  users.push({role:"remitente",name:"DANIA SAINTHILAIRE",id:"REM-026",code:"REM-026",legacyId:"ID65734452",identifiers:["DANIA SAINTHILAIRE","DANIA","daniasainthilaire@gmail.com","daniasaithilaire@gmail.com","8493727884","849-372-7884","ID65734452","65734452","REM-026","REM026"],password:null,phone:"8493727884",email:"daniasainthilaire@gmail.com"});
-  users.push({role:"remitente",name:"EDITA ALBERTO",id:"REM-027",code:"REM-027",legacyId:"ID65734467",identifiers:["EDITA ALBERTO","EDITA","editaalberto@gmail.com","edita.alberto@gmail.com","8299644061","829-964-4061","ID65734467","REM-027","REM027"],password:null,phone:"8299644061",email:"editaalberto@gmail.com"});
+  // Los alias antiguos se conservan en los registros canónicos de cm; no crear cuentas remitentes duplicadas.
   // Deduplicar por role+id+name para evitar herencia cruzada
   return Array.from(new Map(users.map(u=>[`${u.role}|${u.id}|${u.name}`,u])).values());
 }
