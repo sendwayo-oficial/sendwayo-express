@@ -1194,6 +1194,7 @@ document.getElementById('login-form')?.addEventListener('submit', function(e){
     return;
   }
   currentUser = found;
+  window.currentUser = currentUser;
   document.getElementById('login-screen')?.classList.add('hidden');
   document.getElementById('app-dashboard')?.classList.remove('hidden');
   try {
@@ -2229,6 +2230,28 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
 </script>
 
 <script>
+
+/* Mostrar los balances propios al remitente, sin mezclar DOP y HTG */
+(function(){
+  const originalHeader = window.updateFinancialHeader || updateFinancialHeader;
+  window.updateFinancialHeader = function(){
+    if (typeof originalHeader === 'function') originalHeader.apply(this, arguments);
+    const role = String(typeof currentUser !== 'undefined' && currentUser ? currentUser.role : '').toUpperCase();
+    if (role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && typeof currentUser !== 'undefined' && currentUser && String(currentUser.id||'').startsWith('REM-'))) {
+      const rem = REMITENTES.find(r => r.id === currentUser.id);
+      if (!rem) return;
+      const set = (id,val) => { const el=document.getElementById(id); if(el) el.innerText=val; };
+      set('top-bal-rd', formatMoney(rem.balances.DOP,'DOP'));
+      set('top-bal-htg', formatMoney(rem.balances.HTG,'HTG'));
+      set('top-com-rd', formatMoney(rem.commissions.DOP,'DOP'));
+      set('top-com-htg', formatMoney(rem.commissions.HTG,'HTG'));
+      set('card-bal-rd', formatMoney(rem.balances.DOP,'DOP'));
+      set('card-bal-htg', formatMoney(rem.balances.HTG,'HTG'));
+    }
+  };
+  if (typeof updateFinancialHeader === 'function') updateFinancialHeader = window.updateFinancialHeader;
+})();
+
 /* SENDWAYO V118: permisos de interfaz por rol y balances iniciales solicitados */
 function aplicarPermisosSENDWAYO() {
   const role = String(typeof currentUser !== 'undefined' && currentUser ? currentUser.role : '').toUpperCase();
