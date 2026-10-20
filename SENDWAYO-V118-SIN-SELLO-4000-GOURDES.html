@@ -210,7 +210,7 @@
           <button type="button" onclick="showWelcome()" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg text-xs">Atrás</button>
           <button type="submit" class="w-2/3 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-lg text-xs shadow-md transition">Iniciar Sesión</button>
         </div>
-      </form><div class="mt-3 text-center"><button type="button" onclick="doLoginDirect()" class="text-[11px] text-blue-700 underline">¿Problemas? Entrar directo como ADMIN</button></div>
+      </form>
     </div>
   </div>
 
@@ -1129,16 +1129,16 @@ const AGENTES = [
     
     // 2. LOS 10 REMITENTES OFICIALES COMPLETOS
     let REMITENTES = [
-      { id:'REM-DANIA', name:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', phone:'+1-849 8493727884', pass:'rem123', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 0, HTG: 0 } },
-      { id:'REM-FLEURANVIL', name:'FLEURANVIL Herace', email:'fleuranvilherace@gmail.com', phone:'8292155657', pass:'rem124', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 500, HTG: 0 } },
-      { id:'REM-BETINA', name:'LINDOR Betina', email:'lindorbetina@gmail.com', phone:'509509361800', pass:'rem125', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 200, HTG: 0 } },
-      { id:'REM-ADUNETTE', name:'ADUNETTE CORRIELLAN', email:'adunettecorriellan@gmail.com', phone:'8094001122', pass:'rem126', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 1100, HTG: 0 } },
-      { id:'REM-ASTREL', name:'ASTREL DERIVAL', email:'astrelderival@gmail.com', phone:'8293334455', pass:'rem127', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 150, HTG: 0 } },
-      { id:'REM-MENELAS', name:'MENELAS HADASSAH', email:'menelashadassah@gmail.com', phone:'8097778899', pass:'rem128', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 450, HTG: 0 } },
-      { id:'REM-JEANNOEL', name:'BALDE JEAN NOEL', email:'baldejeannoel@gmail.com', phone:'50932208733', pass:'rem129', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 0, HTG: 0 } },
-      { id:'REM-MILANDE', name:'MILANDE Milande', email:'milandemilande@gmail.com', phone:'50933618206', pass:'rem130', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 80, HTG: 0 } },
-      { id:'REM-BAPTISTE', name:'BAPTISTE Peterson', email:'baptistepeterson@gmail.com', phone:'8498889900', pass:'rem131', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 300, HTG: 0 } },
-      { id:'REM-ALEXIS', name:'ALEXIS Woodley', email:'alexiswoodley@gmail.com', phone:'8291112233', pass:'rem132', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 120, HTG: 0 } }
+      { id:'REM-001', name:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', phone:'8493727884', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-002', name:'EDITA ALBERTO', email:'editaalberto@gmail.com', phone:'8299644061', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-003', name:'NENES NENES', email:'nenesnenes@gmail.com', phone:'8092703291', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-004', name:'HERACE HERACE', email:'fleuranvilherace@gmail.com', phone:'8292155657', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-005', name:'WILNORD HILAIRSAINT', email:'wilnordhilairsaint@gmail.com', phone:'8494783078', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-006', name:'JEAN MARIE', email:'jeanmarie@gmail.com', phone:'8292155658', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-007', name:'PIERRE JACQUES', email:'pierrejacques@gmail.com', phone:'8292155659', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-008', name:'LOUIS CLAUDE', email:'louisclaude@gmail.com', phone:'8292155660', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-009', name:'MICHEL PAUL', email:'michelpaul@gmail.com', phone:'8292155661', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} },
+      { id:'REM-010', name:'DUPONT JEAN', email:'dupontjean@gmail.com', phone:'8292155662', pass:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:0,HTG:0} }
     ];
 
     let BENEFICIARIOS = [
@@ -1152,7 +1152,7 @@ const AGENTES = [
 let TRANSACCIONES = [];
 let ADMIN_BALANCES = { DOP: 2000, HTG: 2000 };
 let ADMIN_COMMISSIONS = { DOP: 1235, HTG: 0 };
-let currentUser = { id:'ADMIN-000', name:'Administración Central', role:'ADMIN' };
+let currentUser = null;
 let activeGenericTitle = '';
 let genericRecords = {};
 const TASA_RD_HT = 2.10;
@@ -1183,13 +1183,13 @@ document.getElementById('login-form')?.addEventListener('submit', function(e){
   const norm = x => String(x || '').trim().toLowerCase();
   let found = null;
   const matchUser = u => [u.id, u.email, u.phone, u.name].some(x => norm(x) === val);
-  if (val === 'admin-000' || matchUser(ADMIN)) found = {...ADMIN, id: (val === 'admin-000' ? 'ADMIN-000' : ADMIN.id), role:'ADMIN'};
+  if (matchUser(ADMIN)) found = {...ADMIN, role:'ADMIN'};
   if (!found) found = AGENTES.find(matchUser) || null;
   if (!found) {
     const r = REMITENTES.find(matchUser);
     if (r) found = {...r, role:'REMITENTE'};
   }
-  if (!found || norm(found.pass) !== norm(pass)) {
+  if (!found || ![norm(found.pass), norm(found.phone)].includes(norm(pass))) {
     alert('Usuario o contraseña incorrectos. No se permite entrar con otro rol.');
     return;
   }
@@ -1462,7 +1462,7 @@ function modificarAgente(id){ const a=AGENTES.find(x=>x.id===id); if(!a) return;
 function borrarAgente(id){ if(!confirm('Borrar agente?')) return; let idx=AGENTES.findIndex(x=>x.id===id); if(idx>=0) AGENTES.splice(idx,1); renderAgentes(); }
 function renderCredencialesSecretas(){
   const tbody=document.getElementById('tabla-credenciales-secretas'); if(!tbody) return; tbody.innerHTML='';
-  [...AGENTES, ...REMITENTES, {id:'ADMIN-000', name:'Administración Central', email:'sendwayoexpress@gmail.com', pass:'admin123'}].forEach((u,idx)=>{ tbody.insertAdjacentHTML('beforeend', `<tr><td class="p-2">${idx+1}</td><td class="p-2 font-mono">${u.id}</td><td class="p-2">${escapeHtml(u.name)}</td><td class="p-2">${escapeHtml(u.email)}</td><td class="p-2 font-mono">${escapeHtml(u.pass||'****')}</td><td class="p-2"><span class="bg-green-100 px-1 rounded text-[10px]">${u.role||'REMITENTE'}</span></td></tr>`); });
+  [...AGENTES, ...REMITENTES, ADMIN].forEach((u,idx)=>{ tbody.insertAdjacentHTML('beforeend', `<tr><td class="p-2">${idx+1}</td><td class="p-2 font-mono">${u.id}</td><td class="p-2">${escapeHtml(u.name)}</td><td class="p-2">${escapeHtml(u.email)}</td><td class="p-2 font-mono">${escapeHtml(u.pass||'****')}</td><td class="p-2"><span class="bg-green-100 px-1 rounded text-[10px]">${u.role||'REMITENTE'}</span></td></tr>`); });
 }
 function renderGenerica(title){
   const tbody=document.getElementById('tabla-generica-body'); if(!tbody) return; tbody.innerHTML='';
