@@ -1129,16 +1129,16 @@ const AGENTES = [
     
     // 2. LOS 10 REMITENTES OFICIALES COMPLETOS
     let REMITENTES = [
-      { id:'REM-DANIA', name:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', phone:'+1-849 8493727884', pass:'rem123', balances: { DOP: 4000, HTG: 0 }, commissions: { DOP: 0, HTG: 0 } },
-      { id:'REM-FLEURANVIL', name:'FLEURANVIL Herace', email:'fleuranvilherace@gmail.com', phone:'8292155657', pass:'rem124', balances: { DOP: 15000, HTG: 5000 }, commissions: { DOP: 500, HTG: 0 } },
-      { id:'REM-BETINA', name:'LINDOR Betina', email:'lindorbetina@gmail.com', phone:'509509361800', pass:'rem125', balances: { DOP: 8500, HTG: 1200 }, commissions: { DOP: 200, HTG: 0 } },
-      { id:'REM-ADUNETTE', name:'ADUNETTE CORRIELLAN', email:'adunettecorriellan@gmail.com', phone:'8094001122', pass:'rem126', balances: { DOP: 28000, HTG: 0 }, commissions: { DOP: 1100, HTG: 0 } },
-      { id:'REM-ASTREL', name:'ASTREL DERIVAL', email:'astrelderival@gmail.com', phone:'8293334455', pass:'rem127', balances: { DOP: 5000, HTG: 0 }, commissions: { DOP: 150, HTG: 0 } },
-      { id:'REM-MENELAS', name:'MENELAS HADASSAH', email:'menelashadassah@gmail.com', phone:'8097778899', pass:'rem128', balances: { DOP: 12000, HTG: 3000 }, commissions: { DOP: 450, HTG: 0 } },
-      { id:'REM-JEANNOEL', name:'BALDE JEAN NOEL', email:'baldejeannoel@gmail.com', phone:'50932208733', pass:'rem129', balances: { DOP: 6000, HTG: 0 }, commissions: { DOP: 0, HTG: 0 } },
-      { id:'REM-MILANDE', name:'MILANDE Milande', email:'milandemilande@gmail.com', phone:'50933618206', pass:'rem130', balances: { DOP: 3500, HTG: 800 }, commissions: { DOP: 80, HTG: 0 } },
-      { id:'REM-BAPTISTE', name:'BAPTISTE Peterson', email:'baptistepeterson@gmail.com', phone:'8498889900', pass:'rem131', balances: { DOP: 9200, HTG: 0 }, commissions: { DOP: 300, HTG: 0 } },
-      { id:'REM-ALEXIS', name:'ALEXIS Woodley', email:'alexiswoodley@gmail.com', phone:'8291112233', pass:'rem132', balances: { DOP: 4500, HTG: 1500 }, commissions: { DOP: 120, HTG: 0 } }
+      { id:'REM-DANIA', name:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', phone:'+1-849 8493727884', pass:'rem123', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 0, HTG: 0 } },
+      { id:'REM-FLEURANVIL', name:'FLEURANVIL Herace', email:'fleuranvilherace@gmail.com', phone:'8292155657', pass:'rem124', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 500, HTG: 0 } },
+      { id:'REM-BETINA', name:'LINDOR Betina', email:'lindorbetina@gmail.com', phone:'509509361800', pass:'rem125', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 200, HTG: 0 } },
+      { id:'REM-ADUNETTE', name:'ADUNETTE CORRIELLAN', email:'adunettecorriellan@gmail.com', phone:'8094001122', pass:'rem126', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 1100, HTG: 0 } },
+      { id:'REM-ASTREL', name:'ASTREL DERIVAL', email:'astrelderival@gmail.com', phone:'8293334455', pass:'rem127', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 150, HTG: 0 } },
+      { id:'REM-MENELAS', name:'MENELAS HADASSAH', email:'menelashadassah@gmail.com', phone:'8097778899', pass:'rem128', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 450, HTG: 0 } },
+      { id:'REM-JEANNOEL', name:'BALDE JEAN NOEL', email:'baldejeannoel@gmail.com', phone:'50932208733', pass:'rem129', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 0, HTG: 0 } },
+      { id:'REM-MILANDE', name:'MILANDE Milande', email:'milandemilande@gmail.com', phone:'50933618206', pass:'rem130', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 80, HTG: 0 } },
+      { id:'REM-BAPTISTE', name:'BAPTISTE Peterson', email:'baptistepeterson@gmail.com', phone:'8498889900', pass:'rem131', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 300, HTG: 0 } },
+      { id:'REM-ALEXIS', name:'ALEXIS Woodley', email:'alexiswoodley@gmail.com', phone:'8291112233', pass:'rem132', balances: { DOP: 2000, HTG: 2000 }, commissions: { DOP: 120, HTG: 0 } }
     ];
 
     let BENEFICIARIOS = [
@@ -1150,7 +1150,7 @@ const AGENTES = [
     
     
 let TRANSACCIONES = [];
-let ADMIN_BALANCES = { DOP: 12500, HTG: 4000 };
+let ADMIN_BALANCES = { DOP: 2000, HTG: 2000 };
 let ADMIN_COMMISSIONS = { DOP: 1235, HTG: 0 };
 let currentUser = { id:'ADMIN-000', name:'Administración Central', role:'ADMIN' };
 let activeGenericTitle = '';
@@ -1175,29 +1175,32 @@ function togglePassword(id){ const i=document.getElementById(id); i.type=i.type=
 function recuperarAcceso(){ alert('Contacte admin'); }
 document.getElementById('login-form')?.addEventListener('submit', function(e){
   e.preventDefault();
-  let emailEl = document.getElementById('login-email') || document.getElementById('login-user') || document.getElementById('login-username');
-  let passEl = document.getElementById('login-password') || document.getElementById('login-pass');
-  let val = (emailEl ? emailEl.value : '').trim().toLowerCase();
-  let pass = (passEl ? passEl.value : '').trim();
+  const userEl = document.getElementById('login-email') || document.getElementById('login-user') || document.getElementById('login-username');
+  const passEl = document.getElementById('login-password') || document.getElementById('login-pass');
+  const val = (userEl?.value || '').trim().toLowerCase();
+  const pass = (passEl?.value || '').trim();
+  if (!val || !pass) { alert('Escriba su usuario y contraseña.'); return; }
+  const norm = x => String(x || '').trim().toLowerCase();
   let found = null;
-  // Buscar por ID, email o nombre
-  found = AGENTES.find(a=> a.id.toLowerCase()===val || a.email.toLowerCase()===val || a.name.toLowerCase().includes(val));
-  if(!found) found = REMITENTES.find(r=> r.id.toLowerCase()===val || r.email.toLowerCase()===val || r.name.toLowerCase().includes(val));
-  // Admin credenciales maestras: admin123 / ADMIN-000 / sendwayoexpress@gmail.com
-  if(val.includes('admin') || val.includes('sendwayo') || val==='admin-000' || pass==='admin123'){
-    found = {id:'ADMIN-000', name:'Administración Central', role:'ADMIN', email:'sendwayoexpress@gmail.com'};
+  const matchUser = u => [u.id, u.email, u.phone, u.name].some(x => norm(x) === val);
+  if (matchUser(ADMIN)) found = ADMIN;
+  if (!found) found = AGENTES.find(matchUser) || null;
+  if (!found) {
+    const r = REMITENTES.find(matchUser);
+    if (r) found = {...r, role:'REMITENTE'};
   }
-  // Si es agente, validar pass si existe
-  if(!found){
-    // permitir entrada como admin por defecto para no bloquear
-    found = {id:'ADMIN-000', name:'Administración Central', role:'ADMIN', email:'sendwayoexpress@gmail.com'};
+  if (!found || norm(found.pass) !== norm(pass)) {
+    alert('Usuario o contraseña incorrectos. No se permite entrar con otro rol.');
+    return;
   }
   currentUser = found;
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('app-dashboard').classList.remove('hidden');
-  try{
-    renderRemitentes(); renderAgentes(); renderBeneficiarios(); renderTransacciones(); cargarSelectsGlobales(); renderCredencialesSecretas(); switchModule('dashboard','Dashboard'); updateFinancialHeader();
-  }catch(err){ console.error(err); alert('Error cargando dashboard: '+err.message); }
+  document.getElementById('login-screen')?.classList.add('hidden');
+  document.getElementById('app-dashboard')?.classList.remove('hidden');
+  try {
+    renderRemitentes(); renderAgentes(); renderBeneficiarios(); renderTransacciones();
+    cargarSelectsGlobales(); renderCredencialesSecretas(); switchModule('dashboard','Dashboard'); updateFinancialHeader();
+    if (typeof aplicarPermisosSENDWAYO === 'function') aplicarPermisosSENDWAYO();
+  } catch(err) { console.error(err); alert('Error cargando dashboard: '+err.message); }
   console.log('Login OK como', currentUser.id, currentUser.role);
 });
 function doLoginDirect(){ document.getElementById('login-form')?.dispatchEvent(new Event('submit')); }
@@ -2224,4 +2227,69 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
   console.log('V118 APLICADO - Sello quitado completamente, 4000 gourdes haitianos en balance Haití, HT->HT NatCash MonCash sin fondo insuficiente mentira, solo lo pedido');
 })();
 </script>
+
+<script>
+/* SENDWAYO V118: permisos de interfaz por rol y balances iniciales solicitados */
+function aplicarPermisosSENDWAYO() {
+  const role = String(window.currentUser && currentUser.role || '').toUpperCase();
+  const admin = role === 'ADMIN';
+  const agente = role === 'AGENTE';
+  const remitente = role === 'REMITENTE' || (!admin && !agente && !!(currentUser && currentUser.id && String(currentUser.id).startsWith('REM-')));
+  const secretBtn = document.getElementById('admin-secret-btn');
+  if (secretBtn) secretBtn.classList.toggle('hidden', !admin);
+  const secretView = document.getElementById('view-secretas');
+  if (!admin && secretView) secretView.classList.add('hidden');
+  const allowedForRemitente = new Set(['dashboard','envios','retiros','depositos','beneficiarios','perfil','comisiones']);
+  const allowedForAgent = new Set(['dashboard','envios','retiros','depositos','beneficiarios','remitentes','agentes','comisiones','perfil']);
+  document.querySelectorAll('#sidebar button[onclick*="switchModule"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/switchModule\('([^']+)'/);
+    if (!match) return;
+    const mod = match[1];
+    const visible = admin || (remitente ? allowedForRemitente.has(mod) : agente ? allowedForAgent.has(mod) : false);
+    btn.classList.toggle('hidden', !visible);
+    if (!visible) btn.setAttribute('aria-hidden','true'); else btn.removeAttribute('aria-hidden');
+  });
+  document.querySelectorAll('button').forEach(btn => {
+    const label = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+    if (!admin && /ajustar balance|ajustar bal|ajustar comisi[oó]n|acreditaci[oó]n y ajuste|ajustes \/ cr[eé]ditos|acreditar balance|acreditar comisi[oó]n/.test(label)) {
+      btn.classList.add('hidden'); btn.disabled = true; btn.setAttribute('aria-hidden','true');
+    }
+  });
+  if (remitente) {
+    document.querySelectorAll('#tabla-remitentes-body tr').forEach(tr => {
+      if (!tr.innerText.includes(String(currentUser.id))) tr.classList.add('hidden');
+    });
+    const menu = document.getElementById('admin-secret-btn');
+    if (menu) menu.classList.add('hidden');
+  }
+}
+(function(){
+  const originalSwitch = window.switchModule;
+  if (typeof originalSwitch === 'function') window.switchModule = function(modId,title) {
+    const role = String(window.currentUser && currentUser.role || '').toUpperCase();
+    const isRem = role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && !!(currentUser && String(currentUser.id||'').startsWith('REM-')));
+    const isAgent = role === 'AGENTE';
+    if (modId === 'secretas' && role !== 'ADMIN') { alert('Acceso denegado. Información secreta exclusiva del administrador.'); return false; }
+    if (isRem && !['dashboard','envios','retiros','depositos','beneficiarios','perfil','comisiones'].includes(modId)) { alert('Acceso denegado. Su cuenta de remitente no puede entrar en módulos de administración o agentes.'); return false; }
+    if (isAgent && ['secretas'].includes(modId)) { alert('Acceso denegado.'); return false; }
+    const out = originalSwitch.apply(this, arguments);
+    aplicarPermisosSENDWAYO();
+    return out;
+  };
+  const originalRender = window.renderRemitentes;
+  if (typeof originalRender === 'function') window.renderRemitentes = function() {
+    const out = originalRender.apply(this, arguments);
+    const role = String(window.currentUser && currentUser.role || '').toUpperCase();
+    if (role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && !!(currentUser && String(currentUser.id||'').startsWith('REM-')))) {
+      const tbody = document.getElementById('tabla-remitentes-body');
+      if (tbody) Array.from(tbody.rows).forEach(tr => { if (!tr.innerText.includes(String(currentUser.id))) tr.remove(); });
+    }
+    aplicarPermisosSENDWAYO();
+    return out;
+  };
+  document.addEventListener('DOMContentLoaded', aplicarPermisosSENDWAYO);
+  document.addEventListener('click', () => setTimeout(aplicarPermisosSENDWAYO, 0), true);
+})();
+</script>
+
 </body></html>
