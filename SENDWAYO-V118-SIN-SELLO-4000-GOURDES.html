@@ -2314,4 +2314,150 @@ function aplicarPermisosSENDWAYO() {
 })();
 </script>
 
+
+<!-- SENDWAYO V118 - reglas financieras y retiro de comisión -->
+<script>
+(function(){
+'use strict';
+const role=()=>String(typeof currentUser!=='undefined'&&currentUser?currentUser.role:'').toUpperCase();
+const uid=()=>String(typeof currentUser!=='undefined'&&currentUser?currentUser.id:'');
+const isSender=()=>role()==='REMITENTE';
+const money=(n)=>Math.round((Number(n)+Number.EPSILON)*100)/100;
+const findSender=(id)=>typeof REMITENTES!=='undefined'?REMITENTES.find(r=>String(r.id)===String(id)):null;
+function notify(msg){alert(msg)}
+/* Cada operación usa una sola moneda y la fuente de fondos correcta. */
+window.validarYDescontar=function(rem,monto,moneda){
+  monto=Number(monto);
+  if(!['DOP','HTG'].includes(moneda)||!Number.isFinite(monto)||monto<=0){notify('Monto o moneda inválidos.');return false}
+  let account;
+  if(isSender()) account=findSender(uid());
+  else if(['ADMIN','AGENTE'].includes(role())) account={balances:ADMIN_BALANCES};
+  else {notify('Sesión sin permisos para realizar operaciones.');return false}
+  if(!account||!account.balances){notify('No se encontró el balance asociado.');return false}
+  const available=Number(account.balances[moneda]||0);
+  if(available<monto){notify('Balance insuficiente en '+(moneda==='HTG'?'gourdes HTG':'pesos dominicanos DOP')+'. No se mezclan monedas.');return false}
+  account.balances[moneda]=money(available-monto);
+  return true;
+};
+/* Anota quién financió el movimiento y evita atribuir comisiones a agentes. */
+const oldCreate=window.crearTransaccionBase;
+if(typeof oldCreate==='function')window.crearTransaccionBase=function(tipo,ruta,monto,moneda,remId,benNombre,benTel,fee){
+  const actualId=isSender()?uid():(remId||uid());
+  const t=oldCreate.call(this,tipo,ruta,monto,moneda,actualId,benNombre,benTel,fee);
+  t.creadorId=uid()||'ADMIN-ADM';
+  t.creadorRole=role()||'ADMIN';
+  t.financiadoPor=isSender()?'REMITENTE':'ADMIN';
+  t.balanceDeducido=['Envío','Retiro'].includes(String(tipo));
+  t.reversionAplicada=false;
+  return t;
+};
+/* Protege el cierre de operaciones y la distribución de comisión. */
+const oldApprove=window.aprobarTransaccion;
+if(typeof oldApprove==='function')window.aprobarTransaccion=function(id){
+  const t=typeof TRANSACCIONES!=='undefined'?TRANSACCIONES.find(x=>x.id===id):null;
+  if(!t)return;
+  if(!['ADMIN','AGENTE'].includes(role())){notify('Los remitentes no pueden aprobar operaciones.');return}
+  if(t.tipo==='Depósito'&&role()!=='ADMIN'){notify('Solo administración puede aprobar depósitos.');return}
+  if(role()==='AGENTE'&&String(t.creadorId)===uid()){notify('Un agente no puede aprobar su propia operación.');return}
+  const was=t.estado;
+  const oldAdminComm={DOP:Number(ADMIN_COMMISSIONS.DOP||0),HTG:Number(ADMIN_COMMISSIONS.HTG||0)};
+  const rem=findSender(t.remitenteId);
+  const oldRemComm=rem?{DOP:Number(rem.commissions.DOP||0),HTG:Number(rem.commissions.HTG||0)}:null;
+  oldApprove.call(this,id);
+  if(was!=='Pendiente'||t.estado!=='Aprobado'||!t.comisionDistribuida||!(Number(t.fee)>0))return;
+  const mon=t.moneda==='HTG'?'HTG':'DOP', fee=Number(t.fee);
+  if(String(t.creadorRole).toUpperCase()==='REMITENTE'&&rem){
+    ADMIN_COMMISSIONS[mon]=money(oldAdminComm[mon]+fee/2);
+    rem.commissions[mon]=money((oldRemComm?oldRemComm[mon]:0)+fee/2);
+  }else{
+    if(rem&&oldRemComm)rem.commissions[mon]=oldRemComm[mon];
+    ADMIN_COMMISSIONS[mon]=money(oldAdminComm[mon]+fee);
+  }
+  t.comisionDistribuida=true;
+  if(typeof renderRemitentes==='function')renderRemitentes();
+  if(typeof updateFinancialHeader==='function')updateFinancialHeader();
+};
+function reverseOnce(t){
+  if(!t||t.reversionAplicada||!t.balanceDeducido)return;
+  const amount=Number(t.montoValue||0),mon=t.moneda==='HTG'?'HTG':'DOP';
+  if(t.financiadoPor==='ADMIN')ADMIN_BALANCES[mon]=money(Number(ADMIN_BALANCES[mon]||0)+amount);
+  else {const rem=findSender(t.remitenteId);if(rem)rem.balances[mon]=money(Number(rem.balances[mon]||0)+amount)}
+  t.reversionAplicada=true;
+}
+for(const fn of ['rechazarTransaccion','noCoincideTransaccion']){
+  const old=window[fn];
+  if(typeof old==='function')window[fn]=function(id){
+    const t=typeof TRANSACCIONES!=='undefined'?TRANSACCIONES.find(x=>x.id===id):null;
+    if(!t)return;
+    if(!['ADMIN','AGENTE'].includes(role())){notify('Los remitentes no pueden cambiar el estado de operaciones.');return}
+    if(t.tipo==='Depósito'&&role()!=='ADMIN'){notify('Solo administración puede procesar depósitos.');return}
+    if(role()==='AGENTE'&&String(t.creadorId)===uid()){notify('Un agente no puede procesar su propia operación.');return}
+    const was=t.estado;
+    old.call(this,id);
+    if(was==='Pendiente'&&t.estado!=='Pendiente'){
+      // El manejador antiguo devuelve fondos al remitente; revertimos ese efecto y reembolsamos al pagador real.
+      if(t.financiadoPor==='ADMIN'&&t.balanceDeducido&&!t.reversionAplicada){
+        const rem=findSender(t.remitenteId),mon=t.moneda==='HTG'?'HTG':'DOP';
+        if(rem)rem.balances[mon]=money(Number(rem.balances[mon]||0)-Number(t.montoValue||0));
+        reverseOnce(t);
+      }else if(t.financiadoPor==='REMITENTE')t.reversionAplicada=true;
+      if(typeof renderRemitentes==='function')renderRemitentes();
+      if(typeof updateFinancialHeader==='function')updateFinancialHeader();
+    }
+  };
+}
+/* La administración y los agentes usan el balance común de administración. */
+const oldWithdraw=window.ejecutarRetiroComision;
+window.ejecutarRetiroComision=function(){
+  if(role()!=='ADMIN'){notify('Esta función es exclusiva de administración.');return}
+  const amount=Number(document.getElementById('monto-retiro-com')?.value),mon=document.getElementById('moneda-retiro-com')?.value;
+  if(!Number.isFinite(amount)||amount<=0||!['DOP','HTG'].includes(mon)){notify('Monto o moneda inválidos.');return}
+  if(amount>Number(ADMIN_COMMISSIONS[mon]||0)){notify('La cantidad supera la comisión acumulada.');return}
+  ADMIN_COMMISSIONS[mon]=money(Number(ADMIN_COMMISSIONS[mon]||0)-amount);
+  ADMIN_BALANCES[mon]=money(Number(ADMIN_BALANCES[mon]||0)+amount);
+  document.getElementById('monto-retiro-com').value='';
+  if(typeof updateFinancialHeader==='function')updateFinancialHeader();
+  notify('Retiro de comisión aplicado.');
+};
+/* Pago de comisión del remitente: sin autorización; se traslada de comisión a su balance. */
+function addSenderCommissionUI(){
+  if(!isSender()||document.getElementById('sw-commission-payout'))return;
+  const root=document.getElementById('app-dashboard')||document.body;
+  const wrap=document.createElement('div');wrap.id='sw-commission-payout';
+  wrap.className='fixed bottom-4 right-3 z-40';
+  wrap.innerHTML='<button type="button" id="sw-open-commission" class="rounded-lg bg-indigo-700 text-white font-bold px-4 py-3 shadow-lg">Pago y retiro de comisión</button><div id="sw-commission-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl p-4 w-full max-w-sm"><h3 class="font-bold mb-3">Pago y retiro de comisión</h3><label class="block text-sm mb-1">Moneda</label><select id="sw-commission-currency" class="w-full border rounded p-2 mb-3"><option value="DOP">Pesos dominicanos (DOP)</option><option value="HTG">Gourdes haitianos (HTG)</option></select><p id="sw-commission-available" class="text-sm mb-2"></p><label class="block text-sm mb-1">Cantidad</label><input id="sw-commission-amount" type="number" min="0.01" step="0.01" class="w-full border rounded p-2 mb-3" placeholder="Cantidad a transferir"><div class="flex gap-2"><button id="sw-commission-save" class="flex-1 rounded bg-indigo-700 text-white font-bold p-2">Guardar</button><button id="sw-commission-close" class="flex-1 rounded border p-2">Cancelar</button></div></div></div>';
+  root.appendChild(wrap);
+  const modal=()=>document.getElementById('sw-commission-modal');
+  const refresh=()=>{const rem=findSender(uid());if(!rem)return;const mon=document.getElementById('sw-commission-currency').value;document.getElementById('sw-commission-available').textContent='Comisión disponible: '+formatMoney(Number(rem.commissions[mon]||0),mon);};
+  document.getElementById('sw-open-commission').onclick=()=>{refresh();modal().classList.remove('hidden')};
+  document.getElementById('sw-commission-close').onclick=()=>modal().classList.add('hidden');
+  document.getElementById('sw-commission-currency').onchange=refresh;
+  document.getElementById('sw-commission-save').onclick=()=>{
+    const rem=findSender(uid()),mon=document.getElementById('sw-commission-currency').value,amount=Number(document.getElementById('sw-commission-amount').value);
+    if(!rem){notify('No se encontró la cuenta remitente.');return}
+    const available=Number(rem.commissions[mon]||0);
+    if(!Number.isFinite(amount)||amount<=0||amount>available){notify('La cantidad debe ser mayor que cero y menor o igual a la comisión disponible.');return}
+    rem.commissions[mon]=money(available-amount);rem.balances[mon]=money(Number(rem.balances[mon]||0)+amount);
+    document.getElementById('sw-commission-amount').value='';
+    if(typeof renderRemitentes==='function')renderRemitentes();
+    if(typeof updateFinancialHeader==='function')updateFinancialHeader();
+    refresh();notify('Comisión transferida a su balance en '+mon+'.');
+  };
+}
+document.addEventListener('DOMContentLoaded',addSenderCommissionUI);
+document.getElementById('login-form')?.addEventListener('submit',()=>setTimeout(addSenderCommissionUI,150));
+const originalLoginHandler=window.showDashboard;
+if(typeof originalLoginHandler==='function'){
+  window.showDashboard=function(){const result=originalLoginHandler.apply(this,arguments);setTimeout(addSenderCommissionUI,0);return result};
+}
+const oldRender=window.renderAcciones;
+if(typeof oldRender==='function')window.renderAcciones=function(t){
+  if(isSender())return t.estado==='Aprobado'?'<span class="text-xs text-gray-500">Comprobante disponible</span>':'<span class="text-xs text-gray-500">Esperando revisión</span>';
+  if(role()==='AGENTE'&&t.tipo==='Depósito')return '<span class="text-xs text-amber-700">Pendiente de ADMIN</span>';
+  if(role()==='AGENTE'&&String(t.creadorId)===uid())return '<span class="text-xs text-gray-500">Esperando otro agente o ADMIN</span>';
+  return oldRender.call(this,t);
+};
+})();
+</script>
+
 </body></html>
