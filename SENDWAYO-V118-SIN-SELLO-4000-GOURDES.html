@@ -2460,4 +2460,41 @@ if(typeof oldRender==='function')window.renderAcciones=function(t){
 })();
 </script>
 
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+/* SENDWAYO_FIREBASE_REALTIME_V1: las reglas del servidor siguen siendo obligatorias. */
+(function(){
+ const badge=document.createElement('div');badge.id='sw-firebase-status';badge.textContent='Firebase: conectando…';badge.style.cssText='position:fixed;right:8px;bottom:8px;z-index:99999;padding:7px 10px;border-radius:9px;font:600 11px system-ui;background:#e2e8f0;color:#334155;box-shadow:0 2px 8px #0002;max-width:calc(100vw - 24px)';
+ document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(badge));
+ function status(t,c,b){badge.textContent=t;badge.style.color=c;badge.style.background=b;if(!badge.isConnected&&document.body)document.body.appendChild(badge)}
+ const cfg={apiKey:'AIzaSyDvnBbSRqtGsBlIiX_hJXrtj2Drl_nlDT0',authDomain:'sendwayo-express.firebaseapp.com',databaseURL:'https://sendwayo-express-default-rtdb.firebaseio.com',projectId:'sendwayo-express',storageBucket:'sendwayo-express.firebasestorage.app',messagingSenderId:'191723694148',appId:'1:191723694148:web:ca19828cb8fb566a67b411',measurementId:'G-9RL875KYH9'};
+ let db=null,started=false,applying=false,ready=false,last='',lastSaved='',timer=null;const path='sendwayoExpressV118/state',json=x=>JSON.stringify(x);
+ const strip=a=>(a||[]).map(({pass,password,...r})=>r);
+ function capture(){return {schema:1,remitentes:strip(REMITENTES),agentes:strip(AGENTES),beneficiarios:BENEFICIARIOS,transacciones:TRANSACCIONES,adminBalances:ADMIN_BALANCES,adminCommissions:ADMIN_COMMISSIONS,genericRecords:genericRecords}}
+ function merge(remote,local){const m=new Map((local||[]).map(x=>[x.id,x]));return(remote||[]).map(x=>({...m.get(x.id),...x,pass:(m.get(x.id)||{}).pass||''}))}
+ function apply(d){if(!d||typeof d!=='object')return;applying=true;try{
+  if(Array.isArray(d.remitentes))REMITENTES=merge(d.remitentes,REMITENTES);
+  if(Array.isArray(d.agentes))AGENTES.splice(0,AGENTES.length,...merge(d.agentes,AGENTES));
+  if(Array.isArray(d.beneficiarios))BENEFICIARIOS=d.beneficiarios;
+  if(Array.isArray(d.transacciones))TRANSACCIONES=d.transacciones;
+  if(d.adminBalances&&typeof d.adminBalances==='object')Object.assign(ADMIN_BALANCES,d.adminBalances);
+  if(d.adminCommissions&&typeof d.adminCommissions==='object')Object.assign(ADMIN_COMMISSIONS,d.adminCommissions);
+  if(d.genericRecords&&typeof d.genericRecords==='object')genericRecords=d.genericRecords;
+  if(currentUser&&currentUser.role==='REMITENTE'){const mine=REMITENTES.find(r=>r.id===currentUser.id);if(mine)Object.assign(currentUser,mine)}
+  if(currentUser)try{renderRemitentes();renderAgentes();renderBeneficiarios();renderTransacciones();cargarSelectsGlobales();updateFinancialHeader();if(typeof renderCredencialesSecretas==='function'&&currentUser.role==='ADMIN')renderCredencialesSecretas()}catch(e){console.warn('Firebase views',e)}
+ }finally{applying=false}}
+ function start(){if(started||!currentUser)return;started=true;try{
+  if(!window.firebase)throw Error('No cargó el SDK de Firebase');if(!firebase.apps.length)firebase.initializeApp(cfg);db=firebase.database();const ref=db.ref(path);
+  ref.on('value',snap=>{const d=snap.val();if(d&&typeof d==='object'){apply(d);last=json(capture());lastSaved=last;ready=true;status('Firebase: sincronizado en tiempo real','#166534','#dcfce7')}
+   else if(!ready&&currentUser&&currentUser.role==='ADMIN'){ref.set(capture()).then(()=>{last=json(capture());lastSaved=last;ready=true;status('Firebase: base inicial creada','#166534','#dcfce7')}).catch(e=>status('Firebase: sin permiso ('+(e.code||'error')+')','#991b1b','#fee2e2'))}
+   else if(!ready)status('Firebase: esperando inicialización del administrador','#92400e','#fef3c7')
+  },e=>{status('Firebase: acceso denegado ('+(e.code||'error')+')','#991b1b','#fee2e2');console.error('SENDWAYO Firebase',e)});
+  timer=setInterval(()=>{if(!ready||applying||!currentUser||!db)return;const n=json(capture());if(n===last||n===lastSaved)return;lastSaved=n;db.ref(path).set(JSON.parse(n)).then(()=>{last=n;status('Firebase: sincronizado en tiempo real','#166534','#dcfce7')}).catch(e=>{lastSaved=last;status('Firebase: no se guardó ('+(e.code||'error')+')','#991b1b','#fee2e2');console.error(e)})},1500)
+ }catch(e){status('Firebase: no se pudo iniciar ('+e.message+')','#991b1b','#fee2e2');console.error(e)}}
+ window.sendwayoFirebaseStart=start;
+ document.addEventListener('DOMContentLoaded',()=>{status('Firebase: esperando acceso…','#334155','#e2e8f0');const f=document.getElementById('login-form');if(f)f.addEventListener('submit',()=>setTimeout(()=>{if(currentUser)start()},350))});
+})();
+</script>
 </body></html>
