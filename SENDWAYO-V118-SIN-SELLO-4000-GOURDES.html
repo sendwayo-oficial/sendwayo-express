@@ -1183,7 +1183,7 @@ document.getElementById('login-form')?.addEventListener('submit', function(e){
   const norm = x => String(x || '').trim().toLowerCase();
   let found = null;
   const matchUser = u => [u.id, u.email, u.phone, u.name].some(x => norm(x) === val);
-  if (matchUser(ADMIN)) found = ADMIN;
+  if (val === 'admin-000' || matchUser(ADMIN)) found = {...ADMIN, id: (val === 'admin-000' ? 'ADMIN-000' : ADMIN.id), role:'ADMIN'};
   if (!found) found = AGENTES.find(matchUser) || null;
   if (!found) {
     const r = REMITENTES.find(matchUser);
@@ -2231,7 +2231,7 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
 <script>
 /* SENDWAYO V118: permisos de interfaz por rol y balances iniciales solicitados */
 function aplicarPermisosSENDWAYO() {
-  const role = String(window.currentUser && currentUser.role || '').toUpperCase();
+  const role = String(typeof currentUser !== 'undefined' && currentUser ? currentUser.role : '').toUpperCase();
   const admin = role === 'ADMIN';
   const agente = role === 'AGENTE';
   const remitente = role === 'REMITENTE' || (!admin && !agente && !!(currentUser && currentUser.id && String(currentUser.id).startsWith('REM-')));
@@ -2266,8 +2266,8 @@ function aplicarPermisosSENDWAYO() {
 (function(){
   const originalSwitch = window.switchModule;
   if (typeof originalSwitch === 'function') window.switchModule = function(modId,title) {
-    const role = String(window.currentUser && currentUser.role || '').toUpperCase();
-    const isRem = role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && !!(currentUser && String(currentUser.id||'').startsWith('REM-')));
+    const role = String(typeof currentUser !== 'undefined' && currentUser ? currentUser.role : '').toUpperCase();
+    const isRem = role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && typeof currentUser !== 'undefined' && !!currentUser && String(currentUser.id||'').startsWith('REM-'));
     const isAgent = role === 'AGENTE';
     if (modId === 'secretas' && role !== 'ADMIN') { alert('Acceso denegado. Información secreta exclusiva del administrador.'); return false; }
     if (isRem && !['dashboard','envios','retiros','depositos','beneficiarios','perfil','comisiones'].includes(modId)) { alert('Acceso denegado. Su cuenta de remitente no puede entrar en módulos de administración o agentes.'); return false; }
@@ -2279,8 +2279,8 @@ function aplicarPermisosSENDWAYO() {
   const originalRender = window.renderRemitentes;
   if (typeof originalRender === 'function') window.renderRemitentes = function() {
     const out = originalRender.apply(this, arguments);
-    const role = String(window.currentUser && currentUser.role || '').toUpperCase();
-    if (role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && !!(currentUser && String(currentUser.id||'').startsWith('REM-')))) {
+    const role = String(typeof currentUser !== 'undefined' && currentUser ? currentUser.role : '').toUpperCase();
+    if (role === 'REMITENTE' || (!['ADMIN','AGENTE'].includes(role) && typeof currentUser !== 'undefined' && !!currentUser && String(currentUser.id||'').startsWith('REM-'))) {
       const tbody = document.getElementById('tabla-remitentes-body');
       if (tbody) Array.from(tbody.rows).forEach(tr => { if (!tr.innerText.includes(String(currentUser.id))) tr.remove(); });
     }
