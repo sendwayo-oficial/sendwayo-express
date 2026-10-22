@@ -865,87 +865,110 @@
 
 <!-- MODAL ENVIO COMPACTO -->
 <div id="modal-envio-exclusivo" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2">
-  <div class="bg-white rounded-xl compact-modal w-full p-4 shadow-2xl relative max-h-[95vh] overflow-y-auto">
+  <div class="bg-white rounded-xl compact-modal w-full p-4 shadow-2xl relative max-h-[95vh] overflow-y-auto" style="max-width:min(460px,calc(100vw - 1rem)) !important;">
     <button onclick="closeEnvioExclusivoModal()" class="absolute top-2 right-2 text-gray-400 font-bold">✕</button>
-    <h3 class="font-bold text-sm mb-3 border-b pb-2">💸 Nuevo Envío</h3>
+    <h3 class="font-bold text-sm mb-3 border-b pb-2">🛠️ Agregar Envío - Compacto</h3>
     <div class="space-y-2 text-xs">
-      <div><label class="font-bold uppercase text-[11px]">Ruta</label>
+      <div>
+        <label class="font-bold uppercase text-[11px]">RUTA</label>
         <select id="ex-envio-ruta" class="w-full border rounded p-2 font-bold" onchange="onRutaEnvioChange()"></select>
       </div>
-      <div><label class="font-bold uppercase text-[11px]">Remitente (origen del dinero)</label>
+      <div>
+        <label class="font-bold uppercase text-[11px]">REMITENTE (ADMIN PUEDE ELEGIR A QUIEN DEBITAR)</label>
         <select id="ex-envio-remitente" class="w-full border rounded p-2 font-bold"></select>
       </div>
-      <div class="border rounded p-2 bg-blue-50">
-        <label class="font-bold uppercase text-[11px]">Beneficiario - seleccionar o escribir manual (una sola vez)</label>
+      <div>
+        <label id="label-envio-monto" class="font-bold uppercase text-[11px]">MONTO</label>
+        <input type="number" id="ex-envio-monto" class="w-full border rounded p-3 font-bold text-base" placeholder="0.00" oninput="calcularDetalleEnvio()">
+        <div id="envio-tarifa-hint" class="text-[10px] text-blue-800 font-bold mt-1">Tarifa Local HT→HT: 25 HTG (Ej: 2000=25 HTG)</div>
+      </div>
+      <div class="border rounded-lg p-2 bg-blue-50">
+        <label class="block font-bold uppercase text-[10px] text-blue-900 mb-1">BENEFICIARIO - SELECCIÓN + ESCRITURA MANUAL (UNA SOLA VEZ)</label>
         <select id="ex-envio-beneficiario" class="w-full border rounded p-2 font-bold mb-1"></select>
-        <input id="ex-envio-beneficiario-manual" class="w-full border rounded p-2 font-bold" placeholder="Nombre y celular: Ej: VILBRUN +509... (opcional)">
+        <input id="ex-envio-beneficiario-nombre-manual" class="w-full border rounded p-2 font-bold mb-1" placeholder="Nombre manual (opcional) - una sola vez" autocomplete="off">
+        <input id="ex-envio-beneficiario-telefono-manual" class="w-full border rounded p-2 font-bold mb-1" placeholder="Tel manual (opcional)" autocomplete="off">
+        <button id="plus-ex-envio-beneficiario-nombre-manual" type="button" onclick="agregarBeneficiarioDesdeModal('envio')" class="bg-green-600 text-white font-bold px-3 py-1.5 rounded">+ Agregar Beneficiario</button>
       </div>
-      <div><label id="label-envio-monto" class="font-bold uppercase text-[11px]">Monto</label>
-        <input type="number" id="ex-envio-monto" class="w-full border rounded p-2 font-bold text-sm" placeholder="Ej: 2000" oninput="calcularDetalleEnvio()">
-      </div>
-      <div class="bg-slate-800 text-white p-2 rounded text-[11px] space-y-1">
-        <div class="flex justify-between"><span id="calc-label-monto">Monto</span><span id="calc-monto-neto">0</span></div>
-        <div class="flex justify-between"><span id="calc-label-comision">Comisión</span><span id="calc-comision">0</span></div>
-        <div class="flex justify-between font-bold text-amber-300 border-t border-slate-600 pt-1"><span>A Recibir</span><span id="calc-monto-htg">0</span></div>
-        <div class="flex justify-between text-[10px] text-gray-300"><span>Tarifa</span><span id="calc-tasa"></span></div>
+      <div class="bg-slate-700 text-white p-3 rounded-xl text-xs space-y-1">
+        <div class="flex justify-between"><span id="calc-label-monto">MONTO NETO</span><span id="calc-monto-neto" class="font-bold">0.00</span></div>
+        <div class="flex justify-between"><span id="calc-label-comision">COMISION</span><span id="calc-comision" class="font-bold">0.00</span></div>
+        <div class="flex justify-between font-bold text-amber-300 border-t border-slate-500 pt-1"><span>A RECIBIR</span><span id="calc-monto-htg">0.00</span></div>
+        <div class="flex justify-between text-[10px] text-gray-200"><span>TASA/TARIFA</span><span id="calc-tasa"></span></div>
       </div>
       <div class="flex gap-2 pt-1">
-        <button onclick="closeEnvioExclusivoModal()" class="w-1/2 bg-red-600 text-white font-bold py-2 rounded">Cancelar</button>
-        <button onclick="guardarEnvioExclusivo()" class="w-1/2 bg-blue-900 text-white font-bold py-2 rounded">Guardar Pendiente</button>
+        <button onclick="closeEnvioExclusivoModal()" class="w-1/2 bg-red-600 text-white font-bold py-2.5 rounded-lg">✕ CANCELAR</button>
+        <button onclick="guardarEnvioExclusivo()" class="w-1/2 bg-blue-900 text-white font-bold py-2.5 rounded-lg">✓ GUARDAR (Pendiente)</button>
       </div>
     </div>
   </div>
 </div>
 
 <div id="modal-retiro-exclusivo" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2">
-  <div class="bg-white rounded-xl compact-modal w-full p-4 shadow-2xl relative max-h-[95vh] overflow-y-auto">
+  <div class="bg-white rounded-xl compact-modal w-full p-4 shadow-2xl relative max-h-[95vh] overflow-y-auto" style="max-width:min(460px,calc(100vw - 1rem)) !important;">
     <button onclick="closeRetiroExclusivoModal()" class="absolute top-2 right-2 text-gray-400 font-bold">✕</button>
-    <h3 class="font-bold text-sm mb-3 border-b pb-2">🏧 Nuevo Retiro</h3>
+    <h3 class="font-bold text-sm mb-3 border-b pb-2">🏧 Agregar Retiro - Compacto</h3>
     <div class="space-y-2 text-xs">
-      <div><label class="font-bold uppercase text-[11px]">Método / Ruta</label>
+      <div>
+        <label class="font-bold uppercase text-[11px]">MÉTODO / RUTA</label>
         <select id="ex-retiro-metodo" class="w-full border rounded p-2 font-bold" onchange="onRutaRetiroChange()"></select>
       </div>
-      <div><label class="font-bold uppercase text-[11px]">Remitente / Solicitante</label>
+      <div>
+        <label class="font-bold uppercase text-[11px]">REMITENTE / SOLICITANTE</label>
         <select id="ex-retiro-remitente" class="w-full border rounded p-2 font-bold"></select>
       </div>
-      <div class="border rounded p-2 bg-indigo-50">
-        <label class="font-bold uppercase text-[11px]">Beneficiario - seleccionar o escribir manual (una sola vez)</label>
-        <select id="ex-retiro-beneficiario" class="w-full border rounded p-2 font-bold mb-1"></select>
-        <input id="ex-retiro-beneficiario-manual" class="w-full border rounded p-2 font-bold" placeholder="Nombre y celular manual (opcional)">
+      <div>
+        <label id="label-retiro-monto" class="font-bold uppercase text-[11px]">MONTO A RETIRAR</label>
+        <input type="number" id="ex-retiro-monto" class="w-full border rounded p-3 font-bold text-base" placeholder="0.00" oninput="calcularDetalleRetiro()">
+        <div id="retiro-tarifa-hint" class="text-[10px] text-blue-800 font-bold mt-1">Tarifa local HT→HT según el método seleccionado.</div>
+        <div class="bg-slate-100 p-2 rounded mt-1 text-[11px] flex justify-between"><span>COMISIÓN / TARIFA</span><span id="calc-retiro-fee" class="font-bold">0.00</span></div>
       </div>
-      <div><label id="label-retiro-monto" class="font-bold uppercase text-[11px]">Monto a retirar</label>
-        <input type="number" id="ex-retiro-monto" class="w-full border rounded p-2 font-bold text-sm" placeholder="0.00" oninput="calcularDetalleRetiro()">
-        <div class="bg-slate-100 p-2 rounded mt-1 text-[11px] flex justify-between"><span>Fee:</span><span id="calc-retiro-fee" class="font-bold">0</span></div>
+      <div class="border rounded-lg p-2 bg-indigo-50">
+        <label class="block font-bold uppercase text-[10px] text-indigo-900 mb-1">BENEFICIARIO - SELECCIÓN + ESCRITURA MANUAL (UNA SOLA VEZ)</label>
+        <select id="ex-retiro-beneficiario" class="w-full border rounded p-2 font-bold mb-1"></select>
+        <input id="ex-retiro-beneficiario-nombre-manual" class="w-full border rounded p-2 font-bold mb-1" placeholder="Nombre manual (opcional) - una sola vez" autocomplete="off">
+        <input id="ex-retiro-beneficiario-telefono-manual" class="w-full border rounded p-2 font-bold mb-1" placeholder="Tel manual (opcional)" autocomplete="off">
+        <button id="plus-ex-retiro-beneficiario-nombre-manual" type="button" onclick="agregarBeneficiarioDesdeModal('retiro')" class="bg-green-600 text-white font-bold px-3 py-1.5 rounded">+ Agregar Beneficiario</button>
       </div>
       <div class="flex gap-2 pt-1">
-        <button onclick="closeRetiroExclusivoModal()" class="w-1/2 bg-red-600 text-white font-bold py-2 rounded">Cancelar</button>
-        <button onclick="guardarRetiroExclusivo()" class="w-1/2 bg-indigo-900 text-white font-bold py-2 rounded">Guardar Pendiente</button>
+        <button onclick="closeRetiroExclusivoModal()" class="w-1/2 bg-red-600 text-white font-bold py-2.5 rounded-lg">✕ CANCELAR</button>
+        <button onclick="guardarRetiroExclusivo()" class="w-1/2 bg-indigo-900 text-white font-bold py-2.5 rounded-lg">✓ GUARDAR (Pendiente)</button>
       </div>
     </div>
   </div>
 </div>
 
 <div id="modal-deposito-exclusivo" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2">
-  <div class="bg-white rounded-xl compact-modal w-full p-4 shadow-2xl relative">
+  <div class="bg-white rounded-xl compact-modal w-full p-4 shadow-2xl relative max-h-[95vh] overflow-y-auto" style="max-width:min(540px,calc(100vw - 1rem)) !important;">
     <button onclick="closeDepositoExclusivoModal()" class="absolute top-2 right-2 text-gray-400 font-bold">✕</button>
-    <h3 class="font-bold text-sm mb-3 border-b pb-2">🏛️ Nuevo Depósito (solo ADMIN aprueba)</h3>
-    <div class="space-y-2 text-xs">
-      <div><label class="font-bold uppercase">Cuenta destino</label>
-        <select id="ex-deposito-cuenta" class="w-full border rounded p-2 font-bold">
-          <option>Banco Popular - 831434592</option>
-          <option>Banreservas - 9601783620</option>
-          <option>BHD - 36818900013</option>
+    <h3 class="font-bold text-base mb-3 border-b pb-2 uppercase">🏛️ NUEVO DEPÓSITO</h3>
+    <div class="space-y-3 text-sm">
+      <div>
+        <label class="block font-bold mb-1">Cuentas</label>
+        <select id="ex-deposito-cuenta" class="w-full border rounded-lg p-3 font-bold">
+          <option value="Banco Popular - HERACE FLEURANVIL (831434592)">Banco Popular - HERACE FLEURANVIL (831434592)</option>
+          <option value="Banreservas - 9601783620">Banreservas - 9601783620</option>
+          <option value="BHD - 36818900013">BHD - 36818900013</option>
         </select>
       </div>
-      <div><label class="font-bold uppercase">Remitente a acreditar</label>
-        <select id="ex-deposito-remitente" class="w-full border rounded p-2 font-bold"></select>
+      <div>
+        <label class="block font-bold mb-1">Remitente Depositante</label>
+        <select id="ex-deposito-remitente" class="w-full border rounded-lg p-3 font-bold"></select>
       </div>
-      <div><label class="font-bold uppercase">Monto RD$</label>
-        <input type="number" id="ex-deposito-monto" class="w-full border rounded p-2 font-bold" placeholder="0.00">
+      <div>
+        <label class="block font-bold mb-1">Monto en Pesos (RD$)</label>
+        <input type="number" id="ex-deposito-monto" class="w-full border rounded-lg p-3 font-bold" placeholder="0.00" min="0.01" step="0.01">
       </div>
-      <div class="flex gap-2 pt-2">
-        <button onclick="closeDepositoExclusivoModal()" class="w-1/2 bg-red-600 text-white font-bold py-2 rounded">Cancelar</button>
-        <button onclick="guardarDepositoExclusivo()" class="w-1/2 bg-green-700 text-white font-bold py-2 rounded">Guardar (Pendiente)</button>
+      <div>
+        <label class="block font-bold mb-1">Notas</label>
+        <textarea id="ex-deposito-notas" class="w-full border rounded-lg p-3 min-h-[64px]" placeholder="Nota de referencia..."></textarea>
+      </div>
+      <div>
+        <label class="block font-bold mb-1">Cargar factura del depósito</label>
+        <input type="file" id="ex-deposito-comprobante" accept="image/*,.pdf" class="w-full border rounded-lg p-3 bg-gray-50">
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeDepositoExclusivoModal()" class="w-1/2 bg-red-600 text-white font-bold py-2.5 rounded-lg">✕ CANCELAR</button>
+        <button onclick="guardarDepositoExclusivo()" class="w-1/2 bg-blue-900 text-white font-bold py-2.5 rounded-lg">✓ GUARDAR</button>
       </div>
     </div>
   </div>
@@ -1215,37 +1238,72 @@ function switchModule(modId,title){
   updateFinancialHeader();
   if(window.innerWidth<=1024){ const sb=document.getElementById('sidebar'); const ov=document.getElementById('sidebar-overlay'); if(sb) sb.classList.remove('open'); if(ov) ov.classList.remove('show'); }
 }
-function cargarSelectsGlobales(){
-  const rutas=['RD ➔ HT Natcash','RD ➔ HT Moncash','HT ➔ HT Natcash','HT ➔ HT MonCash','HT ➔ RD NatCash','HT ➔ RD MonCash','RD ➔ RD','RD ➔ USA','USA ➔ RD','USA ➔ HT','HT ➔ USA','Italia ➔ RD'];
-  ['ex-envio-ruta','ex-retiro-metodo'].forEach(id=>{
-    const sel=document.getElementById(id); if(!sel) return;
-    if(id==='ex-envio-ruta'){ sel.innerHTML=rutas.map(r=>`<option value="${r}">${r}</option>`).join(''); }
-    else { sel.innerHTML=['Efectivo en Oficina','Transferencia Bancaria','MonCash / NatCash',...rutas].map(r=>`<option>${r}</option>`).join(''); }
-  });
-  ['ex-envio-remitente','ex-retiro-remitente','ex-deposito-remitente','paq-remitente'].forEach(id=>{
-    const sel=document.getElementById(id); if(sel) sel.innerHTML=REMITENTES.map(r=>`<option value="${r.id}">${r.name} (${r.id}) - ${formatMoney(r.balances.DOP,'DOP')} / ${formatMoney(r.balances.HTG,'HTG')}</option>`).join('');
-  });
+function renderBeneficiariosSelects(){
   ['ex-envio-beneficiario','ex-retiro-beneficiario'].forEach(id=>{
-    const sel=document.getElementById(id); if(sel) sel.innerHTML=BENEFICIARIOS.map(b=>`<option value="${b.id}">${b.name} - ${b.phone}</option>`).join('');
+    const sel=document.getElementById(id); if(!sel) return;
+    const previous=sel.value;
+    sel.innerHTML=BENEFICIARIOS.map(b=>'<option value="'+escapeHtml(b.id)+'">'+escapeHtml(b.name)+' - '+escapeHtml(b.phone)+'</option>').join('');
+    if(BENEFICIARIOS.some(b=>String(b.id)===String(previous))) sel.value=previous;
   });
 }
+function cargarSelectsGlobales(){
+  const rutas=['RD ➔ HT Natcash','RD ➔ HT Moncash','HT ➔ HT Natcash','HT ➔ HT MonCash','HT ➔ RD NatCash','HT ➔ RD MonCash','RD ➔ RD','RD ➔ USA','USA ➔ RD','USA ➔ HT','HT ➔ USA','Italia ➔ RD'];
+  function opcionRuta(r){
+    const label=rutaEsHTHT(r)?r+' - Tarifa Local':r;
+    return '<option value="'+escapeHtml(r)+'">'+escapeHtml(label)+'</option>';
+  }
+  ['ex-envio-ruta','ex-retiro-metodo'].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    if(id==='ex-envio-ruta'){ sel.innerHTML=rutas.map(opcionRuta).join(''); }
+    else { sel.innerHTML=['Efectivo en Oficina','Transferencia Bancaria','MonCash / NatCash',...rutas].map(opcionRuta).join(''); }
+  });
+  ['ex-envio-remitente','ex-retiro-remitente','ex-deposito-remitente','paq-remitente'].forEach(id=>{
+    const sel=document.getElementById(id); if(sel) sel.innerHTML=REMITENTES.map(r=>'<option value="'+escapeHtml(r.id)+'">'+escapeHtml(r.name)+' ('+escapeHtml(r.id)+') - '+formatMoney(r.balances.DOP,'DOP')+' / '+formatMoney(r.balances.HTG,'HTG')+'</option>').join('');
+  });
+  renderBeneficiariosSelects();
+}
+
+
 function calcularDetalleEnvio(){
   const monto=parseFloat(document.getElementById('ex-envio-monto').value)||0;
   const ruta=document.getElementById('ex-envio-ruta').value;
   const esHTHT=rutaEsHTHT(ruta);
+  const ayuda=document.getElementById('envio-tarifa-hint');
+  if(ayuda) ayuda.innerText=esHTHT?'Tarifa Local HT→HT: 25 HTG (Ej: 2000=25 HTG)':'Comisión general: 8%';
+  const label=document.getElementById('label-envio-monto');
+  if(label) label.innerText=esHTHT?'MONTO EN HTG':'MONTO EN RD$';
   let fee=0;
-  if(esHTHT){ fee=getFeeTransfertHT(monto); document.getElementById('calc-monto-neto').innerText=formatMoney(monto,'HTG'); document.getElementById('calc-comision').innerText=fee+' HTG (tarifa oficial - ej 2000=25)'; document.getElementById('calc-monto-htg').innerText=formatMoney(monto-fee,'HTG')+' a recibir'; document.getElementById('calc-tasa').innerText='Tarifa HT→HT oficial'; }
-  else { fee=monto*0.08; document.getElementById('calc-monto-neto').innerText=formatMoney(monto-fee,'DOP'); document.getElementById('calc-comision').innerText=formatMoney(fee,'DOP')+' (8%)'; document.getElementById('calc-monto-htg').innerText=formatMoney((monto-fee)*TASA_RD_HT,'HTG'); document.getElementById('calc-tasa').innerText='Tasa 2.10'; }
+  if(esHTHT){
+    fee=getFeeTransfertHT(monto);
+    document.getElementById('calc-monto-neto').innerText=formatMoney(monto,'HTG');
+    document.getElementById('calc-comision').innerText=formatMoney(fee,'HTG');
+    document.getElementById('calc-monto-htg').innerText=formatMoney(monto-fee,'HTG');
+    document.getElementById('calc-tasa').innerText='25 HTG fee (Tarifa Local)';
+  }else{
+    fee=monto*0.08;
+    document.getElementById('calc-monto-neto').innerText=formatMoney(monto-fee,'DOP');
+    document.getElementById('calc-comision').innerText=formatMoney(fee,'DOP');
+    document.getElementById('calc-monto-htg').innerText=formatMoney((monto-fee)*TASA_RD_HT,'HTG');
+    document.getElementById('calc-tasa').innerText='Tasa 2.10';
+  }
 }
+
+
 function calcularDetalleRetiro(){
   const monto=parseFloat(document.getElementById('ex-retiro-monto').value)||0;
   const ruta=document.getElementById('ex-retiro-metodo').value;
   const esHTHT=rutaEsHTHT(ruta);
-  let fee=esHTHT?getFeeRetraitHT(monto):monto*0.08;
-  document.getElementById('calc-retiro-fee').innerText= esHTHT? fee+' HTG tarifa retrait (ej 2000=81)' : formatMoney(fee,'DOP');
+  const ayuda=document.getElementById('retiro-tarifa-hint');
+  if(ayuda) ayuda.innerText=esHTHT?'Tarifa local HT→HT; se aplica la tabla de retiro.':'Comisión general: 8%';
+  const label=document.getElementById('label-retiro-monto');
+  if(label) label.innerText=esHTHT?'MONTO A RETIRAR (HTG)':'MONTO A RETIRAR (RD$)';
+  const fee=esHTHT?getFeeRetraitHT(monto):monto*0.08;
+  document.getElementById('calc-retiro-fee').innerText=esHTHT?formatMoney(fee,'HTG'):formatMoney(fee,'DOP');
 }
-function onRutaEnvioChange(){ calcularDetalleEnvio(); const r=document.getElementById('ex-envio-ruta').value; document.getElementById('label-envio-monto').innerText= rutaEsHTHT(r)? 'MONTO EN HTG (tarifa tabla 0-115, ej 2000=25)': 'MONTO EN RD$ (8%)'; }
-function onRutaRetiroChange(){ calcularDetalleRetiro(); const r=document.getElementById('ex-retiro-metodo').value; document.getElementById('label-retiro-monto').innerText= rutaEsHTHT(r)? 'MONTO EN HTG - tarifa retrait 6-1440':'MONTO EN RD$ - 8%'; }
+
+
+function onRutaEnvioChange(){ calcularDetalleEnvio(); }
+function onRutaRetiroChange(){ calcularDetalleRetiro(); }
 function openEnvioExclusivoModal(){ cargarSelectsGlobales(); document.getElementById('modal-envio-exclusivo').classList.remove('hidden'); calcularDetalleEnvio(); }
 function closeEnvioExclusivoModal(){ document.getElementById('modal-envio-exclusivo').classList.add('hidden'); }
 function openRetiroExclusivoModal(){ cargarSelectsGlobales(); document.getElementById('modal-retiro-exclusivo').classList.remove('hidden'); calcularDetalleRetiro(); }
@@ -1304,48 +1362,87 @@ function validarYDescontar(rem, monto, moneda){
     return true;
   }
 }
+function resolverBeneficiarioDeModal(tipo){
+  const pref=tipo==='retiro'?'ex-retiro':'ex-envio';
+  const nombreEl=document.getElementById(pref+'-beneficiario-nombre-manual');
+  const telefonoEl=document.getElementById(pref+'-beneficiario-telefono-manual');
+  const nombre=(nombreEl?.value||'').trim();
+  const telefono=(telefonoEl?.value||nombreEl?.dataset.phone||'').trim();
+  if(nombre||telefono){
+    if(!nombre||!telefono){ alert('Complete el nombre y el teléfono del beneficiario.'); return null; }
+    const digits=telefono.replace(/\D/g,'');
+    let b=BENEFICIARIOS.find(x=>digits && String(x.phone||'').replace(/\D/g,'')===digits);
+    if(!b){
+      b={id:'BEN-'+Date.now(),name:nombre,phone:telefono,dir:'Manual',estado:'Activo'};
+      BENEFICIARIOS.unshift(b);
+      renderBeneficiarios();
+      renderBeneficiariosSelects();
+    }
+    return {id:b.id,name:b.name,phone:b.phone};
+  }
+  const sel=document.getElementById(pref+'-beneficiario');
+  const b=BENEFICIARIOS.find(x=>String(x.id)===String(sel?.value||''));
+  if(!b){ alert('Seleccione un beneficiario o escriba su nombre y teléfono.'); return null; }
+  return {id:b.id,name:b.name,phone:b.phone};
+}
+function agregarBeneficiarioDesdeModal(tipo){
+  const pref=tipo==='retiro'?'ex-retiro':'ex-envio';
+  const nombreEl=document.getElementById(pref+'-beneficiario-nombre-manual');
+  const telefonoEl=document.getElementById(pref+'-beneficiario-telefono-manual');
+  const nombre=(nombreEl?.value||'').trim();
+  const telefono=(telefonoEl?.value||nombreEl?.dataset.phone||'').trim();
+  if(!nombre||!telefono){ alert('Escriba el nombre y el teléfono del beneficiario.'); return; }
+  const b=resolverBeneficiarioDeModal(tipo);
+  if(!b) return;
+  const sel=document.getElementById(pref+'-beneficiario');
+  if(sel) sel.value=b.id;
+  if(nombreEl){nombreEl.value='';delete nombreEl.dataset.phone;delete nombreEl.dataset.name;}
+  if(telefonoEl) telefonoEl.value='';
+  alert('Beneficiario agregado y seleccionado.');
+}
 function guardarEnvioExclusivo(){
   const ruta=document.getElementById('ex-envio-ruta').value;
   const monto=parseFloat(document.getElementById('ex-envio-monto').value);
   const remId=document.getElementById('ex-envio-remitente').value;
-  const benId=document.getElementById('ex-envio-beneficiario').value;
-  const manual=document.getElementById('ex-envio-beneficiario-manual').value.trim();
   if(!(monto>0)){ alert('Monto invalido'); return; }
-  let benNombre, benTel;
-  if(manual){ benNombre=manual; let m=manual.match(/\+?[0-9\- ]{7,}/); benTel=m?m[0]:'+509 ----'; } else { let b=BENEFICIARIOS.find(x=>x.id===benId)||BENEFICIARIOS[0]; benNombre=b.name; benTel=b.phone; }
-  if(manual){ BENEFICIARIOS.unshift({id:'BEN-'+Date.now(), name:benNombre, phone:benTel, dir:'Manual', estado:'Activo'}); renderBeneficiarios(); }
+  const b=resolverBeneficiarioDeModal('envio');
+  if(!b) return;
   const esHTHT=rutaEsHTHT(ruta);
   const moneda=esHTHT?'HTG':'DOP';
   const fee=esHTHT?getFeeTransfertHT(monto):monto*0.08;
   const rem=REMITENTES.find(r=>r.id===remId);
   if(!validarYDescontar(rem,monto,moneda)) return;
-  const t=crearTransaccionBase('Envío',ruta,monto,moneda,remId,benNombre,benTel,fee);
+  const t=crearTransaccionBase('Envío',ruta,monto,moneda,remId,b.name,b.phone,fee);
   TRANSACCIONES.unshift(t); renderTransacciones(); renderRemitentes(); updateFinancialHeader(); closeEnvioExclusivoModal(); alert('Envío creado PENDIENTE. Solo otro agente o admin puede aprobar. Tarifa HT→HT: 2000=25 aplicado.');
 }
+
+
 function guardarRetiroExclusivo(){
   const metodo=document.getElementById('ex-retiro-metodo').value;
   const monto=parseFloat(document.getElementById('ex-retiro-monto').value);
   const remId=document.getElementById('ex-retiro-remitente').value;
-  const benId=document.getElementById('ex-retiro-beneficiario').value;
-  const manual=document.getElementById('ex-retiro-beneficiario-manual').value.trim();
   if(!(monto>0)){ alert('Monto invalido'); return; }
-  let benNombre, benTel;
-  if(manual){ benNombre=manual; let m=manual.match(/\+?[0-9\- ]{7,}/); benTel=m?m[0]:'+509 ----'; } else { let b=BENEFICIARIOS.find(x=>x.id===benId)||BENEFICIARIOS[0]; benNombre=b.name; benTel=b.phone; }
-  if(manual){ BENEFICIARIOS.unshift({id:'BEN-'+Date.now(), name:benNombre, phone:benTel, dir:'Manual', estado:'Activo'}); renderBeneficiarios(); }
+  const b=resolverBeneficiarioDeModal('retiro');
+  if(!b) return;
   const esHTHT=rutaEsHTHT(metodo);
   const moneda=esHTHT?'HTG':'DOP';
   const fee=esHTHT?getFeeRetraitHT(monto):monto*0.08;
   const rem=REMITENTES.find(r=>r.id===remId);
   if(!validarYDescontar(rem,monto,moneda)) return;
-  const t=crearTransaccionBase('Retiro',metodo,monto,moneda,remId,benNombre,benTel,fee);
+  const t=crearTransaccionBase('Retiro',metodo,monto,moneda,remId,b.name,b.phone,fee);
   TRANSACCIONES.unshift(t); renderTransacciones(); renderRemitentes(); updateFinancialHeader(); closeRetiroExclusivoModal(); alert('Retiro creado PENDIENTE.');
 }
+
+
 function guardarDepositoExclusivo(){
   const cuenta=document.getElementById('ex-deposito-cuenta').value;
   const monto=parseFloat(document.getElementById('ex-deposito-monto').value);
   const remId=document.getElementById('ex-deposito-remitente').value;
   if(!(monto>0)){ alert('Monto invalido'); return; }
   const t=crearTransaccionBase('Depósito',cuenta,monto,'DOP',remId,'—','—',0);
+  t.notas=(document.getElementById('ex-deposito-notas')?.value||'').trim();
+  const archivo=document.getElementById('ex-deposito-comprobante')?.files?.[0];
+  t.comprobanteArchivoNombre=archivo?archivo.name:'';
   TRANSACCIONES.unshift(t); renderTransacciones(); closeDepositoExclusivoModal(); alert('Depósito PENDIENTE. Solo ADMIN puede aprobarlo.');
 }
 function guardarOperacionRecarga(){
@@ -1605,7 +1702,7 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
       let input=document.getElementById(inputId);
       if(!input) return;
       input.value=''; // vacío
-      input.placeholder='Escriba nombre o número - sugerencia aparecerá';
+      input.placeholder=inputId.includes('nombre-manual')?'Nombre manual (opcional) - una sola vez':'Escriba nombre o número - sugerencia aparecerá';
       input.autocomplete='off';
       // Remove existing dropdown
       let existing=input.parentNode.querySelector('.autocomplete-dropdown');
@@ -1616,6 +1713,7 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
       input.parentNode.style.position='relative';
       input.parentNode.appendChild(dropdown);
       input.addEventListener('input', ()=>{
+        delete input.dataset.phone; delete input.dataset.name;
         let val=input.value.toLowerCase().trim();
         if(val.length<1){ dropdown.style.display='none'; return; }
         let list = (typeof BENEFICIARIOS!=='undefined'? BENEFICIARIOS : []);
@@ -1628,7 +1726,7 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
             // Solo número y nombre entre paréntesis, sin duplicar
             let name=div.dataset.name;
             let phone=div.dataset.phone;
-            input.value=`${name} (${phone})`;
+            input.value=name;
             input.dataset.phone=phone;
             input.dataset.name=name;
             dropdown.style.display='none';
@@ -1639,8 +1737,6 @@ function openDepositoExclusivoModal(){ cargarSelectsGlobales(); document.getElem
     }
     attach('ex-envio-beneficiario-nombre-manual');
     attach('ex-retiro-beneficiario-nombre-manual');
-    attach('ex-envio-beneficiario-manual');
-    attach('ex-retiro-beneficiario-manual');
     attach('transf-beneficiario');
     attach('factura-beneficiario');
     attach('paq-beneficiario-nombre');
