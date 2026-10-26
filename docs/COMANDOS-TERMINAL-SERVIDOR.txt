@@ -1,0 +1,8 @@
+# SENDWAYO EXPRESS - comprobación local del servidor
+# Ejecutar desde la raíz del repositorio en Cursor:
+npm --prefix functions install
+npm --prefix functions run check
+# Para probar Functions/Realtime Database Emulator (requiere Firebase CLI y Java):
+firebase emulators:exec --only database,auth,functions "npm --prefix functions run check"
+# NO usar firebase deploy hasta revisar los secretos de GitHub Actions y terminar
+# pruebas de seguridad/flujo con el emulador.
