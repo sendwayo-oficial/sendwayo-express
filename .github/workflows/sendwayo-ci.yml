@@ -14,6 +14,8 @@ jobs:
           node-version: 20
       - name: Validate Firebase rules JSON
         run: node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('database.rules.json OK')"
+      - name: Validate deposit approval permissions
+        run: node scripts/check-deposit-approval-rules.mjs
       - name: Validate inline JavaScript
         run: |
           node <<'NODE'
