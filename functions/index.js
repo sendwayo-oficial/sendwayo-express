@@ -500,6 +500,13 @@ async function reviewOperation(request) {
   if (!action) throw new HttpsError('invalid-argument', 'Selecciona Aprobado, Rechazado o No coincide.');
   const found = await getOperation(id);
   const { collection } = found;
+  const initialStatus = P.normalizeText(found.record.status || found.record.estado || 'Pendiente');
+  if (!['pendiente', 'reserving', 'reservando'].includes(initialStatus)) {
+    if (initialStatus === P.normalizeText(action)) {
+      return { id, status: action, alreadyProcessed: true };
+    }
+    throw new HttpsError('failed-precondition', 'Esta operación ya fue procesada. Actualiza la lista antes de intentarlo otra vez.');
+  }
   if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(collection)) {
     throw new HttpsError('failed-precondition', 'Este tipo de registro requiere un procedimiento administrativo específico y no se puede liquidar desde la cola general.');
   }
@@ -535,10 +542,12 @@ async function reviewOperation(request) {
     };
     return lockedRecord;
   });
-  if (!lockTx || !lockTx.snapshot || !lockTx.snapshot.exists()) throw new HttpsError('not-found', 'La operación desapareció antes de revisarla.');
+  if (!lockTx) throw new HttpsError('failed-precondition', 'No se pudo bloquear la operación para su revisión.');
+  if (!lockTx.committed && alreadyFinal) return { id, status: action, alreadyProcessed: true };
+  if (!lockTx.snapshot || !lockTx.snapshot.exists()) throw new HttpsError('not-found', 'La operación desapareció antes de revisarla.');
   if (!lockTx.committed) {
     const fresh = lockTx.snapshot.val() || {};
-    if (alreadyFinal || P.normalizeText(fresh.status || fresh.estado) === P.normalizeText(action)) return { id, status: action, alreadyProcessed: true };
+    if (P.normalizeText(fresh.status || fresh.estado) === P.normalizeText(action)) return { id, status: action, alreadyProcessed: true };
     throw new HttpsError('failed-precondition', 'La operación ya se está procesando o ya fue revisada.');
   }
   const record = lockTx.snapshot.val() || lockedRecord || found.record;
