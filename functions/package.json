@@ -9,7 +9,7 @@
   "scripts": {
     "test": "node --test",
     "check": "node --check index.js && node --test",
-    "test:emulator": "node test/run-emulator-tests.cjs"
+    "test:emulator": "node scripts/run-emulator-tests.cjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
