@@ -3246,39 +3246,35 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
  const actionRe=/^(excel|pdf|csv|\+?\s*agregar nuevo(?:\s|$).*)$/i;
  const isAction=b=>actionRe.test(String(b?.textContent||'').replace(/\s+/g,' ').trim());
  const isSearch=i=>i&&((i.type||'').toLowerCase()==='search'||/buscar|buscador|search/i.test((i.placeholder||'')+' '+(i.getAttribute('aria-label')||'')));
- function directSearchField(input, body){
-  let node=input;
-  while(node&&node.parentElement&&node.parentElement!==body)node=node.parentElement;
-  return node;
+ function directChildContaining(node, body){
+  while(node&&node.parentElement!==body)node=node.parentElement;
+  return node&&node.parentElement===body?node:null;
  }
- function directActionGroup(buttons, body){
+ function smallestActionGroup(buttons, body){
   let node=buttons[0]?.parentElement;
-  while(node&&node.parentElement&&node.parentElement!==body){
-   if(buttons.every(b=>node.contains(b)))node=node;else break;
-   const parent=node.parentElement;
-   if(parent===body)break;
-   node=parent;
+  while(node&&node!==body){
+   if(buttons.every(b=>node.contains(b)))return node;
+   node=node.parentElement;
   }
-  return node;
+  return null;
  }
  function configure(table){
   const tableHost=table.closest('.overflow-x-auto')||table;
   const body=tableHost.parentElement;
   if(!body||body===document.body)return;
   const buttons=[...body.querySelectorAll('button')].filter(isAction);
-  const labels=buttons.map(b=>norm(b.textContent));
   if(!['agregar','excel','pdf','csv'].every(key=>buttons.some(b=>{
     const t=norm(b.textContent);return key==='agregar'?t.includes('agregar nuevo'):t===key;
   })))return;
   const input=[...body.querySelectorAll('input')].find(isSearch);
   if(!input)return;
-  const actionGroup=directActionGroup(buttons,body);
-  const searchField=directSearchField(input,body);
-  if(!actionGroup||!searchField||actionGroup===searchField)return;
-  const headerRow=actionGroup.parentElement;
-  const searchRow=searchField.parentElement;
-  // Solo aplicar si son filas hermanas del módulo que contiene esta tabla.
-  if(!headerRow||!searchRow||headerRow.parentElement!==body||searchRow.parentElement!==body||tableHost.parentElement!==body)return;
+  const actionGroup=smallestActionGroup(buttons,body);
+  const headerRow=actionGroup?.parentElement;
+  const searchRow=directChildContaining(input,body);
+  const searchField=input.closest('.relative.flex-1')||input.parentElement;
+  if(!actionGroup||!headerRow||!searchRow||!searchField||actionGroup===searchField)return;
+  // No se mueven nodos React: únicamente se aplica un layout de cuadrícula a filas hermanas.
+  if(headerRow.parentElement!==body||searchRow.parentElement!==body||tableHost.parentElement!==body)return;
   body.classList.add('sw-layout-grid');
   headerRow.classList.add('sw-layout-header-row');
   searchRow.classList.add('sw-layout-search-row');
@@ -3291,7 +3287,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
  function apply(){
   const root=document.querySelector('#root');
   if(!root)return;
-  for(const table of root.querySelectorAll('table')){try{configure(table)}catch(e){console.warn('[SENDWAYO] No se pudo compactar la tabla:',e)}}
+  for(const table of root.querySelectorAll('table')){try{configure(table)}catch(e){console.warn('[SENDWAYO] No se pudo compactar la barra:',e)}}
  }
  let scheduled=false;
  const schedule=()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;apply()})};
