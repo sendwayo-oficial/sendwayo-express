@@ -131,7 +131,19 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
       'agent-1': agent.profile,
       'agent-2': otherAgent.profile
     };
-    await rtdb.set({ users });
+    await rtdb.set({
+      users,
+      // Las reglas de acceso a la cola compartida exigen una vinculación
+      // de agente activa asociada al mismo UID autenticado.
+      agentAuth: {
+        [agent.uid]: {
+          authUid: agent.uid, userId: 'agent-1', role: 'agente', active: true
+        },
+        [otherAgent.uid]: {
+          authUid: otherAgent.uid, userId: 'agent-2', role: 'agente', active: true
+        }
+      }
+    });
     const adminToken = await signIn(adminIdentity.email);
     const senderToken = await signIn(sender.email);
     const agentToken = await signIn(agent.email);
