@@ -67,7 +67,10 @@ async function loadActor(request) {
   return { uid: auth.uid, email, key, role, profile, users };
 }
 function canonicalRole(role) {
-  return role === 'admin' ? 'administrador' : role === 'agent' ? 'agente' : 'remitente';
+  if (role === 'admin') return 'administrador';
+  if (role === 'agent') return 'agente';
+  if (role === 'remitente') return 'remitente';
+  return String(role || '');
 }
 function getCollection(record) {
   const type = P.normalizeText(record && (record.type || record.category || record.routeFull));
@@ -85,7 +88,8 @@ function keyForTarget(users, value) {
   if (raw === 'admin') return 'admin';
   if (users[raw]) return raw;
   const found = Object.entries(users).find(([key, profile]) => profile && [
-    key, profile.id, profile.legacyId, profile.accountId, profile.code, profile.staffId
+    key, profile.id, profile.legacyId, profile.accountId, profile.code, profile.staffId,
+    profile.authUid, profile.uid, profile.authEmail, profile.email, profile.username
   ].some(v => String(v || '') === raw));
   return found ? found[0] : null;
 }
@@ -390,7 +394,7 @@ async function createOperation(request) {
     commissionBeneficiary: deposit ? 'NINGUNO' : actor.role === 'remitente' ? 'REMITENTE_Y_ADMIN' : 'PLATAFORMA',
     userId: ownerKey, ownerId: ownerKey, ownerLegacyId: ownerKey,
     ownerUid: String(ownerProfile.authUid || ownerProfile.uid || (ownerKey === actor.key ? actor.uid : '')),
-    ownerRole: canonicalRole(roleOf(ownerProfile)), ownerName: String(ownerProfile.displayName || ownerProfile.name || ownerProfile.nombre || source.ownerName || source.remitente || ''),
+    ownerRole: canonicalRole(ownerKey === 'admin' ? 'admin' : roleOf(ownerProfile)), ownerName: String(ownerProfile.displayName || ownerProfile.name || ownerProfile.nombre || source.ownerName || source.remitente || (ownerKey === 'admin' ? 'ADMIN' : '')),
     ownerPhone: String(ownerProfile.phone || ownerProfile.telefono || source.ownerPhone || ''),
     targetUserId: ownerKey,
     balanceAccountUserId: financialAccountKey,
