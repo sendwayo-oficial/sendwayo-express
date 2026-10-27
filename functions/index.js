@@ -436,6 +436,9 @@ async function reviewOperation(request) {
   if (!action) throw new HttpsError('invalid-argument', 'Selecciona Aprobado, Rechazado o No coincide.');
   const found = await getOperation(id);
   const { collection } = found;
+  if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(collection)) {
+    throw new HttpsError('failed-precondition', 'Este tipo de registro requiere un procedimiento administrativo específico y no se puede liquidar desde la cola general.');
+  }
   const decision = P.canReview({ actorRole: actor.role, actorUid: actor.uid, actorKey: actor.key, operation: found.record, collection, action });
   if (!decision.allowed) throw new HttpsError('permission-denied', decision.reason);
   const reason = String(request.data.reason || '').trim() || (action === 'Rechazado' ? 'Rechazado tras revisión' : action === 'No Coincide' ? 'Requiere corrección' : '');
@@ -488,7 +491,7 @@ async function reviewOperation(request) {
       if (adminShare > 0) await creditCommission('admin', id, adminShare, currency, true);
     } else {
       if (!P.isDeposit(collection) && record.balanceDebited) {
-        const returned = await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency);
+        const returned = await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency, true);
         if (returned) await opRef.update({ balanceDebited: false, balanceRefunded: true, balanceRefundedAt: now() });
       }
     }
