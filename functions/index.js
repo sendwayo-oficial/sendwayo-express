@@ -26,6 +26,20 @@ const COLLECTIONS = [
 ];
 const db = admin.database();
 const root = () => db.ref(ROOT);
+async function safeTransaction(ref, updateFunction) {
+  // Seed the first client-side transaction callback with a fresh snapshot when
+  // the SDK's local cache is initially null. RTDB still validates the update
+  // against the server and reruns the callback if another writer changed it.
+  const initial = await ref.once('value');
+  let attempts = 0;
+  return ref.transaction(current => {
+    attempts += 1;
+    if ((current === null || current === undefined) && attempts === 1 && initial.exists()) {
+      return updateFunction(initial.val());
+    }
+    return updateFunction(current);
+  }, undefined, false);
+}
 const now = () => Date.now();
 const roleOf = row => P.normalizeRole(row && (row.role || row.rol));
 const activeProfile = row => {
@@ -185,36 +199,10 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
   let callbackUserType = 'unknown';
   let callbackUserKeys = [];
   let callbackBalance = null;
-  let emulatorPreflightUser = null;
   const ref = root().child('users').child(accountKey);
-  if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
-    const probe = await ref.once('value');
-    if (probe.exists()) emulatorPreflightUser = probe.val();
-    if (!probe.exists()) {
-      const usersProbe = await root().child('users').once('value');
-      const allKeys = usersProbe.val() && typeof usersProbe.val() === 'object' ? Object.keys(usersProbe.val()).slice(0, 30) : [];
-      console.error('[SENDWAYO] reserva apunta a una cuenta inexistente en el emulador', {
-        projectId: PROJECT_ID,
-        emulatorHost: process.env.FIREBASE_DATABASE_EMULATOR_HOST,
-        databaseUrl: db.ref().toString(),
-        accountKey,
-        rootUsersExists: usersProbe.exists(),
-        rootUserKeys: allKeys
-      });
-    }
-  }
-  const tx = await ref.transaction(user => {
+
+  const tx = await safeTransaction(ref, user => {
     callbackCount += 1;
-    // Firebase RTDB Emulator can invoke the transaction callback once with a
-    // null local cache immediately after an explicit read. Use the just-read
-    // server snapshot only for this first emulator callback; RTDB will compare
-    // hashes and re-run the callback with the server's current value on conflict.
-    if ((!user || typeof user !== 'object') && callbackCount === 1 &&
-        process.env.FIREBASE_DATABASE_EMULATOR_HOST && emulatorPreflightUser &&
-        typeof emulatorPreflightUser === 'object') {
-      user = emulatorPreflightUser;
-      callbackReason = 'emulator-first-callback-used-preflight';
-    }
     callbackUserExists = Boolean(user);
     callbackUserType = user === null ? 'null' : typeof user;
     callbackUserKeys = user && typeof user === 'object' ? Object.keys(user).slice(0, 30) : [];
@@ -246,7 +234,7 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
     next.lastBalanceReservationCollection = collection;
     next.lastBalanceReservationCurrency = currency;
     return next;
-  }, undefined, false);
+  });
   const fresh = tx && tx.snapshot && tx.snapshot.val();
   const reservation = fresh && fresh.balanceReservations && fresh.balanceReservations[operationId];
   if (reservation && reservation.status === 'RESERVED' && reservation.currency === currency && P.money(reservation.amount) === amount) return;
@@ -282,7 +270,7 @@ async function debitLegacyBalance(accountKey, operationId, amount, currency) {
   const ref = root().child('users').child(accountKey);
   let insufficient = false;
   let alreadyDone = false;
-  const tx = await ref.transaction(user => {
+  const tx = await safeTransaction(ref, user => {
     if (!user || typeof user !== 'object') return;
     const settlements = { ...(user.transactionSettlements || {}) };
     if (settlements[operationId]) { alreadyDone = true; return user; }
@@ -292,7 +280,7 @@ async function debitLegacyBalance(accountKey, operationId, amount, currency) {
     const next = setBalance(user, currency, after);
     next.transactionSettlements = { ...settlements, [operationId]: { id: operationId, amount, currency, before, after, at: now(), kind: 'DEBIT' } };
     return next;
-  }, undefined, false);
+  });
   const fresh = tx && tx.snapshot && tx.snapshot.val();
   if (fresh && fresh.transactionSettlements && fresh.transactionSettlements[operationId]) return;
   if (insufficient) throw new HttpsError('failed-precondition', 'Balance insuficiente en ' + currency + '. La operación no se aprobó.');
@@ -301,7 +289,7 @@ async function debitLegacyBalance(accountKey, operationId, amount, currency) {
 async function updateReservationStatus(accountKey, operationId, newStatus) {
   const ref = root().child('users').child(accountKey);
   let changed = false;
-  const tx = await ref.transaction(user => {
+  const tx = await safeTransaction(ref, user => {
     if (!user || typeof user !== 'object') return;
     const reservations = { ...(user.balanceReservations || {}) };
     const reservation = reservations[operationId];
@@ -311,14 +299,14 @@ async function updateReservationStatus(accountKey, operationId, newStatus) {
     reservations[operationId] = { ...reservation, status: newStatus, [newStatus === 'SETTLED' ? 'settledAt' : 'releasedAt']: now() };
     changed = true;
     return { ...user, balanceReservations: reservations };
-  }, undefined, false);
+  });
   if (!tx || !tx.snapshot || !tx.snapshot.exists()) throw new HttpsError('failed-precondition', 'No se confirmó el estado de la reserva.');
   return changed;
 }
 async function refundBalance(accountKey, operationId, amount, currency, allowLegacyFallback = false) {
   const ref = root().child('users').child(accountKey);
   let refunded = false;
-  const tx = await ref.transaction(user => {
+  const tx = await safeTransaction(ref, user => {
     if (!user || typeof user !== 'object') return;
     const reservations = { ...(user.balanceReservations || {}) };
     const reservation = reservations[operationId];
@@ -345,13 +333,13 @@ async function refundBalance(accountKey, operationId, amount, currency, allowLeg
     next.transactionSettlements = { ...settlements, [refundId]: { id: refundId, operationId, amount, currency, before, after, at: now(), kind: 'REFUND' } };
     refunded = true;
     return next;
-  }, undefined, false);
+  });
   if (!tx || !tx.snapshot || !tx.snapshot.exists()) throw new HttpsError('failed-precondition', 'No se confirmó la devolución del balance.');
   return refunded;
 }
 async function creditDeposit(operationId, accountKey, amount, currency) {
   const ref = root().child('users').child(accountKey);
-  const tx = await ref.transaction(user => {
+  const tx = await safeTransaction(ref, user => {
     if (!user || typeof user !== 'object') return;
     const credits = { ...(user.depositCredits || {}) };
     if (credits[operationId] !== undefined) return user;
@@ -362,7 +350,7 @@ async function creditDeposit(operationId, accountKey, amount, currency) {
     next.depositCurrencies = { ...(user.depositCurrencies || {}), [operationId]: currency };
     next.depositCreditedAt = now();
     return next;
-  }, undefined, false);
+  });
   const fresh = tx && tx.snapshot && tx.snapshot.val();
   if (!fresh || !fresh.depositCredits || P.money(fresh.depositCredits[operationId]) !== amount) {
     throw new HttpsError('failed-precondition', 'Firebase no confirmó el crédito del depósito.');
@@ -372,7 +360,7 @@ async function creditCommission(accountKey, operationId, amount, currency, alsoB
   if (!(amount > 0)) return;
   const key = operationId + (alsoBalance ? '-admin-commission' : '-sender-commission');
   const ref = root().child('users').child(accountKey);
-  const tx = await ref.transaction(user => {
+  const tx = await safeTransaction(ref, user => {
     if (!user || typeof user !== 'object') return;
     const credits = { ...(user.transactionCommissionCredits || {}) };
     if (credits[key]) return user;
@@ -385,7 +373,7 @@ async function creditCommission(accountKey, operationId, amount, currency, alsoB
     }
     next.transactionCommissionCredits = { ...credits, [key]: { id: key, operationId, amount, currency, creditedAt: now(), alsoBalance } };
     return next;
-  }, undefined, false);
+  });
   const fresh = tx && tx.snapshot && tx.snapshot.val();
   if (!fresh || !fresh.transactionCommissionCredits || !fresh.transactionCommissionCredits[key]) {
     throw new HttpsError('failed-precondition', 'Firebase no confirmó la comisión.');
@@ -484,7 +472,7 @@ async function createOperation(request) {
     originalReference: String(source.reference || source.referencia || '')
   };
   const opRef = root().child(collection).child(id);
-  const createTx = await opRef.transaction(current => current || record, undefined, false);
+  const createTx = await safeTransaction(opRef, current => current || record);
   const created = createTx && createTx.snapshot && createTx.snapshot.val();
   if (!created) throw new HttpsError('internal', 'No se pudo crear la operación.');
   if (!createTx.committed && created.createdByAuthUid !== actor.uid) throw new HttpsError('already-exists', 'El identificador ya pertenece a otra operación.');
@@ -521,7 +509,7 @@ async function reviewOperation(request) {
   const opRef = found.ref;
   let alreadyFinal = false;
   let lockedRecord = null;
-  const lockTx = await opRef.transaction(current => {
+  const lockTx = await safeTransaction(opRef, current => {
     if (!current) return;
     const status = P.normalizeText(current.status || current.estado || 'Pendiente');
     const retryingSameAction = status === 'procesando' &&
@@ -546,7 +534,7 @@ async function reviewOperation(request) {
       processingReviewAt: now(), processingReviewAction: action, recoveryRequired: false
     };
     return lockedRecord;
-  }, undefined, false);
+  });
   if (!lockTx || !lockTx.snapshot || !lockTx.snapshot.exists()) throw new HttpsError('not-found', 'La operación desapareció antes de revisarla.');
   if (!lockTx.committed) {
     const fresh = lockTx.snapshot.val() || {};
@@ -625,12 +613,12 @@ async function reviewOperation(request) {
     // misma acción sin crear otro débito ni un segundo asiento.
     if (action === 'Aprobado') {
       const ledgerRef = root().child('ledger').child(id);
-      await ledgerRef.transaction(current => current || ({
+      await safeTransaction(ledgerRef, current => current || ({
         id, recordId: id, sourceCollection: collection, sourceId: id, ledgerLocked: true,
         ledgerEvent: 'APROBACION', userId: record.userId || '', balanceAccountUserId: financialAccountKey,
         amount, currency, commission: fee, commissionUser: finalPatch.commissionUser, commissionAdmin: finalPatch.commissionAdmin,
         balanceDebit: record.balanceDebitAmount || P.money(amount + fee), reviewedByAuthUid: actor.uid, createdAt: reviewedAt
-      }), undefined, false);
+      }));
     }
     await opRef.update(finalPatch);
     await writeAuditOnce(id, action.toUpperCase(), actor, record, collection, { amount, currency, commission: fee, reason }).catch(error => console.error('Auditoría de revisión falló', error));
@@ -644,7 +632,7 @@ async function reviewOperation(request) {
     // Si cualquier marcador de saldo ya pudo haberse aplicado, no volver a
     // Pendiente con otra decisión posible. Guardar la acción y requerir un
     // reintento de la MISMA acción para que los marcadores idempotentes reparen.
-    await opRef.transaction(current => {
+    await safeTransaction(opRef, current => {
       if (!current || current.status !== 'Procesando' || current.processingReviewByAuthUid !== actor.uid) return;
       const next = { ...current, lastReviewError: String(error.message || 'Error de revisión'), lastReviewErrorAt: now() };
       if (financialCommitStarted) {
@@ -663,7 +651,7 @@ async function reviewOperation(request) {
         delete next.recoveryAction;
       }
       return next;
-    }, undefined, false).catch(() => {});
+    }).catch(() => {});
     throw asHttpsError(error, financialCommitStarted
       ? 'La revisión requiere recuperación segura. Repite la misma decisión; no elijas otra acción mientras esté en Procesando.'
       : 'No se confirmó la revisión. La operación volvió a Pendiente.');
