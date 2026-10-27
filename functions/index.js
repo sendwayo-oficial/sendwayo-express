@@ -1150,7 +1150,8 @@ exports.resubmitOperation = onCall(async request => {
         issueCount: issues.length,
         issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
         severity: issues.some(item => item.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'OK',
-        isFinancialOperation: true
+        isFinancialOperation: true,
+        generatedByAudit: true
       };
       rows.push(row);
     }
@@ -1175,7 +1176,8 @@ exports.resubmitOperation = onCall(async request => {
         fecha: new Date(Number(ledgerRow.createdAt || 0) || generatedAt).toLocaleString('es-DO'),
         ownerId: String(ledgerRow.userId || ''), userId: String(ledgerRow.userId || ''),
         ownerName: '', issues, issueCount: 1, issueSummary: issues[0].message, severity: 'ERROR',
-        isFinancialOperation: false
+        isFinancialOperation: false,
+        generatedByAudit: true
       });
     }
   }
@@ -1250,7 +1252,7 @@ exports.resubmitOperation = onCall(async request => {
       fecha: new Date(Number(value.createdAt || value.createdAtMs || 0) || generatedAt).toLocaleString('es-DO'),
       ownerId: String(value.targetUserId || ''), userId: String(value.targetUserId || ''),
       ownerName: String(value.targetUserName || ''),
-      issues: [], issueCount: 0, issueSummary: '', severity: 'INFO', isFinancialOperation: false
+      issues: [], issueCount: 0, issueSummary: '', severity: 'INFO', isFinancialOperation: false, generatedByAudit: true
     }));
   rows.push(...auditRows);
   rows.sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
