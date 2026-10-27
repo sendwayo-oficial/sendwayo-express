@@ -179,6 +179,12 @@ async function addOwnerNotification(operation, collection, id, message) {
 async function reserveBalance(accountKey, operationId, amount, currency, collection) {
   let insufficient = false;
   let mismatch = false;
+  let callbackCount = 0;
+  let callbackReason = 'callback-not-run';
+  let callbackUserExists = false;
+  let callbackUserType = 'unknown';
+  let callbackUserKeys = [];
+  let callbackBalance = null;
   const ref = root().child('users').child(accountKey);
   if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
     const probe = await ref.once('value');
@@ -196,20 +202,28 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
     }
   }
   const tx = await ref.transaction(user => {
-    if (!user || typeof user !== 'object') return;
+    callbackCount += 1;
+    callbackUserExists = Boolean(user);
+    callbackUserType = user === null ? 'null' : typeof user;
+    callbackUserKeys = user && typeof user === 'object' ? Object.keys(user).slice(0, 30) : [];
+    if (!user || typeof user !== 'object') { callbackReason = 'missing-or-non-object'; return; }
     const reservations = { ...(user.balanceReservations || {}) };
     const existing = reservations[operationId];
     if (existing) {
-      if (P.money(existing.amount) === amount && existing.currency === currency && existing.status === 'RESERVED') return user;
+      if (P.money(existing.amount) === amount && existing.currency === currency && existing.status === 'RESERVED') { callbackReason = 'existing-reservation'; return user; }
       mismatch = true;
+      callbackReason = 'reservation-mismatch';
       return;
     }
     const before = balanceState(user, currency);
+    callbackBalance = before;
     if (!Number.isFinite(before) || before < amount) {
       insufficient = true;
+      callbackReason = 'insufficient-or-invalid-balance';
       return;
     }
     const after = P.money(before - amount);
+    callbackReason = 'reservation-created';
     reservations[operationId] = {
       id: operationId, operationId, collection, currency, amount,
       before, after, status: 'RESERVED', reservedAt: now()
@@ -242,7 +256,13 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
     expectedCurrency: currency,
     expectedAmount: amount,
     insufficient,
-    mismatch
+    mismatch,
+    callbackCount,
+    callbackReason,
+    callbackUserExists,
+    callbackUserType,
+    callbackUserKeys,
+    callbackBalance
   });
   throw new HttpsError('failed-precondition', 'Firebase no confirmó la reserva del balance. No se debe repetir con otro importe.');
 }
