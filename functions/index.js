@@ -843,6 +843,44 @@ async function reviewOperation(request) {
   }
 }
 
+async function listDirectory(request) {
+  const actor = await loadActor(request);
+  if (!['admin', 'agent'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Solo administración y agentes pueden consultar la lista de trabajo.');
+  }
+  const profiles = Object.entries(actor.users || {}).map(([key, row]) => {
+    row = row && typeof row === 'object' ? row : {};
+    const role = roleOf(row);
+    const name = String(row.displayName || row.name || row.nombre || row.username || row.email || key);
+    // Directorio mínimo para elegir remitentes y mostrar conteos. No devuelve
+    // balances, comisiones, reservas, campos de seguridad ni historial financiero.
+    return {
+      id: String(row.id || row.legacyId || key),
+      legacyId: String(row.legacyId || row.id || key),
+      accountId: String(row.accountId || row.id || key),
+      uid: String(row.authUid || row.uid || ''),
+      code: String(row.code || ''),
+      staffId: String(row.staffId || ''),
+      name,
+      displayName: name,
+      firstName: String(row.firstName || row.nombre || name.split(/\s+/)[0] || name),
+      lastName: String(row.lastName || name.split(/\s+/).slice(1).join(' ')),
+      email: String(row.email || row.authEmail || ''),
+      phone: String(row.phone || row.telefono || row.cellphone || ''),
+      country: String(row.country || row.pais || ''),
+      role: String(row.role || row.rol || ''),
+      status: String(row.status || 'active'),
+      active: activeProfile(row)
+    };
+  }).filter(row => row.active && ['admin', 'agent', 'remitente'].includes(roleOf(row)));
+  return { profiles };
+}
+
+exports.listDirectory = onCall(async request => {
+  try { return await listDirectory(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo consultar el directorio de trabajo.'); }
+});
+
 exports.submitOperation = onCall(async request => {
   try { return await createOperation(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo registrar la operación. No se confirmó ninguna acción que no aparezca guardada en Firebase.'); }
