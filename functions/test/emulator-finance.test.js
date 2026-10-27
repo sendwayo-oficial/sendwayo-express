@@ -115,6 +115,7 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
   const rtdb = app.database().ref(ROOT);
   const createdUsers = [];
   const ids = [];
+  const reconciliationRunIds = [];
   try {
     const adminIdentity = await createIdentity(app, 'admin', { testKey: 'admin', role: 'admin', balance: 10000, balanceDOP: 10000, balanceHTG: 10000 });
     const sender = await createIdentity(app, 'sender', { testKey: 'sender-1', role: 'remitente' });
@@ -402,12 +403,52 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
       assert.equal(repeated.ok, true);
       assert.equal(await balanceFor(rtdb, 'sender-1'), before, 'no devuelve los fondos dos veces');
     });
+    await t.test('conciliación financiera escanea las operaciones y solo la ejecuta el administrador', async () => {
+      const opId = 'EMUTEST-RECON-' + crypto.randomBytes(4).toString('hex');
+      ids.push(opId);
+      const created = await callFunction(senderToken, 'submitOperation', {
+        id: opId, type: 'Envío', category: 'Envío', route: 'RD->RD', method: 'Banco', amount: 15
+      });
+      assert.equal(created.ok, true, JSON.stringify(created.body));
+      assert.equal(created.result.status, 'Pendiente');
+
+      const agentDenied = await callFunction(agentToken, 'runFinancialReconciliation', {});
+      assert.equal(agentDenied.ok, false, 'un agente no puede ejecutar la conciliación completa');
+
+      const report = await callFunction(adminToken, 'runFinancialReconciliation', {});
+      assert.equal(report.ok, true, JSON.stringify(report.body));
+      assert.equal(report.result.status, 'Completada');
+      assert.ok(report.result.summary.totalOperations >= 1);
+      assert.ok(report.result.summary.transactionRows >= 1);
+      assert.ok(report.result.summary.pendingCount >= 1);
+      reconciliationRunIds.push(report.result.id);
+
+      const current = (await rtdb.child('reconciliationDetails/current').once('value')).val();
+      assert.equal(current.runId, report.result.id);
+      const detailRows = Object.values(current.rows || {});
+      const detail = detailRows.find(row => row && row.transactionId === opId);
+      assert.ok(detail, 'el detalle en tiempo real incluye la operación pendiente creada');
+      assert.equal(detail.statusOriginal, 'Pendiente');
+      assert.equal(detail.generatedByAudit, true, 'el renglón de conciliación se marca como solo lectura');
+
+      const archived = (await rtdb.child('reconciliations').child(report.result.id).once('value')).val();
+      assert.equal(archived.status, 'Completada', 'se conserva un resumen histórico de cada ejecución');
+
+      const notices = (await rtdb.child('notifications').orderByChild('targetUserId').equalTo('admin').once('value')).val() || {};
+      assert.ok(Object.values(notices).some(row => row && row.operationId === report.result.id),
+        'la conciliación genera una notificación en tiempo real para el administrador');
+    });
+
   } finally {
     for (const id of ids) {
       for (const collection of ['envios','recargas','paqueticos','pagos','paquetes','deposits','accountWithdrawals','commissions','credits','ledger','audit','notifications']) {
         await rtdb.child(collection).child(id).remove().catch(() => {});
       }
     }
+    for (const runId of reconciliationRunIds) {
+      await rtdb.child('reconciliations').child(runId).remove().catch(() => {});
+    }
+    await rtdb.child('reconciliationDetails/current').remove().catch(() => {});
     for (const identity of createdUsers) {
       await app.auth().deleteUser(identity.uid).catch(() => {});
     }
