@@ -8,7 +8,14 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const P = require('./lib/policy');
 
-admin.initializeApp();
+const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || 'sendwayo-express';
+const DATABASE_EMULATOR_HOST = process.env.FIREBASE_DATABASE_EMULATOR_HOST || '';
+const DATABASE_URL = process.env.SENDWAYO_DATABASE_URL ||
+  (DATABASE_EMULATOR_HOST ? 'http://' + DATABASE_EMULATOR_HOST + '/?ns=' + PROJECT_ID : undefined);
+admin.initializeApp({
+  projectId: PROJECT_ID,
+  ...(DATABASE_URL ? { databaseURL: DATABASE_URL } : {})
+});
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 
 const ROOT = 'sendwayo_express_v2';
