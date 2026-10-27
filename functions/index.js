@@ -239,7 +239,7 @@ async function updateReservationStatus(accountKey, operationId, newStatus) {
   if (!tx || !tx.snapshot || !tx.snapshot.exists()) throw new HttpsError('failed-precondition', 'No se confirmó el estado de la reserva.');
   return changed;
 }
-async function refundBalance(accountKey, operationId, amount, currency) {
+async function refundBalance(accountKey, operationId, amount, currency, allowLegacyFallback = false) {
   const ref = root().child('users').child(accountKey);
   let refunded = false;
   const tx = await ref.transaction(user => {
@@ -257,8 +257,9 @@ async function refundBalance(accountKey, operationId, amount, currency) {
       refunded = true;
       return next;
     }
-    // Compatibilidad con operaciones antiguas que ya fueron descontadas antes
-    // de que se almacenaran balanceReservations.
+    // Compatibilidad solo cuando el registro histórico confirma que ya hubo descuento.
+    // No crear dinero al cancelar una reserva que nunca se llegó a realizar.
+    if (!allowLegacyFallback) return user;
     const settlements = { ...(user.transactionSettlements || {}) };
     const refundId = operationId + '-refund';
     if (settlements[refundId]) return user;
@@ -474,8 +475,9 @@ async function reviewOperation(request) {
         const reservationData = reservation && reservation.val();
         if (reservationData && reservationData.status === 'RESERVED') {
           await updateReservationStatus(financialAccountKey, id, 'SETTLED');
-        } else if (!record.balanceDebited) {
-          await debitLegacyBalance(financialAccountKey, id, P.money(amount + fee), currency);
+        } else if (!record.balanceDebited || (reservationData && reservationData.status === 'REFUNDED')) {
+          const settlementId = reservationData && reservationData.status === 'REFUNDED' ? id + '-reapproved' : id;
+          await debitLegacyBalance(financialAccountKey, settlementId, P.money(amount + fee), currency);
         }
       }
       const creatorRole = P.normalizeRole(record.createdByRole);
