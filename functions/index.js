@@ -185,9 +185,11 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
   let callbackUserType = 'unknown';
   let callbackUserKeys = [];
   let callbackBalance = null;
+  let emulatorPreflightUser = null;
   const ref = root().child('users').child(accountKey);
   if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
     const probe = await ref.once('value');
+    if (probe.exists()) emulatorPreflightUser = probe.val();
     if (!probe.exists()) {
       const usersProbe = await root().child('users').once('value');
       const allKeys = usersProbe.val() && typeof usersProbe.val() === 'object' ? Object.keys(usersProbe.val()).slice(0, 30) : [];
@@ -203,6 +205,16 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
   }
   const tx = await ref.transaction(user => {
     callbackCount += 1;
+    // Firebase RTDB Emulator can invoke the transaction callback once with a
+    // null local cache immediately after an explicit read. Use the just-read
+    // server snapshot only for this first emulator callback; RTDB will compare
+    // hashes and re-run the callback with the server's current value on conflict.
+    if ((!user || typeof user !== 'object') && callbackCount === 1 &&
+        process.env.FIREBASE_DATABASE_EMULATOR_HOST && emulatorPreflightUser &&
+        typeof emulatorPreflightUser === 'object') {
+      user = emulatorPreflightUser;
+      callbackReason = 'emulator-first-callback-used-preflight';
+    }
     callbackUserExists = Boolean(user);
     callbackUserType = user === null ? 'null' : typeof user;
     callbackUserKeys = user && typeof user === 'object' ? Object.keys(user).slice(0, 30) : [];
