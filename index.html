@@ -285,63 +285,6 @@ function sendwayoSecretRows(){return [...document.querySelectorAll("[data-sendwa
 function sendwayoExportCSV(){const rows=sendwayoSecretRows();const csv=["Tipo,Información",...rows.map(r=>`"${r.tipo.replace(/"/g,'""')}","${r.informacion.replace(/"/g,'""')}"`)].join("\n");sendwayoDownload("SENDWAYO_INFORMACIONES_SECRETAS.csv",csv,"text/csv;charset=utf-8")}
 function sendwayoExportExcel(){const rows=sendwayoSecretRows();const html=`<html><meta charset="utf-8"><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table></html>`;sendwayoDownload("SENDWAYO_INFORMACIONES_SECRETAS.xls",html,"application/vnd.ms-excel;charset=utf-8")}
 function sendwayoExportPDF(){const rows=sendwayoSecretRows();const w=window.open("","_blank","width=1000,height=800");if(!w){alert("Permita las ventanas emergentes para generar el PDF.");return}w.document.write(`<html><head><meta charset="utf-8"><title>SENDWAYO EXPRESS - Informaciones Secretas</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0a245e}h1{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px;text-align:left}th{background:#0a245e;color:#fff}</style></head><body><h1>SENDWAYO EXPRESS — Informaciones Secretas</h1><table><tr><th>Tipo</th><th>Información</th></tr>${rows.map(r=>`<tr><td>${r.tipo}</td><td>${r.informacion.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</td></tr>`).join("")}</table><\x73cript>window.onload=()=>window.print()<\/script>\n\n
-<script id="sendwayo-auto-financial-reconciliation">
-(function () {
-  'use strict';
-  let running = false;
-  let lastRunAt = 0;
-  function normalizeLabel(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
-  }
-  function toast(message) {
-    let box = document.getElementById('sendwayo-reconciliation-toast');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'sendwayo-reconciliation-toast';
-      box.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120010;max-width:min(92vw,640px);padding:12px 16px;border-radius:12px;background:#0a245e;color:#fff;font:700 13px Arial;box-shadow:0 8px 24px #0003';
-      document.body.appendChild(box);
-    }
-    box.textContent = message;
-    box.style.display = 'block';
-    clearTimeout(box._timer);
-    box._timer = setTimeout(function () { box.style.display = 'none'; }, 6500);
-  }
-  async function run() {
-    const cloud = window.sendwayoCloud;
-    if (!cloud || !cloud.ready || typeof cloud.runFinancialReconciliation !== 'function') {
-      toast('Firebase no está disponible; no se ejecutó la conciliación.');
-      return;
-    }
-    if (running || Date.now() - lastRunAt < 2500) return;
-    running = true;
-    lastRunAt = Date.now();
-    toast('Conciliación financiera en curso: revisando operaciones, balances, comisiones, comprobantes y asientos contables…');
-    try {
-      const profile = typeof cloud.getProfile === 'function' ? await cloud.getProfile() : null;
-      const role = normalizeLabel(profile && (profile.role || profile.rol) || '');
-      if (!['admin', 'administrador'].includes(role)) return;
-      const result = await cloud.runFinancialReconciliation({});
-      const summary = result && result.summary || {};
-      toast('Conciliación completada. Operaciones: ' + Number(summary.totalOperations || 0) +
-        '; diferencias: ' + Number(summary.issueCount || 0) +
-        ' (' + Number(summary.errorCount || 0) + ' errores y ' + Number(summary.warningCount || 0) +
-        ' avisos). El detalle se actualiza en esta pantalla.');
-    } catch (error) {
-      console.error('[SENDWAYO] Falló la conciliación financiera:', error);
-      toast(error && error.message || 'No se pudo completar la conciliación. No se modificaron balances automáticamente.');
-    } finally {
-      running = false;
-    }
-  }
-  document.addEventListener('click', function (event) {
-    const target = event.target && event.target.closest ? event.target.closest('button,[role="button"],a') : null;
-    if (!target) return;
-    const text = normalizeLabel(target.innerText || target.textContent || target.getAttribute('aria-label') || '');
-    if (text !== 'conciliacion financiera') return;
-    window.setTimeout(run, 250);
-  }, true);
-})();
-</script>
 </body></html>`);w.document.close()}
 function sendwayoEditSecret(role,id,name){if(!confirm(`Modificar los datos de ${name||id}?`))return;const all=sendwayoSecretUsers();let u=all.find(x=>x.role===role&&String(x.id||"")===String(id||""));if(!u)u={role,name,id,code:id,password:null,identifiers:[name,id]};const nombre=prompt("Nombre",u.name||name||"");if(nombre===null)return;const telefono=prompt("Teléfono",u.phone||"");if(telefono===null)return;const usuario=prompt("Usuario/correo",u.email||u.identifier||"");if(usuario===null)return;const pass=prompt("Nueva contraseña (dejar vacío para conservar)",u.password||"");if(pass===null)return;const next={...u,name:nombre,phone:telefono,email:usuario,identifiers:[...new Set([...(u.identifiers||[]),nombre,telefono,usuario,id]) ]};if(pass)next.password=pass;sendwayoSaveSecretUser(next);alert("Cambios guardados correctamente.");location.reload()}
 function sendwayoAddSecretUser(){const role=prompt("Tipo: escriba AGENTE o REMITENTE");if(!role)return;const r=role.toLowerCase().startsWith("a")?"agent":"remitente";const name=prompt("Nombre completo");if(!name)return;const phone=prompt("Teléfono");if(!phone)return;const id=prompt("ID único (ej. AG-006 / RM-031)");if(!id)return;const email=prompt("Usuario/correo");if(email===null)return;const password=prompt("Contraseña");if(password===null)return;const parts=name.trim().split(/\s+/),first=parts.shift()||"",last=parts.join(" ");const user={role:r,name,first,last,id,code:id,phone,email,password:null,identifiers:[name,phone,email,id],balance:0,balanceDOP:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0};sendwayoSaveSecretUser(user);alert("Registro agregado. Agentes: sin balance ni comisión personal. Remitentes: balance DOP y HTG y comisiones DOP/HTG.");location.reload()}
@@ -3335,4 +3278,62 @@ async function legacyGetUserKey(target) {
 })();
 </script>
 
+
+<script id="sendwayo-auto-financial-reconciliation">
+(function () {
+  'use strict';
+  let running = false;
+  let lastRunAt = 0;
+  function normalizeLabel(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+  function toast(message) {
+    let box = document.getElementById('sendwayo-reconciliation-toast');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'sendwayo-reconciliation-toast';
+      box.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120010;max-width:min(92vw,640px);padding:12px 16px;border-radius:12px;background:#0a245e;color:#fff;font:700 13px Arial;box-shadow:0 8px 24px #0003';
+      document.body.appendChild(box);
+    }
+    box.textContent = message;
+    box.style.display = 'block';
+    clearTimeout(box._timer);
+    box._timer = setTimeout(function () { box.style.display = 'none'; }, 6500);
+  }
+  async function run() {
+    const cloud = window.sendwayoCloud;
+    if (!cloud || !cloud.ready || typeof cloud.runFinancialReconciliation !== 'function') {
+      toast('Firebase no está disponible; no se ejecutó la conciliación.');
+      return;
+    }
+    if (running || Date.now() - lastRunAt < 2500) return;
+    running = true;
+    lastRunAt = Date.now();
+    toast('Conciliación financiera en curso: revisando operaciones, balances, comisiones, comprobantes y asientos contables…');
+    try {
+      const profile = typeof cloud.getProfile === 'function' ? await cloud.getProfile() : null;
+      const role = normalizeLabel(profile && (profile.role || profile.rol) || '');
+      if (!['admin', 'administrador'].includes(role)) return;
+      const result = await cloud.runFinancialReconciliation({});
+      const summary = result && result.summary || {};
+      toast('Conciliación completada. Operaciones: ' + Number(summary.totalOperations || 0) +
+        '; diferencias: ' + Number(summary.issueCount || 0) +
+        ' (' + Number(summary.errorCount || 0) + ' errores y ' + Number(summary.warningCount || 0) +
+        ' avisos). El detalle se actualiza en esta pantalla.');
+    } catch (error) {
+      console.error('[SENDWAYO] Falló la conciliación financiera:', error);
+      toast(error && error.message || 'No se pudo completar la conciliación. No se modificaron balances automáticamente.');
+    } finally {
+      running = false;
+    }
+  }
+  document.addEventListener('click', function (event) {
+    const target = event.target && event.target.closest ? event.target.closest('button,[role="button"],a') : null;
+    if (!target) return;
+    const text = normalizeLabel(target.innerText || target.textContent || target.getAttribute('aria-label') || '');
+    if (text !== 'conciliacion financiera') return;
+    window.setTimeout(run, 250);
+  }, true);
+})();
+</script>
 </body></html>
