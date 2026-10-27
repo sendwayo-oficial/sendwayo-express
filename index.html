@@ -2024,7 +2024,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
         const split = streamKey.indexOf('|');
         const collection = streamKey.slice(0, split);
         const rows = Array.isArray(values) ? values : legacyRows(values, collection);
-        for (const item of rows) merged.push(item._legacyCollection ? item : legacyOperationRow(item.id, item, collection));
+        for (const item of rows) merged.push({ ...item, _legacyCollection: collection });
       }
       const seen = new Map();
       for (const record of merged) seen.set(record._legacyCollection + '|' + record.id, record);
