@@ -22,6 +22,11 @@ test('aplica 5% a servicios, 8% general y tabla local', () => {
   assert.equal(policy.commissionFor({ type: 'Envío', route: 'RD->RD' }, 'envios', 100), 8);
   assert.equal(policy.commissionFor({ type: 'Envío', route: 'HT->HT', method: 'NatCash' }, 'envios', 1500), 18);
   assert.equal(policy.commissionFor({ type: 'Retiro', route: 'HT->HT', method: 'MonCash' }, 'accountWithdrawals', 1500), 46);
+  const haitiWithdrawal = { type: 'Retiro', route: 'HT->HT', method: 'MonCash', currency: 'HTG' };
+  const feeFor2000 = policy.commissionFor(haitiWithdrawal, 'accountWithdrawals', 2000);
+  assert.equal(policy.currencyFor(haitiWithdrawal, 'accountWithdrawals'), 'HTG');
+  assert.equal(feeFor2000, 25);
+  assert.equal(2000 - feeFor2000, 1975);
   assert.equal(policy.commissionFor({ type: 'Depósito' }, 'deposits', 100), 0);
 });
 
