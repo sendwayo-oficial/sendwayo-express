@@ -15,9 +15,23 @@
       "scripts/**",
       "base.html",
       ".nojekyll",
-      "*.log"
+      "*.log",
+      "functions/**",
+      "private/**"
     ],
     "cleanUrls": false,
     "trailingSlash": false
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      ".runtimeconfig.json",
+      "*.local"
+    ]
   }
 }
