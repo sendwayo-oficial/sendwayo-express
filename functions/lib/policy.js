@@ -35,6 +35,11 @@ function isDeposit(collection) {
   return normalizeText(collection) === 'deposits';
 }
 
+function isCommissionWithdrawal(collection, record = {}) {
+  return normalizeText(collection) === 'commissions' &&
+    normalizeText(record.accountingType || '') === 'comision_retiro';
+}
+
 function isWithdrawal(collection, record = {}) {
   return normalizeText(collection) === 'accountwithdrawals' ||
     /retiro|withdraw/.test(normalizeText(record.type || record.category));
@@ -94,6 +99,64 @@ function localWithdrawalFee(amount) {
 }
 
 function currencyFor(record = {}, collection = '') {
+  if (isCommissionWithdrawal(collection, record)) {
+    const requested = String(record.currency || record.balanceCurrency || 'DOP').toUpperCase();
+    if (['HTG', 'GDES'].includes(requested)) return 'HTG';
+    if (['DOP', 'RD
+    const requested = String(record.currency || record.balanceCurrency || 'DOP').toUpperCase();
+    if (['HTG', 'GDES'].includes(requested)) return 'HTG';
+    if (['DOP', 'RD$', 'RD', 'PESO', 'PESOS'].includes(requested)) return 'DOP';
+    throw new Error('La moneda del depósito debe ser DOP o HTG.');
+  }
+  return usesHaitiWalletTable(record) ? 'HTG' : 'DOP';
+}
+
+function commissionFor(record = {}, collection = '', amount) {
+  if (isDeposit(collection) || isCommissionWithdrawal(collection, record)) return 0;
+  if (usesHaitiWalletTable(record)) {
+    return money(isWithdrawal(collection, record) ? localWithdrawalFee(amount) : localSendFee(amount));
+  }
+  return money(amount * (isService(record) ? 0.05 : 0.08));
+}
+
+function canReview({ actorRole, actorUid, actorKey, operation, collection, action }) {
+  const role = normalizeRole(actorRole);
+  if (!['admin', 'agent'].includes(role)) return { allowed: false, reason: 'Solo un agente o el administrador puede revisar operaciones.' };
+  if (isDeposit(collection) && role !== 'admin') {
+    return { allowed: false, reason: 'Solo el administrador puede revisar depósitos.' };
+  }
+  if (role === 'agent') {
+    const creatorUid = String(operation.createdByAuthUid || '');
+    const creatorKey = String(operation.createdByUserId || operation.createdById || '');
+    if ((creatorUid && creatorUid === String(actorUid || '')) ||
+        (creatorKey && actorKey && creatorKey === String(actorKey))) {
+      return { allowed: false, reason: 'No puedes revisar ni aprobar una operación que tú mismo registraste.' };
+    }
+  }
+  if (!action) return { allowed: false, reason: 'La decisión no es válida.' };
+  return { allowed: true };
+}
+
+module.exports = {
+  normalizeText,
+  normalizeRole,
+  normalizeAction,
+  money,
+  isDeposit,
+  isCommissionWithdrawal,
+  isWithdrawal,
+  isService,
+  isHaitiToHaiti,
+  usesHaitiWalletTable,
+  localSendFee,
+  localWithdrawalFee,
+  currencyFor,
+  commissionFor,
+  canReview
+};
+, 'RD', 'PESO', 'PESOS'].includes(requested)) return 'DOP';
+    throw new Error('La moneda del retiro de comisión debe ser DOP o HTG.');
+  }
   if (isDeposit(collection)) {
     const requested = String(record.currency || record.balanceCurrency || 'DOP').toUpperCase();
     if (['HTG', 'GDES'].includes(requested)) return 'HTG';
