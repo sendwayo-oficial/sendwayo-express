@@ -1,37 +1,36 @@
 import fs from 'node:fs';
 
 const rules = JSON.parse(fs.readFileSync('database.rules.json', 'utf8'));
-const depositWrite = rules?.rules?.sendwayo_express_v2?.deposits?.['$id']?.['.write'];
+const root = rules?.rules?.sendwayo_express_v2;
 
-if (typeof depositWrite !== 'string' || !depositWrite.length) {
-  throw new Error('Falta la regla .write de sendwayo_express_v2/deposits/$id.');
-}
+if (!root) throw new Error('Falta sendwayo_express_v2 en database.rules.json.');
 
-// Un agente puede crear una solicitud de depósito pendiente,
-// pero no puede aprobarla ni cambiar su estado después.
-const required = [
-  'auth.token.admin === true',
-  "auth.token.email === 'sendwayoexpress@gmail.com'",
-  "newData.child('status').val() === 'Pendiente'",
-  "newData.child('createdByUserId').val() === root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()"
+// Las operaciones financieras las escriben las Functions con Admin SDK.
+// El navegador no puede crear transacciones pendientes ni cambiar sus estados
+// directamente; esto fuerza a pasar por reserva de balance y auditoría central.
+const serverOnlyCollections = [
+  'envios', 'recargas', 'paqueticos', 'pagos',
+  'deposits', 'accountWithdrawals', 'commissions'
 ];
-for (const phrase of required) {
-  if (!depositWrite.includes(phrase)) {
-    throw new Error('La regla de depósitos perdió una condición necesaria: ' + phrase);
+for (const collection of serverOnlyCollections) {
+  const rule = root[collection]?.['$id']?.['.write'];
+  if (rule !== false) {
+    throw new Error('La escritura del cliente sigue abierta en ' + collection + '/$id.');
   }
+  console.log('PASS: escritura financiera solo por servidor en ' + collection);
 }
 
-for (const forbidden of [
-  "newData.child('reviewedByAuthUid')",
-  "newData.child('reviewedByUserId')",
-  "newData.child('processingApprovalAuthUid')",
-  "newData.child('processingApprovalByUserId')"
+// Los agentes usan una callable que devuelve solo datos mínimos de identidad.
+// No deben leer el árbol completo de usuarios ni las notificaciones de otros.
+for (const [path, rule] of [
+  ['users', root.users?.['.read']],
+  ['users/$uid', root.users?.['$uid']?.['.read']],
+  ['notifications', root.notifications?.['.read']],
+  ['notifications/$id', root.notifications?.['$id']?.['.read']]
 ]) {
-  if (depositWrite.includes(forbidden)) {
-    throw new Error('Un agente podría todavía intentar procesar/aprobar depósitos por esta regla: ' + forbidden);
+  if (typeof rule !== 'string' || rule.includes("root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true")) {
+    throw new Error('La lectura de ' + path + ' permite acceso general a agentes.');
   }
+  console.log('PASS: acceso privado a ' + path);
 }
-
-console.log('PASS: la regla permite al administrador gestionar depósitos.');
-console.log('PASS: los agentes pueden crear depósitos pendientes autorizados.');
-console.log('PASS: la regla .write no concede a agentes iniciar ni finalizar una aprobación de depósito.');
+console.log('PASS: las operaciones financieras deben pasar por las Firebase Functions.');
