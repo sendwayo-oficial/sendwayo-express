@@ -2058,6 +2058,31 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
   function legacyListenAccounts(callback, profilesOnly) {
     if (!legacyAuth.currentUser) throw new Error('Inicia sesión.');
+    if (!legacyIsAdmin() && legacyIsAgent()) {
+      let active = true;
+      callLegacyFunction('listDirectory').then(result => {
+        if (!active) return;
+        const profiles = Array.isArray(result && result.profiles) ? result.profiles : [];
+        const safeRows = profiles.map(row => ({
+          ...row,
+          id: String(row.id || row.legacyId || row.accountId || ''),
+          legacyId: String(row.legacyId || row.id || ''),
+          accountId: String(row.accountId || row.id || ''),
+          name: String(row.name || row.displayName || row.email || ''),
+          displayName: String(row.displayName || row.name || ''),
+          role: String(row.role || row.rol || ''),
+          status: String(row.status || 'active'),
+          balance: 0, balanceDOP: 0, balanceHTG: 0,
+          commission: 0, commissionDOP: 0, commissionHTG: 0,
+          commissionAccrued: 0
+        }));
+        callback(safeRows);
+      }).catch(error => {
+        console.error('[SENDWAYO] No se pudo cargar el directorio limitado de agentes:', error);
+        if (active) callback([]);
+      });
+      return () => { active = false; };
+    }
     if (!legacyIsAdmin()) {
       const key = legacyProfileKey();
       const ref = legacyRtdb.ref(legacyPath('users/' + key));
@@ -2636,14 +2661,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
       }
       case 'submitOperation': return callLegacyFunction('submitOperation', payload);
       case 'reviewOperation': return callLegacyFunction('reviewOperation', payload);
-      case 'resubmitOperation': return callLegacyFunction('resubmitOperation', payload); case 'deleteRejectedOperation': {
-        if (!legacyIsAdmin()) throw legacyError('Solo administración puede eliminar operaciones rechazadas.');
-        const found = await legacyFindOperation(payload.operationId || payload.id);
-        if (!['rechazado', 'rejected'].includes(String(found.record.status || '').toLowerCase())) throw legacyError('Solo se puede eliminar una operación rechazada.');
-        await legacyRtdb.ref(legacyPath(found.collection + '/' + found.id)).remove();
-        return { id: found.id, deleted: true };
-      }
-      case 'adjustAccount': return legacyAdjustAccount(payload);
+      case 'resubmitOperation': return callLegacyFunction('resubmitOperation', payload); case 'deleteRejectedOperation': return callLegacyFunction('deleteRejectedOperation', payload); case 'adjustAccount': return legacyAdjustAccount(payload);
       case 'payCommission': return callLegacyFunction('requestCommissionWithdrawal', payload);
       case 'saveBankAccount': return legacySaveBankAccount(payload);
       case 'deleteBankAccount': {
