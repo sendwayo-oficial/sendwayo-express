@@ -21,6 +21,23 @@ for (const collection of serverOnlyCollections) {
   console.log('PASS: escritura financiera solo por servidor en ' + collection);
 }
 
+const reviewableCollections = [
+  'envios', 'recargas', 'paqueticos', 'pagos',
+  'deposits', 'accountWithdrawals', 'commissions'
+];
+for (const collection of reviewableCollections) {
+  const parentRead = String(root[collection]?.['.read'] || '');
+  const itemRead = String(root[collection]?.['$id']?.['.read'] || '');
+  if (!parentRead.includes("query.orderByChild === 'status'") ||
+      !parentRead.includes("query.equalTo === 'Pendiente'")) {
+    throw new Error('Falta el permiso limitado a cola Pendiente para agentes en ' + collection + '.');
+  }
+  if (itemRead.includes('agentAuth') || itemRead.includes('active').val() === true) {
+    throw new Error('La lectura individual de ' + collection + ' sigue abierta para agentes.');
+  }
+  console.log('PASS: cola de revisión Pendiente y lectura individual restringida en ' + collection);
+}
+
 // Los agentes usan una callable que devuelve solo datos mínimos de identidad.
 // No deben leer el árbol completo de usuarios ni las notificaciones de otros.
 const usersRootRead = String(root.users?.['.read'] || '');
