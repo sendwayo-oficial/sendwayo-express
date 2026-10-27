@@ -178,8 +178,13 @@ async function appendNotification(targetUserId, title, message, collection, oper
 }
 async function notifyReviewers(users, actor, operation, collection, id) {
   const recipients = new Set(['admin']);
-  for (const [key, profile] of Object.entries(users || {})) {
-    if (profile && roleOf(profile) === 'agent' && activeProfile(profile) && key !== actor.key) recipients.add(key);
+  const adminOnlyReview = String(collection || '') === 'commissions' ||
+    P.isDeposit(collection) ||
+    P.isCommissionWithdrawal(collection, operation);
+  if (!adminOnlyReview) {
+    for (const [key, profile] of Object.entries(users || {})) {
+      if (profile && roleOf(profile) === 'agent' && activeProfile(profile) && key !== actor.key) recipients.add(key);
+    }
   }
   recipients.delete(actor.key);
   const title = 'Operación pendiente de revisión';
@@ -872,13 +877,37 @@ async function listDirectory(request) {
       status: String(row.status || 'active'),
       active: activeProfile(row)
     };
-  }).filter(row => row.active && ['admin', 'agent', 'remitente'].includes(roleOf(row)));
+  }).filter(row => row.active && ['agent', 'remitente'].includes(roleOf(row)));
   return { profiles };
 }
 
 exports.listDirectory = onCall(async request => {
   try { return await listDirectory(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo consultar el directorio de trabajo.'); }
+});
+
+async function deleteRejectedOperation(request) {
+  const actor = await loadActor(request);
+  if (actor.role !== 'admin') throw new HttpsError('permission-denied', 'Solo el administrador puede eliminar operaciones rechazadas.');
+  const id = String((request.data && (request.data.operationId || request.data.id)) || '').trim();
+  const found = await getOperation(id);
+  if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(found.collection)) {
+    throw new HttpsError('failed-precondition', 'Este registro no puede eliminarse desde la cola general.');
+  }
+  if (!['rechazado', 'rejected'].includes(P.normalizeText(found.record.status || found.record.estado))) {
+    throw new HttpsError('failed-precondition', 'Solo se pueden eliminar operaciones rechazadas. Las pendientes, aprobadas o No coincide se conservan.');
+  }
+  await writeAuditOnce(id, 'ELIMINADA_OPERACION_RECHAZADA', actor, found.record, found.collection, {
+    amount: P.money(found.record.amount || found.record.monto || 0),
+    currency: String(found.record.currency || found.record.balanceCurrency || 'DOP')
+  });
+  await found.ref.remove();
+  return { id, collection: found.collection, deleted: true };
+}
+
+exports.deleteRejectedOperation = onCall(async request => {
+  try { return await deleteRejectedOperation(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo eliminar la operación rechazada.'); }
 });
 
 exports.submitOperation = onCall(async request => {
