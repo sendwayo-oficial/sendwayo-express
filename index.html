@@ -1780,8 +1780,15 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
   const callable = functions.httpsCallable.bind(functions);
   const callLegacyFunction = async (name, payload = {}) => {
-    const response = await legacyFunctions.httpsCallable(name)(payload);
-    return response.data;
+    if (legacyAuth.currentUser) {
+      const response = await legacyFunctions.httpsCallable(name)(payload);
+      return response.data;
+    }
+    if (auth.currentUser) {
+      const response = await callable(name)(payload);
+      return response.data;
+    }
+    throw new Error('Debes iniciar sesión con usuario/correo y contraseña.');
   };
   const serverEnforcedFunctions = Object.freeze({
     submitOperation: 'submitOperation',
@@ -2753,8 +2760,40 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     return onSnap(db.collection('accounts'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-accounts');
   }
   function listenAllProfiles(callback) {
+    if (legacyAuth.currentUser && legacyIsAdmin()) {
+      return legacyListenAccounts(callback, true);
+    }
+    const currentAuth = legacyAuth.currentUser || auth.currentUser;
+    if (!currentAuth) throw new Error('Inicia sesión para consultar perfiles.');
+    // Los agentes reciben un directorio limitado desde Firebase Functions: sin
+    // balances, comisiones privadas ni contraseñas; no leen el árbol users.
+    if (legacyAuth.currentUser && legacyIsAgent()) {
+      let stopped = false;
+      let refreshing = false;
+      const refresh = async () => {
+        if (stopped || refreshing) return;
+        refreshing = true;
+        try {
+          const data = await callLegacyFunction('listDirectory', {});
+          if (!stopped) callback(Array.isArray(data?.profiles) ? data.profiles : []);
+        } catch (err) {
+          console.error('[SENDWAYO] No se pudo actualizar el directorio seguro:', err);
+          if (!stopped) callback([]);
+        } finally {
+          refreshing = false;
+        }
+      };
+      void refresh();
+      const onSync = () => { void refresh(); };
+      window.addEventListener('sendwayo-data-sync', onSync);
+      const timer = setInterval(() => { void refresh(); }, 30000);
+      return () => {
+        stopped = true;
+        clearInterval(timer);
+        window.removeEventListener('sendwayo-data-sync', onSync);
+      };
+    }
     if (legacyAuth.currentUser) return legacyListenAccounts(callback, true);
-    if (!auth.currentUser) throw new Error('Inicia sesión para consultar perfiles.');
     return onSnap(db.collection('profiles'), snap => callback(snap.docs.map(doc => ({ ...serial(doc), uid: doc.id }))), 'all-profiles');
   }
   function listenSystemBalance(callback, target = 'admin') {
