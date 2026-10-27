@@ -107,6 +107,50 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
     const agentToken = await signIn(agent.email);
     const otherAgentToken = await signIn(otherAgent.email);
 
+    await t.test('privacidad de perfiles: el agente ve su ficha, no el árbol de usuarios', async () => {
+      const rootUrl = 'http://' + host + '/' + ROOT + '/users.json?ns=' + encodeURIComponent(PROJECT_ID) + '&auth=';
+      const listResp = await fetch(rootUrl + encodeURIComponent(agentToken));
+      assert.equal(listResp.ok, false, 'el agente no puede leer todos los perfiles directamente');
+      const ownResp = await fetch('http://' + host + '/' + ROOT + '/users/agent-1.json?ns=' + encodeURIComponent(PROJECT_ID) + '&auth=' + encodeURIComponent(agentToken));
+      assert.equal(ownResp.ok, true, 'el agente puede leer su propia ficha');
+      const otherResp = await fetch('http://' + host + '/' + ROOT + '/users/sender-1.json?ns=' + encodeURIComponent(PROJECT_ID) + '&auth=' + encodeURIComponent(agentToken));
+      assert.equal(otherResp.ok, false, 'el agente no puede leer directamente el perfil financiero de un remitente');
+      const directory = await callFunction(agentToken, 'listDirectory', {});
+      assert.equal(directory.ok, true, JSON.stringify(directory.body));
+      const profiles = directory.result.profiles;
+      assert.ok(profiles.some(row => row.id === 'sender-1' && row.role === 'remitente'), 'el agente puede elegir remitentes para atender operaciones');
+      assert.ok(profiles.some(row => row.id === 'agent-2' && row.role === 'agente'), 'el agente puede ver el directorio de agentes para seguimiento');
+      assert.ok(!profiles.some(row => row.id === 'admin'), 'el directorio de agentes no revela el perfil administrativo');
+      for (const row of profiles) {
+        for (const privateField of ['balance','balanceDOP','balanceHTG','commission','commissionDOP','commissionHTG','balanceReservations','commissionWithdrawalReservations','password','contrasena']) {
+          assert.equal(Object.hasOwn(row, privateField), false, 'el directorio no devuelve ' + privateField);
+        }
+      }
+    });
+
+    await t.test('el cliente no puede escribir directamente operaciones financieras para saltarse el servidor', async () => {
+      const base = 'http://' + host + '/' + ROOT + '/';
+      const query = '?ns=' + encodeURIComponent(PROJECT_ID) + '&auth=';
+      const payload = {
+        id: 'CLIENT-DIRECT-BYPASS', userId: 'sender-1', amount: 100,
+        currency: 'DOP', commission: 0, status: 'Pendiente',
+        createdByAuthUid: sender.uid, createdByUserId: 'sender-1'
+      };
+      const envios = await fetch(base + 'envios/CLIENT-DIRECT-BYPASS.json' + query + encodeURIComponent(senderToken), {
+        method: 'PUT', headers: {'content-type':'application/json'}, body: JSON.stringify(payload)
+      });
+      assert.equal(envios.ok, false, 'el remitente no puede crear un envío omitiendo reserva y validación del servidor');
+      const deposit = await fetch(base + 'deposits/CLIENT-DIRECT-DEPOSIT.json' + query + encodeURIComponent(agentToken), {
+        method: 'PUT', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ ...payload, id: 'CLIENT-DIRECT-DEPOSIT', userId:'sender-1', accountingType:'DEPOSITO_CAPITAL' })
+      });
+      assert.equal(deposit.ok, false, 'un agente no puede escribir directamente un depósito; usa la callable y solo el administrador puede aprobarlo');
+      const withdrawal = await fetch(base + 'accountWithdrawals/CLIENT-DIRECT-WITHDRAWAL.json' + query + encodeURIComponent(senderToken), {
+        method: 'PUT', headers: {'content-type':'application/json'}, body: JSON.stringify({...payload,id:'CLIENT-DIRECT-WITHDRAWAL'})
+      });
+      assert.equal(withdrawal.ok, false, 'un remitente no puede escribir directamente un retiro que salte la reserva del balance');
+    });
+
     await t.test('sender reserves amount + 8%, agent #2 approves once and commissions are ledgered', async () => {
       const opId = 'EMUTEST-ENVIO-' + crypto.randomBytes(4).toString('hex');
       ids.push(opId);
