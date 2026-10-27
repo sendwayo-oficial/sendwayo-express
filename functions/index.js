@@ -211,6 +211,24 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
   if (reservation && reservation.status === 'RESERVED' && reservation.currency === currency && P.money(reservation.amount) === amount) return;
   if (insufficient) throw new HttpsError('failed-precondition', 'Balance insuficiente en ' + currency + '. No se creó la operación.');
   if (mismatch) throw new HttpsError('already-exists', 'El identificador de la operación ya tiene una reserva diferente.');
+  console.error('[SENDWAYO] reserva no confirmada', {
+    projectId: PROJECT_ID,
+    emulatorHost: process.env.FIREBASE_DATABASE_EMULATOR_HOST || null,
+    accountKey,
+    operationId,
+    committed: Boolean(tx && tx.committed),
+    snapshotExists: Boolean(tx && tx.snapshot && tx.snapshot.exists()),
+    snapshotBalanceDOP: fresh && (fresh.balanceDOP ?? fresh.balance) !== undefined ? (fresh.balanceDOP ?? fresh.balance) : null,
+    snapshotBalanceHTG: fresh && fresh.balanceHTG !== undefined ? fresh.balanceHTG : null,
+    hasReservation: Boolean(reservation),
+    reservationStatus: reservation && reservation.status || null,
+    reservationCurrency: reservation && reservation.currency || null,
+    reservationAmount: reservation && reservation.amount !== undefined ? reservation.amount : null,
+    expectedCurrency: currency,
+    expectedAmount: amount,
+    insufficient,
+    mismatch
+  });
   throw new HttpsError('failed-precondition', 'Firebase no confirmó la reserva del balance. No se debe repetir con otro importe.');
 }
 async function debitLegacyBalance(accountKey, operationId, amount, currency) {
