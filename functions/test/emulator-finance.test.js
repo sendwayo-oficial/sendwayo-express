@@ -205,9 +205,31 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
       assert.equal(created.result.currency, 'DOP');
       assert.equal(created.result.commission, 8);
       assert.equal(await balanceFor(rtdb, 'sender-1'), before - 108, 'se reserva importe más comisión');
+
+      const baseUrl = 'http://' + host + '/' + ROOT + '/';
+      const unrestrictedParams = new URLSearchParams({ ns: PROJECT_ID, auth: agentToken });
+      const unrestrictedRead = await fetch(baseUrl + 'envios.json?' + unrestrictedParams.toString());
+      assert.equal(unrestrictedRead.ok, false, 'el agente no puede leer todo el historial de envíos');
+      const pendingParams = new URLSearchParams({
+        ns: PROJECT_ID, orderBy: '"status"', equalTo: '"Pendiente"', auth: agentToken
+      });
+      const pendingRead = await fetch(baseUrl + 'envios.json?' + pendingParams.toString());
+      assert.equal(pendingRead.ok, true, 'el agente sí puede consultar la cola de revisión pendiente');
+      const pendingRows = await pendingRead.json();
+      assert.ok(pendingRows && pendingRows[opId], 'la cola compartida incluye el envío pendiente');
+      const itemReadBefore = await fetch(baseUrl + 'envios/' + encodeURIComponent(opId) + '.json?' + unrestrictedParams.toString());
+      assert.equal(itemReadBefore.ok, false, 'el agente no puede leer directamente el registro privado de otro creador');
+
       const approved = await callFunction(otherAgentToken, 'reviewOperation', { operationId: opId, action: 'approve' });
       assert.equal(approved.ok, true, JSON.stringify(approved.body));
       assert.equal(approved.result.status, 'Aprobado');
+      const pendingAfterParams = new URLSearchParams({
+        ns: PROJECT_ID, orderBy: '"status"', equalTo: '"Pendiente"', auth: agentToken
+      });
+      const pendingAfter = await fetch(baseUrl + 'envios.json?' + pendingAfterParams.toString());
+      assert.equal(pendingAfter.ok, true, 'la cola de revisión sigue disponible');
+      const pendingAfterRows = await pendingAfter.json();
+      assert.equal(pendingAfterRows && pendingAfterRows[opId], undefined, 'el envío sale de la cola tras aprobarse');
       const senderRow = (await rtdb.child('users/sender-1').once('value')).val();
       assert.equal(Number(senderRow.commissionDOP), 4, 'remitente recibe 50% de la comisión');
       assert.equal(Number(senderRow.balanceDOP), before - 108, 'la reserva no se descuenta dos veces');
