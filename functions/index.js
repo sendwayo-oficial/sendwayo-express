@@ -470,7 +470,60 @@ async function requestCommissionWithdrawal(request) {
     ? request.data.operation : (request.data || {});
   const amount = amountFrom(payload);
   const currencyValue = String(payload.currency || payload.balanceCurrency || 'DOP').toUpperCase();
-  const currency = ['HTG', 'GDES'].includes(currencyValue) ? 'HTG' : ['DOP', 'RD
+  const currency = ['HTG', 'GDES'].includes(currencyValue) ? 'HTG' :
+    ['DOP', 'RD$', 'RD', 'PESO', 'PESOS'].includes(currencyValue) ? 'DOP' : null;
+  if (!currency) throw new HttpsError('invalid-argument', 'La moneda debe ser DOP o HTG.');
+  const id = String(payload.idempotencyKey || payload.id || ('COM-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
+  if (!id || id.length > 180 || /[.#$\\[\\]/]/.test(id)) throw new HttpsError('invalid-argument', 'El identificador del retiro de comisión no es válido.');
+  const opRef = root().child('commissions').child(id);
+  const existing = await opRef.once('value');
+  if (existing.exists()) {
+    const old = existing.val() || {};
+    if (old.accountingType === 'COMISION_RETIRO' && old.createdByAuthUid === actor.uid &&
+        P.money(old.amount) === amount && old.currency === currency) {
+      return { id, status: old.status || 'Pendiente', alreadyExists: true, amount, currency };
+    }
+    throw new HttpsError('already-exists', 'El identificador ya se utilizó para otra operación.');
+  }
+  const profile = actor.profile;
+  const record = {
+    id, operationId: id, type: 'Retiro de comisión', category: 'Retiro de comisión',
+    route: 'Retiro de comisión', routeFull: 'Retiro de comisión', method: 'Comisión',
+    amount, currency, balanceCurrency: currency, commission: 0, commissionTotal: 0, commissionRate: 0,
+    commissionSplit: 'SIN REPARTO', commissionBeneficiary: 'AGENTE',
+    userId: actor.key, ownerId: actor.key, ownerLegacyId: actor.key, targetUserId: actor.key,
+    ownerUid: actor.uid, ownerRole: 'agente', ownerName: String(profile.displayName || profile.name || profile.nombre || actor.email),
+    ownerPhone: String(profile.phone || profile.telefono || ''),
+    balanceAccountUserId: 'admin', balanceDebitAmount: amount,
+    createdByRole: 'agente', createdByUserId: actor.key, createdByAuthUid: actor.uid,
+    createdByName: String(profile.displayName || profile.name || actor.email),
+    createdAt: now(), createdAtMs: now(), timestamp: now(),
+    status: 'RESERVANDO', estado: 'reservando',
+    balanceDebited: false, balanceSettled: false, balanceRefunded: false,
+    commissionReserved: true, commissionReservationId: id, accountingType: 'COMISION_RETIRO',
+    adminVisible: true, adminInbox: true
+  };
+  const createTx = await safeTransaction(opRef, current => current || record);
+  const created = createTx && createTx.snapshot && createTx.snapshot.val();
+  if (!created) throw new HttpsError('internal', 'No se pudo crear la solicitud de retiro de comisión.');
+  if (!createTx.committed && (created.createdByAuthUid !== actor.uid || created.accountingType !== 'COMISION_RETIRO')) {
+    throw new HttpsError('already-exists', 'El identificador ya pertenece a otra operación.');
+  }
+  try {
+    await reserveAgentCommission(actor.key, id, amount, currency);
+    await opRef.update({ status: 'Pendiente', estado: 'pendiente', commissionReserved: true, reservedAt: now() });
+  } catch (error) {
+    await updateAgentCommissionReservation(actor.key, id, 'RELEASED').catch(() => {});
+    await opRef.remove().catch(() => {});
+    throw error;
+  }
+  await notifyReviewers(actor.users, actor, record, 'commissions', id).catch(error => console.error('Notificación de retiro de comisión falló', error));
+  await appendNotification(actor.key, 'Retiro de comisión pendiente', 'Tu solicitud de retiro de comisión quedó pendiente de revisión. No tienes un balance separado; el pago se procesará contra el balance compartido de la administración al aprobar.', 'commissions', id).catch(error => console.error('Notificación al agente falló', error));
+  await writeAuditOnce(id, 'RETIRO_COMISION_CREADO', actor, record, 'commissions', { amount, currency, balanceAccountUserId: 'admin' }).catch(error => console.error('Auditoría de retiro de comisión falló', error));
+  return { id, status: 'Pendiente', collection: 'commissions', amount, currency, commissionReserved: true };
+}
+
+async function writeAuditOnce(id, action, actor, operation, collection, extras = {}) {
   const auditId = String(id) + '-' + String(action).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const record = {
     id: auditId, operationId: String(id), sourceCollection: String(collection),
