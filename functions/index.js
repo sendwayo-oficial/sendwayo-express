@@ -379,6 +379,479 @@ async function creditCommission(accountKey, operationId, amount, currency, alsoB
     throw new HttpsError('failed-precondition', 'Firebase no confirmó la comisión.');
   }
 }
+async function reserveAgentCommission(accountKey, operationId, amount, currency) {
+  const ref = root().child('users').child(accountKey);
+  let insufficient = false;
+  let mismatch = false;
+  const tx = await safeTransaction(ref, user => {
+    if (!user || typeof user !== 'object') return;
+    const reservations = { ...(user.commissionWithdrawalReservations || {}) };
+    const existing = reservations[operationId];
+    if (existing) {
+      if (existing.status === 'RESERVED' && existing.currency === currency && P.money(existing.amount) === amount) return user;
+      mismatch = true;
+      return;
+    }
+    const before = P.money(currency === 'HTG'
+      ? (user.commissionHTG ?? user.commissionAccruedHTG ?? 0)
+      : (user.commissionDOP ?? user.commission ?? user.commissionAccrued ?? 0));
+    if (!Number.isFinite(before) || before < amount) {
+      insufficient = true;
+      return;
+    }
+    const after = P.money(before - amount);
+    reservations[operationId] = {
+      id: operationId, operationId, amount, currency, before, after,
+      status: 'RESERVED', reservedAt: now()
+    };
+    const next = setCommission(user, currency, after);
+    next.commissionWithdrawalReservations = reservations;
+    return next;
+  });
+  const fresh = tx && tx.snapshot && tx.snapshot.val();
+  const reservation = fresh && fresh.commissionWithdrawalReservations && fresh.commissionWithdrawalReservations[operationId];
+  if (reservation && reservation.status === 'RESERVED' && reservation.currency === currency && P.money(reservation.amount) === amount) return reservation;
+  if (insufficient) throw new HttpsError('failed-precondition', 'La comisión disponible es insuficiente en ' + currency + '.');
+  if (mismatch) throw new HttpsError('already-exists', 'El identificador ya tiene otra reserva de comisión.');
+  throw new HttpsError('failed-precondition', 'Firebase no confirmó la reserva de comisión del agente.');
+}
+
+async function updateAgentCommissionReservation(accountKey, operationId, status) {
+  const ref = root().child('users').child(accountKey);
+  let missing = false;
+  let invalid = false;
+  const tx = await safeTransaction(ref, user => {
+    if (!user || typeof user !== 'object') { missing = true; return; }
+    const reservations = { ...(user.commissionWithdrawalReservations || {}) };
+    const reservation = reservations[operationId];
+    if (!reservation) { missing = true; return; }
+    if (reservation.status === status) return user;
+    if (reservation.status !== 'RESERVED') {
+      invalid = true;
+      return;
+    }
+    if (status === 'RELEASED') {
+      const before = P.money(reservation.currency === 'HTG'
+        ? (user.commissionHTG ?? user.commissionAccruedHTG ?? 0)
+        : (user.commissionDOP ?? user.commission ?? user.commissionAccrued ?? 0));
+      const after = P.money(before + P.money(reservation.amount));
+      const next = setCommission(user, reservation.currency, after);
+      next.commissionWithdrawalReservations = {
+        ...reservations,
+        [operationId]: { ...reservation, status, releasedAt: now(), releaseBefore: before, releaseAfter: after }
+      };
+      return next;
+    }
+    if (status === 'SETTLED') {
+      return {
+        ...user,
+        commissionWithdrawalReservations: {
+          ...reservations,
+          [operationId]: { ...reservation, status, settledAt: now() }
+        }
+      };
+    }
+    throw new HttpsError('invalid-argument', 'El estado de reserva de comisión no es válido.');
+  });
+  const fresh = tx && tx.snapshot && tx.snapshot.val();
+  const reservation = fresh && fresh.commissionWithdrawalReservations && fresh.commissionWithdrawalReservations[operationId];
+  if (reservation && reservation.status === status) return reservation;
+  if (missing) throw new HttpsError('not-found', 'No se encontró la reserva de comisión del agente.');
+  if (invalid) throw new HttpsError('failed-precondition', 'La reserva de comisión ya fue finalizada y no se puede volver a cambiar.');
+  throw new HttpsError('failed-precondition', 'Firebase no confirmó el cierre de la reserva de comisión.');
+}
+
+async function requestCommissionWithdrawal(request) {
+  const actor = await loadActor(request);
+  if (actor.role !== 'agent') {
+    throw new HttpsError('permission-denied', 'Solo un agente puede solicitar un retiro de comisión desde este módulo.');
+  }
+  const payload = request.data && request.data.operation && typeof request.data.operation === 'object'
+    ? request.data.operation : (request.data || {});
+  const amount = amountFrom(payload);
+  const currencyValue = String(payload.currency || payload.balanceCurrency || 'DOP').toUpperCase();
+  const currency = ['HTG', 'GDES'].includes(currencyValue) ? 'HTG' : ['DOP', 'RD
+  const auditId = String(id) + '-' + String(action).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const record = {
+    id: auditId, operationId: String(id), sourceCollection: String(collection),
+    action, targetUserId: String(operation.userId || ''), createdByAuthUid: actor.uid,
+    createdByUserId: actor.key, createdByRole: actor.role, createdAt: now(), ...extras
+  };
+  const ref = root().child('audit').child(auditId);
+  await safeTransaction(ref, current => current || record);
+}
+async function buildReceipt(id, record, collection, amount, currency, commission, actor) {
+  const receiptId = String(record.receiptId || ('SW-' + new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14) + '-' + id.slice(-5)));
+  const date = new Date().toLocaleDateString('es-DO');
+  const time = new Date().toLocaleTimeString('es-DO');
+  return {
+    id: receiptId, date, time, business: 'SENDWAYO EXPRESS',
+    concept: record.type || record.category || collection,
+    type: record.type || record.category || collection,
+    route: record.routeFull || record.route || '',
+    amount, net: P.money(amount - commission), currency,
+    remitente: record.ownerName || record.remitente || '',
+    remitentePhone: record.ownerPhone || record.telefono || '',
+    beneficiario: record.beneficiary || record.beneficiario || '',
+    beneficiarioPhone: record.beneficiaryPhone || '',
+    collection, status: 'Aprobado', authorizedByUid: actor.uid,
+    authorizedByCode: actor.profile.code || actor.profile.staffId || actor.key
+  };
+}
+async function createOperation(request) {
+  const actor = await loadActor(request);
+  const source = request.data && request.data.operation && typeof request.data.operation === 'object'
+    ? request.data.operation : (request.data || {});
+  const amount = amountFrom(source);
+  const collection = getCollection(source);
+  const deposit = P.isDeposit(collection);
+  const requestedKey = source.targetUserId || source.ownerId || source.remitenteId || source.userId || '';
+  let ownerKey;
+  if (actor.role === 'remitente') ownerKey = actor.key;
+  else if (deposit && !requestedKey) ownerKey = 'admin';
+  else ownerKey = keyForTarget(actor.users, requestedKey) || (requestedKey ? null : actor.key);
+  if (!ownerKey || !actor.users[ownerKey] && ownerKey !== 'admin') throw new HttpsError('not-found', 'No se encontró el destinatario de la operación.');
+  let ownerProfile = actor.users[ownerKey] || (ownerKey === 'admin' ? { role: 'admin', name: 'ADMIN', active: true } : null);
+  if (!ownerProfile) throw new HttpsError('not-found', 'El destinatario no tiene perfil.');
+  if (actor.role === 'agent' && ownerKey !== actor.key && roleOf(ownerProfile) !== 'remitente') {
+    throw new HttpsError('permission-denied', 'Un agente solo puede operar para un remitente o registrar una operación propia.');
+  }
+  if (actor.role === 'remitente' && ownerKey !== actor.key) throw new HttpsError('permission-denied', 'Un remitente solo puede operar sobre su propia cuenta.');
+  if (ownerKey !== 'admin' && !activeProfile(ownerProfile)) throw new HttpsError('failed-precondition', 'El destinatario no está activo.');
+  const currency = P.currencyFor(source, collection);
+  const fee = P.commissionFor({ ...source, type: source.type || source.category || (collection === 'accountWithdrawals' ? 'Retiro' : '') }, collection, amount);
+  const grossDebit = deposit ? 0 : P.money(amount + fee);
+  const financialAccountKey = actor.role === 'remitente' ? actor.key : 'admin';
+  const financialAccount = actor.users[financialAccountKey];
+  if (!deposit && !financialAccount) throw new HttpsError('failed-precondition', 'No existe el balance operativo de la administración o del remitente.');
+  const id = String(source.idempotencyKey || source.id || ('SW-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
+  if (!id || id.length > 180 || /[.#$\[\]/]/.test(id)) throw new HttpsError('invalid-argument', 'El identificador de la operación no es válido.');
+  const saved = await root().child(collection).child(id).once('value');
+  if (saved.exists()) {
+    const old = saved.val() || {};
+    if (old.createdByAuthUid === actor.uid && P.money(old.amount) === amount && String(old.userId) === ownerKey) {
+      return { id, status: old.status || 'Pendiente', alreadyExists: true };
+    }
+    throw new HttpsError('already-exists', 'El identificador ya se utilizó para otra operación.');
+  }
+  const record = {
+    id, operationId: id, type: String(source.type || source.category || (deposit ? 'Depósito' : collection === 'accountWithdrawals' ? 'Retiro' : 'Envío')),
+    category: String(source.category || source.type || (deposit ? 'Depósito' : collection === 'accountWithdrawals' ? 'Retiro' : 'Envío')),
+    route: String(source.route || source.routeFull || ''), routeFull: String(source.routeFull || source.route || ''),
+    method: String(source.method || source.provider || ''), provider: String(source.provider || source.method || ''),
+    amount, currency, balanceCurrency: currency, commission: fee, commissionTotal: fee,
+    commissionRate: deposit ? 0 : (P.isService(source) ? 0.05 : P.usesHaitiWalletTable(source) ? null : 0.08),
+    commissionSplit: deposit ? 'NINGUNO' : actor.role === 'remitente' ? '50/50' : '100% PLATAFORMA',
+    commissionBeneficiary: deposit ? 'NINGUNO' : actor.role === 'remitente' ? 'REMITENTE_Y_ADMIN' : 'PLATAFORMA',
+    userId: ownerKey, ownerId: ownerKey, ownerLegacyId: ownerKey,
+    ownerUid: String(ownerProfile.authUid || ownerProfile.uid || (ownerKey === actor.key ? actor.uid : '')),
+    ownerRole: canonicalRole(ownerKey === 'admin' ? 'admin' : roleOf(ownerProfile)), ownerName: String(ownerProfile.displayName || ownerProfile.name || ownerProfile.nombre || source.ownerName || source.remitente || (ownerKey === 'admin' ? 'ADMIN' : '')),
+    ownerPhone: String(ownerProfile.phone || ownerProfile.telefono || source.ownerPhone || ''),
+    targetUserId: ownerKey,
+    balanceAccountUserId: financialAccountKey,
+    balanceDebitAmount: grossDebit,
+    createdByRole: canonicalRole(actor.role), createdByUserId: actor.key,
+    createdByAuthUid: actor.uid, createdByName: String(actor.profile.displayName || actor.profile.name || actor.email || ''),
+    createdAt: now(), createdAtMs: now(), timestamp: now(),
+    status: 'RESERVANDO', estado: 'reservando', balanceDebited: false,
+    balanceSettled: false, balanceRefunded: false, adminVisible: true, adminInbox: true,
+    accountingType: deposit ? 'DEPOSITO_CAPITAL' : 'COMERCIAL',
+    beneficiary: String(source.beneficiary || source.beneficiario || ''),
+    beneficiaryPhone: String(source.beneficiaryPhone || source.beneficiarioPhone || ''),
+    accountId: String(source.accountId || source.bankAccountId || ''),
+    bankAccountId: String(source.bankAccountId || source.accountId || ''),
+    originalReference: String(source.reference || source.referencia || '')
+  };
+  const opRef = root().child(collection).child(id);
+  const createTx = await safeTransaction(opRef, current => current || record);
+  const created = createTx && createTx.snapshot && createTx.snapshot.val();
+  if (!created) throw new HttpsError('internal', 'No se pudo crear la operación.');
+  if (!createTx.committed && created.createdByAuthUid !== actor.uid) throw new HttpsError('already-exists', 'El identificador ya pertenece a otra operación.');
+  if (!deposit && !created.balanceDebited) {
+    try {
+      await reserveBalance(financialAccountKey, id, grossDebit, currency, collection);
+      await opRef.update({ balanceDebited: true, balanceReservationId: id, balanceDebitAmount: grossDebit, status: 'Pendiente', estado: 'pendiente', reservedAt: now() });
+    } catch (error) {
+      await refundBalance(financialAccountKey, id, grossDebit, currency).catch(refundError => console.error('[SENDWAYO] No se pudo revertir una reserva fallida:', refundError));
+      await opRef.remove().catch(() => {});
+      throw error;
+    }
+  } else if (deposit) {
+    await opRef.update({ status: 'Pendiente', estado: 'pendiente', commission: 0, commissionTotal: 0, commissionRate: 0 });
+  }
+  await notifyReviewers(actor.users, actor, record, collection, id).catch(error => console.error('Notificación de revisión falló', error));
+  if (actor.role === 'remitente') await addOwnerNotification(record, collection, id, 'Tu operación quedó pendiente de revisión. Los fondos están reservados si la operación requiere balance.').catch(error => console.error('Notificación al remitente falló', error));
+  await writeAuditOnce(id, 'CREADA_PENDIENTE', actor, record, collection, { amount, currency, balanceAccountUserId: financialAccountKey }).catch(error => console.error('Auditoría de creación falló', error));
+  return { id, status: 'Pendiente', collection, amount, currency, commission: fee, balanceDebited: !deposit };
+}
+async function reviewOperation(request) {
+  const actor = await loadActor(request);
+  const id = String((request.data && (request.data.operationId || request.data.id)) || '').trim();
+  const action = P.normalizeAction(request.data && (request.data.action || request.data.status));
+  if (!action) throw new HttpsError('invalid-argument', 'Selecciona Aprobado, Rechazado o No coincide.');
+  const found = await getOperation(id);
+  const { collection } = found;
+  const initialStatus = P.normalizeText(found.record.status || found.record.estado || 'Pendiente');
+  if (!['pendiente', 'reserving', 'reservando'].includes(initialStatus)) {
+    if (initialStatus === P.normalizeText(action)) {
+      return { id, status: action, alreadyProcessed: true };
+    }
+    throw new HttpsError('failed-precondition', 'Esta operación ya fue procesada. Actualiza la lista antes de intentarlo otra vez.');
+  }
+  if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(collection)) {
+    throw new HttpsError('failed-precondition', 'Este tipo de registro requiere un procedimiento administrativo específico y no se puede liquidar desde la cola general.');
+  }
+  const decision = P.canReview({ actorRole: actor.role, actorUid: actor.uid, actorKey: actor.key, operation: found.record, collection, action });
+  if (!decision.allowed) throw new HttpsError('permission-denied', decision.reason);
+  const reason = String(request.data.reason || '').trim() || (action === 'Rechazado' ? 'Rechazado tras revisión' : action === 'No Coincide' ? 'Requiere corrección' : '');
+  const opRef = found.ref;
+  let alreadyFinal = false;
+  let lockedRecord = null;
+  const lockTx = await safeTransaction(opRef, current => {
+    if (!current) return;
+    const status = P.normalizeText(current.status || current.estado || 'Pendiente');
+    const retryingSameAction = status === 'procesando' &&
+      current.recoveryRequired === true &&
+      P.normalizeAction(current.recoveryAction) === action;
+    if (retryingSameAction) {
+      lockedRecord = {
+        ...current, status: 'Procesando', estado: 'procesando',
+        processingReviewByAuthUid: actor.uid, processingReviewByUserId: actor.key,
+        processingReviewAt: now(), processingReviewAction: action,
+        recoveryRequired: false, recoveryStartedAt: now()
+      };
+      return lockedRecord;
+    }
+    if (!['pendiente', 'reserving', 'reservando'].includes(status)) {
+      if (status === P.normalizeText(action)) alreadyFinal = true;
+      return;
+    }
+    lockedRecord = {
+      ...current, status: 'Procesando', estado: 'procesando',
+      processingReviewByAuthUid: actor.uid, processingReviewByUserId: actor.key,
+      processingReviewAt: now(), processingReviewAction: action, recoveryRequired: false
+    };
+    return lockedRecord;
+  });
+  if (!lockTx) throw new HttpsError('failed-precondition', 'No se pudo bloquear la operación para su revisión.');
+  if (!lockTx.committed && alreadyFinal) return { id, status: action, alreadyProcessed: true };
+  if (!lockTx.snapshot || !lockTx.snapshot.exists()) throw new HttpsError('not-found', 'La operación desapareció antes de revisarla.');
+  if (!lockTx.committed) {
+    const fresh = lockTx.snapshot.val() || {};
+    if (P.normalizeText(fresh.status || fresh.estado) === P.normalizeText(action)) return { id, status: action, alreadyProcessed: true };
+    throw new HttpsError('failed-precondition', 'La operación ya se está procesando o ya fue revisada.');
+  }
+  const record = lockTx.snapshot.val() || lockedRecord || found.record;
+  const amount = amountFrom(record);
+  const currency = P.currencyFor(record, collection);
+  const fee = P.isDeposit(collection) ? 0 : P.commissionFor(record, collection, amount);
+  const financialAccountKey = String(record.balanceAccountUserId || ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
+  let financialCommitStarted = false;
+  let balanceDebitedFinal = !!record.balanceDebited;
+  let balanceWasRefunded = !!record.balanceRefunded;
+  try {
+    if (action === 'Aprobado') {
+      if (P.isDeposit(collection)) {
+        if (actor.role !== 'admin') throw new HttpsError('permission-denied', 'Solo el administrador puede aprobar depósitos.');
+        const ownerKey = String(record.userId || record.targetUserId || '');
+        if (!ownerKey) throw new HttpsError('failed-precondition', 'El depósito no tiene destinatario.');
+        financialCommitStarted = true;
+        await creditDeposit(id, ownerKey, amount, currency);
+      } else {
+        const reservation = financialAccountKey ? await root().child('users').child(financialAccountKey).child('balanceReservations').child(id).once('value') : null;
+        const reservationData = reservation && reservation.val();
+        if (reservationData && reservationData.status === 'RESERVED') {
+          financialCommitStarted = true;
+          await updateReservationStatus(financialAccountKey, id, 'SETTLED');
+          balanceDebitedFinal = true;
+        } else if (!record.balanceDebited || (reservationData && reservationData.status === 'REFUNDED')) {
+          financialCommitStarted = true;
+          const settlementId = reservationData && reservationData.status === 'REFUNDED' ? id + '-reapproved' : id;
+          await debitLegacyBalance(financialAccountKey, settlementId, P.money(amount + fee), currency);
+          balanceDebitedFinal = true;
+        } else {
+          balanceDebitedFinal = true;
+        }
+      }
+      const creatorRole = P.normalizeRole(record.createdByRole);
+      const senderKey = String(record.createdByUserId || '');
+      const senderShare = creatorRole === 'remitente' ? P.money(fee / 2) : 0;
+      const adminShare = P.money(fee - senderShare);
+      if (senderShare > 0 && senderKey && actor.users[senderKey]) await creditCommission(senderKey, id, senderShare, currency, false);
+      if (adminShare > 0) await creditCommission('admin', id, adminShare, currency, true);
+    } else {
+      if (!P.isDeposit(collection) && record.balanceDebited) {
+        financialCommitStarted = true;
+        const returned = await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency, true);
+        if (returned) {
+          balanceWasRefunded = true;
+          balanceDebitedFinal = false;
+          await opRef.update({ balanceDebited: false, balanceRefunded: true, balanceRefundedAt: now() });
+        }
+      }
+    }
+    const reviewedAt = now();
+    const finalPatch = {
+      status: action, estado: action.toLowerCase(), reviewedAt, approvedAt: action === 'Aprobado' ? reviewedAt : null,
+      reviewedBy: actor.profile.username || actor.profile.name || actor.email || actor.key,
+      reviewedByName: actor.profile.displayName || actor.profile.name || actor.email || actor.key,
+      reviewedByAuthUid: actor.uid, reviewedByUserId: actor.key, reviewReason: reason,
+      commissionTotal: action === 'Aprobado' ? fee : 0, commissionUser: action === 'Aprobado' && P.normalizeRole(record.createdByRole) === 'remitente' ? P.money(fee / 2) : 0,
+      commissionAdmin: action === 'Aprobado' ? P.money(fee - (P.normalizeRole(record.createdByRole) === 'remitente' ? P.money(fee / 2) : 0)) : 0,
+      balanceSettled: action === 'Aprobado', balanceSettledAt: action === 'Aprobado' ? reviewedAt : null,
+      balanceDebited: action === 'Aprobado' ? balanceDebitedFinal : false,
+      balanceRefunded: action !== 'Aprobado' && (balanceWasRefunded || !!record.balanceDebited),
+      balanceRefundedAt: action === 'Aprobado' ? (record.balanceRefundedAt || null) : (balanceWasRefunded ? (record.balanceRefundedAt || reviewedAt) : null),
+      manualReview: true
+    };
+    if (action === 'Aprobado') {
+      finalPatch.receiptId = record.receiptId || ('SW-' + new Date(reviewedAt).toISOString().replace(/[-:TZ.]/g, '').slice(0, 14) + '-' + id.slice(-5));
+      finalPatch.receipt = await buildReceipt(id, { ...record, receiptId: finalPatch.receiptId }, collection, amount, currency, fee, actor);
+    }
+    // Escribir primero el apunte contable idempotente. Si el siguiente update de la
+    // operación falla, el estado quedará en recuperación y podrá reintentarse la
+    // misma acción sin crear otro débito ni un segundo asiento.
+    if (action === 'Aprobado') {
+      const ledgerRef = root().child('ledger').child(id);
+      await safeTransaction(ledgerRef, current => current || ({
+        id, recordId: id, sourceCollection: collection, sourceId: id, ledgerLocked: true,
+        ledgerEvent: 'APROBACION', userId: record.userId || '', balanceAccountUserId: financialAccountKey,
+        amount, currency, commission: fee, commissionUser: finalPatch.commissionUser, commissionAdmin: finalPatch.commissionAdmin,
+        balanceDebit: record.balanceDebitAmount || P.money(amount + fee), reviewedByAuthUid: actor.uid, createdAt: reviewedAt
+      }));
+    }
+    await opRef.update(finalPatch);
+    await writeAuditOnce(id, action.toUpperCase(), actor, record, collection, { amount, currency, commission: fee, reason }).catch(error => console.error('Auditoría de revisión falló', error));
+    const note = action === 'Aprobado' ? 'Tu operación fue aprobada. El comprobante ya está disponible.' : action === 'Rechazado' ? 'Tu operación fue rechazada. Los fondos reservados se devolvieron si correspondía.' : 'Tu operación quedó No coincide. Los fondos reservados se liberaron para que puedas corregirla y reenviarla.';
+    await addOwnerNotification(record, collection, id, note).catch(error => console.error('Notificación de revisión falló', error));
+    if (record.createdByUserId && record.createdByUserId !== record.userId) {
+      await appendNotification(record.createdByUserId, 'Estado de operación actualizado', 'La operación ' + id + ' quedó ' + action + '.', collection, id).catch(error => console.error('Notificación al creador falló', error));
+    }
+    return { id, status: action, receiptId: finalPatch.receiptId || null };
+  } catch (error) {
+    // Si cualquier marcador de saldo ya pudo haberse aplicado, no volver a
+    // Pendiente con otra decisión posible. Guardar la acción y requerir un
+    // reintento de la MISMA acción para que los marcadores idempotentes reparen.
+    await safeTransaction(opRef, current => {
+      if (!current || current.status !== 'Procesando' || current.processingReviewByAuthUid !== actor.uid) return;
+      const next = { ...current, lastReviewError: String(error.message || 'Error de revisión'), lastReviewErrorAt: now() };
+      if (financialCommitStarted) {
+        next.status = 'Procesando';
+        next.estado = 'procesando';
+        next.recoveryRequired = true;
+        next.recoveryAction = action;
+      } else {
+        next.status = 'Pendiente';
+        next.estado = 'pendiente';
+        delete next.processingReviewByAuthUid;
+        delete next.processingReviewByUserId;
+        delete next.processingReviewAt;
+        delete next.processingReviewAction;
+        delete next.recoveryRequired;
+        delete next.recoveryAction;
+      }
+      return next;
+    }).catch(() => {});
+    throw asHttpsError(error, financialCommitStarted
+      ? 'La revisión requiere recuperación segura. Repite la misma decisión; no elijas otra acción mientras esté en Procesando.'
+      : 'No se confirmó la revisión. La operación volvió a Pendiente.');
+  }
+}
+
+exports.submitOperation = onCall(async request => {
+  try { return await createOperation(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo registrar la operación. No se confirmó ninguna acción que no aparezca guardada en Firebase.'); }
+});
+async function resubmitOperation(request) {
+  const actor = await loadActor(request);
+  const payload = request.data || {};
+  const oldId = String(payload.operationId || payload.id || '').trim();
+  const found = await getOperation(oldId);
+  if (P.normalizeText(found.record.status || found.record.estado) !== 'no coincide') {
+    throw new HttpsError('failed-precondition', 'Solo se puede corregir una operación marcada No coincide.');
+  }
+  const isAdmin = actor.role === 'admin';
+  if (!isAdmin && actor.key !== String(found.record.userId || '') && actor.key !== String(found.record.createdByUserId || '')) {
+    throw new HttpsError('permission-denied', 'No tienes permiso para corregir esta operación.');
+  }
+  const changes = payload.operation && typeof payload.operation === 'object' ? payload.operation : (payload.changes || {});
+  const nextId = String(payload.newOperationId || ('SW-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
+  const nextData = {
+    ...changes,
+    id: nextId,
+    idempotencyKey: nextId,
+    type: changes.type || found.record.type || found.record.category,
+    category: changes.category || found.record.category || found.record.type,
+    targetUserId: isAdmin ? (changes.targetUserId || found.record.userId) : found.record.userId,
+    userId: found.record.userId,
+    resubmittedFrom: oldId
+  };
+  const result = await createOperation({ auth: request.auth, data: { operation: nextData } });
+  await found.ref.update({ resubmittedTo: result.id, resubmittedAt: now() });
+  await writeAuditOnce(oldId, 'REENVIADA_CORREGIDA', actor, found.record, found.collection, { resubmittedTo: result.id });
+  return { ...result, resubmittedFrom: oldId };
+}
+
+exports.reviewOperation = onCall(async request => {
+  try { return await reviewOperation(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo revisar la operación. Comprueba el estado actualizado antes de volver a intentarlo.'); }
+});
+exports.resubmitOperation = onCall(async request => {
+  try { return await resubmitOperation(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo reenviar la operación corregida.'); }
+});
+, 'RD', 'PESO', 'PESOS'].includes(currencyValue) ? 'DOP' : null;
+  if (!currency) throw new HttpsError('invalid-argument', 'La moneda debe ser DOP o HTG.');
+  const id = String(payload.idempotencyKey || payload.id || ('COM-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
+  if (!id || id.length > 180 || /[.#$\[\]/]/.test(id)) throw new HttpsError('invalid-argument', 'El identificador del retiro de comisión no es válido.');
+  const opRef = root().child('commissions').child(id);
+  const existing = await opRef.once('value');
+  if (existing.exists()) {
+    const old = existing.val() || {};
+    if (old.accountingType === 'COMISION_RETIRO' && old.createdByAuthUid === actor.uid &&
+        P.money(old.amount) === amount && old.currency === currency) {
+      return { id, status: old.status || 'Pendiente', alreadyExists: true, amount, currency };
+    }
+    throw new HttpsError('already-exists', 'El identificador ya se utilizó para otra operación.');
+  }
+  const profile = actor.profile;
+  const record = {
+    id, operationId: id, type: 'Retiro de comisión', category: 'Retiro de comisión',
+    route: 'Retiro de comisión', routeFull: 'Retiro de comisión', method: 'Comisión',
+    amount, currency, balanceCurrency: currency, commission: 0, commissionTotal: 0, commissionRate: 0,
+    commissionSplit: 'SIN REPARTO', commissionBeneficiary: 'AGENTE',
+    userId: actor.key, ownerId: actor.key, ownerLegacyId: actor.key, targetUserId: actor.key,
+    ownerUid: actor.uid, ownerRole: 'agente', ownerName: String(profile.displayName || profile.name || profile.nombre || actor.email),
+    ownerPhone: String(profile.phone || profile.telefono || ''),
+    balanceAccountUserId: 'admin', balanceDebitAmount: amount,
+    createdByRole: 'agente', createdByUserId: actor.key, createdByAuthUid: actor.uid,
+    createdByName: String(profile.displayName || profile.name || actor.email),
+    createdAt: now(), createdAtMs: now(), timestamp: now(),
+    status: 'RESERVANDO', estado: 'reservando',
+    balanceDebited: false, balanceSettled: false, balanceRefunded: false,
+    commissionReserved: true, commissionReservationId: id, accountingType: 'COMISION_RETIRO',
+    adminVisible: true, adminInbox: true
+  };
+  const createTx = await safeTransaction(opRef, current => current || record);
+  const created = createTx && createTx.snapshot && createTx.snapshot.val();
+  if (!created) throw new HttpsError('internal', 'No se pudo crear la solicitud de retiro de comisión.');
+  if (!createTx.committed && (created.createdByAuthUid !== actor.uid || created.accountingType !== 'COMISION_RETIRO')) {
+    throw new HttpsError('already-exists', 'El identificador ya pertenece a otra operación.');
+  }
+  try {
+    await reserveAgentCommission(actor.key, id, amount, currency);
+    await opRef.update({ status: 'Pendiente', estado: 'pendiente', commissionReserved: true, reservedAt: now() });
+  } catch (error) {
+    await updateAgentCommissionReservation(actor.key, id, 'RELEASED').catch(() => {});
+    await opRef.remove().catch(() => {});
+    throw error;
+  }
+  await notifyReviewers(actor.users, actor, record, 'commissions', id).catch(error => console.error('Notificación de retiro de comisión falló', error));
+  await appendNotification(actor.key, 'Retiro de comisión pendiente', 'Tu solicitud de retiro de comisión quedó pendiente de revisión. No tienes un balance separado; el pago se procesará contra el balance compartido de la administración al aprobar.', 'commissions', id).catch(error => console.error('Notificación al agente falló', error));
+  await writeAuditOnce(id, 'RETIRO_COMISION_CREADO', actor, record, 'commissions', { amount, currency, balanceAccountUserId: 'admin' }).catch(error => console.error('Auditoría de retiro de comisión falló', error));
+  return { id, status: 'Pendiente', collection: 'commissions', amount, currency, commissionReserved: true };
+}
+
 async function writeAuditOnce(id, action, actor, operation, collection, extras = {}) {
   const auditId = String(id) + '-' + String(action).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const record = {
