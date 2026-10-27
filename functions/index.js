@@ -178,9 +178,7 @@ async function appendNotification(targetUserId, title, message, collection, oper
 }
 async function notifyReviewers(users, actor, operation, collection, id) {
   const recipients = new Set(['admin']);
-  const adminOnlyReview = String(collection || '') === 'commissions' ||
-    P.isDeposit(collection) ||
-    P.isCommissionWithdrawal(collection, operation);
+  const adminOnlyReview = P.isDeposit(collection);
   if (!adminOnlyReview) {
     for (const [key, profile] of Object.entries(users || {})) {
       if (profile && roleOf(profile) === 'agent' && activeProfile(profile) && key !== actor.key) recipients.add(key);
