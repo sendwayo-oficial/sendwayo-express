@@ -182,8 +182,12 @@ async function appendNotification(targetUserId, title, message, collection, oper
 }
 async function notifyReviewers(users, actor, operation, collection, id) {
   const recipients = new Set(['admin']);
-  for (const [key, profile] of Object.entries(users || {})) {
-    if (profile && roleOf(profile) === 'agent' && activeProfile(profile) && key !== actor.key) recipients.add(key);
+  // Los depósitos son competencia exclusiva del administrador. No anunciar
+  // depósitos en las bandejas de los agentes.
+  if (collection !== 'deposits') {
+    for (const [key, profile] of Object.entries(users || {})) {
+      if (profile && roleOf(profile) === 'agent' && activeProfile(profile) && key !== actor.key) recipients.add(key);
+    }
   }
   recipients.delete(actor.key);
   const title = 'Operación pendiente de revisión';
