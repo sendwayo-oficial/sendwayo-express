@@ -25,6 +25,13 @@ test('aplica 5% a servicios, 8% general y tabla local', () => {
   assert.equal(policy.commissionFor({ type: 'Depósito' }, 'deposits', 100), 0);
 });
 
+test('el retiro de comisión usa la moneda seleccionada y no genera otra comisión', () => {
+  assert.equal(policy.isCommissionWithdrawal('commissions', { accountingType: 'COMISION_RETIRO' }), true);
+  assert.equal(policy.currencyFor({ accountingType: 'COMISION_RETIRO', currency: 'HTG' }, 'commissions'), 'HTG');
+  assert.equal(policy.currencyFor({ accountingType: 'COMISION_RETIRO', currency: 'DOP' }, 'commissions'), 'DOP');
+  assert.equal(policy.commissionFor({ accountingType: 'COMISION_RETIRO', type: 'Retiro de comisión' }, 'commissions', 50), 0);
+});
+
 test('un agente no puede auto-revisarse ni aprobar depósitos', () => {
   const base = { actorRole: 'agente', actorUid: 'uid-a', actorKey: 'AG-01', action: 'Aprobado' };
   assert.equal(policy.canReview({ ...base, operation: { createdByAuthUid: 'uid-a' }, collection: 'envios' }).allowed, false);
