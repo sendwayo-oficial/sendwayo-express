@@ -6,7 +6,7 @@
       ".read": false,
       ".write": false,
       "users": {
-        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'authUid' && query.equalTo === auth.uid) || (query.orderByChild === 'authEmail' && query.equalTo === auth.token.email) || (query.orderByChild === 'email' && query.equalTo === auth.token.email) || (query.orderByChild === 'username' && query.equalTo === auth.token.email) || (query.orderByChild === 'staffId' && query.equalTo === auth.token.email)))",
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
         ".indexOn": [
           "authUid",
           "authEmail",
@@ -98,7 +98,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "recargas": {
         "$id": {
@@ -115,7 +116,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "paqueticos": {
         "$id": {
@@ -132,7 +134,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "pagos": {
         "$id": {
@@ -149,7 +152,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "paquetes": {
         "$id": {
@@ -183,7 +187,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "accountWithdrawals": {
         "$id": {
@@ -199,7 +204,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "commissions": {
         "$id": {
@@ -216,7 +222,8 @@
           "approvedAt",
           "balanceSettledAt",
           "createdByAuthUid"
-        ]
+        ],
+        ".write": false
       },
       "credits": {
         "$id": {
