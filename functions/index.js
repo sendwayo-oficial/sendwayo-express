@@ -387,7 +387,7 @@ async function writeAuditOnce(id, action, actor, operation, collection, extras =
     createdByUserId: actor.key, createdByRole: actor.role, createdAt: now(), ...extras
   };
   const ref = root().child('audit').child(auditId);
-  await ref.transaction(current => current || record, undefined, false);
+  await safeTransaction(ref, current => current || record);
 }
 async function buildReceipt(id, record, collection, amount, currency, commission, actor) {
   const receiptId = String(record.receiptId || ('SW-' + new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14) + '-' + id.slice(-5)));
