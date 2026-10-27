@@ -38,10 +38,10 @@
       },
       "notifications": {
         "$id": {
-          ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'targetUserId' && query.equalTo === 'admin' && root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid) || (query.orderByChild === 'targetUserId' && query.equalTo === root.child('sendwayo_express_v2/users').child(query.equalTo).child('id').val() && root.child('sendwayo_express_v2/users').child(query.equalTo).child('authUid').val() === auth.uid))) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
+          ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')) || (auth != null && data.child('targetUserId').val() != null && root.child('sendwayo_express_v2/users').child(data.child('targetUserId').val()).child('authUid').val() === auth.uid)",
           ".write": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (!data.exists() && ((newData.child('targetUserId').val() === 'admin' && newData.child('createdByAuthUid').val() === auth.uid) || root.child('sendwayo_express_v2/users').child(newData.child('targetUserId').val()).child('authUid').val() === auth.uid)) || (data.exists() && root.child('sendwayo_express_v2/users').child(data.child('targetUserId').val()).child('authUid').val() === auth.uid && (!newData.exists() || newData.child('targetUserId').val() === data.child('targetUserId').val())))) || (auth != null && (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true) && !data.exists() && newData.child('createdByAuthUid').val() === auth.uid)"
         },
-        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'targetUserId' && root.child('sendwayo_express_v2/users').child(query.equalTo).child('authUid').val() === auth.uid))) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
+        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')) || (auth != null && query.orderByChild === 'targetUserId' && root.child('sendwayo_express_v2/users').child(query.equalTo).child('authUid').val() === auth.uid)",
         ".indexOn": [
           "targetUserId",
           "createdAtMs",
@@ -50,11 +50,11 @@
       },
       "requests": {
         "$id": {
-          ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'createdByAuthUid' && query.equalTo === auth.uid))) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
+          ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')) || (auth != null && data.child('createdByAuthUid').val() === auth.uid)",
           ".write": "((auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (data.exists() && data.child('createdByAuthUid').val() === auth.uid))) || (!data.exists() && newData.child('id').val() === $id && newData.child('type').exists() && newData.child('name').exists() && newData.child('phone').exists()))",
           ".validate": "!newData.exists() || (newData.child('id').val() === $id && newData.child('type').isString() && newData.child('name').isString() && newData.child('phone').isString() && newData.child('status').isString())"
         },
-        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (query.orderByChild === 'createdByAuthUid' && query.equalTo === auth.uid))) || (auth != null && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
+        ".read": "(auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')) || (auth != null && query.orderByChild === 'createdByAuthUid' && query.equalTo === auth.uid)",
         ".indexOn": [
           "createdByAuthUid",
           "status",
