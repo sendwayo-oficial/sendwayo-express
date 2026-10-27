@@ -452,11 +452,27 @@ async function reviewOperation(request) {
   const lockTx = await opRef.transaction(current => {
     if (!current) return;
     const status = P.normalizeText(current.status || current.estado || 'Pendiente');
+    const retryingSameAction = status === 'procesando' &&
+      current.recoveryRequired === true &&
+      P.normalizeAction(current.recoveryAction) === action;
+    if (retryingSameAction) {
+      lockedRecord = {
+        ...current, status: 'Procesando', estado: 'procesando',
+        processingReviewByAuthUid: actor.uid, processingReviewByUserId: actor.key,
+        processingReviewAt: now(), processingReviewAction: action,
+        recoveryRequired: false, recoveryStartedAt: now()
+      };
+      return lockedRecord;
+    }
     if (!['pendiente', 'reserving', 'reservando'].includes(status)) {
       if (status === P.normalizeText(action)) alreadyFinal = true;
       return;
     }
-    lockedRecord = { ...current, status: 'Procesando', estado: 'procesando', processingReviewByAuthUid: actor.uid, processingReviewByUserId: actor.key, processingReviewAt: now() };
+    lockedRecord = {
+      ...current, status: 'Procesando', estado: 'procesando',
+      processingReviewByAuthUid: actor.uid, processingReviewByUserId: actor.key,
+      processingReviewAt: now(), processingReviewAction: action, recoveryRequired: false
+    };
     return lockedRecord;
   }, undefined, false);
   if (!lockTx || !lockTx.snapshot || !lockTx.snapshot.exists()) throw new HttpsError('not-found', 'La operación desapareció antes de revisarla.');
@@ -470,21 +486,31 @@ async function reviewOperation(request) {
   const currency = P.currencyFor(record, collection);
   const fee = P.isDeposit(collection) ? 0 : P.commissionFor(record, collection, amount);
   const financialAccountKey = String(record.balanceAccountUserId || ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
+  let financialCommitStarted = false;
+  let balanceDebitedFinal = !!record.balanceDebited;
+  let balanceWasRefunded = !!record.balanceRefunded;
   try {
     if (action === 'Aprobado') {
       if (P.isDeposit(collection)) {
         if (actor.role !== 'admin') throw new HttpsError('permission-denied', 'Solo el administrador puede aprobar depósitos.');
         const ownerKey = String(record.userId || record.targetUserId || '');
         if (!ownerKey) throw new HttpsError('failed-precondition', 'El depósito no tiene destinatario.');
+        financialCommitStarted = true;
         await creditDeposit(id, ownerKey, amount, currency);
       } else {
         const reservation = financialAccountKey ? await root().child('users').child(financialAccountKey).child('balanceReservations').child(id).once('value') : null;
         const reservationData = reservation && reservation.val();
         if (reservationData && reservationData.status === 'RESERVED') {
+          financialCommitStarted = true;
           await updateReservationStatus(financialAccountKey, id, 'SETTLED');
+          balanceDebitedFinal = true;
         } else if (!record.balanceDebited || (reservationData && reservationData.status === 'REFUNDED')) {
+          financialCommitStarted = true;
           const settlementId = reservationData && reservationData.status === 'REFUNDED' ? id + '-reapproved' : id;
           await debitLegacyBalance(financialAccountKey, settlementId, P.money(amount + fee), currency);
+          balanceDebitedFinal = true;
+        } else {
+          balanceDebitedFinal = true;
         }
       }
       const creatorRole = P.normalizeRole(record.createdByRole);
@@ -495,8 +521,13 @@ async function reviewOperation(request) {
       if (adminShare > 0) await creditCommission('admin', id, adminShare, currency, true);
     } else {
       if (!P.isDeposit(collection) && record.balanceDebited) {
+        financialCommitStarted = true;
         const returned = await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency, true);
-        if (returned) await opRef.update({ balanceDebited: false, balanceRefunded: true, balanceRefundedAt: now() });
+        if (returned) {
+          balanceWasRefunded = true;
+          balanceDebitedFinal = false;
+          await opRef.update({ balanceDebited: false, balanceRefunded: true, balanceRefundedAt: now() });
+        }
       }
     }
     const reviewedAt = now();
@@ -508,9 +539,9 @@ async function reviewOperation(request) {
       commissionTotal: action === 'Aprobado' ? fee : 0, commissionUser: action === 'Aprobado' && P.normalizeRole(record.createdByRole) === 'remitente' ? P.money(fee / 2) : 0,
       commissionAdmin: action === 'Aprobado' ? P.money(fee - (P.normalizeRole(record.createdByRole) === 'remitente' ? P.money(fee / 2) : 0)) : 0,
       balanceSettled: action === 'Aprobado', balanceSettledAt: action === 'Aprobado' ? reviewedAt : null,
-      balanceDebited: action === 'Aprobado' ? !!record.balanceDebited : false,
-      balanceRefunded: action !== 'Aprobado' && !!record.balanceRefunded || (action !== 'Aprobado' && !!record.balanceDebited),
-      balanceRefundedAt: action === 'Aprobado' ? (record.balanceRefundedAt || null) : (record.balanceRefundedAt || reviewedAt),
+      balanceDebited: action === 'Aprobado' ? balanceDebitedFinal : false,
+      balanceRefunded: action !== 'Aprobado' && (balanceWasRefunded || !!record.balanceDebited),
+      balanceRefundedAt: action === 'Aprobado' ? (record.balanceRefundedAt || null) : (balanceWasRefunded ? (record.balanceRefundedAt || reviewedAt) : null),
       manualReview: true
     };
     if (action === 'Aprobado') {
@@ -535,17 +566,32 @@ async function reviewOperation(request) {
     }
     return { id, status: action, receiptId: finalPatch.receiptId || null };
   } catch (error) {
-    // El cambio de saldo usa marcadores idempotentes; se vuelve a Pendiente para
-    // permitir reintento seguro y evitar una operación "congelada".
+    // Si cualquier marcador de saldo ya pudo haberse aplicado, no volver a
+    // Pendiente con otra decisión posible. Guardar la acción y requerir un
+    // reintento de la MISMA acción para que los marcadores idempotentes reparen.
     await opRef.transaction(current => {
       if (!current || current.status !== 'Procesando' || current.processingReviewByAuthUid !== actor.uid) return;
-      const next = { ...current, status: 'Pendiente', estado: 'pendiente', lastReviewError: String(error.message || 'Error de revisión'), lastReviewErrorAt: now() };
-      delete next.processingReviewByAuthUid;
-      delete next.processingReviewByUserId;
-      delete next.processingReviewAt;
+      const next = { ...current, lastReviewError: String(error.message || 'Error de revisión'), lastReviewErrorAt: now() };
+      if (financialCommitStarted) {
+        next.status = 'Procesando';
+        next.estado = 'procesando';
+        next.recoveryRequired = true;
+        next.recoveryAction = action;
+      } else {
+        next.status = 'Pendiente';
+        next.estado = 'pendiente';
+        delete next.processingReviewByAuthUid;
+        delete next.processingReviewByUserId;
+        delete next.processingReviewAt;
+        delete next.processingReviewAction;
+        delete next.recoveryRequired;
+        delete next.recoveryAction;
+      }
       return next;
     }, undefined, false).catch(() => {});
-    throw asHttpsError(error, 'No se confirmó la revisión. La operación volvió a Pendiente si todavía no se liquidó.');
+    throw asHttpsError(error, financialCommitStarted
+      ? 'La revisión requiere recuperación segura. Repite la misma decisión; no elijas otra acción mientras esté en Procesando.'
+      : 'No se confirmó la revisión. La operación volvió a Pendiente.');
   }
 }
 
