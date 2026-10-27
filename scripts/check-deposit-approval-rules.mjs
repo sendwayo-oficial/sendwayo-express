@@ -27,6 +27,13 @@ const usersRootRead = String(root.users?.['.read'] || '');
 if (usersRootRead.includes('query.orderByChild') || usersRootRead.includes("root.child('sendwayo_express_v2/agentAuth')")) {
   throw new Error('La lectura del directorio completo de usuarios no está reservada a administración.');
 }
+const usersItemWrite = String(root.users?.['$uid']?.['.write'] || '');
+if (usersItemWrite.includes('data.child(\'authUid\')') || usersItemWrite.includes('newData.child(\'balance\')')) {
+  throw new Error('La regla todavía permite escrituras directas de un usuario sobre su propia ficha financiera.');
+}
+if (!usersItemWrite.includes("auth.token.email === 'sendwayoexpress@gmail.com'")) {
+  throw new Error('La administración debe conservar el permiso de mantenimiento de perfiles.');
+}
 for (const [path, rule] of [
   ['users', root.users?.['.read']],
   ['users/$uid', root.users?.['$uid']?.['.read']],
