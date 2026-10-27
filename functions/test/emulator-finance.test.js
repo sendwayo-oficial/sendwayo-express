@@ -149,6 +149,18 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
         method: 'PUT', headers: {'content-type':'application/json'}, body: JSON.stringify({...payload,id:'CLIENT-DIRECT-WITHDRAWAL'})
       });
       assert.equal(withdrawal.ok, false, 'un remitente no puede escribir directamente un retiro que salte la reserva del balance');
+
+      const directBalanceEdit = await fetch(base + 'users/agent-1.json' + query + encodeURIComponent(agentToken), {
+        method: 'PUT',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({
+          id: 'agent-1', authUid: agent.uid, authEmail: agent.email, email: agent.email,
+          role: 'agente', active: true, status: 'active',
+          balance: 999999, balanceDOP: 999999, balanceHTG: 1000,
+          commission: 0, commissionDOP: 0, commissionHTG: 0
+        })
+      });
+      assert.equal(directBalanceEdit.ok, false, 'un agente no puede modificar directamente su propio balance ni comisión');
     });
 
     await t.test('sender reserves amount + 8%, agent #2 approves once and commissions are ledgered', async () => {
