@@ -69,6 +69,31 @@ if (!requestsRootRead.includes("sendwayoexpress@gmail.com") ||
 }
 console.log('PASS: solicitudes privadas; el conjunto completo queda reservado a administración.');
 
+// Los detalles y el histórico de conciliación solo pueden leerlos los administradores.
+// Las escrituras se hacen desde Cloud Functions con Admin SDK, no desde el navegador.
+for (const [name, rule] of [
+  ['reconciliationDetails', root.reconciliationDetails],
+  ['reconciliations', root.reconciliations]
+]) {
+  if (!rule || rule['.write'] !== false || typeof rule['.read'] !== 'string' ||
+      !rule['.read'].includes("sendwayoexpress@gmail.com")) {
+    throw new Error(name + ' debe ser de lectura administrativa y escritura solo desde servidor.');
+  }
+  if (rule['$id'] && (rule['$id']['.write'] !== false ||
+      typeof rule['$id']['.read'] !== 'string' ||
+      !rule['$id']['.read'].includes("sendwayoexpress@gmail.com"))) {
+    throw new Error(name + '/$id debe ser privado y solo escribible desde servidor.');
+  }
+  console.log('PASS: ' + name + ' solo es accesible para administración.');
+}
+const currentDetails = root.reconciliationDetails?.current;
+if (!currentDetails || currentDetails['.write'] !== false ||
+    typeof currentDetails['.read'] !== 'string' ||
+    !currentDetails['.read'].includes("sendwayoexpress@gmail.com")) {
+  throw new Error('El detalle en tiempo real de conciliación debe ser privado y de solo lectura para el cliente.');
+}
+console.log('PASS: el detalle en tiempo real de conciliación queda protegido.');
+
 // Los agentes usan una callable que devuelve solo datos mínimos de identidad.
 // No deben leer el árbol completo de usuarios ni las notificaciones de otros.
 const usersRootRead = String(root.users?.['.read'] || '');
