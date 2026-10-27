@@ -1826,7 +1826,19 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     console.info('[SENDWAYO] Firebase Emulator Suite activo. No se están usando datos de producción.');
   }
   const callable = functions.httpsCallable.bind(functions);
+  const serverEnforcedFunctions = Object.freeze({
+    submitOperation: 'submitOperation',
+    reviewOperation: 'reviewOperation',
+    resubmitOperation: 'resubmitOperation',
+    deleteRejectedOperation: 'deleteRejectedOperation',
+    payCommission: 'requestCommissionWithdrawal',
+    runFinancialReconciliation: 'runFinancialReconciliation'
+  });
   const invoke = (name) => async (payload = {}) => {
+    const serverName = serverEnforcedFunctions[name];
+    // Los movimientos de dinero, las revisiones y la conciliación nunca se resuelven
+    // mediante funciones locales del navegador; siempre pasan por Cloud Functions.
+    if (serverName) return callLegacyFunction(serverName, payload);
     if (legacyAuth.currentUser) return legacyInvoke(name, payload);
     if (!auth.currentUser) throw new Error('Debes iniciar sesión con correo y contraseña.');
     const response = await callable(name)(payload);
