@@ -859,29 +859,346 @@ async function runFinancialReconciliation(request) {
 
   const runId = 'REC-' + now() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
   const generatedAt = now();
-  const snapshot = await root().once('value');
-  const data = snapshot.val() || {};
+  const snap = await root().once('value');
+  const data = snap.val() || {};
   const users = data.users && typeof data.users === 'object' ? data.users : {};
   const ledger = data.ledger && typeof data.ledger === 'object' ? data.ledger : {};
   const audit = data.audit && typeof data.audit === 'object' ? data.audit : {};
   const rows = [];
-  const transactionMap = new Map();
-  let errors = 0;
-  let warnings = 0;
+  const operationKeys = new Set();
+  let errorCount = 0;
+  let warningCount = 0;
 
   const statusLabel = value => {
     const normalized = P.normalizeText(value || 'Pendiente');
     if (normalized === 'aprobado' || normalized === 'approved') return 'Aprobado';
     if (normalized === 'rechazado' || normalized === 'rejected') return 'Rechazado';
     if (normalized === 'no coincide' || normalized === 'nomatch' || normalized === 'mismatch') return 'No coincide';
-    if (normalized === 'procesando' || normalized === 'processing') return 'Procesando';
     if (normalized === 'reservando' || normalized === 'reserving') return 'Reservando';
+    if (normalized === 'procesando' || normalized === 'processing') return 'Procesando';
     return value || 'Pendiente';
   };
-  const normalCurrency = value => {
-    const currency = String(value || '').trim().toUpperCase();
-    if (['HTG', 'GDES', 'GOURDES', 'GOURDE'].includes(currency)) return 'HTG';
-    if (['DOP', 'RD
+  const currencyLabel = value => {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (['HTG', 'GDES', 'GOURDES', 'GOURDE'].includes(normalized)) return 'HTG';
+    if (['DOP', 'RD\u0024', 'RD', 'PESO', 'PESOS'].includes(normalized)) return 'DOP';
+    return normalized || 'DOP';
+  };
+  const numeric = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? P.money(parsed) : fallback;
+  };
+  const millis = value => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    const asNumber = Number(value);
+    if (Number.isFinite(asNumber) && asNumber > 0) return asNumber;
+    const asDate = Date.parse(value || '');
+    return Number.isFinite(asDate) ? asDate : 0;
+  };
+  const addIssue = (issues, code, severity, message) => {
+    issues.push({ code, severity, message });
+    if (severity === 'ERROR') errorCount += 1;
+    else warningCount += 1;
+  };
+  const adminReviewer = new Map();
+  for (const [key, user] of Object.entries(users)) {
+    if (!user || typeof user !== 'object') continue;
+    for (const uid of [user.authUid, user.uid]) {
+      if (uid) adminReviewer.set(String(uid), {
+        key, role: roleOf(user),
+        email: P.normalizeText(user.email || user.authEmail || '')
+      });
+    }
+  }
+
+  // Leer toda la actividad financiera de las colecciones configuradas. No se limita a 1.500 registros.
+  for (const collection of COLLECTIONS) {
+    const collectionRows = data[collection] && typeof data[collection] === 'object' ? data[collection] : {};
+    for (const [storedKey, value] of Object.entries(collectionRows)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+      const record = value;
+      const id = String(record.id || record.operationId || storedKey);
+      const key = collection + '/' + id;
+      operationKeys.add(key);
+      const status = statusLabel(record.status || record.estado || 'Pendiente');
+      const normalizedStatus = P.normalizeText(status);
+      const approved = normalizedStatus === 'aprobado';
+      const rejected = normalizedStatus === 'rechazado';
+      const noMatch = normalizedStatus === 'no coincide';
+      const pending = ['pendiente', 'reservando', 'procesando', 'reserving', 'processing'].includes(normalizedStatus);
+      const isDeposit = P.isDeposit(collection);
+      const isCommissionWithdrawal = P.isCommissionWithdrawal(collection, record);
+      const amount = numeric(record.amount ?? record.monto, NaN);
+      const commission = numeric(record.commissionTotal ?? record.commission ?? record.comision, 0);
+      const actualCurrency = currencyLabel(record.currency || record.balanceCurrency);
+      let currency = actualCurrency;
+      const issues = [];
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        addIssue(issues, 'MONTO_INVALIDO', 'ERROR', 'El importe no es un número válido mayor que cero.');
+      }
+      if (!['DOP', 'HTG'].includes(actualCurrency)) {
+        addIssue(issues, 'MONEDA_DESCONOCIDA', 'ERROR', 'La moneda registrada no es DOP ni HTG.');
+      }
+      try {
+        const expectedCurrency = P.currencyFor(record, collection);
+        if (['DOP', 'HTG'].includes(actualCurrency) && expectedCurrency !== actualCurrency) {
+          addIssue(issues, 'MONEDA_NO_COINCIDE', 'WARNING', 'La moneda registrada (' + actualCurrency + ') no coincide con la regla esperada (' + expectedCurrency + ').');
+        }
+        if (!record.currency && !record.balanceCurrency) currency = expectedCurrency;
+      } catch (error) {
+        addIssue(issues, 'REGLA_DE_MONEDA', 'WARNING', String(error.message || 'No se pudo validar la moneda.'));
+      }
+
+      // El saldo usado para pagar una comisión es el compartido de administración,
+      // pero la reserva de comisión pertenece al agente titular.
+      const balanceAccountKey = String(record.balanceAccountUserId ||
+        ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
+      const reservationAccountKey = isCommissionWithdrawal
+        ? String(record.createdByUserId || record.userId || '')
+        : balanceAccountKey;
+      const account = users[reservationAccountKey];
+      const reservationId = String(record.balanceReservationId || record.commissionReservationId || id);
+      const balanceReservation = account && account.balanceReservations && account.balanceReservations[reservationId];
+      const commissionReservation = account && account.commissionWithdrawalReservations && account.commissionWithdrawalReservations[reservationId];
+      const ledgerEntry = ledger[id];
+
+      if (approved && !ledgerEntry) {
+        addIssue(issues, 'ASIENTO_CONTABLE_FALTANTE', 'WARNING', 'La operación aprobada no tiene un apunte contable asociado en ledger.');
+      } else if (ledgerEntry && (ledgerEntry.sourceCollection || ledgerEntry.sourceId) &&
+        (String(ledgerEntry.sourceCollection || '') !== collection || String(ledgerEntry.sourceId || ledgerEntry.recordId || '') !== id)) {
+        addIssue(issues, 'ASIENTO_NO_COINCIDE', 'ERROR', 'El apunte contable con este identificador corresponde a otra operación o colección.');
+      }
+      if (approved && !isDeposit && !isCommissionWithdrawal && !record.balanceSettled) {
+        addIssue(issues, 'BALANCE_NO_LIQUIDADO', 'ERROR', 'La operación aparece aprobada, pero no está marcada como liquidada.');
+      }
+      if (pending && !isDeposit && !isCommissionWithdrawal) {
+        if (!record.balanceDebited) {
+          addIssue(issues, 'FONDOS_NO_RESERVADOS', 'ERROR', 'La operación está pendiente, pero no indica que haya reservado fondos.');
+        } else if (!balanceReservation || balanceReservation.status !== 'RESERVED') {
+          addIssue(issues, 'RESERVA_NO_ENCONTRADA', 'ERROR', 'La operación pendiente no tiene una reserva de balance activa.');
+        }
+      }
+      if (approved && !isDeposit && !isCommissionWithdrawal && record.balanceDebited &&
+        balanceReservation && balanceReservation.status !== 'SETTLED') {
+        addIssue(issues, 'RESERVA_NO_LIQUIDADA', 'ERROR', 'La operación está aprobada, pero su reserva no aparece como SETTLED.');
+      }
+      if ((rejected || noMatch) && record.balanceDebited && !record.balanceRefunded &&
+        !isDeposit && !isCommissionWithdrawal && !(balanceReservation && balanceReservation.status === 'REFUNDED')) {
+        addIssue(issues, 'REEMBOLSO_FALTANTE', 'ERROR', 'La operación fue rechazada o marcada No coincide, pero no consta la devolución de los fondos.');
+      }
+      if (isCommissionWithdrawal && pending) {
+        if (!record.commissionReserved || !commissionReservation || commissionReservation.status !== 'RESERVED') {
+          addIssue(issues, 'COMISION_NO_RESERVADA', 'ERROR', 'El retiro de comisión pendiente no tiene una reserva de comisión activa.');
+        }
+      }
+      if (isCommissionWithdrawal && approved && !record.commissionPaid) {
+        addIssue(issues, 'RETIRO_COMISION_NO_LIQUIDADO', 'ERROR', 'El retiro de comisión aparece aprobado, pero no consta como pagado.');
+      }
+      const receiptId = record.receiptId || record.comprobanteId || (record.receipt && record.receipt.id);
+      if (approved && (
+        ['envios', 'recargas', 'paqueticos', 'pagos', 'deposits', 'accountWithdrawals'].includes(collection) ||
+        (collection === 'commissions' && isCommissionWithdrawal)
+      ) && !receiptId) {
+        addIssue(issues, 'COMPROBANTE_FALTANTE', 'WARNING', 'La operación aprobada no tiene identificador de comprobante.');
+      }
+      if (approved && isDeposit) {
+        const reviewer = adminReviewer.get(String(record.reviewedByAuthUid || ''));
+        if (!record.reviewedByAuthUid) {
+          addIssue(issues, 'DEPOSITO_SIN_REVISOR', 'ERROR', 'El depósito aprobado no identifica quién lo revisó.');
+        } else if (!reviewer || (reviewer.role !== 'admin' && reviewer.email !== ADMIN_EMAIL)) {
+          addIssue(issues, 'DEPOSITO_REVISOR_NO_ADMIN', 'ERROR', 'El depósito aparece aprobado por una cuenta que no se reconoce como administrador.');
+        }
+      }
+
+      const creatorRole = P.normalizeRole(record.createdByRole || record.ownerRole);
+      if (approved && commission > 0 && !isDeposit && !isCommissionWithdrawal) {
+        const expectedUserShare = creatorRole === 'remitente' ? P.money(commission / 2) : 0;
+        const expectedAdminShare = P.money(commission - expectedUserShare);
+        if (record.commissionUser !== undefined && P.money(record.commissionUser) !== expectedUserShare) {
+          addIssue(issues, 'REPARTO_COMISION_REMITENTE', 'WARNING', 'La parte de comisión del remitente no coincide con la regla 50/50.');
+        }
+        if (record.commissionAdmin !== undefined && P.money(record.commissionAdmin) !== expectedAdminShare) {
+          addIssue(issues, 'REPARTO_COMISION_ADMIN', 'WARNING', 'La parte de comisión de administración no coincide con la regla vigente.');
+        }
+      }
+
+      const ownerKey = String(record.userId || record.targetUserId || '');
+      const owner = users[ownerKey] || {};
+      const createdAt = millis(record.createdAtMs || record.createdAt || record.timestamp || record.date) || generatedAt;
+      rows.push({
+        id: collection + '__' + id,
+        transactionId: id,
+        collection,
+        type: String(record.type || record.category || collection),
+        concept: String(record.type || record.category || collection),
+        concepto: String(record.type || record.category || collection),
+        amount: Number.isFinite(amount) ? amount : 0,
+        monto: Number.isFinite(amount) ? amount : 0,
+        currency,
+        moneda: currency,
+        status,
+        statusOriginal: status,
+        estado: issues.length ? 'REVISAR (' + issues.length + ')' : status,
+        createdAt, createdAtMs: createdAt, fecha: new Date(createdAt).toLocaleString('es-DO'),
+        ownerId: ownerKey, userId: ownerKey,
+        ownerName: String(record.ownerName || record.remitente || owner.displayName || owner.name || owner.nombre || owner.email || ownerKey),
+        createdByRole: String(record.createdByRole || ''),
+        createdByName: String(record.createdByName || ''),
+        reviewerUid: String(record.reviewedByAuthUid || ''),
+        receiptId: String(receiptId || ''),
+        commission,
+        commissionUser: numeric(record.commissionUser, 0),
+        commissionAdmin: numeric(record.commissionAdmin, 0),
+        balanceAccountUserId: balanceAccountKey,
+        issues, issueCount: issues.length,
+        issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
+        severity: issues.some(item => item.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'OK',
+        isFinancialOperation: true,
+        generatedByAudit: true
+      });
+    }
+  }
+
+  for (const [ledgerId, entry] of Object.entries(ledger)) {
+    if (!entry || typeof entry !== 'object') continue;
+    const collection = String(entry.sourceCollection || '');
+    const sourceId = String(entry.sourceId || entry.recordId || ledgerId);
+    if (collection && !operationKeys.has(collection + '/' + sourceId)) {
+      errorCount += 1;
+      const issueRow = [{ code: 'ASIENTO_SIN_OPERACION', severity: 'ERROR', message: 'Existe un asiento contable sin una operación fuente identificable.' }];
+      const createdAt = millis(entry.createdAt) || generatedAt;
+      rows.push({
+        id: 'ledger__' + String(ledgerId), transactionId: String(ledgerId), collection: 'ledger',
+        type: 'Apunte contable sin operación', concept: 'Apunte contable sin operación', concepto: 'Apunte contable sin operación',
+        amount: numeric(entry.amount, 0), monto: numeric(entry.amount, 0),
+        currency: currencyLabel(entry.currency), moneda: currencyLabel(entry.currency),
+        status: 'Sin operación', statusOriginal: 'Sin operación', estado: 'REVISAR (1)',
+        createdAt, createdAtMs: createdAt, fecha: new Date(createdAt).toLocaleString('es-DO'),
+        ownerId: String(entry.userId || ''), userId: String(entry.userId || ''), ownerName: '',
+        issues: issueRow, issueCount: 1, issueSummary: issueRow[0].message,
+        severity: 'ERROR', isFinancialOperation: false, generatedByAudit: true
+      });
+    }
+  }
+
+  let totalBalanceDOP = 0;
+  let totalBalanceHTG = 0;
+  let totalSenderBalanceDOP = 0;
+  let totalSenderBalanceHTG = 0;
+  let adminBalanceDOP = 0;
+  let adminBalanceHTG = 0;
+  let usersScanned = 0;
+  for (const [userKey, user] of Object.entries(users)) {
+    if (!user || typeof user !== 'object') continue;
+    usersScanned += 1;
+    const role = roleOf(user);
+    const dop = numeric(user.balanceDOP !== undefined ? user.balanceDOP : user.balance, 0);
+    const htg = numeric(user.balanceHTG, 0);
+    totalBalanceDOP = P.money(totalBalanceDOP + dop);
+    totalBalanceHTG = P.money(totalBalanceHTG + htg);
+    if (userKey === 'admin' || role === 'admin') {
+      adminBalanceDOP = dop;
+      adminBalanceHTG = htg;
+    }
+    if (role === 'remitente') {
+      totalSenderBalanceDOP = P.money(totalSenderBalanceDOP + dop);
+      totalSenderBalanceHTG = P.money(totalSenderBalanceHTG + htg);
+    }
+    const issues = [];
+    if (dop < 0) addIssue(issues, 'BALANCE_DOP_NEGATIVO', 'ERROR', 'El balance DOP de esta cuenta es negativo.');
+    if (htg < 0) addIssue(issues, 'BALANCE_HTG_NEGATIVO', 'ERROR', 'El balance HTG de esta cuenta es negativo.');
+    const commissionDOP = numeric(user.commissionDOP !== undefined ? user.commissionDOP : user.commission, 0);
+    const commissionHTG = numeric(user.commissionHTG, 0);
+    if (commissionDOP < 0 || commissionHTG < 0) {
+      addIssue(issues, 'COMISION_NEGATIVA', 'ERROR', 'La comisión disponible no puede ser negativa.');
+    }
+    if (role === 'agent' && (dop > 0 || htg > 0)) {
+      addIssue(issues, 'BALANCE_INDIVIDUAL_AGENTE', 'WARNING', 'El perfil conserva un balance individual histórico; los agentes deben utilizar el balance compartido de administración. No se modificó automáticamente.');
+    }
+    if (issues.length) {
+      rows.push({
+        id: 'account__' + String(userKey), transactionId: String(userKey), collection: 'users',
+        type: role === 'agent' ? 'Cuenta de agente' : role === 'remitente' ? 'Cuenta de remitente' : 'Cuenta administrativa',
+        concept: 'Revisión de balance', concepto: 'Revisión de balance',
+        amount: dop, monto: dop, currency: 'DOP', moneda: 'DOP',
+        status: 'Cuenta', statusOriginal: 'Cuenta', estado: 'REVISAR (' + issues.length + ')',
+        createdAt: generatedAt, createdAtMs: generatedAt, fecha: new Date(generatedAt).toLocaleString('es-DO'),
+        ownerId: String(userKey), userId: String(userKey),
+        ownerName: String(user.displayName || user.name || user.nombre || user.email || userKey),
+        commissionDOP, commissionHTG, issues,
+        issueCount: issues.length, issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
+        severity: issues.some(item => item.severity === 'ERROR') ? 'ERROR' : 'WARNING',
+        isFinancialOperation: false, generatedByAudit: true
+      });
+    }
+  }
+
+  const auditRows = Object.entries(audit)
+    .filter(([, value]) => value && typeof value === 'object')
+    .map(([key, value]) => {
+      const createdAt = millis(value.createdAt || value.createdAtMs) || generatedAt;
+      return {
+        id: 'audit__' + String(value.id || key), transactionId: String(value.operationId || value.id || key),
+        collection: 'audit', type: String(value.action || 'Evento de auditoría'),
+        concept: String(value.action || 'Evento de auditoría'), concepto: String(value.action || 'Evento de auditoría'),
+        amount: numeric(value.amount, 0), monto: numeric(value.amount, 0),
+        currency: currencyLabel(value.currency), moneda: currencyLabel(value.currency),
+        status: 'Auditado', statusOriginal: 'Auditado', estado: 'Auditado',
+        createdAt, createdAtMs: createdAt, fecha: new Date(createdAt).toLocaleString('es-DO'),
+        ownerId: String(value.targetUserId || ''), userId: String(value.targetUserId || ''),
+        ownerName: String(value.targetUserName || ''), issues: [], issueCount: 0,
+        issueSummary: '', severity: 'INFO', isFinancialOperation: false, generatedByAudit: true
+      };
+    });
+  rows.push(...auditRows);
+  rows.sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
+
+  const operationRows = rows.filter(row => row.isFinancialOperation);
+  const totalOperations = operationKeys.size;
+  const summary = {
+    generatedAt, generatedAtMs: generatedAt, totalOperations, transactionRows: operationRows.length,
+    ledgerEntries: Object.keys(ledger).length, auditEntries: Object.keys(audit).length,
+    pendingCount: operationRows.filter(row => ['pendiente', 'reservando', 'procesando', 'reserving', 'processing'].includes(P.normalizeText(row.statusOriginal))).length,
+    approvedCount: operationRows.filter(row => P.normalizeText(row.statusOriginal) === 'aprobado').length,
+    rejectedCount: operationRows.filter(row => P.normalizeText(row.statusOriginal) === 'rechazado').length,
+    noMatchCount: operationRows.filter(row => P.normalizeText(row.statusOriginal) === 'no coincide').length,
+    issueRows: rows.filter(row => row.issueCount > 0).length,
+    issueCount: rows.reduce((total, row) => total + Number(row.issueCount || 0), 0),
+    errorCount, warningCount, usersScanned,
+    totalBalanceDOP, totalBalanceHTG, totalSenderBalanceDOP, totalSenderBalanceHTG,
+    adminBalanceDOP, adminBalanceHTG,
+    currencies: {
+      DOP: operationRows.filter(row => row.currency === 'DOP').length,
+      HTG: operationRows.filter(row => row.currency === 'HTG').length
+    }
+  };
+
+  const detailsRows = {};
+  for (const row of rows) {
+    detailsRows[Buffer.from(String(row.collection) + '|' + String(row.id)).toString('base64url')] = row;
+  }
+  await root().child('reconciliationDetails/current').set({
+    runId, generatedAt, generatedAtMs: generatedAt,
+    generatedByAuthUid: actor.uid, generatedByUserId: actor.key, summary, rows: detailsRows
+  });
+  await root().child('reconciliations').child(runId).set({
+    id: runId, type: 'financial-reconciliation', status: 'Completada',
+    createdAt: generatedAt, createdAtMs: generatedAt,
+    createdByAuthUid: actor.uid, createdByUserId: actor.key, summary
+  });
+  await writeAuditOnce(runId, 'RECONCILIACION_FINANCIERA', actor,
+    { userId: 'admin', type: 'Conciliación financiera' }, 'reconciliations', {
+      totalOperations, issueRows: summary.issueRows, issueCount: summary.issueCount, errorCount, warningCount
+    }).catch(error => console.error('No se pudo guardar la auditoría de conciliación:', error));
+  await appendNotification('admin', 'Conciliación financiera completada',
+    'Se revisaron ' + totalOperations + ' operaciones. Diferencias: ' + summary.issueCount +
+      ' (' + errorCount + ' errores y ' + warningCount + ' avisos). Revisa el módulo de conciliación.',
+    'conciliacion', runId);
+  return { id: runId, status: 'Completada', summary, rowsCount: rows.length };
+}
+
+async function listDirectory(request) {
   const actor = await loadActor(request);
   if (!['admin', 'agent'].includes(actor.role)) {
     throw new HttpsError('permission-denied', 'Solo administración y agentes pueden consultar el directorio de trabajo.');
@@ -935,448 +1252,6 @@ exports.runFinancialReconciliation = onCall(async request => {
   try { return await runFinancialReconciliation(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo completar la conciliación financiera.'); }
 });
-exports.listDirectory = onCall(async request => {
-  try { return await listDirectory(request); }
-  catch (error) { throw asHttpsError(error, 'No se pudo consultar el directorio de trabajo.'); }
-});
-exports.deleteRejectedOperation = onCall(async request => {
-  try { return await deleteRejectedOperation(request); }
-  catch (error) { throw asHttpsError(error, 'No se pudo eliminar la operación rechazada.'); }
-});
-exports.requestCommissionWithdrawal = onCall(async request => {
-  try { return await requestCommissionWithdrawal(request); }
-  catch (error) { throw asHttpsError(error, 'No se pudo registrar la solicitud de retiro de comisión.'); }
-});
-
-exports.submitOperation = onCall(async request => {
-  try { return await createOperation(request); }
-  catch (error) { throw asHttpsError(error, 'No se pudo registrar la operación. No se confirmó ninguna acción que no aparezca guardada en Firebase.'); }
-});
-async function resubmitOperation(request) {
-  const actor = await loadActor(request);
-  const payload = request.data || {};
-  const oldId = String(payload.operationId || payload.id || '').trim();
-  const found = await getOperation(oldId);
-  if (P.normalizeText(found.record.status || found.record.estado) !== 'no coincide') {
-    throw new HttpsError('failed-precondition', 'Solo se puede corregir una operación marcada No coincide.');
-  }
-  const isAdmin = actor.role === 'admin';
-  if (!isAdmin && actor.key !== String(found.record.userId || '') && actor.key !== String(found.record.createdByUserId || '')) {
-    throw new HttpsError('permission-denied', 'No tienes permiso para corregir esta operación.');
-  }
-  const changes = payload.operation && typeof payload.operation === 'object' ? payload.operation : (payload.changes || {});
-  const nextId = String(payload.newOperationId || ('SW-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
-  const nextData = {
-    ...changes,
-    id: nextId,
-    idempotencyKey: nextId,
-    type: changes.type || found.record.type || found.record.category,
-    category: changes.category || found.record.category || found.record.type,
-    targetUserId: isAdmin ? (changes.targetUserId || found.record.userId) : found.record.userId,
-    userId: found.record.userId,
-    resubmittedFrom: oldId
-  };
-  const result = await createOperation({ auth: request.auth, data: { operation: nextData } });
-  await found.ref.update({ resubmittedTo: result.id, resubmittedAt: now() });
-  await writeAuditOnce(oldId, 'REENVIADA_CORREGIDA', actor, found.record, found.collection, { resubmittedTo: result.id });
-  return { ...result, resubmittedFrom: oldId };
-}
-
-exports.reviewOperation = onCall(async request => {
-  try { return await reviewOperation(request); }
-  catch (error) { throw asHttpsError(error, 'No se pudo revisar la operación. Comprueba el estado actualizado antes de volver a intentarlo.'); }
-});
-exports.resubmitOperation = onCall(async request => {
-  try { return await resubmitOperation(request); }
-  catch (error) { throw asHttpsError(error, 'No se pudo reenviar la operación corregida.'); }
-});
-, 'RD', 'PESO', 'PESOS'].includes(currency)) return 'DOP';
-    return currency || 'DOP';
-  };
-  const issue = (issues, code, severity, message) => {
-    issues.push({ code, severity, message });
-    if (severity === 'ERROR') errors += 1;
-    else warnings += 1;
-  };
-  const numeric = (value, fallback = 0) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? P.money(parsed) : fallback;
-  };
-  const financialCollections = COLLECTIONS.filter(collection => collection !== 'credits' || data.credits);
-  const reportableReceiptCollections = new Set([
-    'envios', 'recargas', 'paqueticos', 'pagos', 'deposits', 'accountWithdrawals'
-  ]);
-  const rolesByUid = new Map();
-  for (const [key, profile] of Object.entries(users)) {
-    if (!profile || typeof profile !== 'object') continue;
-    for (const uid of [profile.authUid, profile.uid]) {
-      if (uid) rolesByUid.set(String(uid), { key, role: roleOf(profile), email: P.normalizeText(profile.email || profile.authEmail || '') });
-    }
-  }
-
-  // Leer todas las operaciones financieras; no se aplica límite de 1.500 filas.
-  for (const collection of financialCollections) {
-    const records = data[collection] && typeof data[collection] === 'object' ? data[collection] : {};
-    for (const [recordKey, recordValue] of Object.entries(records)) {
-      if (!recordValue || typeof recordValue !== 'object' || Array.isArray(recordValue)) continue;
-      const record = recordValue;
-      const id = String(record.id || record.operationId || recordKey);
-      const status = statusLabel(record.status || record.estado || 'Pendiente');
-      const statusNorm = P.normalizeText(status);
-      const amount = numeric(record.amount ?? record.monto, NaN);
-      const commission = numeric(record.commissionTotal ?? record.commission ?? record.comision, 0);
-      let currency = normalCurrency(record.currency || record.balanceCurrency);
-      const issues = [];
-      const ledgerRow = ledger[id];
-      transactionMap.set(collection + '/' + id, { id, collection, record });
-
-      if (!Number.isFinite(amount) || amount <= 0) {
-        issue(issues, 'MONTO_INVALIDO', 'ERROR', 'La operación no tiene un monto válido mayor que cero.');
-      }
-      if (!['DOP', 'HTG'].includes(currency)) {
-        issue(issues, 'MONEDA_DESCONOCIDA', 'ERROR', 'La moneda registrada no es DOP ni HTG.');
-      }
-      try {
-        const expectedCurrency = P.currencyFor(record, collection);
-        if (['DOP', 'HTG'].includes(currency) && expectedCurrency !== currency) {
-          issue(issues, 'MONEDA_NO_COINCIDE', 'WARNING', 'La moneda registrada (' + currency + ') no coincide con la regla esperada (' + expectedCurrency + ').');
-        }
-        if (!record.currency && !record.balanceCurrency) currency = expectedCurrency;
-      } catch (error) {
-        issue(issues, 'REGLA_DE_MONEDA', 'WARNING', String(error.message || 'No se pudo validar la moneda.'));
-      }
-
-      const approved = statusNorm === 'aprobado';
-      const rejected = statusNorm === 'rechazado';
-      const noMatch = statusNorm === 'no coincide';
-      const pending = ['pendiente', 'reservando', 'procesando', 'reserving', 'processing'].includes(statusNorm);
-      const isDeposit = P.isDeposit(collection);
-      const isCommissionWithdrawal = P.isCommissionWithdrawal(collection, record);
-      const balanceAccountKey = String(record.balanceAccountUserId ||
-        ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
-      // El saldo usado para pagar una comisión es el compartido de administración,
-      // pero la reserva de comisión pertenece al agente titular.
-      const accountKey = isCommissionWithdrawal ? String(record.createdByUserId || record.userId || '') : balanceAccountKey;
-      const account = users[accountKey];
-      const reservationId = String(record.balanceReservationId || record.commissionReservationId || id);
-      const reservation = account && account.balanceReservations && account.balanceReservations[reservationId];
-      const commissionReservation = account && account.commissionWithdrawalReservations && account.commissionWithdrawalReservations[reservationId];
-
-      if (approved && !ledgerRow) {
-        issue(issues, 'ASIENTO_CONTABLE_FALTANTE', 'WARNING', 'La operación aprobada no tiene un apunte contable asociado en ledger.');
-      } else if (ledgerRow && (ledgerRow.sourceCollection || ledgerRow.sourceId) &&
-          (String(ledgerRow.sourceCollection || '') !== collection || String(ledgerRow.sourceId || ledgerRow.recordId || '') !== id)) {
-        issue(issues, 'ASIENTO_NO_COINCIDE', 'ERROR', 'El asiento contable con este ID corresponde a otra operación o colección.');
-      }
-      if (approved && !record.balanceSettled && !isDeposit && !isCommissionWithdrawal) {
-        issue(issues, 'BALANCE_NO_LIQUIDADO', 'ERROR', 'La operación aparece aprobada, pero no está marcada como liquidada en el balance.');
-      }
-      if (pending && !isDeposit && !isCommissionWithdrawal) {
-        if (!record.balanceDebited) {
-          issue(issues, 'FONDOS_NO_RESERVADOS', 'ERROR', 'La operación está pendiente, pero no indica que haya reservado el importe del balance.');
-        } else if (!reservation || reservation.status !== 'RESERVED') {
-          issue(issues, 'RESERVA_NO_ENCONTRADA', 'ERROR', 'La operación pendiente no tiene una reserva de balance activa correspondiente.');
-        }
-      }
-      if (approved && !isDeposit && !isCommissionWithdrawal && record.balanceDebited && reservation && reservation.status !== 'SETTLED') {
-        issue(issues, 'RESERVA_NO_LIQUIDADA', 'ERROR', 'La operación está aprobada, pero la reserva del balance no aparece como SETTLED.');
-      }
-      if ((rejected || noMatch) && record.balanceDebited && !record.balanceRefunded &&
-          !isDeposit && !isCommissionWithdrawal && !(reservation && reservation.status === 'REFUNDED')) {
-        issue(issues, 'REEMBOLSO_FALTANTE', 'ERROR', 'La operación fue rechazada o marcada No coincide, pero no consta la devolución de los fondos reservados.');
-      }
-      if (isCommissionWithdrawal && pending) {
-        if (!record.commissionReserved || !commissionReservation || commissionReservation.status !== 'RESERVED') {
-          issue(issues, 'COMISION_NO_RESERVADA', 'ERROR', 'El retiro de comisión pendiente no tiene una reserva activa de comisión.');
-        }
-      }
-      if (isCommissionWithdrawal && approved && !record.commissionPaid) {
-        issue(issues, 'RETIRO_COMISION_NO_LIQUIDADO', 'ERROR', 'El retiro de comisión aparece aprobado, pero no consta como pagado.');
-      }
-      if (approved && reportableReceiptCollections.has(collection) && !(record.receiptId || record.comprobanteId || (record.receipt && record.receipt.id))) {
-        issue(issues, 'COMPROBANTE_FALTANTE', 'WARNING', 'La operación aprobada no tiene un identificador de comprobante.');
-      }
-
-      if (approved && isDeposit) {
-        const reviewer = rolesByUid.get(String(record.reviewedByAuthUid || ''));
-        if (!record.reviewedByAuthUid) {
-          issue(issues, 'DEPOSITO_SIN_REVISOR', 'ERROR', 'El depósito aprobado no identifica quién lo revisó.');
-        } else if (!reviewer || (reviewer.role !== 'admin' && reviewer.email !== ADMIN_EMAIL)) {
-          issue(issues, 'DEPOSITO_REVISOR_NO_ADMIN', 'ERROR', 'El depósito aparece aprobado por una cuenta que no se reconoce como administrador.');
-        }
-      }
-
-      const creatorRole = P.normalizeRole(record.createdByRole || record.ownerRole);
-      if (approved && commission > 0 && !isDeposit && !isCommissionWithdrawal) {
-        const expectedUserShare = creatorRole === 'remitente' ? P.money(commission / 2) : 0;
-        const expectedAdminShare = P.money(commission - expectedUserShare);
-        if (record.commissionUser !== undefined && P.money(record.commissionUser) !== expectedUserShare) {
-          issue(issues, 'REPARTO_COMISION_REMITENTE', 'WARNING', 'La parte de comisión del remitente no coincide con la regla 50/50.');
-        }
-        if (record.commissionAdmin !== undefined && P.money(record.commissionAdmin) !== expectedAdminShare) {
-          issue(issues, 'REPARTO_COMISION_ADMIN', 'WARNING', 'La parte de comisión de la administración no coincide con la regla vigente.');
-        }
-      }
-
-      const ownerKey = String(record.userId || record.targetUserId || '');
-      const owner = users[ownerKey] || {};
-      const createdAt = Number(record.createdAtMs || record.createdAt || record.timestamp || 0);
-      const row = {
-        id: collection + '__' + id,
-        transactionId: id,
-        collection,
-        type: String(record.type || record.category || collection),
-        concept: String(record.type || record.category || collection),
-        concepto: String(record.type || record.category || collection),
-        amount: Number.isFinite(amount) ? amount : 0,
-        monto: Number.isFinite(amount) ? amount : 0,
-        currency,
-        moneda: currency,
-        status,
-        statusOriginal: status,
-        estado: issues.length ? 'REVISAR (' + issues.length + ')' : status,
-        createdAt: createdAt || generatedAt,
-        createdAtMs: createdAt || generatedAt,
-        fecha: new Date(createdAt || generatedAt).toLocaleString('es-DO'),
-        ownerId: ownerKey,
-        userId: ownerKey,
-        ownerName: String(record.ownerName || record.remitente || owner.displayName || owner.name || owner.nombre || owner.email || ownerKey),
-        createdByRole: String(record.createdByRole || ''),
-        createdByName: String(record.createdByName || ''),
-        reviewerUid: String(record.reviewedByAuthUid || ''),
-        receiptId: String(record.receiptId || record.comprobanteId || (record.receipt && record.receipt.id) || ''),
-        commission,
-        commissionUser: numeric(record.commissionUser, 0),
-        commissionAdmin: numeric(record.commissionAdmin, 0),
-        balanceAccountUserId: balanceAccountKey,
-        issues,
-        issueCount: issues.length,
-        issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
-        severity: issues.some(item => item.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'OK',
-        isFinancialOperation: true,
-        generatedByAudit: true
-      };
-      rows.push(row);
-    }
-  }
-
-  // Revisar asientos contables que no enlazan con ninguna operación registrada.
-  for (const [ledgerId, ledgerRow] of Object.entries(ledger)) {
-    if (!ledgerRow || typeof ledgerRow !== 'object') continue;
-    const collection = String(ledgerRow.sourceCollection || '');
-    const id = String(ledgerRow.sourceId || ledgerRow.recordId || ledgerRowId(ledgerId));
-    if (collection && !transactionMap.has(collection + '/' + id)) {
-      const issues = [{ code: 'ASIENTO_SIN_OPERACION', severity: 'ERROR', message: 'Existe un asiento contable sin una operación fuente identificable.' }];
-      errors += 1;
-      rows.push({
-        id: 'ledger__' + String(ledgerId), transactionId: String(ledgerId), collection: 'ledger',
-        type: 'Apunte contable sin operación', concept: 'Apunte contable sin operación',
-        concepto: 'Apunte contable sin operación', amount: numeric(ledgerRow.amount, 0),
-        monto: numeric(ledgerRow.amount, 0), currency: normalCurrency(ledgerRow.currency),
-        moneda: normalCurrency(ledgerRow.currency), status: 'Sin operación', statusOriginal: 'Sin operación',
-        estado: 'REVISAR (1)', createdAt: Number(ledgerRow.createdAt || 0) || generatedAt,
-        createdAtMs: Number(ledgerRow.createdAt || 0) || generatedAt,
-        fecha: new Date(Number(ledgerRow.createdAt || 0) || generatedAt).toLocaleString('es-DO'),
-        ownerId: String(ledgerRow.userId || ''), userId: String(ledgerRow.userId || ''),
-        ownerName: '', issues, issueCount: 1, issueSummary: issues[0].message, severity: 'ERROR',
-        isFinancialOperation: false,
-        generatedByAudit: true
-      });
-    }
-  }
-
-  // Revisar balances y comisiones con valores inválidos. No se corrige dinero automáticamente.
-  let totalBalanceDOP = 0;
-  let totalBalanceHTG = 0;
-  let totalSenderBalanceDOP = 0;
-  let totalSenderBalanceHTG = 0;
-  let adminBalanceDOP = 0;
-  let adminBalanceHTG = 0;
-  let usersScanned = 0;
-  for (const [userKey, user] of Object.entries(users)) {
-    if (!user || typeof user !== 'object') continue;
-    usersScanned += 1;
-    const role = roleOf(user);
-    const dop = numeric(user.balanceDOP !== undefined ? user.balanceDOP : user.balance, 0);
-    const htg = numeric(user.balanceHTG, 0);
-    totalBalanceDOP = P.money(totalBalanceDOP + dop);
-    totalBalanceHTG = P.money(totalBalanceHTG + htg);
-    if (userKey === 'admin' || role === 'admin') {
-      adminBalanceDOP = dop;
-      adminBalanceHTG = htg;
-    }
-    if (role === 'remitente') {
-      totalSenderBalanceDOP = P.money(totalSenderBalanceDOP + dop);
-      totalSenderBalanceHTG = P.money(totalSenderBalanceHTG + htg);
-    }
-    const issues = [];
-    if (dop < 0) issue(issues, 'BALANCE_DOP_NEGATIVO', 'ERROR', 'El balance DOP de esta cuenta es negativo.');
-    if (htg < 0) issue(issues, 'BALANCE_HTG_NEGATIVO', 'ERROR', 'El balance HTG de esta cuenta es negativo.');
-    const comDOP = numeric(user.commissionDOP !== undefined ? user.commissionDOP : user.commission, 0);
-    const comHTG = numeric(user.commissionHTG, 0);
-    if (comDOP < 0 || comHTG < 0) issue(issues, 'COMISION_NEGATIVA', 'ERROR', 'La comisión disponible no puede ser negativa.');
-    if (role === 'agent' && (dop > 0 || htg > 0)) {
-      issue(issues, 'BALANCE_INDIVIDUAL_AGENTE', 'WARNING', 'El perfil de agente contiene un balance individual histórico; los agentes deben operar con el balance compartido de administración. No se modificó automáticamente.');
-    }
-    if (issues.length) {
-      rows.push({
-        id: 'account__' + String(userKey), transactionId: String(userKey), collection: 'users',
-        type: role === 'agent' ? 'Cuenta de agente' : role === 'remitente' ? 'Cuenta de remitente' : 'Cuenta administrativa',
-        concept: 'Revisión de balance', concepto: 'Revisión de balance',
-        amount: dop, monto: dop, currency: 'DOP', moneda: 'DOP',
-        status: 'Cuenta', statusOriginal: 'Cuenta', estado: 'REVISAR (' + issues.length + ')',
-        createdAt: generatedAt, createdAtMs: generatedAt, fecha: new Date(generatedAt).toLocaleString('es-DO'),
-        ownerId: String(userKey), userId: String(userKey),
-        ownerName: String(user.displayName || user.name || user.nombre || user.email || userKey),
-        commissionDOP: comDOP, commissionHTG: comHTG, issues,
-        issueCount: issues.length, issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
-        severity: issues.some(item => item.severity === 'ERROR') ? 'ERROR' : 'WARNING',
-        isFinancialOperation: false,
-        generatedByAudit: true
-      });
-    }
-  }
-
-  // Mostrar también las últimas acciones auditadas, para que ajustes manuales y
-  // eventos administrativos no queden invisibles respecto de las operaciones.
-  const auditRows = Object.entries(audit)
-    .filter(([, value]) => value && typeof value === 'object')
-    .map(([key, value]) => ({
-      id: 'audit__' + String(value.id || key),
-      transactionId: String(value.operationId || value.id || key),
-      collection: 'audit',
-      type: String(value.action || 'Evento de auditoría'),
-      concept: String(value.action || 'Evento de auditoría'),
-      concepto: String(value.action || 'Evento de auditoría'),
-      amount: numeric(value.amount, 0), monto: numeric(value.amount, 0),
-      currency: normalCurrency(value.currency), moneda: normalCurrency(value.currency),
-      status: 'Auditado', statusOriginal: 'Auditado', estado: 'Auditado',
-      createdAt: Number(value.createdAt || value.createdAtMs || 0) || generatedAt,
-      createdAtMs: Number(value.createdAt || value.createdAtMs || 0) || generatedAt,
-      fecha: new Date(Number(value.createdAt || value.createdAtMs || 0) || generatedAt).toLocaleString('es-DO'),
-      ownerId: String(value.targetUserId || ''), userId: String(value.targetUserId || ''),
-      ownerName: String(value.targetUserName || ''),
-      issues: [], issueCount: 0, issueSummary: '', severity: 'INFO', isFinancialOperation: false, generatedByAudit: true
-    }));
-  rows.push(...auditRows);
-  rows.sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
-
-  const totalOperations = transactionMap.size;
-  const pendingCount = rows.filter(row => row.isFinancialOperation && ['pendiente', 'reservando', 'procesando', 'reserving', 'processing'].includes(P.normalizeText(row.statusOriginal))).length;
-  const approvedCount = rows.filter(row => row.isFinancialOperation && P.normalizeText(row.statusOriginal) === 'aprobado').length;
-  const rejectedCount = rows.filter(row => row.isFinancialOperation && P.normalizeText(row.statusOriginal) === 'rechazado').length;
-  const noMatchCount = rows.filter(row => row.isFinancialOperation && P.normalizeText(row.statusOriginal) === 'no coincide').length;
-  const transactionRows = rows.filter(row => row.isFinancialOperation).length;
-  const reportSummary = {
-    generatedAt,
-    generatedAtMs: generatedAt,
-    totalOperations,
-    transactionRows,
-    ledgerEntries: Object.keys(ledger).length,
-    auditEntries: Object.keys(audit).length,
-    pendingCount, approvedCount, rejectedCount, noMatchCount,
-    issueRows: rows.filter(row => row.issueCount > 0).length,
-    issueCount: rows.reduce((total, row) => total + Number(row.issueCount || 0), 0),
-    errorCount: errors,
-    warningCount: warnings,
-    usersScanned,
-    totalBalanceDOP, totalBalanceHTG,
-    totalSenderBalanceDOP, totalSenderBalanceHTG,
-    adminBalanceDOP, adminBalanceHTG,
-    currencies: {
-      DOP: rows.filter(row => row.isFinancialOperation && row.currency === 'DOP').length,
-      HTG: rows.filter(row => row.isFinancialOperation && row.currency === 'HTG').length
-    }
-  };
-
-  // Usar base64url como llave de RTDB evita los caracteres prohibidos de los IDs
-  // históricos, y el campo id conserva el identificador original para el usuario.
-  const detailsRows = {};
-  for (const row of rows) {
-    const key = Buffer.from(String(row.collection) + '|' + String(row.id)).toString('base64url');
-    detailsRows[key] = row;
-  }
-  await root().child('reconciliationDetails/current').set({
-    runId, generatedAt, generatedAtMs: generatedAt,
-    generatedByAuthUid: actor.uid, generatedByUserId: actor.key,
-    summary: reportSummary, rows: detailsRows
-  });
-  await root().child('reconciliations').child(runId).set({
-    id: runId, type: 'financial-reconciliation', status: 'Completada',
-    createdAt: generatedAt, createdAtMs: generatedAt,
-    createdByAuthUid: actor.uid, createdByUserId: actor.key,
-    summary: reportSummary
-  });
-  await writeAuditOnce(runId, 'RECONCILIACION_FINANCIERA', actor,
-    { userId: 'admin', type: 'Conciliación financiera' }, 'reconciliations', {
-      totalOperations, issueRows: reportSummary.issueRows, issueCount: reportSummary.issueCount,
-      errorCount: errors, warningCount: warnings
-    }).catch(error => console.error('No se pudo guardar la auditoría de conciliación:', error));
-  await appendNotification(
-    'admin',
-    'Conciliación financiera completada',
-    'Se revisaron ' + totalOperations + ' operaciones. Diferencias: ' + reportSummary.issueCount +
-      ' (' + errors + ' errores y ' + warnings + ' avisos). Revisa el módulo de conciliación.',
-    'conciliacion',
-    runId
-  );
-  return { id: runId, status: 'Completada', summary: reportSummary, rowsCount: rows.length };
-}
-
-function ledgerRowId(value) {
-  return String(value || '');
-}
-
-async function listDirectory(request) {
-  const actor = await loadActor(request);
-  if (!['admin', 'agent'].includes(actor.role)) {
-    throw new HttpsError('permission-denied', 'Solo administración y agentes pueden consultar el directorio de trabajo.');
-  }
-  const profiles = Object.entries(actor.users || {}).map(([key, row]) => {
-    row = row && typeof row === 'object' ? row : {};
-    const role = roleOf(row);
-    const name = String(row.displayName || row.name || row.nombre || row.username || row.email || key);
-    return {
-      id: String(row.id || row.legacyId || key),
-      legacyId: String(row.legacyId || row.id || key),
-      accountId: String(row.accountId || row.id || key),
-      uid: String(row.authUid || row.uid || ''),
-      code: String(row.code || ''),
-      staffId: String(row.staffId || ''),
-      name,
-      displayName: name,
-      firstName: String(row.firstName || row.nombre || name.split(/\s+/)[0] || name),
-      lastName: String(row.lastName || name.split(/\s+/).slice(1).join(' ')),
-      email: String(row.email || row.authEmail || ''),
-      phone: String(row.phone || row.telefono || row.cellphone || ''),
-      country: String(row.country || row.pais || ''),
-      role: String(row.role || row.rol || ''),
-      status: String(row.status || 'active'),
-      active: activeProfile(row)
-    };
-  }).filter(row => row.active && ['agent', 'remitente'].includes(roleOf(row)));
-  return { profiles };
-}
-
-async function deleteRejectedOperation(request) {
-  const actor = await loadActor(request);
-  if (actor.role !== 'admin') throw new HttpsError('permission-denied', 'Solo el administrador puede eliminar operaciones rechazadas.');
-  const id = String((request.data && (request.data.operationId || request.data.id)) || '').trim();
-  const found = await getOperation(id);
-  if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(found.collection)) {
-    throw new HttpsError('failed-precondition', 'Este registro no puede eliminarse desde la cola general.');
-  }
-  if (!['rechazado', 'rejected'].includes(P.normalizeText(found.record.status || found.record.estado))) {
-    throw new HttpsError('failed-precondition', 'Solo se pueden eliminar operaciones rechazadas. Las pendientes, aprobadas o No coincide se conservan.');
-  }
-  await writeAuditOnce(id, 'ELIMINADA_OPERACION_RECHAZADA', actor, found.record, found.collection, {
-    amount: P.money(found.record.amount || found.record.monto || 0),
-    currency: String(found.record.currency || found.record.balanceCurrency || 'DOP')
-  });
-  await found.ref.remove();
-  return { id, collection: found.collection, deleted: true };
-}
-
 exports.listDirectory = onCall(async request => {
   try { return await listDirectory(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo consultar el directorio de trabajo.'); }
