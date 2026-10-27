@@ -180,6 +180,21 @@ async function reserveBalance(accountKey, operationId, amount, currency, collect
   let insufficient = false;
   let mismatch = false;
   const ref = root().child('users').child(accountKey);
+  if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
+    const probe = await ref.once('value');
+    if (!probe.exists()) {
+      const usersProbe = await root().child('users').once('value');
+      const allKeys = usersProbe.val() && typeof usersProbe.val() === 'object' ? Object.keys(usersProbe.val()).slice(0, 30) : [];
+      console.error('[SENDWAYO] reserva apunta a una cuenta inexistente en el emulador', {
+        projectId: PROJECT_ID,
+        emulatorHost: process.env.FIREBASE_DATABASE_EMULATOR_HOST,
+        databaseUrl: db.ref().toString(),
+        accountKey,
+        rootUsersExists: usersProbe.exists(),
+        rootUserKeys: allKeys
+      });
+    }
+  }
   const tx = await ref.transaction(user => {
     if (!user || typeof user !== 'object') return;
     const reservations = { ...(user.balanceReservations || {}) };
