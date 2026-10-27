@@ -32,7 +32,7 @@ for (const collection of reviewableCollections) {
       !parentRead.includes("query.equalTo === 'Pendiente'")) {
     throw new Error('Falta el permiso limitado a cola Pendiente para agentes en ' + collection + '.');
   }
-  if (itemRead.includes('agentAuth') || itemRead.includes('active').val() === true) {
+  if (itemRead.includes("root.child('sendwayo_express_v2/agentAuth')") || itemRead.includes("child('active').val() === true")) {
     throw new Error('La lectura individual de ' + collection + ' sigue abierta para agentes.');
   }
   console.log('PASS: cola de revisión Pendiente y lectura individual restringida en ' + collection);
