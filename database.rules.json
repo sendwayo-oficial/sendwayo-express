@@ -80,7 +80,7 @@
       },
       "ledger": {
         ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
-        ".write": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com') && !data.exists()",
+        ".write": false,
         ".validate": "!newData.exists() || (newData.child('ledgerLocked').val() === true && newData.child('ledgerEvent').val() === 'APROBACION' && newData.child('recordId').exists() && newData.child('sourceCollection').exists() && newData.child('sourceId').val() === newData.child('recordId').val())"
       },
       "envios": {
@@ -247,6 +247,26 @@
           ".read": "auth != null && (auth.uid === $authUid || auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
           ".write": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || (auth.uid === $authUid && newData.child('authUid').val() === auth.uid && newData.child('active').val() === true && root.child('sendwayo_express_v2/users').child(newData.child('userId').val()).child('authUid').val() === auth.uid && (root.child('sendwayo_express_v2/users').child(newData.child('userId').val()).child('role').val() === 'Agente' || root.child('sendwayo_express_v2/users').child(newData.child('userId').val()).child('role').val() === 'agente')))",
           ".validate": "!newData.exists() || (newData.child('authUid').val() === $authUid && newData.child('active').val() === true && newData.child('userId').isString() && (newData.child('role').val() === 'Agente' || newData.child('role').val() === 'agente') && root.child('sendwayo_express_v2/users').child(newData.child('userId').val()).child('authUid').val() === $authUid)"
+        }
+      },
+      "reconciliations": {
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
+        ".write": false,
+        "$id": {
+          ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
+          ".write": false
+        }
+      },
+      "reconciliationDetails": {
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
+        ".write": false,
+        "current": {
+          ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
+          ".write": false
+        },
+        "$id": {
+          ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com')",
+          ".write": false
         }
       }
     }
