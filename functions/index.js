@@ -67,15 +67,22 @@ async function loadActor(request) {
   const email = P.normalizeText(auth.token.email || '');
   const usersSnap = await root().child('users').once('value');
   const users = usersSnap.val() || {};
-  let entry = Object.entries(users).find(([key, value]) =>
-    value && (
-      String(value.authUid || value.uid || '') === auth.uid ||
-      (email && [value.authEmail, value.email, value.username].some(v => P.normalizeText(v) === email))
-    )
+  // Prefer an exact UID link. Email fallback is allowed only for legacy profiles
+  // that have not already been bound to a different Firebase UID.
+  let entry = Object.entries(users).find(([, value]) =>
+    value && String(value.authUid || value.uid || '') === auth.uid
   );
+  if (!entry && email) {
+    entry = Object.entries(users).find(([, value]) => {
+      if (!value || String(value.authUid || value.uid || '')) return false;
+      return [value.authEmail, value.email, value.username].some(v => P.normalizeText(v) === email);
+    });
+  }
   if (!entry && email === ADMIN_EMAIL) {
     const adminRow = users.admin || {};
-    entry = ['admin', { ...adminRow, role: 'admin', email: ADMIN_EMAIL, active: adminRow.active !== false }];
+    if (!String(adminRow.authUid || adminRow.uid || '') || String(adminRow.authUid || adminRow.uid || '') === auth.uid) {
+      entry = ['admin', { ...adminRow, role: 'admin', email: ADMIN_EMAIL, active: adminRow.active !== false }];
+    }
   }
   if (!entry) throw new HttpsError('permission-denied', 'Tu cuenta no está vinculada a un perfil autorizado de SENDWAYO EXPRESS.');
   const [key, profile] = entry;
@@ -90,6 +97,37 @@ async function loadActor(request) {
     throw new HttpsError('permission-denied', 'La cuenta no tiene privilegios de administración.');
   }
   return { uid: auth.uid, email, key, role, profile, users };
+}
+function safeProfileForClient(actor) {
+  const source = actor.profile && typeof actor.profile === 'object' ? actor.profile : {};
+  const allowed = [
+    'id','legacyId','accountId','staffId','code','codigo','codigo2','numero',
+    'role','rol','status','accountStatus','estado','active','disabled',
+    'name','displayName','fullName','nombre','firstName','lastName','apellido',
+    'email','authEmail','username','usuario','phone','telefono','celular','cellphone',
+    'country','pais','balance','balanceDOP','balanceHTG','commission','commissionDOP',
+    'commissionHTG','commissionAccrued','commissionAccruedHTG','bonusAccrued',
+    'bonus','bonuses','commissions','comisiones','referrals','referralCount',
+    'createdAt','updatedAt','lastLoginAt'
+  ];
+  const profile = {};
+  for (const key of allowed) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) profile[key] = source[key];
+  }
+  profile.id = String(profile.id || actor.key);
+  profile.legacyId = String(profile.legacyId || profile.accountId || profile.id);
+  profile.accountId = String(profile.accountId || profile.id);
+  profile.authUid = actor.uid;
+  profile.authEmail = actor.email;
+  profile.email = actor.email || String(profile.email || profile.authEmail || '');
+  profile.role = canonicalRole(actor.role);
+  profile.status = String(profile.status || profile.accountStatus || profile.estado || (activeProfile(source) ? 'active' : 'inactive'));
+  profile.active = activeProfile(source);
+  return { key: actor.key, profile };
+}
+async function resolveProfile(request) {
+  const actor = await loadActor(request);
+  return safeProfileForClient(actor);
 }
 function canonicalRole(role) {
   if (role === 'admin') return 'administrador';
@@ -1255,6 +1293,10 @@ exports.runFinancialReconciliation = onCall(async request => {
 exports.listDirectory = onCall(async request => {
   try { return await listDirectory(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo consultar el directorio de trabajo.'); }
+});
+exports.resolveProfile = onCall(async request => {
+  try { return await resolveProfile(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo validar el perfil de esta cuenta.'); }
 });
 exports.deleteRejectedOperation = onCall(async request => {
   try { return await deleteRejectedOperation(request); }
