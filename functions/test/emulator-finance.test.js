@@ -88,7 +88,10 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
   try {
     const adminIdentity = await createIdentity(app, 'admin', { testKey: 'admin', role: 'admin', balance: 10000, balanceDOP: 10000, balanceHTG: 10000 });
     const sender = await createIdentity(app, 'sender', { testKey: 'sender-1', role: 'remitente' });
-    const agent = await createIdentity(app, 'agent', { testKey: 'agent-1', role: 'agente' });
+    const agent = await createIdentity(app, 'agent', {
+      testKey: 'agent-1', role: 'agente',
+      commission: 200, commissionDOP: 200, commissionHTG: 300
+    });
     const otherAgent = await createIdentity(app, 'agent2', { testKey: 'agent-2', role: 'agente' });
     createdUsers.push(adminIdentity, sender, agent, otherAgent);
 
@@ -147,6 +150,69 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
       assert.equal(stillPending.status, 'Pendiente');
       const returned = await callFunction(adminToken, 'reviewOperation', { operationId: opId, action: 'reject', reason: 'Limpieza de prueba' });
       assert.equal(returned.ok, true, JSON.stringify(returned.body));
+    });
+
+    await t.test('retiro de comisión del agente queda pendiente, lo aprueba otro agente y descuenta balance compartido', async () => {
+      const opId = 'EMUTEST-COM-WD-' + crypto.randomBytes(4).toString('hex');
+      ids.push(opId);
+      const adminBefore = await balanceFor(rtdb, 'admin', 'DOP');
+      const agentBefore = Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP);
+      const agentBalanceBefore = await balanceFor(rtdb, 'agent-1', 'DOP');
+
+      const created = await callFunction(agentToken, 'requestCommissionWithdrawal', {
+        id: opId, amount: 50, currency: 'DOP'
+      });
+      assert.equal(created.ok, true, JSON.stringify(created.body));
+      assert.equal(created.result.status, 'Pendiente');
+      assert.equal(created.result.amount, 50);
+      assert.equal(Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP), agentBefore - 50,
+        'se reserva la comisión disponible al solicitar el retiro');
+      assert.equal(await balanceFor(rtdb, 'agent-1', 'DOP'), agentBalanceBefore,
+        'el agente no recibe un balance operativo propio');
+      assert.equal(await balanceFor(rtdb, 'admin', 'DOP'), adminBefore,
+        'el balance compartido solo cambia al aprobar el retiro');
+
+      const selfReview = await callFunction(agentToken, 'reviewOperation', { operationId: opId, action: 'approve' });
+      assert.equal(selfReview.ok, false, 'el agente no puede autoaprobar su retiro de comisión');
+      assert.equal((await rtdb.child('commissions').child(opId).once('value')).val().status, 'Pendiente');
+
+      const approved = await callFunction(otherAgentToken, 'reviewOperation', { operationId: opId, action: 'approve' });
+      assert.equal(approved.ok, true, JSON.stringify(approved.body));
+      assert.equal(approved.result.status, 'Aprobado');
+      assert.equal(await balanceFor(rtdb, 'admin', 'DOP'), adminBefore - 50,
+        'el pago sale del balance compartido de administración');
+      assert.equal(Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP), agentBefore - 50,
+        'la comisión reservada no vuelve a descontarse');
+      assert.equal((await rtdb.child('commissions').child(opId).child('receipt').once('value')).exists(), false,
+        'no se inventa un comprobante dentro de la solicitud antes de aprobación');
+      const repeated = await callFunction(adminToken, 'reviewOperation', { operationId: opId, action: 'approve' });
+      assert.equal(repeated.ok, true, JSON.stringify(repeated.body));
+      assert.equal(repeated.result.alreadyProcessed, true);
+      assert.equal(await balanceFor(rtdb, 'admin', 'DOP'), adminBefore - 50,
+        'un segundo intento no duplica el pago');
+    });
+
+    await t.test('rechazar retiro de comisión libera la comisión reservada una sola vez', async () => {
+      const opId = 'EMUTEST-COM-REJECT-' + crypto.randomBytes(4).toString('hex');
+      ids.push(opId);
+      const agentBefore = Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP);
+      const created = await callFunction(agentToken, 'requestCommissionWithdrawal', {
+        id: opId, amount: 25, currency: 'DOP'
+      });
+      assert.equal(created.ok, true, JSON.stringify(created.body));
+      assert.equal(Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP), agentBefore - 25);
+      const rejected = await callFunction(otherAgentToken, 'reviewOperation', {
+        operationId: opId, action: 'reject', reason: 'Prueba de rechazo'
+      });
+      assert.equal(rejected.ok, true, JSON.stringify(rejected.body));
+      assert.equal(Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP), agentBefore,
+        'el rechazo devuelve la comisión reservada');
+      const repeated = await callFunction(otherAgentToken, 'reviewOperation', {
+        operationId: opId, action: 'reject', reason: 'Segundo intento'
+      });
+      assert.equal(repeated.ok, true, JSON.stringify(repeated.body));
+      assert.equal(Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP), agentBefore,
+        'la devolución de comisión no ocurre dos veces');
     });
 
     await t.test('los agentes no pueden aprobar depósitos; el administrador sí y solo una vez', async () => {
