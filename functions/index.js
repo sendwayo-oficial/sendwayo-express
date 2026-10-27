@@ -1052,8 +1052,11 @@ exports.resubmitOperation = onCall(async request => {
       const pending = ['pendiente', 'reservando', 'procesando', 'reserving', 'processing'].includes(statusNorm);
       const isDeposit = P.isDeposit(collection);
       const isCommissionWithdrawal = P.isCommissionWithdrawal(collection, record);
-      const accountKey = String(record.balanceAccountUserId ||
+      const balanceAccountKey = String(record.balanceAccountUserId ||
         ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
+      // El saldo usado para pagar una comisión es el compartido de administración,
+      // pero la reserva de comisión pertenece al agente titular.
+      const accountKey = isCommissionWithdrawal ? String(record.createdByUserId || record.userId || '') : balanceAccountKey;
       const account = users[accountKey];
       const reservationId = String(record.balanceReservationId || record.commissionReservationId || id);
       const reservation = account && account.balanceReservations && account.balanceReservations[reservationId];
@@ -1145,7 +1148,7 @@ exports.resubmitOperation = onCall(async request => {
         commission,
         commissionUser: numeric(record.commissionUser, 0),
         commissionAdmin: numeric(record.commissionAdmin, 0),
-        balanceAccountUserId: accountKey,
+        balanceAccountUserId: balanceAccountKey,
         issues,
         issueCount: issues.length,
         issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
