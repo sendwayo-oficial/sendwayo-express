@@ -1231,7 +1231,8 @@ exports.resubmitOperation = onCall(async request => {
         commissionDOP: comDOP, commissionHTG: comHTG, issues,
         issueCount: issues.length, issueSummary: issues.map(item => item.code + ': ' + item.message).join(' | '),
         severity: issues.some(item => item.severity === 'ERROR') ? 'ERROR' : 'WARNING',
-        isFinancialOperation: false
+        isFinancialOperation: false,
+        generatedByAudit: true
       });
     }
   }
