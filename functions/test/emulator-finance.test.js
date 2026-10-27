@@ -347,6 +347,20 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
       assert.equal(created.ok, true, JSON.stringify(created.body));
       assert.equal(created.result.currency, 'HTG');
       assert.equal(created.result.commission, 0);
+
+      const depositQueueParams = new URLSearchParams({
+        ns: PROJECT_ID, orderBy: '"status"', equalTo: '"Pendiente"', auth: agentToken
+      });
+      const agentDepositQueue = await fetch('http://' + host + '/' + ROOT + '/deposits.json?' + depositQueueParams.toString());
+      assert.equal(agentDepositQueue.ok, false, 'los agentes no pueden consultar la cola de depósitos');
+
+      const agentDepositItem = await fetch('http://' + host + '/' + ROOT + '/deposits/' + encodeURIComponent(opId) + '.json?ns=' + encodeURIComponent(PROJECT_ID) + '&auth=' + encodeURIComponent(agentToken));
+      assert.equal(agentDepositItem.ok, false, 'los agentes no pueden leer directamente un depósito');
+
+      const agentNotices = (await rtdb.child('notifications').orderByChild('targetUserId').equalTo('agent-2').once('value')).val() || {};
+      assert.equal(Object.values(agentNotices).some(row => row && row.operationId === opId), false,
+        'el depósito no debe generar notificación en la bandeja de otro agente');
+
       const denied = await callFunction(otherAgentToken, 'reviewOperation', { operationId: opId, action: 'approve' });
       assert.equal(denied.ok, false);
       assert.match(JSON.stringify(denied.body), /Solo el administrador|permission-denied|PERMISSION_DENIED/i);
