@@ -127,13 +127,8 @@ function canReview({ actorRole, actorUid, actorKey, operation, collection, actio
   if (!['admin', 'agent'].includes(role)) {
     return { allowed: false, reason: 'Solo un agente o el administrador puede revisar operaciones.' };
   }
-  if ((isDeposit(collection) || isCommissionWithdrawal(collection, operation)) && role !== 'admin') {
-    return {
-      allowed: false,
-      reason: isDeposit(collection)
-        ? 'Solo el administrador puede revisar depósitos.'
-        : 'Solo el administrador puede aprobar retiros de comisión.'
-    };
+  if (isDeposit(collection) && role !== 'admin') {
+    return { allowed: false, reason: 'Solo el administrador puede revisar depósitos.' };
   }
   if (role === 'agent') {
     const creatorUid = String(operation.createdByAuthUid || '');
