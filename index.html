@@ -3271,50 +3271,161 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
 (function(){
  'use strict';
  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
- const actionRe=/^(excel|pdf|csv|\+?\s*agregar nuevo(?:\s|$).*)$/i;
- const isAction=b=>actionRe.test(String(b?.textContent||'').replace(/\s+/g,' ').trim());
+ const isAdd=b=>/^\+?\s*agregar nuevo(?:\s|$).*/i.test(String(b?.textContent||'').replace(/\s+/g,' ').trim());
+ const exportKind=b=>{const t=norm(b?.textContent);return ['excel','pdf','csv'].includes(t)?t:''};
+ const isToolbarControl=b=>isAdd(b)||!!exportKind(b);
  const isSearch=i=>i&&((i.type||'').toLowerCase()==='search'||/buscar|buscador|search/i.test((i.placeholder||'')+' '+(i.getAttribute('aria-label')||'')));
- function directChildContaining(node, body){
+ const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function filename(table){
+  const view=table.closest('.view');
+  const heading=view?.querySelector('h3,h2')?.textContent||view?.id||'SENDWAYO-EXPRESS';
+  return norm(heading).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'sendwayo-express';
+ }
+ function tableRows(table){
+  return [...table.querySelectorAll('tr')].filter(tr=>{
+    if(tr.querySelector('td[colspan]'))return false;
+    if(tr.style.display==='none')return false;
+    if(typeof getComputedStyle==='function'&&getComputedStyle(tr).display==='none')return false;
+    return true;
+  }).map(tr=>[...tr.querySelectorAll('th,td')].map(cell=>String(cell.innerText||cell.textContent||'').replace(/\s+/g,' ').trim()));
+ }
+ function doExport(table,format){
+  const rows=tableRows(table);
+  if(!rows.length){alert('No hay datos para exportar en esta tabla.');return;}
+  const name=filename(table);
+  if(format==='csv'){
+   const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+v.replace(/"/g,'""')+'"').join(',')).join('\r\n');
+   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+   const url=URL.createObjectURL(blob);const a=document.createElement('a');
+   a.href=url;a.download=name+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;
+  }
+  const body=rows.map((row,i)=>'<tr>'+row.map(cell=>i===0?'<th>'+escapeHtml(cell)+'</th>':'<td>'+escapeHtml(cell)+'</td>').join('')+'</tr>').join('');
+  const printable='<!doctype html><html lang="es"><head><meta charset="utf-8"><title>'+escapeHtml(name)+'</title><style>body{font:12px Arial,sans-serif;padding:20px;color:#172033}h1{font-size:18px;color:#0a245e}p{font-size:11px;color:#475569}table{width:100%;border-collapse:collapse}th,td{border:1px solid #94a3b8;padding:6px;text-align:left;vertical-align:top}th{background:#e2e8f0;font-weight:700}tr{break-inside:avoid}@media print{body{padding:0}}</style></head><body><h1>SENDWAYO EXPRESS — '+escapeHtml(name)+'</h1><p>Generado: '+escapeHtml(new Date().toLocaleString('es-DO'))+'</p><table>'+body+'</table></body></html>';
+  if(format==='excel'){
+   const blob=new Blob([printable],{type:'application/vnd.ms-excel;charset=utf-8;'});
+   const url=URL.createObjectURL(blob);const a=document.createElement('a');
+   a.href=url;a.download=name+'.xls';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;
+  }
+  const w=window.open('','_blank');
+  if(!w){alert('El navegador bloqueó la ventana de PDF. Permite ventanas emergentes para imprimir la tabla.');return;}
+  w.document.open();w.document.write(printable);w.document.close();
+  w.onload=()=>{w.focus();setTimeout(()=>w.print(),250)};
+ }
+ function attachExport(button,table,format){
+  if(button.dataset.swExportBound==='1'&&button.dataset.swExportTable===filename(table))return;
+  button.dataset.swExportBound='1';button.dataset.swExportTable=filename(table);
+  // Capturar antes de los manejadores React antiguos para que PDF/CSV/Excel
+  // siempre exporten la tabla visible, sin tocar los datos ni los módulos.
+  button.addEventListener('click',event=>{
+   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+   doExport(table,format);
+  },true);
+ }
+ function directChildContaining(node,body){
   while(node&&node.parentElement!==body)node=node.parentElement;
   return node&&node.parentElement===body?node:null;
  }
- function smallestActionGroup(buttons, body){
-  let node=buttons[0]?.parentElement;
+ function smallestGroup(buttons,body){
+  if(!buttons.length)return null;
+  let node=buttons[0].parentElement;
   while(node&&node!==body){
-   if(buttons.every(b=>node.contains(b)))return node;
+   if(buttons.every(button=>node.contains(button)))return node;
    node=node.parentElement;
   }
   return null;
  }
+ function makeSearchRow(table,body,tableHost){
+  const row=document.createElement('div');
+  row.className='mt-4 flex gap-2 flex-col md:flex-row';
+  row.dataset.swToolbarSearchRow='1';
+  const field=document.createElement('div');field.className='relative flex-1';
+  const input=document.createElement('input');input.type='search';
+  input.placeholder='Buscar en la tabla...';input.setAttribute('aria-label','Buscar en la tabla');
+  input.className='w-full border rounded-full pl-3 pr-3 py-2 text-[12px] bg-white';
+  input.dataset.swGeneratedSearch='1';
+  field.appendChild(input);row.appendChild(field);
+  tableHost.parentNode?.insertBefore(row,tableHost);
+  return {row,field,input};
+ }
+ function bindGeneratedSearch(input,table){
+  if(input.dataset.swFilterBound==='1')return;
+  input.dataset.swFilterBound='1';
+  input.addEventListener('input',()=>{
+   const query=norm(input.value);
+   for(const row of table.querySelectorAll('tbody tr')){
+    if(row.querySelector('td[colspan]'))continue;
+    row.style.display=!query||norm(row.innerText||row.textContent).includes(query)?'':'none';
+   }
+  });
+ }
  function configure(table){
+  if(!table||table.dataset.swToolbarDone==='1') {
+   // Se vuelve a inspeccionar para volver a enlazar botones tras renders React.
+  }
   const tableHost=table.closest('.overflow-x-auto')||table;
-  const body=tableHost.parentElement;
-  if(!body||body===document.body)return;
-  const buttons=[...body.querySelectorAll('button')].filter(isAction);
-  if(!['agregar','excel','pdf','csv'].every(key=>buttons.some(b=>{
-    const t=norm(b.textContent);return key==='agregar'?t.includes('agregar nuevo'):t===key;
-  })))return;
-  const input=[...body.querySelectorAll('input')].find(isSearch);
-  if(!input)return;
-  const actionGroup=smallestActionGroup(buttons,body);
-  const headerRow=actionGroup?.parentElement;
-  const searchRow=directChildContaining(input,body);
-  const searchField=input.closest('.relative.flex-1')||input.parentElement;
-  if(!actionGroup||!headerRow||!searchRow||!searchField||actionGroup===searchField)return;
-  // No se mueven nodos React: únicamente se aplica un layout de cuadrícula a filas hermanas.
-  if(headerRow.parentElement!==body||searchRow.parentElement!==body||tableHost.parentElement!==body)return;
+  let body=tableHost.parentElement;
+  if(!body)return;
+  const root=document.querySelector('#root');
+  if(!root)return;
+  let addButton=[...body.querySelectorAll('button')].find(isAdd);
+  let climb=0;
+  // Algunos módulos pintan el toolbar fuera del contenedor inmediato de la tabla.
+  while(!addButton&&body.parentElement&&body!==root&&climb++<5){
+   const parent=body.parentElement;
+   if(parent.querySelectorAll('table').length>1)break;
+   body=parent;addButton=[...body.querySelectorAll('button')].find(isAdd);
+  }
+  if(!addButton)return;
+  if(body.querySelectorAll('table').length>1)return;
+  let actionButtons=[...body.querySelectorAll('button')].filter(isToolbarControl);
+  let actionGroup=smallestGroup(actionButtons,body);
+  if(!actionGroup)return;
+  const expected=[['excel','Excel'],['pdf','PDF'],['csv','CSV']];
+  for(const [format,label] of expected){
+   let existing=[...actionGroup.querySelectorAll('button')].find(button=>exportKind(button)===format);
+   if(!existing){
+    existing=document.createElement('button');existing.type='button';existing.textContent=label;
+    existing.className=format==='excel'?'bg-green-600 text-white px-3 py-1 rounded-full text-[11px] font-bold':
+      format==='pdf'?'bg-red-600 text-white px-3 py-1 rounded-full text-[11px] font-bold':
+      'bg-blue-600 text-white px-3 py-1 rounded-full text-[11px] font-bold';
+    existing.dataset.swGeneratedExport='1';actionGroup.appendChild(existing);
+   }
+   attachExport(existing,table,format);
+  }
+  // No se inventa un controlador para Agregar nuevo: se conserva el botón original.
+  const addStillExists=[...actionGroup.querySelectorAll('button')].find(isAdd);
+  if(!addStillExists)return;
+  let input=[...body.querySelectorAll('input')].find(isSearch);
+  let searchRow=input?directChildContaining(input,body):null;
+  let searchField=input?(input.closest('.relative.flex-1')||input.parentElement):null;
+  if(!input){
+   const generated=makeSearchRow(table,body,tableHost);
+   input=generated.input;searchRow=generated.row;searchField=generated.field;
+   bindGeneratedSearch(input,table);
+  }else if(input.dataset.swGeneratedSearch==='1'){
+   bindGeneratedSearch(input,table);
+  }
+  if(!searchRow||!searchField)return;
+  const headerRow=actionGroup.parentElement;
+  if(!headerRow||headerRow.parentElement!==body||searchRow.parentElement!==body||tableHost.parentElement!==body)return;
   body.classList.add('sw-layout-grid');
   headerRow.classList.add('sw-layout-header-row');
   searchRow.classList.add('sw-layout-search-row');
   actionGroup.classList.add('sw-layout-action-group');
   searchField.classList.add('sw-layout-search-field');
   tableHost.classList.add('sw-layout-table');
-  const title=[...headerRow.children].find(child=>child!==actionGroup&&!child.contains(input)&&!buttons.some(b=>child===b||child.contains(b)));
+  const title=[...headerRow.children].find(child=>child!==actionGroup&&!child.contains(input)&&!actionButtons.some(button=>child===button||child.contains(button)));
   if(title)title.classList.add('sw-layout-toolbar-title');
+  if(input?.dataset.swGeneratedSearch==='1'){
+   const query=norm(input.value);
+   for(const row of table.querySelectorAll('tbody tr')){
+    if(row.querySelector('td[colspan]'))continue;
+    row.style.display=!query||norm(row.innerText||row.textContent).includes(query)?'':'none';
+   }
+  }
  }
  function apply(){
-  const root=document.querySelector('#root');
-  if(!root)return;
+  const root=document.querySelector('#root');if(!root)return;
   for(const table of root.querySelectorAll('table')){try{configure(table)}catch(e){console.warn('[SENDWAYO] No se pudo compactar la barra:',e)}}
  }
  let scheduled=false;
