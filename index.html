@@ -1783,7 +1783,8 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     resubmitOperation: 'resubmitOperation',
     deleteRejectedOperation: 'deleteRejectedOperation',
     payCommission: 'requestCommissionWithdrawal',
-    runFinancialReconciliation: 'runFinancialReconciliation'
+    runFinancialReconciliation: 'runFinancialReconciliation',
+    listDirectory: 'listDirectory'
   });
   const invoke = (name) => async (payload = {}) => {
     const serverName = serverEnforcedFunctions[name];
@@ -1845,57 +1846,15 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   }
   async function readLegacyProfile(user) {
     if (!user || !user.uid) return null;
-    const usersRef = legacyRtdb.ref('sendwayo_express_v2/users');
-    const email = String(user.email || '').trim().toLowerCase();
-    const timeoutMs = 4000;
-    const rowsFromSnapshot = (snapshot) => {
-      const value = snapshot && snapshot.val();
-      if (!value || typeof value !== 'object') return [];
-      return Array.isArray(value) ? value.map((row, i) => [String(i), row]) : Object.entries(value);
-    };
-    const findMatchingProfile = (snapshot, queryKey) => {
-      const rows = rowsFromSnapshot(snapshot);
-      const found = rows.find(([id, row]) => {
-        if (!row || typeof row !== 'object') return false;
-        if (String(row.authUid || '') === String(user.uid)) return true;
-        if (queryKey === 'admin' && email === 'sendwayoexpress@gmail.com' && String(id).toLowerCase() === 'admin') return true;
-        const emails = [row.authEmail, row.email, row.authEmailLegacy, row.legacyAuthEmail, row.username, row.login, row.identifier]
-          .map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
-        return !!email && emails.includes(email);
-      });
-      return found ? mapLegacyProfile(found[1], found[0], user) : null;
-    };
-    const lookup = (key, query) => new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Profile lookup timed out')), timeoutMs);
-      Promise.resolve().then(() => query.once('value')).then(snapshot => {
-        clearTimeout(timer);
-        const profile = key === 'admin' && snapshot.exists()
-          ? mapLegacyProfile(snapshot.val(), 'admin', user)
-          : findMatchingProfile(snapshot, key);
-        if (profile) resolve(profile);
-        else reject(new Error('Profile not found for query'));
-      }, err => {
-        clearTimeout(timer);
-        reject(err);
-      });
-    });
-    const lookups = [
-      lookup('authUid', usersRef.orderByChild('authUid').equalTo(String(user.uid)))
-    ];
-    if (email) {
-      lookups.push(lookup('authEmail', usersRef.orderByChild('authEmail').equalTo(email)));
-      lookups.push(lookup('email', usersRef.orderByChild('email').equalTo(email)));
-      lookups.push(lookup('username', usersRef.orderByChild('username').equalTo(email)));
-      if (email === 'sendwayoexpress@gmail.com') {
-        lookups.unshift(lookup('admin', usersRef.child('admin')));
-      }
-    }
     try {
-      // Query the allowed UID/email keys concurrently. A missing authUid on an older profile
-      // must not force several sequential waits before checking the already-stored email.
-      return await Promise.any(lookups);
+      // Perfil propio: se obtiene mediante Cloud Function autenticada.
+      // No se consulta ni se descarga la colección completa de usuarios en el navegador.
+      const result = await legacyFunctions.httpsCallable('resolveProfile')({});
+      const data = result && result.data;
+      if (!data || !data.profile || typeof data.profile !== 'object') return null;
+      return mapLegacyProfile(data.profile, String(data.key || data.profile.id || user.uid), user);
     } catch (err) {
-      console.warn('[SENDWAYO] No se encontró un perfil por UID/correo en la consulta segura:', err?.message || 'no match');
+      console.warn('[SENDWAYO] No se pudo resolver el perfil autenticado:', err?.message || 'sin detalle');
       return null;
     }
   }
