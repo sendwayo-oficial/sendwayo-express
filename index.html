@@ -2014,26 +2014,48 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     if (!legacyAuth.currentUser) throw new Error('Inicia sesión con la cuenta existente.');
     if (isAdmin && !legacyIsAdmin()) throw new Error('Acceso exclusivo del administrador.');
     const ownKey = legacyProfileKey();
-    const canReviewQueue = isAdmin || legacyIsAgent();
+    const ownUid = String(legacyAuth.currentUser.uid || '');
+    const isAgent = !isAdmin && legacyIsAgent();
     const byCollection = new Map();
-    const stops = LEGACY_OPERATION_COLLECTIONS.map(collection => {
-      let query = legacyRtdb.ref(legacyPath(collection));
-      if (!canReviewQueue) query = query.orderByChild('userId').equalTo(ownKey);
-      return legacyWatch(query, rows => {
-        byCollection.set(collection, Array.isArray(rows) ? rows : legacyRows(rows, collection));
-        const merged = [];
-        for (const [name, values] of byCollection.entries()) {
-          const list = Array.isArray(values) ? values : legacyRows(values, name);
-          for (const item of list) merged.push(item._legacyCollection ? item : legacyOperationRow(item.id, item, name));
+    const stops = [];
+    const publish = () => {
+      const merged = [];
+      for (const [streamKey, values] of byCollection.entries()) {
+        const split = streamKey.indexOf('|');
+        const collection = streamKey.slice(0, split);
+        const rows = Array.isArray(values) ? values : legacyRows(values, collection);
+        for (const item of rows) merged.push(item._legacyCollection ? item : legacyOperationRow(item.id, item, collection));
+      }
+      const seen = new Map();
+      for (const record of merged) seen.set(record._legacyCollection + '|' + record.id, record);
+      callback([...seen.values()].sort((a, b) => legacyNum(b.createdAtMs) - legacyNum(a.createdAtMs)));
+    };
+    const subscribe = (collection, stream, query) => {
+      const streamKey = collection + '|' + stream;
+      const stop = legacyWatch(query, rows => {
+        byCollection.set(streamKey, Array.isArray(rows) ? rows : legacyRows(rows, collection));
+        publish();
+      }, 'operaciones:' + collection + ':' + stream, value => legacyRows(value, collection));
+      if (typeof stop === 'function') stops.push(stop);
+    };
+    for (const collection of LEGACY_OPERATION_COLLECTIONS) {
+      const ref = legacyRtdb.ref(legacyPath(collection));
+      if (isAdmin) {
+        subscribe(collection, 'admin-all', ref);
+      } else if (isAgent) {
+        // Solo la cola Pendiente está compartida entre agentes para que puedan
+        // revisar transacciones de remitentes/otros agentes sin consultar el historial privado.
+        if (collection !== 'credits') {
+          subscribe(collection, 'review-queue', ref.orderByChild('status').equalTo('Pendiente'));
+          subscribe(collection, 'own-history-auth', ref.orderByChild('createdByAuthUid').equalTo(ownUid));
+          subscribe(collection, 'own-history-profile', ref.orderByChild('createdByUserId').equalTo(ownKey));
         }
-        const seen = new Map();
-        for (const record of merged) seen.set(record._legacyCollection + '|' + record.id, record);
-        callback([...seen.values()].sort((a, b) => legacyNum(b.createdAtMs) - legacyNum(a.createdAtMs)));
-      }, 'operaciones:' + collection, value => legacyRows(value, collection));
-    });
-    return () => stops.forEach(stop => stop());
-  }
-  function legacyAccountRow(key, raw) {
+      } else {
+        subscribe(collection, 'own-records', ref.orderByChild('userId').equalTo(ownKey));
+      }
+    }
+    return () => stops.forEach(stop => { try { stop(); } catch (_) {} });
+  }function legacyAccountRow(key, raw) {
     const row = raw || {};
     const name = row.displayName || row.name || row.fullName || row.nombre || row.username || row.email || key;
     const legacyId = String(row.id || row.legacyId || row.accountId || key);
