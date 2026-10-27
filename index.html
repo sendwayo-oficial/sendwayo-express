@@ -1744,6 +1744,7 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
   const legacyRtdb = legacyApp.database();
   const db = firebase.firestore();
   const functions = firebase.app().functions('us-central1');
+  const legacyFunctions = legacyApp.functions('us-central1');
 
   let authExchangeInProgress = false;
   const authBridgeSubscribers = new Set();
@@ -1774,9 +1775,14 @@ if(typeof swV23OriginalAddReceipt==='function')window.__sendwayoAddReceipt=funct
     auth.useEmulator('http://127.0.0.1:9099');
     db.useEmulator('127.0.0.1', 8080);
     functions.useEmulator('127.0.0.1', 5001);
+    legacyFunctions.useEmulator('127.0.0.1', 5001);
     console.info('[SENDWAYO] Firebase Emulator Suite activo. No se están usando datos de producción.');
   }
   const callable = functions.httpsCallable.bind(functions);
+  const callLegacyFunction = async (name, payload = {}) => {
+    const response = await legacyFunctions.httpsCallable(name)(payload);
+    return response.data;
+  };
   const serverEnforcedFunctions = Object.freeze({
     submitOperation: 'submitOperation',
     reviewOperation: 'reviewOperation',
