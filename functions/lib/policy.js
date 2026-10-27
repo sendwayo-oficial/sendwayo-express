@@ -93,7 +93,7 @@ function localWithdrawalFee(amount) {
   if (amount < 500) return 15;
   if (amount < 1000) return 28;
   if (amount < 2000) return 46;
-  if (amount < 4000) return 81;
+  if (amount < 4000) return 25;
   if (amount < 8000) return 130;
   if (amount < 12000) return 248;
   if (amount < 20000) return 342;
