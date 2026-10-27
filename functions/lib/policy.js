@@ -35,6 +35,11 @@ function isDeposit(collection) {
   return normalizeText(collection) === 'deposits';
 }
 
+function isCommissionWithdrawal(collection, record = {}) {
+  return normalizeText(collection) === 'commissions' &&
+    normalizeText(record.accountingType || '') === 'comision_retiro';
+}
+
 function isWithdrawal(collection, record = {}) {
   return normalizeText(collection) === 'accountwithdrawals' ||
     /retiro|withdraw/.test(normalizeText(record.type || record.category));
@@ -47,20 +52,25 @@ function isService(record = {}) {
 }
 
 function isHaitiToHaiti(record = {}) {
-  const route = normalizeText([record.route, record.routeFull, record.originCountry, record.destinationCountry].filter(Boolean).join(' '));
+  const route = normalizeText([
+    record.route, record.routeFull, record.originCountry, record.destinationCountry
+  ].filter(Boolean).join(' '));
   const explicitCountries = normalizeText(record.originCountry) === 'ht' &&
     normalizeText(record.destinationCountry) === 'ht';
-  return explicitCountries || /ht\s*(?:->|→|a|to|-)\s*ht/.test(route) ||
+  return explicitCountries ||
+    /ht\s*(?:->|→|a|to|-)\s*ht/.test(route) ||
     /haiti\s*(?:->|→|a|to|-)\s*haiti/.test(route);
 }
 
 function usesHaitiWalletTable(record = {}) {
-  const method = normalizeText([record.method, record.provider, record.route, record.routeFull].filter(Boolean).join(' '));
+  const method = normalizeText([
+    record.method, record.provider, record.route, record.routeFull
+  ].filter(Boolean).join(' '));
   return isHaitiToHaiti(record) && /(natcash|moncash)/.test(method);
 }
 
-// Tabla local existente en el HTML V118. Se conserva la misma escala por monto
-// para envío (Am) y retiro (Aw); solo aplica a HT -> HT NatCash/MonCash.
+// Tabla local HT -> HT del proyecto existente. Debe mantenerse alineada con
+// la tabla aprobada por administración antes de habilitar dinero real.
 function localSendFee(amount) {
   if (amount < 20 || amount > 99999) return 0;
   if (amount < 500) return 0;
@@ -94,17 +104,17 @@ function localWithdrawalFee(amount) {
 }
 
 function currencyFor(record = {}, collection = '') {
-  if (isDeposit(collection)) {
+  if (isCommissionWithdrawal(collection, record) || isDeposit(collection)) {
     const requested = String(record.currency || record.balanceCurrency || 'DOP').toUpperCase();
     if (['HTG', 'GDES'].includes(requested)) return 'HTG';
     if (['DOP', 'RD$', 'RD', 'PESO', 'PESOS'].includes(requested)) return 'DOP';
-    throw new Error('La moneda del depósito debe ser DOP o HTG.');
+    throw new Error('La moneda debe ser DOP o HTG.');
   }
   return usesHaitiWalletTable(record) ? 'HTG' : 'DOP';
 }
 
 function commissionFor(record = {}, collection = '', amount) {
-  if (isDeposit(collection)) return 0;
+  if (isDeposit(collection) || isCommissionWithdrawal(collection, record)) return 0;
   if (usesHaitiWalletTable(record)) {
     return money(isWithdrawal(collection, record) ? localWithdrawalFee(amount) : localSendFee(amount));
   }
@@ -113,7 +123,9 @@ function commissionFor(record = {}, collection = '', amount) {
 
 function canReview({ actorRole, actorUid, actorKey, operation, collection, action }) {
   const role = normalizeRole(actorRole);
-  if (!['admin', 'agent'].includes(role)) return { allowed: false, reason: 'Solo un agente o el administrador puede revisar operaciones.' };
+  if (!['admin', 'agent'].includes(role)) {
+    return { allowed: false, reason: 'Solo un agente o el administrador puede revisar operaciones.' };
+  }
   if (isDeposit(collection) && role !== 'admin') {
     return { allowed: false, reason: 'Solo el administrador puede revisar depósitos.' };
   }
@@ -135,6 +147,7 @@ module.exports = {
   normalizeAction,
   money,
   isDeposit,
+  isCommissionWithdrawal,
   isWithdrawal,
   isService,
   isHaitiToHaiti,
