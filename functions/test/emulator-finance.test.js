@@ -215,6 +215,8 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
         'el agente no recibe un balance operativo propio');
       assert.equal(await balanceFor(rtdb, 'admin', 'DOP'), adminBefore,
         'el balance compartido solo cambia al aprobar el retiro');
+      assert.equal((await rtdb.child('commissions').child(opId).child('receipt').once('value')).exists(), false,
+        'el comprobante del retiro no aparece antes de aprobar');
 
       const selfReview = await callFunction(agentToken, 'reviewOperation', { operationId: opId, action: 'approve' });
       assert.equal(selfReview.ok, false, 'el agente no puede autoaprobar su retiro de comisión');
@@ -227,8 +229,8 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
         'el pago sale del balance compartido de administración');
       assert.equal(Number((await rtdb.child('users/agent-1').once('value')).val().commissionDOP), agentBefore - 50,
         'la comisión reservada no vuelve a descontarse');
-      assert.equal((await rtdb.child('commissions').child(opId).child('receipt').once('value')).exists(), false,
-        'no se inventa un comprobante dentro de la solicitud antes de aprobación');
+      assert.equal((await rtdb.child('commissions').child(opId).child('receipt').once('value')).exists(), true,
+        'el comprobante se genera al aprobar el retiro de comisión');
       const repeated = await callFunction(adminToken, 'reviewOperation', { operationId: opId, action: 'approve' });
       assert.equal(repeated.ok, true, JSON.stringify(repeated.body));
       assert.equal(repeated.result.alreadyProcessed, true);
