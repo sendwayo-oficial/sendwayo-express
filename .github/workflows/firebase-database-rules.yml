@@ -88,6 +88,18 @@ jobs:
       - name: Instalar Firebase CLI
         run: npm install --global firebase-tools
 
+      - name: Publicar Cloud Functions financieras de SENDWAYO
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
+            firebase deploy --only functions --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
+          else
+            firebase deploy --only functions --project sendwayo-express --non-interactive
+          fi
+
       - name: Publicar el sitio en el dominio de prueba de Firebase
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
@@ -110,18 +122,6 @@ jobs:
             firebase deploy --only database --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
           else
             firebase deploy --only database --project sendwayo-express --non-interactive
-          fi
-
-      - name: Publicar Cloud Functions financieras de SENDWAYO
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
-            firebase deploy --only functions --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
-          else
-            firebase deploy --only functions --project sendwayo-express --non-interactive
           fi
 
       - name: Eliminar credencial temporal
