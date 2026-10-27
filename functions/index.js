@@ -416,6 +416,7 @@ async function createOperation(request) {
       await reserveBalance(financialAccountKey, id, grossDebit, currency, collection);
       await opRef.update({ balanceDebited: true, balanceReservationId: id, balanceDebitAmount: grossDebit, status: 'Pendiente', estado: 'pendiente', reservedAt: now() });
     } catch (error) {
+      await refundBalance(financialAccountKey, id, grossDebit, currency).catch(refundError => console.error('[SENDWAYO] No se pudo revertir una reserva fallida:', refundError));
       await opRef.remove().catch(() => {});
       throw error;
     }
@@ -485,7 +486,8 @@ async function reviewOperation(request) {
       if (adminShare > 0) await creditCommission('admin', id, adminShare, currency, true);
     } else {
       if (!P.isDeposit(collection) && record.balanceDebited) {
-        await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency);
+        const returned = await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency);
+        if (returned) await opRef.update({ balanceDebited: false, balanceRefunded: true, balanceRefundedAt: now() });
       }
     }
     const reviewedAt = now();
@@ -497,6 +499,9 @@ async function reviewOperation(request) {
       commissionTotal: action === 'Aprobado' ? fee : 0, commissionUser: action === 'Aprobado' && P.normalizeRole(record.createdByRole) === 'remitente' ? P.money(fee / 2) : 0,
       commissionAdmin: action === 'Aprobado' ? P.money(fee - (P.normalizeRole(record.createdByRole) === 'remitente' ? P.money(fee / 2) : 0)) : 0,
       balanceSettled: action === 'Aprobado', balanceSettledAt: action === 'Aprobado' ? reviewedAt : null,
+      balanceDebited: action === 'Aprobado' ? !!record.balanceDebited : false,
+      balanceRefunded: action !== 'Aprobado' && !!record.balanceRefunded || (action !== 'Aprobado' && !!record.balanceDebited),
+      balanceRefundedAt: action === 'Aprobado' ? (record.balanceRefundedAt || null) : (record.balanceRefundedAt || reviewedAt),
       manualReview: true
     };
     if (action === 'Aprobado') {
@@ -539,7 +544,41 @@ exports.submitOperation = onCall(async request => {
   try { return await createOperation(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo registrar la operación. No se confirmó ninguna acción que no aparezca guardada en Firebase.'); }
 });
+async function resubmitOperation(request) {
+  const actor = await loadActor(request);
+  const payload = request.data || {};
+  const oldId = String(payload.operationId || payload.id || '').trim();
+  const found = await getOperation(oldId);
+  if (P.normalizeText(found.record.status || found.record.estado) !== 'no coincide') {
+    throw new HttpsError('failed-precondition', 'Solo se puede corregir una operación marcada No coincide.');
+  }
+  const isAdmin = actor.role === 'admin';
+  if (!isAdmin && actor.key !== String(found.record.userId || '') && actor.key !== String(found.record.createdByUserId || '')) {
+    throw new HttpsError('permission-denied', 'No tienes permiso para corregir esta operación.');
+  }
+  const changes = payload.operation && typeof payload.operation === 'object' ? payload.operation : (payload.changes || {});
+  const nextId = String(payload.newOperationId || ('SW-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
+  const nextData = {
+    ...changes,
+    id: nextId,
+    idempotencyKey: nextId,
+    type: changes.type || found.record.type || found.record.category,
+    category: changes.category || found.record.category || found.record.type,
+    targetUserId: isAdmin ? (changes.targetUserId || found.record.userId) : found.record.userId,
+    userId: found.record.userId,
+    resubmittedFrom: oldId
+  };
+  const result = await createOperation({ auth: request.auth, data: { operation: nextData } });
+  await found.ref.update({ resubmittedTo: result.id, resubmittedAt: now() });
+  await writeAuditOnce(oldId, 'REENVIADA_CORREGIDA', actor, found.record, found.collection, { resubmittedTo: result.id });
+  return { ...result, resubmittedFrom: oldId };
+}
+
 exports.reviewOperation = onCall(async request => {
   try { return await reviewOperation(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo revisar la operación. Comprueba el estado actualizado antes de volver a intentarlo.'); }
+});
+exports.resubmitOperation = onCall(async request => {
+  try { return await resubmitOperation(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo reenviar la operación corregida.'); }
 });
