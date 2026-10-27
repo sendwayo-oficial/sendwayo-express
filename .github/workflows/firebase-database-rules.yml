@@ -12,6 +12,7 @@ on:
       - 'firebase.json'
       - '.firebaserc'
       - 'database.rules.json'
+      - 'functions/**'
       - '.github/workflows/firebase-database-rules.yml'
 
 permissions:
@@ -109,6 +110,18 @@ jobs:
             firebase deploy --only database --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
           else
             firebase deploy --only database --project sendwayo-express --non-interactive
+          fi
+
+      - name: Publicar Cloud Functions financieras de SENDWAYO
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
+            firebase deploy --only functions --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
+          else
+            firebase deploy --only functions --project sendwayo-express --non-interactive
           fi
 
       - name: Eliminar credencial temporal
