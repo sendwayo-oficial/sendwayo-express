@@ -591,6 +591,7 @@ async function reviewOperation(request) {
   if (!action) throw new HttpsError('invalid-argument', 'Selecciona Aprobado, Rechazado o No coincide.');
   const found = await getOperation(id);
   const { collection } = found;
+  const commissionWithdrawal = P.isCommissionWithdrawal(collection, found.record);
   const initialStatus = P.normalizeText(found.record.status || found.record.estado || 'Pendiente');
   if (!['pendiente', 'reserving', 'reservando'].includes(initialStatus)) {
     if (initialStatus === P.normalizeText(action)) {
@@ -598,7 +599,7 @@ async function reviewOperation(request) {
     }
     throw new HttpsError('failed-precondition', 'Esta operación ya fue procesada. Actualiza la lista antes de intentarlo otra vez.');
   }
-  if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(collection)) {
+  if (!['envios', 'recargas', 'paqueticos', 'pagos', 'paquetes', 'deposits', 'accountWithdrawals'].includes(collection) && !commissionWithdrawal) {
     throw new HttpsError('failed-precondition', 'Este tipo de registro requiere un procedimiento administrativo específico y no se puede liquidar desde la cola general.');
   }
   const decision = P.canReview({ actorRole: actor.role, actorUid: actor.uid, actorKey: actor.key, operation: found.record, collection, action });
@@ -644,8 +645,8 @@ async function reviewOperation(request) {
   const record = lockTx.snapshot.val() || lockedRecord || found.record;
   const amount = amountFrom(record);
   const currency = P.currencyFor(record, collection);
-  const fee = P.isDeposit(collection) ? 0 : P.commissionFor(record, collection, amount);
-  const financialAccountKey = String(record.balanceAccountUserId || ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
+  const fee = (P.isDeposit(collection) || commissionWithdrawal) ? 0 : P.commissionFor(record, collection, amount);
+  const financialAccountKey = commissionWithdrawal ? 'admin' : String(record.balanceAccountUserId || ((P.normalizeRole(record.createdByRole) === 'agent' || P.normalizeRole(record.createdByRole) === 'admin') ? 'admin' : (record.userId || '')));
   let financialCommitStarted = false;
   let balanceDebitedFinal = !!record.balanceDebited;
   let balanceWasRefunded = !!record.balanceRefunded;
@@ -657,6 +658,26 @@ async function reviewOperation(request) {
         if (!ownerKey) throw new HttpsError('failed-precondition', 'El depósito no tiene destinatario.');
         financialCommitStarted = true;
         await creditDeposit(id, ownerKey, amount, currency);
+      } else if (commissionWithdrawal) {
+        const ownerKey = String(record.createdByUserId || record.userId || '');
+        if (!ownerKey) throw new HttpsError('failed-precondition', 'El retiro de comisión no tiene agente titular.');
+        const adminSnap = await root().child('users').child('admin').once('value');
+        const adminProfile = adminSnap.val() || actor.users.admin || {};
+        const available = balanceState(adminProfile, currency);
+        if (!Number.isFinite(available) || available < amount) {
+          throw new HttpsError('failed-precondition', 'Balance insuficiente de la administración en ' + currency + '. El retiro sigue pendiente; no se descontó nada.');
+        }
+        financialCommitStarted = true;
+        try {
+          await debitLegacyBalance('admin', id, amount, currency);
+        } catch (error) {
+          // La función de débito revierte sin escribir cuando el balance resulta
+          // insuficiente por una operación concurrente; eso no requiere recuperación.
+          if (String(error.message || '').includes('Balance insuficiente en ')) financialCommitStarted = false;
+          throw error;
+        }
+        await updateAgentCommissionReservation(ownerKey, id, 'SETTLED');
+        balanceDebitedFinal = true;
       } else {
         const reservation = financialAccountKey ? await root().child('users').child(financialAccountKey).child('balanceReservations').child(id).once('value') : null;
         const reservationData = reservation && reservation.val();
@@ -680,7 +701,12 @@ async function reviewOperation(request) {
       if (senderShare > 0 && senderKey && actor.users[senderKey]) await creditCommission(senderKey, id, senderShare, currency, false);
       if (adminShare > 0) await creditCommission('admin', id, adminShare, currency, true);
     } else {
-      if (!P.isDeposit(collection) && record.balanceDebited) {
+      if (commissionWithdrawal) {
+        const ownerKey = String(record.createdByUserId || record.userId || '');
+        if (!ownerKey) throw new HttpsError('failed-precondition', 'El retiro de comisión no tiene agente titular.');
+        financialCommitStarted = true;
+        await updateAgentCommissionReservation(ownerKey, id, 'RELEASED');
+      } else if (!P.isDeposit(collection) && record.balanceDebited) {
         financialCommitStarted = true;
         const returned = await refundBalance(financialAccountKey, id, P.money(record.balanceDebitAmount || (amount + fee)), currency, true);
         if (returned) {
@@ -702,6 +728,12 @@ async function reviewOperation(request) {
       balanceDebited: action === 'Aprobado' ? balanceDebitedFinal : false,
       balanceRefunded: action !== 'Aprobado' && (balanceWasRefunded || !!record.balanceDebited),
       balanceRefundedAt: action === 'Aprobado' ? (record.balanceRefundedAt || null) : (balanceWasRefunded ? (record.balanceRefundedAt || reviewedAt) : null),
+      ...(commissionWithdrawal ? {
+        commissionReserved: false,
+        commissionPaid: action === 'Aprobado',
+        commissionReleased: action !== 'Aprobado',
+        commissionReservationFinalizedAt: reviewedAt
+      } : {}),
       manualReview: true
     };
     if (action === 'Aprobado') {
