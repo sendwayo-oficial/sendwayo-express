@@ -555,7 +555,9 @@ async function reviewOperation(request) {
       finalPatch.receiptId = record.receiptId || ('SW-' + new Date(reviewedAt).toISOString().replace(/[-:TZ.]/g, '').slice(0, 14) + '-' + id.slice(-5));
       finalPatch.receipt = await buildReceipt(id, { ...record, receiptId: finalPatch.receiptId }, collection, amount, currency, fee, actor);
     }
-    await opRef.update(finalPatch);
+    // Escribir primero el apunte contable idempotente. Si el siguiente update de la
+    // operación falla, el estado quedará en recuperación y podrá reintentarse la
+    // misma acción sin crear otro débito ni un segundo asiento.
     if (action === 'Aprobado') {
       const ledgerRef = root().child('ledger').child(id);
       await ledgerRef.transaction(current => current || ({
@@ -565,6 +567,7 @@ async function reviewOperation(request) {
         balanceDebit: record.balanceDebitAmount || P.money(amount + fee), reviewedByAuthUid: actor.uid, createdAt: reviewedAt
       }), undefined, false);
     }
+    await opRef.update(finalPatch);
     await writeAuditOnce(id, action.toUpperCase(), actor, record, collection, { amount, currency, commission: fee, reason }).catch(error => console.error('Auditoría de revisión falló', error));
     const note = action === 'Aprobado' ? 'Tu operación fue aprobada. El comprobante ya está disponible.' : action === 'Rechazado' ? 'Tu operación fue rechazada. Los fondos reservados se devolvieron si correspondía.' : 'Tu operación quedó No coincide. Los fondos reservados se liberaron para que puedas corregirla y reenviarla.';
     await addOwnerNotification(record, collection, id, note).catch(error => console.error('Notificación de revisión falló', error));
