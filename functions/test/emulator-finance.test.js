@@ -426,7 +426,7 @@ test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (prueba
       const current = (await rtdb.child('reconciliationDetails/current').once('value')).val();
       assert.equal(current.runId, report.result.id);
       const detailRows = Object.values(current.rows || {});
-      const detail = detailRows.find(row => row && row.transactionId === opId);
+      const detail = detailRows.find(row => row && row.isFinancialOperation === true && row.transactionId === opId);
       assert.ok(detail, 'el detalle en tiempo real incluye la operación pendiente creada');
       assert.equal(detail.statusOriginal, 'Pendiente');
       assert.equal(detail.generatedByAudit, true, 'el renglón de conciliación se marca como solo lectura');
