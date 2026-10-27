@@ -13,15 +13,20 @@ const serverOnlyCollections = [
   'deposits', 'accountWithdrawals', 'commissions'
 ];
 for (const collection of serverOnlyCollections) {
-  const rule = root[collection]?.['$id']?.['.write'];
-  if (rule !== false) {
-    throw new Error('La escritura del cliente sigue abierta en ' + collection + '/$id.');
+  const parentRule = root[collection]?.['.write'];
+  const itemRule = root[collection]?.['$id']?.['.write'];
+  if (parentRule !== false || itemRule !== false) {
+    throw new Error('La escritura del cliente sigue abierta en ' + collection + ' (padre o registro).');
   }
   console.log('PASS: escritura financiera solo por servidor en ' + collection);
 }
 
 // Los agentes usan una callable que devuelve solo datos mínimos de identidad.
 // No deben leer el árbol completo de usuarios ni las notificaciones de otros.
+const usersRootRead = String(root.users?.['.read'] || '');
+if (usersRootRead.includes('query.orderByChild') || usersRootRead.includes("root.child('sendwayo_express_v2/agentAuth')")) {
+  throw new Error('La lectura del directorio completo de usuarios no está reservada a administración.');
+}
 for (const [path, rule] of [
   ['users', root.users?.['.read']],
   ['users/$uid', root.users?.['$uid']?.['.read']],
