@@ -10,7 +10,9 @@ const host = process.env.FIREBASE_DATABASE_EMULATOR_HOST || '127.0.0.1:9000';
 process.env.FIREBASE_DATABASE_EMULATOR_HOST = host;
 process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099';
 
-const admin = require('firebase-admin');
+// El test de producción habitual no debe necesitar node_modules. Cargamos
+// Firebase Admin únicamente cuando se ejecuta explícitamente el emulador.
+const admin = enabled ? require('firebase-admin') : null;
 const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || 'sendwayo-express';
 const ROOT = 'sendwayo_express_v2';
 const PASSWORD = 'Swayo-test-2026!';
