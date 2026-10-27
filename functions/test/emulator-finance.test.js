@@ -4,6 +4,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const enabled = process.env.SENDWAYO_RUN_EMULATOR_TESTS === '1';
 const host = process.env.FIREBASE_DATABASE_EMULATOR_HOST || '127.0.0.1:9000';
@@ -78,6 +80,34 @@ async function balanceFor(ref, key, currency = 'DOP') {
 }
 
 test('Firebase Emulator: operaciones, reservas, aprobación y depósitos (pruebas aisladas)', { skip: !enabled }, async t => {
+  // Asegurar que las pruebas evalúan las reglas reales del proyecto y no reglas
+  // abiertas de otro namespace del emulador.
+  const namespace = PROJECT_ID;
+  const rulesPath = path.resolve(__dirname, '../../database.rules.json');
+  const rulesText = fs.readFileSync(rulesPath, 'utf8');
+  const rulesUrl = 'http://' + host + '/.settings/rules.json?ns=' + encodeURIComponent(namespace);
+  const rulesPut = await fetch(rulesUrl, {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      'authorization': 'Bearer owner'
+    },
+    body: rulesText
+  });
+  const rulesPutBody = await rulesPut.text();
+  assert.equal(rulesPut.ok, true, 'El emulador debe aceptar las reglas del repositorio: ' + rulesPutBody);
+  const rulesGet = await fetch(rulesUrl, {
+    headers: { authorization: 'Bearer owner' }
+  });
+  assert.equal(rulesGet.ok, true, 'El emulador debe permitir verificar las reglas cargadas.');
+  const loadedRules = await rulesGet.json();
+  const loadedUsersRead = String(loadedRules?.rules?.sendwayo_express_v2?.users?.['.read'] || '');
+  assert.ok(
+    loadedUsersRead.includes("auth.token.email === 'sendwayoexpress@gmail.com'") &&
+    !loadedUsersRead.includes('query.orderByChild'),
+    'El namespace de prueba debe tener la regla privada de usuarios del repositorio.'
+  );
+
   const app = admin.initializeApp({
     projectId: PROJECT_ID,
     databaseURL: 'http://' + host + '/?ns=' + PROJECT_ID
