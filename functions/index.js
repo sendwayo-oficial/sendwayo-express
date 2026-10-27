@@ -794,6 +794,10 @@ exports.submitOperation = onCall(async request => {
   try { return await createOperation(request); }
   catch (error) { throw asHttpsError(error, 'No se pudo registrar la operación. No se confirmó ninguna acción que no aparezca guardada en Firebase.'); }
 });
+exports.requestCommissionWithdrawal = onCall(async request => {
+  try { return await requestCommissionWithdrawal(request); }
+  catch (error) { throw asHttpsError(error, 'No se pudo crear la solicitud de retiro de comisión.'); }
+});
 async function resubmitOperation(request) {
   const actor = await loadActor(request);
   const payload = request.data || {};
@@ -808,6 +812,20 @@ async function resubmitOperation(request) {
   }
   const changes = payload.operation && typeof payload.operation === 'object' ? payload.operation : (payload.changes || {});
   const nextId = String(payload.newOperationId || ('SW-' + now() + '-' + Math.random().toString(36).slice(2, 9)));
+  if (P.isCommissionWithdrawal(found.collection, found.record)) {
+    const result = await requestCommissionWithdrawal({
+      auth: request.auth,
+      data: {
+        ...(payload.operation && typeof payload.operation === 'object' ? payload.operation : (payload.changes || {})),
+        amount: (payload.operation || payload.changes || {}).amount ?? found.record.amount,
+        currency: (payload.operation || payload.changes || {}).currency || found.record.currency || 'DOP',
+        idempotencyKey: nextId
+      }
+    });
+    await found.ref.update({ resubmittedTo: result.id, resubmittedAt: now() });
+    await writeAuditOnce(oldId, 'REENVIADO_RETIRO_COMISION', actor, found.record, found.collection, { resubmittedTo: result.id });
+    return { ...result, resubmittedFrom: oldId };
+  }
   const nextData = {
     ...changes,
     id: nextId,
