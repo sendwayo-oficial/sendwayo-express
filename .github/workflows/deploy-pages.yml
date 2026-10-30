@@ -42,6 +42,7 @@ jobs:
           test "$bytes" -eq 22881979
           grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' "$target"
           grep -Fq '</html>' "$target"
+          rm -rf v7-source
           echo "PASS: la ruta publicada conserva el mismo nombre y ahora contiene el HTML V7."
 
       - name: Setup Pages
