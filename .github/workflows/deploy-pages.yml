@@ -36,3 +36,25 @@ jobs:
           path: site
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verificar acceso rápido y archivos publicados
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_URL="${PAGE_URL%/}"
+          for path in "/" "/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"; do
+            curl --fail --silent --show-error --retry 10 --retry-delay 4 --retry-connrefused "${BASE_URL}${path}" -o /tmp/sendwayo-check.html
+            grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/sendwayo-check.html
+            ! grep -Fq 'data:image/' /tmp/sendwayo-check.html
+            test "$(wc -c < /tmp/sendwayo-check.html)" -lt 1000000
+            echo "PASS: ${path} sirve la V7 optimizada."
+          done
+          cmp -s <(curl --fail --silent --show-error "${BASE_URL}/") <(curl --fail --silent --show-error "${BASE_URL}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html")
+          echo "PASS: ambos enlaces sirven exactamente la misma V7 optimizada."
+          for asset in site/assets/*; do
+            name="$(basename "$asset")"
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 "${BASE_URL}/assets/${name}" -o /dev/null
+          done
+          echo "PASS: todos los recursos de imagen están publicados."
