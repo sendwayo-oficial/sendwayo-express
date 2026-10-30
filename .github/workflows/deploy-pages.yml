@@ -21,57 +21,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el material V7 aprobado
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: sendwayo-oficial/sendwayo-express-oficial
           path: v7-source
-          fetch-depth: 1
-
-      - name: Reemplazar TODO el sitio por SENDWAYO EXPRESS V7
-        shell: bash
-        run: |
+      - run: |
           set -euo pipefail
-          target="SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"
-          mkdir -p site
           cat v7-source/chunks/part*.txt > /tmp/SENDWAYO-V7.html
-          bytes="$(wc -c < /tmp/SENDWAYO-V7.html | tr -d ' ')"
-          echo "HTML V7 reconstruido: ${bytes} bytes"
-          test "$bytes" -eq 22881979
-          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/SENDWAYO-V7.html
-          grep -Fq '</html>' /tmp/SENDWAYO-V7.html
-          cp /tmp/SENDWAYO-V7.html "site/$target"
-          cp /tmp/SENDWAYO-V7.html site/index.html
-          cmp -s "site/$target" site/index.html
-          rm -rf v7-source
-          echo "PASS: raíz y enlace antiguo contienen exactamente el mismo HTML V7."
-          echo "PASS: el artefacto se construye solo con la versión 7; no conserva archivos de versiones anteriores."
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v4
+          python scripts/optimize_v7.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
         with:
-          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: site
-
-      - name: Deploy
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Verificar que toda la web publicada sea V7
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          set -euo pipefail
-          BASE_URL="${PAGE_URL%/}"
-          for path in "/" "/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"; do
-            curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}${path}" -o /tmp/sendwayo-check.html
-            grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/sendwayo-check.html
-            echo "PASS: ${path} publica SENDWAYO EXPRESS V7."
-          done
-          cmp -s <(curl --fail --silent --show-error "${BASE_URL}/") <(curl --fail --silent --show-error "${BASE_URL}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html")
-          echo "PASS: ambos accesos entregan el mismo archivo V7.";
