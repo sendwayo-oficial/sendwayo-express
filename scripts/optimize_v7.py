@@ -49,6 +49,7 @@ bridge = r'''<script id="sendwayo-early-access-bridge">
     var login=document.getElementById('login-screen');
     if(welcome)welcome.classList.add('hidden');
     if(login){login.classList.remove('hidden');login.style.display='flex';}
+    window.__sendwayoUserRequestedLogin=true;
     if(document.body)document.body.classList.remove('sendwayo-authenticated');
     var field=document.getElementById('login-usuario');
     if(field)field.focus({preventScroll:true});
@@ -77,14 +78,22 @@ bridge = r'''<script id="sendwayo-early-access-bridge">
       earlyLogin();return;
     }
     var welcomeButton=event.target.closest && event.target.closest('#welcome-landing button[onclick*="v162_showLogin"]');
-    if(welcomeButton && window.v162_showLogin===earlyShow){
-      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-      earlyShow();
+    if(welcomeButton){
+      window.__sendwayoUserRequestedLogin=true;
+      if(window.v162_showLogin===earlyShow){
+        event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+        earlyShow();
+      }
     }
   },true);
 })();
 </script>
 '''
+late = "setTimeout(()=>{ initCarousel(); document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden');"
+replacement = "setTimeout(()=>{ initCarousel(); if(!window.__sendwayoUserRequestedLogin){ document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden'); }"
+assert html.count(late) == 1, "Expected carousel startup block not found exactly once"
+html = html.replace(late, replacement, 1)
+
 assert "</head>" in html
 html = html.replace("</head>", bridge + "\n</head>", 1)
 assert "data:image/" not in html
