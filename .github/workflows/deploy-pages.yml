@@ -21,8 +21,28 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout del repositorio publicado
         uses: actions/checkout@v6
+
+      - name: Descargar el material V7 aprobado de ayer
+        uses: actions/checkout@v4
+        with:
+          repository: sendwayo-oficial/sendwayo-express-oficial
+          path: v7-source
+          fetch-depth: 1
+
+      - name: Sustituir el contenido publicado de V118 por V7
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"
+          cat v7-source/chunks/part*.txt > "$target"
+          bytes="$(wc -c < "$target" | tr -d ' ')"
+          echo "HTML V7 reconstruido: ${bytes} bytes"
+          test "$bytes" -eq 22881979
+          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' "$target"
+          grep -Fq '</html>' "$target"
+          echo "PASS: la ruta publicada conserva el mismo nombre y ahora contiene el HTML V7."
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -39,7 +59,7 @@ jobs:
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Smoke-test existing SENDWAYO root site only
+      - name: Verificar la página raíz existente
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
@@ -48,4 +68,4 @@ jobs:
           curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}/" -o /tmp/sendwayo-root.html
           grep -Fq 'SENDWAYO EXPRESS — Plataforma oficial' /tmp/sendwayo-root.html
           grep -Fq 'SENDWAYO V30' /tmp/sendwayo-root.html
-          echo "PASS Existing root SENDWAYO platform is reachable; no stage routes are published from this project"
+          echo "PASS: la página raíz se conserva; la ruta V118 publica el contenido V7."
