@@ -21,29 +21,31 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del repositorio publicado
-        uses: actions/checkout@v6
-
-      - name: Descargar el material V7 aprobado de ayer
+      - name: Descargar el material V7 aprobado
         uses: actions/checkout@v4
         with:
           repository: sendwayo-oficial/sendwayo-express-oficial
           path: v7-source
           fetch-depth: 1
 
-      - name: Sustituir el contenido publicado de V118 por V7
+      - name: Reemplazar TODO el sitio por SENDWAYO EXPRESS V7
         shell: bash
         run: |
           set -euo pipefail
           target="SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"
-          cat v7-source/chunks/part*.txt > "$target"
-          bytes="$(wc -c < "$target" | tr -d ' ')"
+          mkdir -p site
+          cat v7-source/chunks/part*.txt > /tmp/SENDWAYO-V7.html
+          bytes="$(wc -c < /tmp/SENDWAYO-V7.html | tr -d ' ')"
           echo "HTML V7 reconstruido: ${bytes} bytes"
           test "$bytes" -eq 22881979
-          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' "$target"
-          grep -Fq '</html>' "$target"
+          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/SENDWAYO-V7.html
+          grep -Fq '</html>' /tmp/SENDWAYO-V7.html
+          cp /tmp/SENDWAYO-V7.html "site/$target"
+          cp /tmp/SENDWAYO-V7.html site/index.html
+          cmp -s "site/$target" site/index.html
           rm -rf v7-source
-          echo "PASS: la ruta publicada conserva el mismo nombre y ahora contiene el HTML V7."
+          echo "PASS: raíz y enlace antiguo contienen exactamente el mismo HTML V7."
+          echo "PASS: el artefacto se construye solo con la versión 7; no conserva archivos de versiones anteriores."
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -52,7 +54,7 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
+          path: site
 
       - name: Deploy
         id: deployment
@@ -60,13 +62,16 @@ jobs:
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Verificar la página raíz existente
+      - name: Verificar que toda la web publicada sea V7
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
           BASE_URL="${PAGE_URL%/}"
-          curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}/" -o /tmp/sendwayo-root.html
-          grep -Fq 'SENDWAYO EXPRESS — Plataforma oficial' /tmp/sendwayo-root.html
-          grep -Fq 'SENDWAYO V30' /tmp/sendwayo-root.html
-          echo "PASS: la página raíz se conserva; la ruta V118 publica el contenido V7."
+          for path in "/" "/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"; do
+            curl --fail --silent --show-error --retry 8 --retry-delay 4 --retry-connrefused "${BASE_URL}${path}" -o /tmp/sendwayo-check.html
+            grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/sendwayo-check.html
+            echo "PASS: ${path} publica SENDWAYO EXPRESS V7."
+          done
+          cmp -s <(curl --fail --silent --show-error "${BASE_URL}/") <(curl --fail --silent --show-error "${BASE_URL}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html")
+          echo "PASS: ambos accesos entregan el mismo archivo V7.";
