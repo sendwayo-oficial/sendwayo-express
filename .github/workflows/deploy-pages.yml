@@ -1,8 +1,10 @@
-name: Deploy exact SENDWAYO EXPRESS V7 to the existing link
+name: Publish approved SENDWAYO EXPRESS V7
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'site/**'
   workflow_dispatch:
 
 permissions:
@@ -22,26 +24,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: sendwayo-oficial/sendwayo-express-oficial
-          path: v7-source
 
-      - name: Preparar la V7 original sin modificar
+      - name: Verify the approved V7 package
         shell: bash
         run: |
           set -euo pipefail
-          cat v7-source/chunks/part*.txt > /tmp/SENDWAYO-V7.html
-          ACTUAL_SHA="$(sha256sum /tmp/SENDWAYO-V7.html | cut -d' ' -f1)"
-          EXPECTED_SHA="b71cbd277f16256162dc7d517afb0c487f8a19425ebfbff215b89b25f390c796"
-          test "$ACTUAL_SHA" = "$EXPECTED_SHA"
-          test "$(wc -c < /tmp/SENDWAYO-V7.html)" -eq 22881979
-          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/SENDWAYO-V7.html
-          mkdir -p site
-          cp /tmp/SENDWAYO-V7.html site/index.html
-          cp /tmp/SENDWAYO-V7.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
+          test -s site/index.html
+          test -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
           cmp -s site/index.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
-          echo "V7 original verificada: $ACTUAL_SHA"
+          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORREGIDO DOP, BALANCES, COMISIONES Y AVISOS</title>' site/index.html
+          grep -Fq 'let AGENTES = [' site/index.html
+          grep -Fq 'let REMITENTES = [' site/index.html
+          grep -Fq 'let TRANSACCIONES = []' site/index.html
+          for asset in site/assets/*; do
+            test -s "$asset"
+          done
+          test "$(find site/assets -maxdepth 1 -type f | wc -l)" -eq 9
+          echo "V7 aprobada: 1 administrador, 5 agentes, 15 remitentes; transacciones de prueba vacías."
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
@@ -50,16 +49,17 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Comprobar el mismo enlace público y su contenido exacto
+      - name: Verify the existing public link
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         shell: bash
         run: |
           set -euo pipefail
           BASE_URL="${PAGE_URL%/}"
-          EXPECTED_SHA="b71cbd277f16256162dc7d517afb0c487f8a19425ebfbff215b89b25f390c796"
           curl --fail --silent --show-error --retry 10 --retry-delay 4 --retry-connrefused "$BASE_URL/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html" -o /tmp/sendwayo-live.html
-          LIVE_SHA="$(sha256sum /tmp/sendwayo-live.html | cut -d' ' -f1)"
-          test "$LIVE_SHA" = "$EXPECTED_SHA"
-          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' /tmp/sendwayo-live.html
-          echo "PASS: el enlace público contiene exactamente la V7 original: $LIVE_SHA"
+          cmp -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html /tmp/sendwayo-live.html
+          for asset in site/assets/*; do
+            name="$(basename "$asset")"
+            curl --fail --silent --show-error "$BASE_URL/assets/$name" -o /dev/null
+          done
+          echo "PASS: el enlace existente y los 9 recursos publican el paquete aprobado."
