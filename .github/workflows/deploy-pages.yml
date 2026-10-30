@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -25,22 +26,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify the approved V7 package
+      - name: Verify the approved V7 source
         shell: bash
         run: |
           set -euo pipefail
           test -s site/index.html
           test -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
           cmp -s site/index.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
-          grep -Fq '<title>SENDWAYO EXPRESS - V7 CORREGIDO DOP, BALANCES, COMISIONES Y AVISOS</title>' site/index.html
-          grep -Fq 'let AGENTES = [' site/index.html
-          grep -Fq 'let REMITENTES = [' site/index.html
-          grep -Fq 'let TRANSACCIONES = []' site/index.html
-          for asset in site/assets/*; do
-            test -s "$asset"
-          done
-          test "$(find site/assets -maxdepth 1 -type f | wc -l)" -eq 9
-          echo "V7 aprobada: 1 administrador, 5 agentes, 15 remitentes; transacciones de prueba vacías."
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("site/index.html").read_text(encoding="utf-8")
+          assert "<title>SENDWAYO EXPRESS - V7 CORREGIDO DOP, BALANCES, COMISIONES Y AVISOS</title>" in html
+          assert len(re.findall(r"\blet\s+ADMIN\s*=", html)) == 1
+          expected_agents = ["AG-HERACE", "AG-JULIE", "AG-BETINA", "AGE00004", "AG-MIKE"]
+          expected_senders = ["REM-DANIA", "REM-EDITA", "REM-NENES", "REM-FLEURANVIL", "REM-WILNORD", "ID65734453", "ID65734454", "ID65734455", "ID65734456", "ID65734457", "REM-011", "REM-012", "REM-013", "REM-014", "REM-015"]
+          for name, expected in [("AGENTES", expected_agents), ("REMITENTES", expected_senders)]:
+              m = re.search(rf"let\s+{name}\s*=\s*(\[[\s\S]*?\]);", html)
+              assert m, f"Falta {name}"
+              actual = re.findall(r"id\s*:\s*['\"]([^'\"]+)['\"]", m.group(1))
+              assert actual == expected, f"{name} incorrectos: {actual}"
+          m = re.search(r"let\s+TRANSACCIONES\s*=\s*(\[[\s\S]*?\]);", html)
+          assert m and not m.group(1).strip("[] \\r\\n\\t"), "Transacciones de prueba inesperadas"
+          assets = sorted(p.name for p in Path("site/assets").iterdir() if p.is_file())
+          expected_assets = sorted(["165bf5cfd643e8b3c495.webp", "2fdc9be46456ec238812.webp", "38f24ea0a0b492e616f3.webp", "7c21802557d7e52599bf.jpg", "8ef928f661874a6a9d9c.webp", "ca43ab0c2b8e924cfacc.webp", "d0a323d74b9c3176a044.webp", "d6ce41174c8bf68a01de.webp", "e5a13ed27d534efccab1.jpg"])
+          assert assets == expected_assets, f"Recursos distintos: {assets}"
+          print("V7 aprobada: 1 administrador, 5 agentes, 15 remitentes, transacciones vacías y 9 recursos.")
+          PY
+          test "$(git hash-object site/index.html)" = "4eea72fd2d0a347c976f42574259002671a0bb7d"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
@@ -49,17 +62,22 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify the existing public link
+      - name: Verify the existing public URL without cache
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         shell: bash
         run: |
           set -euo pipefail
           BASE_URL="${PAGE_URL%/}"
-          curl --fail --silent --show-error --retry 10 --retry-delay 4 --retry-connrefused "$BASE_URL/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html" -o /tmp/sendwayo-live.html
-          cmp -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html /tmp/sendwayo-live.html
+          EXPECTED_BLOB="4eea72fd2d0a347c976f42574259002671a0bb7d"
+          for path in "/index.html" "/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html"; do
+            target="/tmp/sendwayo-$(basename "$path")"
+            curl --fail --silent --show-error --location --retry 10 --retry-delay 4 --retry-connrefused -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${BASE_URL}${path}?sendwayo_release=${GITHUB_SHA}" -o "$target"
+            test "$(git hash-object "$target")" = "$EXPECTED_BLOB"
+          done
+          cmp -s /tmp/sendwayo-index.html /tmp/sendwayo-SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
           for asset in site/assets/*; do
             name="$(basename "$asset")"
-            curl --fail --silent --show-error "$BASE_URL/assets/$name" -o /dev/null
+            curl --fail --silent --show-error --location --retry 5 --retry-delay 2 -H 'Cache-Control: no-cache' "${BASE_URL}/assets/${name}?sendwayo_release=${GITHUB_SHA}" -o /dev/null
           done
-          echo "PASS: el enlace existente y los 9 recursos publican el paquete aprobado."
+          echo "PASS: la URL original entrega el mismo HTML aprobado y sus 9 imágenes."
