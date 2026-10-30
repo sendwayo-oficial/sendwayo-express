@@ -29,15 +29,17 @@ html, replaced = pattern.subn(externalize, html)
 assert replaced == 33, f"Expected 33 embedded images; found {replaced}"
 assert len(assets) == 9, f"Expected 9 unique images; found {len(assets)}"
 
+# Tailwind is presentation-only and can be deferred. Firebase SDKs must remain
+# synchronous here because the final inline Firebase initializer runs in-document.
+old_tailwind = '<script src="https://cdn.tailwindcss.com"></script>'
+assert html.count(old_tailwind) == 1
+html = html.replace(old_tailwind, '<script defer src="https://cdn.tailwindcss.com"></script>', 1)
 for url in [
-    "https://cdn.tailwindcss.com",
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js",
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js",
 ]:
-    old = f'<script src="{url}"></script>'
-    assert old in html, f"Missing expected script: {url}"
-    html = html.replace(old, f'<script defer src="{url}"></script>', 1)
+    assert f'<script src="{url}"></script>' in html
 
 html = re.sub(r"<img\b(?![^>]*\bloading=)", '<img loading="lazy" decoding="async"', html, flags=re.I)
 
