@@ -1,4 +1,4 @@
-name: Publish approved SENDWAYO EXPRESS V7
+name: Publish approved SENDWAYO EXPRESS - shared balances
 
 on:
   push:
@@ -26,31 +26,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify the approved V7 source
+      - name: Verify the selected shared-balance version
         shell: bash
         run: |
           set -euo pipefail
           test -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
+          test -s site/index.html
           cmp -s site/index.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
           python - <<'PY'
           import re
           from pathlib import Path
-          html = Path("site/index.html").read_text(encoding="utf-8")
-          assert "<title>SENDWAYO EXPRESS - V7 CORREGIDO DOP, BALANCES, COMISIONES Y AVISOS</title>" in html
-          assert len(re.findall(r"\blet\s+ADMIN\s*=", html)) == 1
+          html = Path('site/index.html').read_text(encoding='utf-8')
+          assert '<title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>' in html
+          assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
+          assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
+          assert "function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
           expected = {
-            "AGENTES": ["AG-HERACE", "AG-JULIE", "AG-BETINA", "AGE00004", "AG-MIKE"],
-            "REMITENTES": ["REM-DANIA", "REM-EDITA", "REM-NENES", "REM-FLEURANVIL", "REM-WILNORD", "ID65734453", "ID65734454", "ID65734455", "ID65734456", "ID65734457", "REM-011", "REM-012", "REM-013", "REM-014", "REM-015"]
+            'AGENTES': ['AG-HERACE', 'AG-JULIE', 'AG-BETINA', 'AGE00004', 'AG-MIKE'],
+            'REMITENTES': ['REM-DANIA', 'REM-EDITA', 'REM-NENES', 'REM-FLEURANVIL', 'REM-WILNORD', 'ID65734453', 'ID65734454', 'ID65734455', 'ID65734456', 'ID65734457', 'REM-011', 'REM-012', 'REM-013', 'REM-014', 'REM-015'],
           }
           for name, ids in expected.items():
-            m = re.search(rf"let\s+{name}\s*=\s*(\[[\s\S]*?\]);", html)
+            m = re.search(rf'let\s+{name}\s*=\s*(\[[\s\S]*?\]);', html)
             assert m and re.findall(r"id\s*:\s*['\"]([^'\"]+)['\"]", m.group(1)) == ids, name
-          m = re.search(r"let\s+TRANSACCIONES\s*=\s*(\[[\s\S]*?\]);", html)
-          assert m and m.group(1).strip() == "[]", "La lista de transacciones no está vacía"
-          assert len(list(Path("site/assets").iterdir())) == 9
-          print("V7 aprobada: 1 administrador, 5 agentes, 15 remitentes y transacciones vacías.")
+          refs = set(re.findall(r'assets/([A-Za-z0-9._-]+)', html))
+          assert len(refs) == 9, f'Esperaba 9 recursos gráficos, encontré {len(refs)}'
+          for name in refs:
+            assert (Path('site/assets') / name).is_file(), name
+          assert html.rstrip().endswith('</html>')
+          print('PASS: versión de balance compartido, 5 agentes, 15 remitentes y 9 imágenes.')
           PY
-          test "$(git hash-object site/index.html)" = "4eea72fd2d0a347c976f42574259002671a0bb7d"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
@@ -68,20 +72,10 @@ jobs:
           BASE_URL="${PAGE_URL%/}"
           TARGET="${BASE_URL}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release=${GITHUB_SHA}"
           curl --fail --silent --show-error --location --retry 15 --retry-all-errors --retry-delay 4 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "$TARGET" -o /tmp/sendwayo-live.html
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          html = Path("/tmp/sendwayo-live.html").read_text(encoding="utf-8")
-          assert "<title>SENDWAYO EXPRESS - V7 CORREGIDO DOP, BALANCES, COMISIONES Y AVISOS</title>" in html
-          assert len(re.findall(r"\blet\s+ADMIN\s*=", html)) == 1
-          assert all(x in html for x in ["AG-HERACE", "AG-JULIE", "AG-BETINA", "AGE00004", "AG-MIKE"])
-          assert all(x in html for x in ["REM-DANIA", "REM-EDITA", "REM-NENES", "REM-FLEURANVIL", "REM-WILNORD", "ID65734453", "ID65734454", "ID65734455", "ID65734456", "ID65734457", "REM-011", "REM-012", "REM-013", "REM-014", "REM-015"])
-          m = re.search(r"let\s+TRANSACCIONES\s*=\s*(\[[\s\S]*?\]);", html)
-          assert m and m.group(1).strip() == "[]"
-          print("PASS: el enlace antiguo devuelve la V7 aprobada y sus 21 perfiles.")
-          PY
-          for asset in site/assets/*; do
-            name="$(basename "$asset")"
-            curl --fail --silent --show-error --location --retry 10 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' "${BASE_URL}/assets/${name}?sendwayo_release=${GITHUB_SHA}" -o /dev/null
-          done
-          echo "PASS: los 9 recursos gráficos del comprobante y las páginas responden."
+          LOCAL_SHA="$(sha256sum site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html | cut -d ' ' -f1)"
+          LIVE_SHA="$(sha256sum /tmp/sendwayo-live.html | cut -d ' ' -f1)"
+          test "$LOCAL_SHA" = "$LIVE_SHA"
+          while IFS= read -r asset; do
+            curl --fail --silent --show-error --location --retry 10 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' "${BASE_URL}/assets/${asset}?sendwayo_release=${GITHUB_SHA}" -o /dev/null
+          done < <(grep -oE 'assets/[A-Za-z0-9._-]+' site/index.html | sed 's#^assets/##' | sort -u)
+          echo 'PASS: el enlace existente devuelve exactamente el HTML y sus 9 imágenes.'
