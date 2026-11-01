@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SENDWAYO EXPRESS - V7 CORRECCIONES PUNTUALES</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.tailwindcss.com"></script>
 <style>
-body::before{content:"";position:fixed;inset:0;z-index:0;opacity:0.04;pointer-events:none;background-image:url('assets/sendwayo-shared-balance-01.jpg');background-repeat:repeat;background-size:120px;}
+body::before{content:"";position:fixed;inset:0;z-index:0;opacity:0.04;pointer-events:none;background-image:url('assets/e5a13ed27d534efccab1.jpg');background-repeat:repeat;background-size:120px;}
 </style>
 <style>
 /* Correcciones solicitadas: bienvenida, menú móvil y centrado de acceso */
@@ -142,6 +142,54 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 /* Hide visible diagnostic/debug overlays without deleting source or app data. */
 #sendwayo-debug,#sendwayo-debug-panel,.sendwayo-debug-panel,.debug-panel,[data-debug="true"]{display:none!important}
 </style>
+<script id="sendwayo-early-access-bridge">
+(function(){
+  'use strict';
+  function earlyShow(){
+    var welcome=document.getElementById('welcome-landing');
+    var login=document.getElementById('login-screen');
+    if(welcome)welcome.classList.add('hidden');
+    if(login){login.classList.remove('hidden');login.style.display='flex';}
+    window.__sendwayoUserRequestedLogin=true;
+    if(document.body)document.body.classList.remove('sendwayo-authenticated');
+    var field=document.getElementById('login-usuario');
+    if(field)field.focus({preventScroll:true});
+  }
+  window.v162_showLogin=earlyShow;
+  function earlyLogin(){
+    var started=Date.now();
+    var error=document.getElementById('login-error');
+    function waitForFirebase(){
+      if(window.sendwayoFirebaseReady===true && window.intentarLogin!==earlyLogin){
+        window.intentarLogin.call(window);
+        return;
+      }
+      if(Date.now()-started>90000){
+        if(error){error.textContent='La conexión segura todavía está iniciando. Espere unos segundos y vuelva a pulsar Entrar.';error.classList.remove('hidden');}
+        return;
+      }
+      setTimeout(waitForFirebase,150);
+    }
+    waitForFirebase();
+  }
+  document.addEventListener('click',function(event){
+    var loginButton=event.target.closest && event.target.closest('#login-screen button[onclick*="intentarLogin"]');
+    if(loginButton){
+      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+      earlyLogin();return;
+    }
+    var welcomeButton=event.target.closest && event.target.closest('#welcome-landing button[onclick*="v162_showLogin"]');
+    if(welcomeButton){
+      window.__sendwayoUserRequestedLogin=true;
+      if(window.v162_showLogin===earlyShow){
+        event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+        earlyShow();
+      }
+    }
+  },true);
+})();
+</script>
+
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
@@ -169,7 +217,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 
 <div class="bg-[#0b1a2f] text-white flex items-center justify-between px-3 py-2 sticky top-0 z-[9999] h-[48px]">
   <div class="flex items-center gap-2">
-    <img src="assets/sendwayo-shared-balance-01.jpg" class="w-7 h-7 rounded-full bg-white">
+    <img loading="lazy" decoding="async" src="assets/e5a13ed27d534efccab1.jpg" class="w-7 h-7 rounded-full bg-white">
     <span class="font-extrabold text-[12px] tracking-wider">SENDWAYO EXPRESS</span>
     <span class="bg-orange-400 text-black text-[10px] px-3 py-1 rounded-full font-bold ml-3">BALANCE RD$ <span id="top-bal-rd">1,250.00</span> RD$</span>
     <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">BALANCE HTG <span id="top-bal-htg">0,00</span> HTG</span>
@@ -319,7 +367,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 <div id="modal-comprobante" class="hidden fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-3">
   <div id="receipt-print-root" class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border-[3px] border-amber-400">
     <div class="p-4 flex items-center gap-3 border-b">
-      <img src="assets/sendwayo-shared-balance-01.jpg" class="w-14 h-14 object-contain bg-white rounded-full border">
+      <img loading="lazy" decoding="async" src="assets/e5a13ed27d534efccab1.jpg" class="w-14 h-14 object-contain bg-white rounded-full border">
       <div class="flex-1"><h3 class="font-extrabold text-[16px]">SENDWAYO EXPRESS</h3><p class="text-[11px] text-slate-600">Servicio de calidad que conecta contigo con confianza y seguridad. ✓</p></div>
       <div class="w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-green-600 font-bold">✓</div>
     </div>
@@ -357,41 +405,41 @@ let ADMIN = {
   celular:'8297676665',
   password:'herace2060',
   contrasena:'herace2060',
-  balances:{DOP:0,HTG:0},
-  commissions:{DOP:0,HTG:0},
-  comisiones:{DOP:0,HTG:0},
+  balances:{DOP:2000,HTG:2000},
+  commissions:{DOP:1000,HTG:1000},
+  comisiones:{DOP:1000,HTG:1000},
   role:'ADMIN'
 };
 
 let AGENTES = [
-  {id:'AG-HERACE', codigo:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', password:'12345678', contrasena:'12345678', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AG-JULIE', codigo:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', password:'12345678', contrasena:'12345678', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AG-BETINA', codigo:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', password:'12345678', contrasena:'12345678', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00004', codigo:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', password:'12345678', contrasena:'12345678', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AG-MIKE', codigo:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', password:'12345678', contrasena:'12345678', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
+  {id:'AG-HERACE', codigo:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', password:'12345678', contrasena:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'AGENTE'},
+  {id:'AG-JULIE', codigo:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', password:'12345678', contrasena:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'AGENTE'},
+  {id:'AG-BETINA', codigo:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', password:'12345678', contrasena:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'AGENTE'},
+  {id:'AGE00004', codigo:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', password:'12345678', contrasena:'12345678', commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'AGENTE'},
+  {id:'AG-MIKE', codigo:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', password:'12345678', contrasena:'12345678', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'AGENTE'}
 ];
 
 // REMITENTES - 15 REMITENTES - RECUERDA QUE ESTOS SON LOS REMITENTES - 10 en foto pero 15 en total
 let REMITENTES = [
-  {id:'REM-DANIA', codigo:'REM-001', numero:'01', name:'DANIA SAINTHILAIRE', nombre:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', telefono:'+1-849 8493727884', celular:'+1-849 8493727884', password:'+1-849 8493727884', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-EDITA', codigo:'REM-002', numero:'02', name:'EDITA ALBERTO', nombre:'EDITA ALBERTO', email:'editaalberto@gmail.com', telefono:'+1-829 829054061', celular:'+1-829 829054061', password:'+1-829 829054061', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-NENES', codigo:'REM-003', numero:'03', name:'NENES NENES', nombre:'NENES NENES', email:'nenesnenes@gmail.com', telefono:'+1-809 8092703291', celular:'+1-809 8092703291', password:'+1-809 8092703291', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-FLEURANVIL', codigo:'REM-004', numero:'04', name:'FLEURANVIL Herace', nombre:'FLEURANVIL Herace', email:'fleurancilherace@gmail.com', telefono:'+1-829 8292155657', celular:'+1-829 8292155657', password:'+1-829 8292155657', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-WILNORD', codigo:'REM-005', numero:'05', name:'WILNORD HILAIRSAINT', nombre:'WILNORD HILAIRSAINT', email:'wilnordhilairsaint@gmail.com', telefono:'+1-849 849783078', celular:'+1-849 849783078', password:'+1-849 849783078', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734453', codigo:'REM-006', numero:'06', name:'JEAN Marie', nombre:'JEAN Marie', email:'jeanmarie@gmail.com', telefono:'+1-829 8292155658', celular:'+1-829 8292155658', password:'+1-829 8292155658', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734454', codigo:'REM-007', numero:'07', name:'PIERRE Jacques', nombre:'PIERRE Jacques', email:'pierrejacques@gmail.com', telefono:'+1-829 8292155659', celular:'+1-829 8292155659', password:'+1-829 8292155659', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734455', codigo:'REM-008', numero:'08', name:'LOUIS Claude', nombre:'LOUIS Claude', email:'louisclaude@gmail.com', telefono:'+1-829 8292155660', celular:'+1-829 8292155660', password:'+1-829 8292155660', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734456', codigo:'REM-009', numero:'09', name:'MICHEL Paul', nombre:'MICHEL Paul', email:'michelpaul@gmail.com', telefono:'+1-829 8292155661', celular:'+1-829 8292155661', password:'+1-829 8292155661', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734457', codigo:'REM-010', numero:'10', name:'DUPONT Jean', nombre:'DUPONT Jean', email:'dupontjean@gmail.com', telefono:'+1-829 8292155662', celular:'+1-829 8292155662', password:'+1-829 8292155662', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-011', codigo:'REM-011', numero:'11', name:'REMITENTE 11', nombre:'REMITENTE 11', email:'remitente11@gmail.com', telefono:'+1-829 0000011', celular:'+1-829 0000011', password:'+1-829 0000011', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-012', codigo:'REM-012', numero:'12', name:'REMITENTE 12', nombre:'REMITENTE 12', email:'remitente12@gmail.com', telefono:'+1-829 0000012', celular:'+1-829 0000012', password:'+1-829 0000012', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-013', codigo:'REM-013', numero:'13', name:'REMITENTE 13', nombre:'REMITENTE 13', email:'remitente13@gmail.com', telefono:'+1-829 0000013', celular:'+1-829 0000013', password:'+1-829 0000013', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-014', codigo:'REM-014', numero:'14', name:'REMITENTE 14', nombre:'REMITENTE 14', email:'remitente14@gmail.com', telefono:'+1-829 0000014', celular:'+1-829 0000014', password:'+1-829 0000014', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-015', codigo:'REM-015', numero:'15', name:'REMITENTE 15', nombre:'REMITENTE 15', email:'remitente15@gmail.com', telefono:'+1-829 0000015', celular:'+1-829 0000015', password:'+1-829 0000015', contrasena:'número de celular', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'}
+  {id:'REM-DANIA', codigo:'REM-001', numero:'01', name:'DANIA SAINTHILAIRE', nombre:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', telefono:'+1-849 8493727884', celular:'+1-849 8493727884', password:'+1-849 8493727884', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-EDITA', codigo:'REM-002', numero:'02', name:'EDITA ALBERTO', nombre:'EDITA ALBERTO', email:'editaalberto@gmail.com', telefono:'+1-829 829054061', celular:'+1-829 829054061', password:'+1-829 829054061', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-NENES', codigo:'REM-003', numero:'03', name:'NENES NENES', nombre:'NENES NENES', email:'nenesnenes@gmail.com', telefono:'+1-809 8092703291', celular:'+1-809 8092703291', password:'+1-809 8092703291', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-FLEURANVIL', codigo:'REM-004', numero:'04', name:'FLEURANVIL Herace', nombre:'FLEURANVIL Herace', email:'fleurancilherace@gmail.com', telefono:'+1-829 8292155657', celular:'+1-829 8292155657', password:'+1-829 8292155657', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-WILNORD', codigo:'REM-005', numero:'05', name:'WILNORD HILAIRSAINT', nombre:'WILNORD HILAIRSAINT', email:'wilnordhilairsaint@gmail.com', telefono:'+1-849 849783078', celular:'+1-849 849783078', password:'+1-849 849783078', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'ID65734453', codigo:'REM-006', numero:'06', name:'JEAN Marie', nombre:'JEAN Marie', email:'jeanmarie@gmail.com', telefono:'+1-829 8292155658', celular:'+1-829 8292155658', password:'+1-829 8292155658', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'ID65734454', codigo:'REM-007', numero:'07', name:'PIERRE Jacques', nombre:'PIERRE Jacques', email:'pierrejacques@gmail.com', telefono:'+1-829 8292155659', celular:'+1-829 8292155659', password:'+1-829 8292155659', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'ID65734455', codigo:'REM-008', numero:'08', name:'LOUIS Claude', nombre:'LOUIS Claude', email:'louisclaude@gmail.com', telefono:'+1-829 8292155660', celular:'+1-829 8292155660', password:'+1-829 8292155660', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'ID65734456', codigo:'REM-009', numero:'09', name:'MICHEL Paul', nombre:'MICHEL Paul', email:'michelpaul@gmail.com', telefono:'+1-829 8292155661', celular:'+1-829 8292155661', password:'+1-829 8292155661', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'ID65734457', codigo:'REM-010', numero:'10', name:'DUPONT Jean', nombre:'DUPONT Jean', email:'dupontjean@gmail.com', telefono:'+1-829 8292155662', celular:'+1-829 8292155662', password:'+1-829 8292155662', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-011', codigo:'REM-011', numero:'11', name:'REMITENTE 11', nombre:'REMITENTE 11', email:'remitente11@gmail.com', telefono:'+1-829 0000011', celular:'+1-829 0000011', password:'+1-829 0000011', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-012', codigo:'REM-012', numero:'12', name:'REMITENTE 12', nombre:'REMITENTE 12', email:'remitente12@gmail.com', telefono:'+1-829 0000012', celular:'+1-829 0000012', password:'+1-829 0000012', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-013', codigo:'REM-013', numero:'13', name:'REMITENTE 13', nombre:'REMITENTE 13', email:'remitente13@gmail.com', telefono:'+1-829 0000013', celular:'+1-829 0000013', password:'+1-829 0000013', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-014', codigo:'REM-014', numero:'14', name:'REMITENTE 14', nombre:'REMITENTE 14', email:'remitente14@gmail.com', telefono:'+1-829 0000014', celular:'+1-829 0000014', password:'+1-829 0000014', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'},
+  {id:'REM-015', codigo:'REM-015', numero:'15', name:'REMITENTE 15', nombre:'REMITENTE 15', email:'remitente15@gmail.com', telefono:'+1-829 0000015', celular:'+1-829 0000015', password:'+1-829 0000015', contrasena:'número de celular', balances:{DOP:2000,HTG:2000}, commissions:{DOP:1000,HTG:1000}, comisiones:{DOP:1000,HTG:1000}, role:'REMITENTE'}
 ];
 
-let ADMIN_BAL = {DOP:0, HTG:0};
-let ADMIN_COM = {DOP:0, HTG:0};
+let ADMIN_BAL = {DOP:2000, HTG:2000};
+let ADMIN_COM = {DOP:1000, HTG:1000};
 let TRANSACCIONES=[
 {id:'SW-2026-10-12-180939', fecha:'2026-10-12 18:09:39', tipo:'Deposito', ruta:'Deposito (3 cuentas bancarias) NatCash - Deposito', rutaExacta:'RD - RD + Deposito', monto:'DOP 5,000', montoValue:5000, fee:0, neto:5000, feeText:'Fee 8%: 0 Neto: 5000', moneda:'DOP', beneficiario:'Deposito', estado:'Aprobado', timestamp:Date.now()-100000, creadorId:'ADMINADMIN', remitenteId:'ADMINADMIN', aprobadoPor:'ADMINADMIN', montoRecibido:'5,000 DOP'},
 {id:'SW-2026-09-26-124800', fecha:'2026-09-26 12:48:00', tipo:'Paquetico', ruta:'Paquetico Claro - Internet 5 dias libres', rutaExacta:'Compañía: Claro - Número: 8097074780 - Plan: Internet 5 dias libres', monto:'DOP 160', montoValue:160, fee:8, neto:160, feeText:'Fee 8%: 8 Neto: 160', moneda:'DOP', beneficiario:'8097074780', compania:'Claro', estado:'Aprobado', timestamp:Date.now()-90000, creadorId:'REM-001', remitenteId:'REM-001', aprobadoPor:'ADMINADMIN', montoRecibido:'160 DOP'},
@@ -2357,7 +2405,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
   <header class="bg-white/95 backdrop-blur shadow sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <img src="assets/sendwayo-shared-balance-02.jpg" alt="SENDWAYO EXPRESS" style="height:48px; width:auto;" class="rounded">
+        <img loading="lazy" decoding="async" src="assets/7c21802557d7e52599bf.jpg" alt="SENDWAYO EXPRESS" style="height:48px; width:auto;" class="rounded">
         <div class="hidden md:block"><div class="font-black text-[14px] text-[#0a1931]">SENDWAYO EXPRESS</div><div class="text-[10px] text-gray-500 -mt-1">Envíos • Retiros • Paquetes • Recargas</div></div>
       </div>
       <div class="flex gap-2">
@@ -2372,7 +2420,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
       <div class="lg:col-span-3">
         <div class="relative h-[500px] rounded-[24px] overflow-hidden shadow-2xl bg-black">
-          <img id="v162-car-main" src="assets/sendwayo-shared-balance-03.webp" class="absolute inset-0 w-full h-full object-cover carousel-img">
+          <img loading="lazy" decoding="async" id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" class="absolute inset-0 w-full h-full object-cover carousel-img">
           <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
             <div class="inline-flex bg-white/20 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold mb-2">RD ↔ HT • USA • Canadá • Europa • Otros lugares</div>
@@ -2391,10 +2439,10 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
         </div>
 
         <div class="grid grid-cols-4 gap-2 mt-3">
-          <img src="assets/sendwayo-shared-balance-04.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(1)">
-          <img src="assets/sendwayo-shared-balance-05.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(2)">
-          <img src="assets/sendwayo-shared-balance-06.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(3)">
-          <img src="assets/sendwayo-shared-balance-07.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(4)">
+          <img loading="lazy" decoding="async" src="assets/2fdc9be46456ec238812.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(1)">
+          <img loading="lazy" decoding="async" src="assets/d6ce41174c8bf68a01de.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(2)">
+          <img loading="lazy" decoding="async" src="assets/d0a323d74b9c3176a044.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(3)">
+          <img loading="lazy" decoding="async" src="assets/165bf5cfd643e8b3c495.webp" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(4)">
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
@@ -2407,7 +2455,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 
       <div class="lg:col-span-2 space-y-4">
         <div id="v162-registro" class="bg-white rounded-[20px] p-6 shadow-2xl">
-          <div class="text-center mb-4"><img src="assets/sendwayo-shared-balance-02.jpg" style="width:190px; margin:0 auto;" class="rounded-lg"><h3 class="font-black text-[15px] mt-3">Crear cuenta - Registrarse</h3><p class="text-[10px] text-gray-500">Puede crear aunque no tiene cuenta dentro puede crear</p></div>
+          <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/7c21802557d7e52599bf.jpg" style="width:190px; margin:0 auto;" class="rounded-lg"><h3 class="font-black text-[15px] mt-3">Crear cuenta - Registrarse</h3><p class="text-[10px] text-gray-500">Puede crear aunque no tiene cuenta dentro puede crear</p></div>
           <div class="space-y-2.5">
             <div class="grid grid-cols-2 gap-2"><input id="v162-reg-nombre" placeholder="Nombre" class="border rounded-full px-4 py-2.5 text-[12px]"><input id="v162-reg-apellido" placeholder="Apellido" class="border rounded-full px-4 py-2.5 text-[12px]"></div>
             <input id="v162-reg-celular" placeholder="Número de celular - Ej: (809) 000 0000" class="w-full border rounded-full px-4 py-2.5 text-[12px]">
@@ -2422,12 +2470,12 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
         </div>
 
         <div class="grid grid-cols-3 gap-2">
-          <img src="assets/sendwayo-shared-balance-08.webp" class="h-20 w-full object-cover rounded-2xl">
-          <img src="assets/sendwayo-shared-balance-09.webp" class="h-20 w-full object-cover rounded-2xl">
-          <img src="assets/sendwayo-shared-balance-03.webp" class="h-20 w-full object-cover rounded-2xl">
-          <img src="assets/sendwayo-shared-balance-04.webp" class="h-20 w-full object-cover rounded-2xl">
-          <img src="assets/sendwayo-shared-balance-05.webp" class="h-20 w-full object-cover rounded-2xl">
-          <img src="assets/sendwayo-shared-balance-06.webp" class="h-20 w-full object-cover rounded-2xl">
+          <img loading="lazy" decoding="async" src="assets/38f24ea0a0b492e616f3.webp" class="h-20 w-full object-cover rounded-2xl">
+          <img loading="lazy" decoding="async" src="assets/8ef928f661874a6a9d9c.webp" class="h-20 w-full object-cover rounded-2xl">
+          <img loading="lazy" decoding="async" src="assets/ca43ab0c2b8e924cfacc.webp" class="h-20 w-full object-cover rounded-2xl">
+          <img loading="lazy" decoding="async" src="assets/2fdc9be46456ec238812.webp" class="h-20 w-full object-cover rounded-2xl">
+          <img loading="lazy" decoding="async" src="assets/d6ce41174c8bf68a01de.webp" class="h-20 w-full object-cover rounded-2xl">
+          <img loading="lazy" decoding="async" src="assets/d0a323d74b9c3176a044.webp" class="h-20 w-full object-cover rounded-2xl">
         </div>
       </div>
     </div>
@@ -2546,24 +2594,24 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 <script>
 console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros real ventanilla + beneficiario restaurado + recargas paquetikos esquina redondo sugerencias numeros');
 (function(){
-  const carouselImgs = ["assets/sendwayo-shared-balance-03.webp",
-"assets/sendwayo-shared-balance-04.webp",
-"assets/sendwayo-shared-balance-05.webp",
-"assets/sendwayo-shared-balance-06.webp",
-"assets/sendwayo-shared-balance-07.webp",
-"assets/sendwayo-shared-balance-08.webp",
-"assets/sendwayo-shared-balance-09.webp",
-"assets/sendwayo-shared-balance-03.webp",
-"assets/sendwayo-shared-balance-04.webp",
-"assets/sendwayo-shared-balance-05.webp",
-"assets/sendwayo-shared-balance-06.webp",
-"assets/sendwayo-shared-balance-07.webp",
-"assets/sendwayo-shared-balance-08.webp",
-"assets/sendwayo-shared-balance-09.webp",
-"assets/sendwayo-shared-balance-03.webp",
-"assets/sendwayo-shared-balance-04.webp"];
+  const carouselImgs = ["assets/ca43ab0c2b8e924cfacc.webp",
+"assets/2fdc9be46456ec238812.webp",
+"assets/d6ce41174c8bf68a01de.webp",
+"assets/d0a323d74b9c3176a044.webp",
+"assets/165bf5cfd643e8b3c495.webp",
+"assets/38f24ea0a0b492e616f3.webp",
+"assets/8ef928f661874a6a9d9c.webp",
+"assets/ca43ab0c2b8e924cfacc.webp",
+"assets/2fdc9be46456ec238812.webp",
+"assets/d6ce41174c8bf68a01de.webp",
+"assets/d0a323d74b9c3176a044.webp",
+"assets/165bf5cfd643e8b3c495.webp",
+"assets/38f24ea0a0b492e616f3.webp",
+"assets/8ef928f661874a6a9d9c.webp",
+"assets/ca43ab0c2b8e924cfacc.webp",
+"assets/2fdc9be46456ec238812.webp"];
   let carIdx=0;
-  window.v162_bal={rd:0, htg:0, comRD:0, comHTG:0};
+  window.v162_bal={rd:2000, htg:2000, comRD:0, comHTG:0};
   try{ const s=localStorage.getItem('sendwayo_bal_v162'); if(s) Object.assign(window.v162_bal, JSON.parse(s)); }catch(e){}
   function saveBal(){ localStorage.setItem('sendwayo_bal_v162', JSON.stringify(window.v162_bal)); }
   window.v162_getFeeEnvioHT=function(m){ if(m>=20&&m<=99)return 0; if(m>=100&&m<=249)return 0; if(m>=250&&m<=499)return 0; if(m>=500&&m<=999)return 6; if(m>=1000&&m<=1999)return 18; if(m>=2000&&m<=3999)return 25; if(m>=4000&&m<=7999)return 35; if(m>=8000&&m<=11999)return 54; if(m>=12000&&m<=19999)return 63; if(m>=20000&&m<=39999)return 68; if(m>=40000&&m<=59999)return 90; if(m>=60000&&m<=74999)return 108; if(m>=75000&&m<=99999)return 115; if(m<20)return 0; return 115; };
@@ -2622,7 +2670,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     if(!ls) return;
     ls.innerHTML=`<div class="w-full max-w-[420px] mx-auto bg-white rounded-[24px] p-6 shadow-2xl border mt-10">
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
-      <div class="text-center mb-4"><img src="assets/sendwayo-shared-balance-02.jpg" style="width:240px; margin:0 auto; border-radius:12px;"><p class="text-[10px] text-gray-500 mt-2">Ya tengo cuenta - Entrar con correo y contraseña</p></div>
+      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/7c21802557d7e52599bf.jpg" style="width:240px; margin:0 auto; border-radius:12px;"><p class="text-[10px] text-gray-500 mt-2">Ya tengo cuenta - Entrar con correo y contraseña</p></div>
       <div class="space-y-3">
         <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
@@ -2835,7 +2883,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   window.abrirModalSeparado=function(view){ if(view==='envios') document.getElementById('modal-envio-v162').classList.remove('hidden'); else if(view==='retiros') document.getElementById('modal-retiro-v162').classList.remove('hidden'); else if(view==='depositos'||view==='cuentas'){ const q=document.getElementById('v162-dep-quien'); if(q) q.value=(currentUser.nombre||'')+' - '+(currentUser.codigo||currentUser.id||'')+' ('+currentUser.role+')'; document.getElementById('modal-deposito-v162').classList.remove('hidden'); } else if(view==='recepcion') document.getElementById('modal-paquetes-v162').classList.remove('hidden'); else if(view==='recargas') document.getElementById('modal-recargas-v162').classList.remove('hidden'); else if(view==='paquetikos') document.getElementById('modal-paquetikos-v162').classList.remove('hidden'); else if(view==='facturas') document.getElementById('modal-facturas-v162').classList.remove('hidden'); else if(view==='comisiones') document.getElementById('modal-comisiones-v162').classList.remove('hidden'); else if(view==='creditos') document.getElementById('modal-creditos-v162').classList.remove('hidden'); };
   window.abrirVentanillaTablero=function(ruta, tipo){ if(tipo==='envio'){ document.getElementById('v162-envio-ruta').value=ruta; v162_onEnvioRuta(); document.getElementById('modal-envio-v162').classList.remove('hidden'); } else if(tipo==='retiro'){ document.getElementById('v162-retiro-ruta').value=ruta; v162_onRetiroRuta(); document.getElementById('modal-retiro-v162').classList.remove('hidden'); } };
 
-  setTimeout(()=>{ initCarousel(); document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; }); document.addEventListener('click', e=>{ if(!e.target.closest('input') && !e.target.closest('[id^=v162-sug]') && !e.target.closest('[id^=v162-sug-num]')){ document.querySelectorAll('[id^=v162-sug]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^=v162-sug-num]').forEach(el=>el.classList.add('hidden')); } }); },600);
+  setTimeout(()=>{ initCarousel(); if(!window.__sendwayoUserRequestedLogin){ document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden'); } document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; }); document.addEventListener('click', e=>{ if(!e.target.closest('input') && !e.target.closest('[id^=v162-sug]') && !e.target.closest('[id^=v162-sug-num]')){ document.querySelectorAll('[id^=v162-sug]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^=v162-sug-num]').forEach(el=>el.classList.add('hidden')); } }); },600);
   setInterval(()=>{ document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; }); },2000);
 })();
 </script>
@@ -3671,13 +3719,13 @@ document.addEventListener('DOMContentLoaded', function(){
  // 1) Identificadores inmutables normalizados, credenciales y balances de prueba.
  try{
    const A=admin();
-   if(A){A.idAnterior=A.id;A.codigoAnterior=A.codigo;A.id='ADMINADMIN';A.codigo='ADMIN-000';A.role='ADMIN';A.balances={DOP:0,HTG:0};A.commissions=A.commissions||A.comisiones||{DOP:0,HTG:0};A.comisiones=A.commissions;}
+   if(A){A.idAnterior=A.id;A.codigoAnterior=A.codigo;A.id='ADMINADMIN';A.codigo='ADMIN-000';A.role='ADMIN';A.balances={DOP:2000,HTG:2000};A.commissions=A.commissions||A.comisiones||{DOP:1000,HTG:1000};A.comisiones=A.commissions;}
    const idMap={};
-   agents().forEach((a,i)=>{const old=a.id; a.idAnterior=old;a.codigoAnterior=a.codigo;a.codigo2Anterior=a.codigo2;a.id='AGE'+String(i+1).padStart(5,'0');const parts=text(a.nombre||a.name).trim().split(/\s+/);const first=(parts[0]||'AGE').slice(0,3).toUpperCase();const last=(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();a.codigo='AGE-'+first+last;a.codigo2=a.codigo;a.role='AGENTE';a.balances=a.balances||{DOP:0,HTG:0};if(a.balances.DOP==null)a.balances.DOP=0;if(a.balances.HTG==null)a.balances.HTG=0;a.commissions=a.commissions||a.comisiones||{DOP:0,HTG:0};a.comisiones=a.commissions;if(old)idMap[old]=a.id;if(a.codigoAnterior)idMap[a.codigoAnterior]=a.id;if(a.codigo2Anterior)idMap[a.codigo2Anterior]=a.id;});
+   agents().forEach((a,i)=>{const old=a.id; a.idAnterior=old;a.codigoAnterior=a.codigo;a.codigo2Anterior=a.codigo2;a.id='AGE'+String(i+1).padStart(5,'0');const parts=text(a.nombre||a.name).trim().split(/\s+/);const first=(parts[0]||'AGE').slice(0,3).toUpperCase();const last=(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();a.codigo='AGE-'+first+last;a.codigo2=a.codigo;a.role='AGENTE';a.balances=a.balances||{DOP:0,HTG:0};if(a.balances.DOP==null)a.balances.DOP=0;if(a.balances.HTG==null)a.balances.HTG=0;a.commissions=a.commissions||a.comisiones||{DOP:1000,HTG:1000};a.comisiones=a.commissions;if(old)idMap[old]=a.id;if(a.codigoAnterior)idMap[a.codigoAnterior]=a.id;if(a.codigo2Anterior)idMap[a.codigo2Anterior]=a.id;});
    // Inserta la cuenta de prueba MICKENSON SIDNEY como REM00011 y desplaza las anteriores desde el 11 sin perderlas.
    let M=senders().find(a=>norm(a.nombre||a.name)==='mickenson sidney'||norm(a.email)==='mikc@gmail.com');
    if(!M&&typeof REMITENTES!=='undefined'){
-     M={id:'REM00011',codigo:'REM-MIKSID',numero:'11',name:'MICKENSON SIDNEY',nombre:'MICKENSON SIDNEY',email:'mikc@gmail.com',usuario:'mikc@gmail.com',telefono:'8097690254',celular:'8097690254',password:'12345678',contrasena:'12345678',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE',fechaCreacion:new Date().toLocaleDateString('es-DO')};
+     M={id:'REM00011',codigo:'REM-MIKSID',numero:'11',name:'MICKENSON SIDNEY',nombre:'MICKENSON SIDNEY',email:'mikc@gmail.com',usuario:'mikc@gmail.com',telefono:'8097690254',celular:'8097690254',password:'12345678',contrasena:'12345678',balances:{DOP:2000,HTG:2000},commissions:{DOP:1000,HTG:1000},comisiones:{DOP:1000,HTG:1000},role:'REMITENTE',fechaCreacion:new Date().toLocaleDateString('es-DO')};
      REMITENTES.splice(Math.min(10,REMITENTES.length),0,M);
    }
    const registeredAccounts=readJSON('sendwayo_registered_accounts_v5',[]);
@@ -3686,7 +3734,7 @@ document.addEventListener('DOMContentLoaded', function(){
       if(norm(a.nombre||a.name)==='mickenson sidney'||norm(a.email)==='mikc@gmail.com'){a.id='REM00011';a.codigo='REM-MIKSID';a.numero='11';a.email='mikc@gmail.com';a.usuario='mikc@gmail.com';a.celular='8097690254';a.telefono='8097690254';a.password='12345678';a.contrasena='12345678';}
       else {const idx=i+1>10?i+1:i+1; a.id='REM'+String(idx).padStart(5,'0');const parts=text(a.nombre||a.name).trim().split(/\s+/);const first=(parts[0]||'REM').slice(0,3).toUpperCase();const last=(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();a.codigo='REM-'+first+last;a.numero=String(idx).padStart(2,'0');}
       a.role='REMITENTE';if(!a.usuario)a.usuario=a.email;if(!a.password||a.password==='número de celular')a.password=a.celular||a.telefono||'12345678';
-      a.balances={DOP:0,HTG:0};a.commissions=a.commissions||a.comisiones||{DOP:0,HTG:0};a.comisiones=a.commissions;if(old)idMap[old]=a.id;if(a.codigoAnterior)idMap[a.codigoAnterior]=a.id;if(a.codigo2Anterior)idMap[a.codigo2Anterior]=a.id;
+      a.balances={DOP:2000,HTG:2000};a.commissions=a.commissions||a.comisiones||{DOP:1000,HTG:1000};a.comisiones=a.commissions;if(old)idMap[old]=a.id;if(a.codigoAnterior)idMap[a.codigoAnterior]=a.id;if(a.codigo2Anterior)idMap[a.codigo2Anterior]=a.id;
    });
    // Reescribe las referencias del histórico al nuevo ID de cuenta; no cambia IDs de transacción.
    txs().forEach(t=>{['creadorId','remitenteId','destinoId','depositanteId'].forEach(k=>{if(t[k]&&idMap[t[k]])t[k]=idMap[t[k]]});if(t.creadorId==='ADMIN-ADM')t.creadorId='ADMINADMIN';if(t.remitenteId==='ADMIN-ADM')t.remitenteId='ADMINADMIN';});
@@ -3740,7 +3788,7 @@ document.addEventListener('DOMContentLoaded', function(){
  function searchModule(view,q){const tbody=$('tabla-sendwayo-'+view+'-body');if(!tbody)return;const needle=norm(q);tbody.querySelectorAll('tr').forEach(tr=>tr.style.display=norm(tr.innerText).includes(needle)?'':'none');}
  window.sendwayoExportModule=exportTable;window.sendwayoSearchModule=searchModule;
  window.sendwayoActionGeneric=function(view,action,id){
-  if(view==='bienvenida'){const rows=extraRows('bienvenida');const requests=readJSON('sendwayo_registros_pendientes_v5',[]);const r=requests.find(x=>String(x.id)===String(id));if(!r)return;if(action==='aprobar'){if(!isAdmin()){alert('Solo el administrador puede aprobar registros.');return;}r.estado='Aprobado';r.aprobadoPor=user()?.id;const next=senders().length+1;const nom=r.nombre||r.name||'';const p=nom.trim().split(/\s+/);const a={id:'REM'+String(next).padStart(5,'0'),codigo:'REM-'+(p[0]||'REM').slice(0,3).toUpperCase()+(p.length>1?p[p.length-1]:p[0]).slice(0,3).toUpperCase(),nombre:nom,name:nom,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password,password2:r.celular,role:'REMITENTE',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};REMITENTES.push(a);writeJSON('sendwayo_registered_accounts_v5',[...readJSON('sendwayo_registered_accounts_v5',[]),a]);saveAccountValues();window.USUARIOS_LOGIN.push({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.id,a.codigo],celular:a.celular,telefono:a.telefono,password:a.password,password2:a.celular,nombre:a.nombre,role:a.role});}else if(action==='rechazar'){if(!isAdmin()){alert('Solo el administrador puede rechazar registros.');return;}r.estado='Rechazado';}writeJSON('sendwayo_registros_pendientes_v5',requests);renderCustom(view);return;}
+  if(view==='bienvenida'){const rows=extraRows('bienvenida');const requests=readJSON('sendwayo_registros_pendientes_v5',[]);const r=requests.find(x=>String(x.id)===String(id));if(!r)return;if(action==='aprobar'){if(!isAdmin()){alert('Solo el administrador puede aprobar registros.');return;}r.estado='Aprobado';r.aprobadoPor=user()?.id;const next=senders().length+1;const nom=r.nombre||r.name||'';const p=nom.trim().split(/\s+/);const a={id:'REM'+String(next).padStart(5,'0'),codigo:'REM-'+(p[0]||'REM').slice(0,3).toUpperCase()+(p.length>1?p[p.length-1]:p[0]).slice(0,3).toUpperCase(),nombre:nom,name:nom,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password,password2:r.celular,role:'REMITENTE',balances:{DOP:2000,HTG:2000},commissions:{DOP:1000,HTG:1000},comisiones:{DOP:1000,HTG:1000}};REMITENTES.push(a);writeJSON('sendwayo_registered_accounts_v5',[...readJSON('sendwayo_registered_accounts_v5',[]),a]);saveAccountValues();window.USUARIOS_LOGIN.push({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.id,a.codigo],celular:a.celular,telefono:a.telefono,password:a.password,password2:a.celular,nombre:a.nombre,role:a.role});}else if(action==='rechazar'){if(!isAdmin()){alert('Solo el administrador puede rechazar registros.');return;}r.estado='Rechazado';}writeJSON('sendwayo_registros_pendientes_v5',requests);renderCustom(view);return;}
   if(view==='cuentas'&&action==='borrar'){if(!isAdmin()){alert('Solo el administrador puede administrar cuentas bancarias.');return;}if(confirm('¿Eliminar esta cuenta bancaria?')){window.SENDWAYO_BANKS=window.SENDWAYO_BANKS.filter(x=>x.id!==id);renderCustom(view);}return;}
   if(view==='perfil'){if(action==='password'){const a=currentAccount();if(!a)return;const old=prompt('Contraseña actual:');if(old===null)return;if(![a.password,a.contrasena,a.celular,a.telefono].filter(Boolean).includes(old)){alert('La contraseña actual no coincide.');return;}const np=prompt('Nueva contraseña (mínimo 8 caracteres):');if(!np||np.length<8){alert('La contraseña debe tener al menos 8 caracteres.');return;}a.password=np;a.contrasena=np;const lu=(window.USUARIOS_LOGIN||[]).find(x=>x.id===a.id);if(lu){lu.password=np;lu.password2=a.celular||a.telefono;}saveAccountValues();alert('Contraseña actualizada en este navegador.');}return;}
   if(mapTypes[view]){const t=txs().find(x=>String(x.id)===String(id));if(!t)return;if(action==='ver'){alert('ID: '+t.id+'\nFecha: '+t.fecha+'\nTipo: '+t.tipo+'\nRuta: '+t.ruta+'\nMonto: '+t.monto+'\nBeneficiario: '+t.beneficiario+'\nEstado: '+t.estado);return;}if(action==='comprobante'){if(t.estado==='Aprobado'&&window.verComprobante)window.verComprobante(t.id);else alert('El comprobante estará disponible solo después de la aprobación.');return;}if(action==='aprobar'){window.aprobar(t.id);return;}if(action==='rechazar'){window.rechazar(t.id);return;}if(action==='nocoincide'){window.noCoincide(t.id);return;}if(action==='modificar'){if(!isAdmin()&&t.estado==='Aprobado'){alert('Solo el administrador puede modificar una operación aprobada.');return;}const n=prompt('Nuevo monto:',String(t.montoValue||''));if(n===null)return;const m=Number(n);if(!Number.isFinite(m)||m<=0){alert('El monto debe ser mayor que cero.');return;}t.montoValue=m;t.monto=m+' '+currencyFor(t);t.actualizadoEn=new Date().toLocaleString('es-DO');refreshTx();renderCustom(view);return;}if(action==='borrar'){if(!isAdmin()&&t.estado==='Aprobado'){alert('Solo el administrador puede borrar una operación aprobada.');return;}if(confirm('¿Borrar '+t.id+'?')){const arr=txs();const idx=arr.indexOf(t);if(idx>=0)arr.splice(idx,1);refreshTx();renderCustom(view);}return;}}
@@ -3956,7 +4004,7 @@ document.addEventListener('DOMContentLoaded', function(){
       agent04.codigo = 'AGE-BETVIL'; agent04.codigo2 = agent04.codigo;
       agent04.loginAliases = ['idelette@gmail.com','AGE-IDEISM','AGE00004','AGE00004','AG-IDEISM','IDELETTE ISMORIN','8094995193'];
       agent04.allowedPasswords = ['12345678','8094995193','8094995193'];
-      if (!agent04.balances) agent04.balances = {DOP:0,HTG:0};
+      if (!agent04.balances) agent04.balances = {DOP:200,HTG:100};
     }
     let senderNum = 1;
     senders().forEach((a, idx) => {
@@ -3976,8 +4024,8 @@ document.addEventListener('DOMContentLoaded', function(){
         a.codigo='REM-'+f+l; a.codigo2=a.codigo; senderNum++;
         a.usuario=a.usuario||a.email; a.password=a.password||a.contrasena||a.celular||a.telefono||'12345678';
       }
-      a.balances = a.balances || {DOP:0,HTG:0};
-      a.commissions = a.commissions || a.comisiones || {DOP:0,HTG:0}; a.comisiones=a.commissions;
+      a.balances = a.balances || {DOP:2000,HTG:2000};
+      a.commissions = a.commissions || a.comisiones || {DOP:1000,HTG:1000}; a.comisiones=a.commissions;
       if (a.estado == null && a.activo == null) { a.estado='Activo'; a.activo=true; }
     });
     agents().forEach(a=>{if(a.estado==null&&a.activo==null){a.estado='Activo';a.activo=true;}});
@@ -4055,7 +4103,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(!a){const arr=role==='AGENTE'?agents():senders();if(allAccounts().some(x=>norm(x.email||x.usuario)===norm(email))){alert('Ese correo ya está registrado.');return;}
       let num=1;const prefix=role==='AGENTE'?'AGE':'REM';while(accountById(prefix+String(num).padStart(5,'0')))num++;
       const parts=name.split(/\s+/);const idNew=prefix+String(num).padStart(5,'0');const code=(role==='AGENTE'?'AGE-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
-      a={id:idNew,codigo:code,codigo2:code,numero:String(num).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
+      a={id:idNew,codigo:code,codigo2:code,numero:String(num).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:2000,HTG:2000},commissions:{DOP:1000,HTG:1000}};a.comisiones=a.commissions;arr.push(a);
     } else {a.nombre=a.name=name;a.email=a.usuario=email;a.celular=a.telefono=phone;a.estado=state;a.activo=state==='Activo';}
     a.estado=state;a.activo=state==='Activo';writeJSON('sendwayo_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
     const old=window.USUARIOS_LOGIN||[];window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,aliases:[x.idAnterior,x.codigoAnterior,x.codigo2,...(x.loginAliases||[])].filter(Boolean),celular:x.celular||x.telefono,telefono:x.telefono||x.celular,password:x.password||x.contrasena||'12345678',password2:x.celular||x.telefono,allowedPasswords:x.allowedPasswords||[],nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
@@ -4117,7 +4165,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const add=view==='cuentas'?`${isAdmin()?`<button type="button" onclick="sendwayoAgregarModulo('cuentas')" class="bg-[#0f2440] text-white font-bold text-xs px-4 py-2.5 rounded-full">＋ Agregar cuenta bancaria</button>`:''}<button type="button" onclick="sendwayoAgregarModulo('depositos')" class="bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-full">＋ Agregar depósito</button>`:`<button type="button" onclick="sendwayoAgregarModulo('${view}')" class="bg-[#0f2440] text-white font-bold text-xs px-4 py-2.5 rounded-full">${view==='depositos'?'＋ Agregar depósito':'＋ Agregar nuevo'}</button>`;
     let extra='';
     if(view==='perfil'){
-      const a=currentAccount()||admin();extra=`<section class="border rounded-xl p-4 space-y-3"><h3 class="font-bold">Mi perfil — datos de acceso</h3><div class="flex items-center gap-3">${a?.profilePhoto?`<img src="${a.profilePhoto}" class="w-16 h-16 rounded-full object-cover border">`:'<div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">👤</div>'}<label class="text-xs">Foto de perfil<input type="file" accept="image/*" onchange="sendwayoProfilePhoto(this)" class="block mt-1"></label></div><div class="grid sm:grid-cols-3 gap-2">${inp('v7-prof-old','Contraseña actual','','password')}${inp('v7-prof-new','Nueva contraseña (8+ caracteres)','','password')}${inp('v7-prof-confirm','Confirmar nueva contraseña','','password')}</div><button onclick="sendwayoSaveProfile()" class="bg-green-600 text-white rounded-full px-4 py-2 font-bold">Guardar contraseña</button><p class="text-xs text-gray-500">ID y código de acceso son inmodificables.</p></section>`;
+      const a=currentAccount()||admin();extra=`<section class="border rounded-xl p-4 space-y-3"><h3 class="font-bold">Mi perfil — datos de acceso</h3><div class="flex items-center gap-3">${a?.profilePhoto?`<img loading="lazy" decoding="async" src="${a.profilePhoto}" class="w-16 h-16 rounded-full object-cover border">`:'<div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">👤</div>'}<label class="text-xs">Foto de perfil<input type="file" accept="image/*" onchange="sendwayoProfilePhoto(this)" class="block mt-1"></label></div><div class="grid sm:grid-cols-3 gap-2">${inp('v7-prof-old','Contraseña actual','','password')}${inp('v7-prof-new','Nueva contraseña (8+ caracteres)','','password')}${inp('v7-prof-confirm','Confirmar nueva contraseña','','password')}</div><button onclick="sendwayoSaveProfile()" class="bg-green-600 text-white rounded-full px-4 py-2 font-bold">Guardar contraseña</button><p class="text-xs text-gray-500">ID y código de acceso son inmodificables.</p></section>`;
     }
     if(view==='mibanco'){
       const a=currentAccount()||admin(),d=a?.bankDetails||{};extra=`<section class="border rounded-xl p-4 space-y-3"><h3 class="font-bold">Datos de mi cuenta bancaria</h3><div class="grid sm:grid-cols-2 gap-3">${inp('v7-bank-name','Banco','Nombre del banco','text',d.banco||'')}${inp('v7-bank-account','Número de cuenta','Número de cuenta','text',d.cuenta||'')}${inp('v7-bank-holder','Titular','Nombre del titular','text',d.titular||acctName(a))}${inp('v7-bank-doc','Cédula / pasaporte','Documento','text',d.documento||'')}${sel('v7-bank-currency','Moneda',curOptions(d.moneda||'DOP'))}</div><button onclick="sendwayoSaveMyBank()" class="bg-green-600 text-white rounded-full px-4 py-2 font-bold">Guardar datos bancarios</button><p class="text-xs text-gray-500">Estos datos son de tu perfil; las cuentas bancarias oficiales se administran en su módulo separado.</p></section>`;
@@ -4174,7 +4222,7 @@ document.addEventListener('DOMContentLoaded', function(){
       if((action==='aprobar'||action==='rechazar')&&!isAdmin()){alert('Solo el administrador puede revisar solicitudes.');return;}
       if(action==='aprobar'&&r.tipoSolicitud!=='SERVICIO'){
         r.estado='Aprobado';r.aprobadoPor=user()?.id;const name=text(r.nombre).trim().split(/\s+/);let next=1;while(accountById('REM'+String(next).padStart(5,'0')))next++;if(next===11)next++;
-        const idNew='REM'+String(next).padStart(5,'0'),code='REM-'+(name[0]||'REM').slice(0,3).toUpperCase()+(name.length>1?name[name.length-1]:name[0]||'REM').slice(0,3).toUpperCase();const a={id:idNew,codigo:code,codigo2:code,numero:String(next).padStart(2,'0'),nombre:r.nombre,name:r.nombre,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password||'12345678',contrasena:r.password||'12345678',role:'REMITENTE',estado:'Activo',activo:true,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;senders().push(a);
+        const idNew='REM'+String(next).padStart(5,'0'),code='REM-'+(name[0]||'REM').slice(0,3).toUpperCase()+(name.length>1?name[name.length-1]:name[0]||'REM').slice(0,3).toUpperCase();const a={id:idNew,codigo:code,codigo2:code,numero:String(next).padStart(2,'0'),nombre:r.nombre,name:r.nombre,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password||'12345678',contrasena:r.password||'12345678',role:'REMITENTE',estado:'Activo',activo:true,balances:{DOP:2000,HTG:2000},commissions:{DOP:1000,HTG:1000}};a.comisiones=a.commissions;senders().push(a);
       }else r.estado=action==='aprobar'?'Aprobado':'Rechazado';writeJSON('sendwayo_registros_pendientes_v5',rows);saveAccountValues();renderCustom(view);return;
     }
     if(view==='secretas'&&['modificar','editar'].includes(action)){const a=accountById(id);if(a)window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);return;}
@@ -4212,11 +4260,11 @@ document.addEventListener('DOMContentLoaded', function(){
  // V8: aplicar las credenciales actualizadas de administrador y agente 04.
  try {
    const A=admin();
-   if(A){A.id='ADMINADMIN';A.codigo='ADMIN-000';A.role='ADMIN';A.nombre=A.name='ADMINISTRADOR';A.email=A.usuario='sendwayoexpress@gmail.com';A.password=A.contrasena='herace2060';A.balances=A.balances||{DOP:0,HTG:0};A.commissions=A.commissions||A.comisiones||{DOP:0,HTG:0};A.comisiones=A.commissions;}
+   if(A){A.id='ADMINADMIN';A.codigo='ADMIN-000';A.role='ADMIN';A.nombre=A.name='ADMINISTRADOR';A.email=A.usuario='sendwayoexpress@gmail.com';A.password=A.contrasena='herace2060';A.balances=A.balances||{DOP:2000,HTG:2000};A.commissions=A.commissions||A.comisiones||{DOP:1000,HTG:1000};A.comisiones=A.commissions;}
    const a4=agents().find(a=>String(a.id)==='AGE00004'||String(a.numero)==='04')||agents()[3];
-   if(a4){a4.idAnterior=a4.idAnterior||a4.id;a4.codigoAnterior=a4.codigoAnterior||a4.codigo;a4.id='AGE00004';a4.numero='04';a4.role='AGENTE';a4.nombre=a4.name='IDELETTE ISMORIN';a4.email=a4.usuario='idelette@gmail.com';a4.celular=a4.telefono='8094995193';a4.password=a4.contrasena='12345678';a4.codigo=a4.codigo2='AGE-IDEISM';a4.loginAliases=['AGE00004','AGE-IDEISM','IDELETTE ISMORIN'];a4.allowedPasswords=['12345678','8094995193'];a4.estado='Activo';a4.activo=true;a4.balances=a4.balances||{DOP:0,HTG:0};a4.commissions=a4.commissions||a4.comisiones||{DOP:0,HTG:0};a4.comisiones=a4.commissions;}
+   if(a4){a4.idAnterior=a4.idAnterior||a4.id;a4.codigoAnterior=a4.codigoAnterior||a4.codigo;a4.id='AGE00004';a4.numero='04';a4.role='AGENTE';a4.nombre=a4.name='IDELETTE ISMORIN';a4.email=a4.usuario='idelette@gmail.com';a4.celular=a4.telefono='8094995193';a4.password=a4.contrasena='12345678';a4.codigo=a4.codigo2='AGE-IDEISM';a4.loginAliases=['AGE00004','AGE-IDEISM','IDELETTE ISMORIN'];a4.allowedPasswords=['12345678','8094995193'];a4.estado='Activo';a4.activo=true;a4.balances=a4.balances||{DOP:200,HTG:100};a4.commissions=a4.commissions||a4.comisiones||{DOP:1000,HTG:1000};a4.comisiones=a4.commissions;}
    const m11=senders().find(a=>String(a.id)==='REM00011'||norm(a.nombre||a.name)==='mickenson sidney'||norm(a.email||a.usuario)==='mikc@gmail.com');
-   if(m11){m11.idAnterior=m11.idAnterior||m11.id;m11.id='REM00011';m11.numero='11';m11.role='REMITENTE';m11.nombre=m11.name='MICKENSON SIDNEY';m11.email=m11.usuario='mikc@gmail.com';m11.celular=m11.telefono='8097690254';m11.password=m11.contrasena='12345678';m11.codigo=m11.codigo2='REM-MIKSID';m11.loginAliases=['REM00011','REM-MIKSID'];m11.allowedPasswords=['12345678','8097690254'];m11.estado='Activo';m11.activo=true;m11.balances=m11.balances||{DOP:0,HTG:0};m11.commissions=m11.commissions||m11.comisiones||{DOP:0,HTG:0};m11.comisiones=m11.commissions;}
+   if(m11){m11.idAnterior=m11.idAnterior||m11.id;m11.id='REM00011';m11.numero='11';m11.role='REMITENTE';m11.nombre=m11.name='MICKENSON SIDNEY';m11.email=m11.usuario='mikc@gmail.com';m11.celular=m11.telefono='8097690254';m11.password=m11.contrasena='12345678';m11.codigo=m11.codigo2='REM-MIKSID';m11.loginAliases=['REM00011','REM-MIKSID'];m11.allowedPasswords=['12345678','8097690254'];m11.estado='Activo';m11.activo=true;m11.balances=m11.balances||{DOP:2000,HTG:2000};m11.commissions=m11.commissions||m11.comisiones||{DOP:1000,HTG:1000};m11.comisiones=m11.commissions;}
    window.USUARIOS_LOGIN=allAccounts().map(a=>({usuario:a.usuario||a.email||'',email:a.email||a.usuario||'',id:a.id,codigo:a.codigo,aliases:[a.idAnterior,a.codigoAnterior,a.codigo2,a.codigo2Anterior,...(a.loginAliases||[])].filter(Boolean),celular:a.celular||a.telefono||'',telefono:a.telefono||a.celular||'',password:a.password||a.contrasena||'12345678',password2:a.id==='ADMINADMIN'?'':(a.celular||a.telefono||''),allowedPasswords:a.allowedPasswords||[],nombre:a.nombre||a.name||'',role:a.role,status:a.estado||(a.activo===false?'Inactivo':'Activo')}));
    const al=window.USUARIOS_LOGIN.find(x=>x.id==='ADMINADMIN');if(al){al.usuario=al.email='sendwayoexpress@gmail.com';al.codigo='ADMIN-000';al.password='herace2060';al.password2='';al.allowedPasswords=[];}
    const l4=window.USUARIOS_LOGIN.find(x=>x.id==='AGE00004');if(l4){l4.usuario=l4.email='idelette@gmail.com';l4.codigo='AGE-IDEISM';l4.password='12345678';l4.password2='8094995193';l4.celular=l4.telefono='8094995193';l4.allowedPasswords=['12345678','8094995193'];l4.aliases=['AGE00004','AGE-IDEISM','IDELETTE ISMORIN'];}
@@ -4259,7 +4307,7 @@ document.addEventListener('DOMContentLoaded', function(){
         loginAliases: ['AGE00004','AGE-IDEISM','IDELETTE ISMORIN'],
         allowedPasswords: ['12345678','8094995193']
       });
-      a4.balances = a4.balances || {DOP:0, HTG:0};
+      a4.balances = a4.balances || {DOP:200, HTG:100};
       a4.commissions = a4.commissions || a4.comisiones || {DOP:1000, HTG:1000};
       a4.comisiones = a4.commissions;
 
@@ -4367,7 +4415,7 @@ document.addEventListener('DOMContentLoaded', function(){
   // Agent 04's actual record and the user directory are canonicalized; IDs remain unchanged for senders.
   try{
     const admin=officialAdmin();
-    if(admin){admin.id='ADMINADMIN';admin.codigo='ADMIN-ADMIN';admin.email='sendwayoexpress@gmail.com';admin.usuario='sendwayoexpress@gmail.com';admin.password='herace2060';admin.contrasena='herace2060';admin.role='ADMIN';admin.balances=admin.balances||{DOP:0,HTG:0};}
+    if(admin){admin.id='ADMINADMIN';admin.codigo='ADMIN-ADMIN';admin.email='sendwayoexpress@gmail.com';admin.usuario='sendwayoexpress@gmail.com';admin.password='herace2060';admin.contrasena='herace2060';admin.role='ADMIN';admin.balances=admin.balances||{DOP:2000,HTG:2000};}
     const agents=listAgents();
     agents.forEach((a,i)=>{
       if(!a)return;
@@ -6021,7 +6069,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const findTx=id=>getTxs().find(t=>String(t.id)===String(id))||null;
   function saveTransactions(){try{localStorage.setItem('sendwayo_transacciones',JSON.stringify(getTxs()));}catch(e){}try{window.sendwayoPersistTx&&window.sendwayoPersistTx();}catch(e){}}
   function saveAccounts(){const data=allAccounts().map(a=>({id:a.id,balances:balances(a),commissions:ownCommissions(a),password:a.password||a.contrasena||''}));try{localStorage.setItem('sendwayo_account_values_v5',JSON.stringify(data));localStorage.setItem('sendwayo_accounts_v5',JSON.stringify(data));}catch(e){}}
-  function syncLegacy(){const a=adminAccount();if(!a)return;const b=balances(a),c=commissions(a);window.v162_bal=window.v162_bal||{};window.v162_bal.rd=num(b.DOP);window.v162_bal.htg=num(b.HTG);window.v162_bal.comRD=num(c.DOP);window.v162_bal.comHTG=num(c.HTG);try{localStorage.setItem('sendwayo_bal_v162',JSON.stringify(window.v162_bal));}catch(e){}try{if(typeof ADMIN_BAL!=='undefined'&&ADMIN_BAL){ADMIN_BAL.DOP=b.DOP;ADMIN_BAL.HTG=b.HTG;}}catch(_){}try{if(typeof ADMIN_COM!=='undefined'&&ADMIN_COM){ADMIN_COM.DOP=c.DOP;ADMIN_COM.HTG=c.HTG;}}catch(_){}try{const u=getUser(),me=currentAccount()||u,role=roleOf(me);const visibleBal=balances(role==='AGENTE'?a:(me||a))||b;const visibleCom=commissions(role==='AGENTE'?a:(me||a));const f=n=>num(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});[['top-bal-rd',visibleBal.DOP],['top-bal-htg',visibleBal.HTG],['top-com-rd',visibleCom.DOP],['top-com-htg',visibleCom.HTG],['sendwayo-v7-bal-dop',visibleBal.DOP],['sendwayo-v7-bal-htg',visibleBal.HTG],['sendwayo-v7-com-dop',visibleCom.DOP],['sendwayo-v7-com-htg',visibleCom.HTG]].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=f(v);});}catch(_){}}
+  function syncLegacy(){const a=adminAccount();if(!a)return;const b=balances(a),c=commissions(a);window.v162_bal=window.v162_bal||{};window.v162_bal.rd=num(b.DOP);window.v162_bal.htg=num(b.HTG);window.v162_bal.comRD=num(c.DOP);window.v162_bal.comHTG=num(c.HTG);try{localStorage.setItem('sendwayo_bal_v162',JSON.stringify(window.v162_bal));}catch(e){}try{if(typeof ADMIN_BAL!=='undefined'&&ADMIN_BAL){ADMIN_BAL.DOP=b.DOP;ADMIN_BAL.HTG=b.HTG;}}catch(_){}try{if(typeof ADMIN_COM!=='undefined'&&ADMIN_COM){ADMIN_COM.DOP=c.DOP;ADMIN_COM.HTG=c.HTG;}}catch(_){}try{const u=getUser(),me=currentAccount()||u,role=roleOf(me);const visibleBal=balances(me||a)||b;const visibleCom=role==='AGENTE'?ownCommissions(me):ownCommissions(me||a);const f=n=>num(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});[['top-bal-rd',visibleBal.DOP],['top-bal-htg',visibleBal.HTG],['top-com-rd',visibleCom.DOP],['top-com-htg',visibleCom.HTG],['sendwayo-v7-bal-dop',visibleBal.DOP],['sendwayo-v7-bal-htg',visibleBal.HTG],['sendwayo-v7-com-dop',visibleCom.DOP],['sendwayo-v7-com-htg',visibleCom.HTG]].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=f(v);});}catch(_){}}
   function persistAll(){saveTransactions();saveAccounts();syncLegacy();}
   function refreshAll(){persistAll();try{if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();else if(typeof window.renderPrincipal==='function')window.renderPrincipal();}catch(e){}try{const visible=[...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden')&&v.id);const active=visible?visible.id.replace(/^view-/,''):(document.body.dataset.sendwayoActiveView||'');if(active==='bono'&&typeof renderCustom==='function')renderCustom('bono');else if(active&&active!=='tablero'&&typeof window.renderModuloSeparado==='function')window.renderModuloSeparado(active);}catch(e){}try{if(typeof window.refreshBellCount==='function')window.refreshBellCount();}catch(e){}}
   function sourceOf(t){return accountById(t&&(t.cuentaOrigenId||t.debitAccountSourceId||t.remitenteId||t.depositanteId||t.creadorId||t.creadoPorId||t.usuarioId))||currentAccount()||null;}
@@ -6088,7 +6136,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function announce(s){try{window.alert(s);}catch(_){}}
   function approve(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'){announce('Esta operación ya está aprobada.');return;}if(status(t)==='rechazado'){announce('Esta operación fue rechazada y no puede aprobarse directamente. Registre una nueva operación.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden aprobar operaciones de envío, retiro, recarga, paquetico y servicios de otras cuentas. Los depósitos y ajustes administrativos son exclusivos de Administración.');return;}
     const cur=currencyOf(t),amount=amountOf(t);if(!(amount>0)){announce('El monto registrado no es válido.');return;}
-    if(isDeposit(t)){if(!isAdmin()){announce('Solo Administración puede aprobar depósitos.');return;}const banks=Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[];if(banks.length&&(!t.cuentaBancaria||!banks.some(b=>String(b.id)===String(t.cuentaBancaria)))){announce('No se puede aprobar: seleccione una cuenta bancaria oficial válida en el depósito.');return;}const depositor=sourceOf(t);const dest=depositor&&roleOf(depositor)==='AGENTE'?(adminAccount()||depositor):(accountById(t.destinoId)||accountById(t.depositanteId)||accountById(t.remitenteId)||adminAccount());if(!dest){announce('No se encontró el destino del depósito.');return;}t.tipoAcreditacion='BALANCE';if(!t.saldoAcreditado)creditTarget(t,dest,'deposito');
+    if(isDeposit(t)){if(!isAdmin()){announce('Solo Administración puede aprobar depósitos.');return;}const banks=Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[];if(banks.length&&(!t.cuentaBancaria||!banks.some(b=>String(b.id)===String(t.cuentaBancaria)))){announce('No se puede aprobar: seleccione una cuenta bancaria oficial válida en el depósito.');return;}const dest=accountById(t.destinoId)||accountById(t.depositanteId)||accountById(t.remitenteId)||adminAccount();if(!dest){announce('No se encontró el destino del depósito.');return;}t.tipoAcreditacion='BALANCE';if(!t.saldoAcreditado)creditTarget(t,dest,'deposito');
     }else if(isCredit(t)||isAdjustment(t)||isBonus(t)){if(!isAdmin()){announce('Solo Administración puede aprobar créditos, ajustes y bonos.');return;}const dest=accountById(t.destinoId)||accountByInput(t.beneficiario||t.rutaExacta);if(!dest){announce('No se encontró la cuenta destino de esta acreditación.');return;}if(!t.saldoAcreditado)creditTarget(t,dest,typeKey(t));
     }else if(isCommissionPayment(t)){if(!isAdmin()){announce('Solo Administración puede gestionar pagos de comisión.');return;}const dest=accountById(t.destinoId);if(!dest||roleOf(dest)!=='REMITENTE'){announce('Seleccione un remitente válido para trasladar su propia comisión al balance.');return;}if(!t.pagoComisionAplicado){const sourceCom=commissions(dest),destBal=balances(dest);if(num(sourceCom[cur])+0.000001<amount){announce('Comisión insuficiente del remitente. Disponible: '+num(sourceCom[cur]).toFixed(2)+' '+cur+'.');return;}sourceCom[cur]=round2(num(sourceCom[cur])-amount);destBal[cur]=round2(num(destBal[cur])+amount);t.pagoComisionAplicado=true;t.pagoComisionWallet=true;t.pagoComisionMonto=amount;t.pagoComisionDestinoId=String(dest.id);t.pagoComisionOrigenId=String(dest.id);t.pagoComisionMoneda=cur;}
     }else if(isSpend(t)){const debited=debit(t,true);if(!debited.ok){announce(debited.reason||'No se pudo descontar el balance; la operación continúa pendiente.');return;}applyCommission(t);
@@ -6439,7 +6487,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(localStorage.getItem(baselineKey)!=='done'){
       // Seed fresh installations only. If balances were already persisted, preserve them (especially HTG) across HTML updates.
       if(!window.__sendwayoHadSavedAccountState){
-        accounts().forEach(a=>{a.balances={DOP:0,HTG:0};a.commissions={DOP:0,HTG:0};a.comisiones=a.commissions;});
+        accounts().forEach(a=>{a.balances={DOP:2000,HTG:2000};a.commissions={DOP:2000,HTG:2000};a.comisiones=a.commissions;});
       }
       const adminNow=accounts().find(a=>role(a).includes('ADMIN')||str(a.id).toUpperCase()==='ADMINADMIN');
       try{if(typeof ADMIN_BAL!=='undefined'&&ADMIN_BAL&&adminNow){ADMIN_BAL.DOP=n(adminNow.balances?.DOP);ADMIN_BAL.HTG=n(adminNow.balances?.HTG)}}catch(_){}
@@ -6455,7 +6503,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const wrappedGenericAction=function(view,action,id){
       const before=new Set(accounts().map(a=>str(a.id)));
       const result=priorGenericAction.apply(this,arguments);
-      accounts().filter(a=>!before.has(str(a.id))).forEach(a=>{a.balances={DOP:0,HTG:0};a.commissions={DOP:0,HTG:0};a.comisiones=a.commissions;});
+      accounts().filter(a=>!before.has(str(a.id))).forEach(a=>{a.balances={DOP:2000,HTG:2000};a.commissions={DOP:2000,HTG:2000};a.comisiones=a.commissions;});
       if(accounts().some(a=>!before.has(str(a.id))))persistAccounts();
       return result;
     };
@@ -6463,7 +6511,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   const priorSaveAccount=window.sendwayoSaveAccountForm;
   if(typeof priorSaveAccount==='function'&&!priorSaveAccount.__sendwayoBaselineWrapped){
-    const wrappedSaveAccount=function(){const before=new Set(accounts().map(a=>str(a.id)));const result=priorSaveAccount.apply(this,arguments);accounts().filter(a=>!before.has(str(a.id))).forEach(a=>{a.balances={DOP:0,HTG:0};a.commissions={DOP:0,HTG:0};a.comisiones=a.commissions;});persistAccounts();return result;};
+    const wrappedSaveAccount=function(){const before=new Set(accounts().map(a=>str(a.id)));const result=priorSaveAccount.apply(this,arguments);accounts().filter(a=>!before.has(str(a.id))).forEach(a=>{a.balances={DOP:2000,HTG:2000};a.commissions={DOP:2000,HTG:2000};a.comisiones=a.commissions;});persistAccounts();return result;};
     wrappedSaveAccount.__sendwayoBaselineWrapped=true;window.sendwayoSaveAccountForm=wrappedSaveAccount;
   }
 
