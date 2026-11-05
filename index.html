@@ -103,6 +103,60 @@ button:disabled{opacity:0.5;cursor:not-allowed;}
   try { Object.defineProperty(window,"localStorage",{configurable:true,enumerable:true,value:fallback}); } catch(e) {}
 })();
 </script>
+<script id="sendwayo-early-load-diagnostic">
+/* Diagnóstico seguro: solo muestra un aviso si la plataforma no llega a arrancar. */
+(function () {
+  'use strict';
+  var failures = [];
+  window.addEventListener('error', function (e) {
+    var target = e && e.target;
+    if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+      failures.push('Recurso no cargado: ' + (target.src || target.href || target.tagName));
+    } else if (e && e.message) {
+      failures.push('Error JavaScript: ' + e.message);
+    }
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    var reason = e && e.reason;
+    failures.push('Error de inicialización: ' + (reason && reason.message ? reason.message : String(reason || 'promesa rechazada')));
+  });
+  window.setTimeout(function () {
+    var root = document.getElementById('root');
+    if (!root) return;
+    var loading = document.getElementById('sendwayo-loading');
+    if (!loading && root.children.length > 0) return;
+    if (document.getElementById('sendwayo-early-diagnostic-panel')) return;
+    var panel = document.createElement('section');
+    panel.id = 'sendwayo-early-diagnostic-panel';
+    panel.style.cssText = 'position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#fff;color:#111827;padding:22px;font:16px/1.5 system-ui,sans-serif';
+    var title = document.createElement('h2');
+    title.textContent = 'SENDWAYO EXPRESS: la plataforma no terminó de cargar';
+    title.style.cssText = 'color:#0a245e;font-size:22px';
+    panel.appendChild(title);
+    var intro = document.createElement('p');
+    intro.textContent = 'Diagnóstico de arranque. No se han cambiado ni borrado cuentas, saldos ni transacciones.';
+    panel.appendChild(intro);
+    var list = document.createElement('pre');
+    list.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f4f6;padding:12px;border-radius:8px;font-size:12px';
+    var info = [];
+    info.push('Página: ' + location.href.split('?')[0]);
+    info.push('Firebase SDK disponible: ' + Boolean(window.firebase));
+    info.push('Firebase app inicializada: ' + Boolean(window.firebase && window.firebase.apps && window.firebase.apps.length));
+    info.push('Proyecto Firebase: ' + (window.firebase && window.firebase.apps && window.firebase.apps.length ? (window.firebase.app().options.projectId || 'no identificado') : 'no disponible'));
+    info.push('Recursos fallidos detectados:');
+    info.push(failures.length ? failures.slice(-12).join('\n') : 'No se capturó un error de recurso antes del tiempo límite.');
+    list.textContent = info.join('\n');
+    panel.appendChild(list);
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Volver a intentar';
+    button.style.cssText = 'margin-top:12px;background:#0a245e;color:white;border:0;border-radius:9px;padding:12px 18px;font-weight:800';
+    button.addEventListener('click', function () { location.reload(); });
+    panel.appendChild(button);
+    document.body.appendChild(panel);
+  }, 18000);
+})();
+</script>
 <script type="module">
 /* SENDWAYO: helper local del módulo principal. */
 function cleanMethod(routeFull){
