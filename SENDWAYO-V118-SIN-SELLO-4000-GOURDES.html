@@ -1262,8 +1262,7 @@ window.habilitarTablero = function(){
   });
 }
 
-setTimeout(window.habilitarTablero, 500);
-setTimeout(window.habilitarTablero, 2000);
+/* Se retira la activación global automática: cada rol conserva sus permisos. */
 
 // Calcular envio con tarifa Haiti-Haiti 25
 window.calcularEnvio = function(){
@@ -2267,8 +2266,7 @@ window.activarGuardars = function(){
     btn.style.pointerEvents='auto';
   });
 }
-setTimeout(window.activarGuardars, 800);
-setTimeout(window.activarGuardars, 2000);
+/* Se retira la activación global automática: cada rol conserva sus permisos. */
 
 // Sugerencia inmediata al escribir - números y nombres registrados
 window.BENEF_DB = [];
@@ -3158,8 +3156,7 @@ document.addEventListener('DOMContentLoaded', function(){
       });
     }
   }
-  habilitarTableroDeposito();
-  setTimeout(habilitarTableroDeposito, 2000);
+/* Se retira la activación global automática: cada rol conserva sus permisos. */
 });
 </script>
 
