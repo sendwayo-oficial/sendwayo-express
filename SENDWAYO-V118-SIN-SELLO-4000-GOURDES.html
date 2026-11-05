@@ -6719,13 +6719,25 @@ window.sendwayoShareReceipt=async function(){
     document.getElementById('view-tablero')?.classList.remove('hidden');
   }
   function showLogin() {
-    document.body.classList.remove('sendwayo-authenticated');
+    document.body.classList.remove('sendwayo-authenticated', 'sendwayo-login-open');
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-tablero')?.classList.add('hidden');
+    // En una sesión cerrada se muestra primero la portada pública. El formulario
+    // solo se abre cuando el visitante pulsa "Ya tengo una cuenta".
     const login=document.getElementById('login-screen');
-    if(login){login.classList.remove('hidden');login.style.display='flex';}
+    if(login){
+      login.classList.add('hidden');
+      login.style.setProperty('display','none','important');
+      login.style.setProperty('visibility','hidden','important');
+      login.style.setProperty('pointer-events','none','important');
+    }
     const welcome=document.getElementById('welcome-landing');
-    if(welcome) welcome.classList.remove('hidden');
+    if(welcome){
+      welcome.classList.remove('hidden');
+      welcome.style.setProperty('display','block','important');
+      welcome.style.setProperty('visibility','visible','important');
+      welcome.style.setProperty('pointer-events','auto','important');
+    }
     const top=document.getElementById('user-top'); if(top) top.textContent='';
   }
   function collectAliases() {
