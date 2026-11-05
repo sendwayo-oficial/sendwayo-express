@@ -6711,6 +6711,7 @@ window.sendwayoShareReceipt=async function(){
     const welcome = document.getElementById('welcome-landing');
     if (login) login.classList.add('hidden');
     if (welcome) welcome.classList.add('hidden');
+    document.body.classList.remove('sendwayo-login-open');
     document.body.classList.add('sendwayo-authenticated');
     const top = document.getElementById('user-top');
     if (top) top.textContent = `${user.nombre || user.name || 'Usuario'} — ${user.codigo || user.id || ''}`;
