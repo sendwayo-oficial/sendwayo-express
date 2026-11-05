@@ -236,12 +236,23 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 }
 </style>
 
+
+<style id="sendwayo-v7-welcome-photos-login-sharp-fix">
+/* Recuperar las fotografías reales del portal público y mantener el formulario de acceso nítido. */
+#welcome-landing .sendwayo-home-aside-photo{display:block!important;width:100%!important;height:164px!important;margin-top:22px!important;overflow:hidden!important;border-radius:16px!important;background:#0b1a2f!important}
+#welcome-landing .sendwayo-home-aside-photo img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
+#login-screen{filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;opacity:1!important}
+#login-screen>div{filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;opacity:1!important;transform:none!important;background:#fff!important;color:#10243d!important;box-shadow:0 24px 70px rgba(0,0,0,.38)!important}
+#login-screen input{filter:none!important;opacity:1!important;background:#fff!important;color:#10243d!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#login-screen button{filter:none!important;opacity:1!important}
+@media(max-width:760px){#welcome-landing .sendwayo-home-aside-photo{height:125px!important;margin-top:16px!important}}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
     <div class="text-center mb-6">
-      <div class="w-20 h-20 mx-auto rounded-full bg-[#0b1a2f] flex items-center justify-center text-white font-extrabold text-[10px] mb-3">SENDWAYO<br>EXPRESS</div>
+      <img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" style="display:block;width:150px;height:100px;object-fit:contain;margin:0 auto 12px;">
       <h2 class="font-extrabold text-[18px]">SENDWAYO EXPRESS</h2>
     </div>
     <div class="space-y-4">
@@ -2595,22 +2606,13 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 <script>
 console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros real ventanilla + beneficiario restaurado + recargas paquetikos esquina redondo sugerencias numeros');
 (function(){
-  const carouselImgs = ["assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg",
-"assets/sendwayo-servicios.jpg"];
+  const carouselImgs = [
+    "assets/ca43ab0c2b8e924cfacc.webp",
+    "assets/2fdc9be46456ec238812.webp",
+    "assets/d6ce41174c8bf68a01de.webp",
+    "assets/d0a323d74b9c3176a044.webp",
+    "assets/165bf5cfd643e8b3c495.webp"
+  ];
   let carIdx=0;
   window.v162_bal={rd:0, htg:0, comRD:0, comHTG:0};
   try{ const s=localStorage.getItem('sendwayo_express_oficial_20261029_bal_v162'); if(s) Object.assign(window.v162_bal, JSON.parse(s)); }catch(e){}
