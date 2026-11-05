@@ -153,19 +153,67 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify the existing public URL
+      - name: Verify the existing public URL and wait for CDN propagation
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         shell: bash
         run: |
           set -euo pipefail
-          BASE_URL="${PAGE_URL%/}"
-          TARGET="${BASE_URL}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release=${GITHUB_SHA}"
-          curl --fail --silent --show-error --location --retry 15 --retry-all-errors --retry-delay 4 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "$TARGET" -o /tmp/sendwayo-live.html
-          LOCAL_SHA="$(sha256sum site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html | cut -d ' ' -f1)"
-          LIVE_SHA="$(sha256sum /tmp/sendwayo-live.html | cut -d ' ' -f1)"
-          test "$LOCAL_SHA" = "$LIVE_SHA"
-          while IFS= read -r asset; do
-            curl --fail --silent --show-error --location --retry 10 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' "${BASE_URL}/assets/${asset}?sendwayo_release=${GITHUB_SHA}" -o /dev/null
-          done < <(grep -oE 'assets/[A-Za-z0-9._-]+' site/index.html | sed 's#^assets/##' | sort -u)
-          echo 'PASS: el enlace existente devuelve exactamente el HTML y sus 9 imágenes.'
+          python - <<'PY'
+          import hashlib
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          base = os.environ["PAGE_URL"].rstrip("/")
+          sha = os.environ["GITHUB_SHA"]
+          target = f"{base}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release={sha}"
+          expected = hashlib.sha256(
+              Path("site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html").read_bytes()
+          ).hexdigest()
+          headers = {
+              "Cache-Control": "no-cache, no-store, max-age=0",
+              "Pragma": "no-cache",
+              "User-Agent": "SENDWAYO-Pages-Deployment-Verification",
+          }
+
+          last_status = "sin respuesta"
+          last_hash = "ninguno"
+          for attempt in range(1, 37):
+              try:
+                  request = urllib.request.Request(target, headers=headers)
+                  with urllib.request.urlopen(request, timeout=20) as response:
+                      body = response.read()
+                      last_status = str(response.status)
+                  last_hash = hashlib.sha256(body).hexdigest()
+                  if last_hash == expected:
+                      print(f"PASS: URL pública coincide exactamente con V7 (intento {attempt}).")
+                      break
+                  print(
+                      f"CDN todavía entrega otra copia (intento {attempt}/36); "
+                      f"esperando propagación. SHA esperado={expected}, recibido={last_hash}"
+                  )
+              except (urllib.error.URLError, TimeoutError, OSError) as error:
+                  last_status = repr(error)
+                  print(f"URL aún no disponible (intento {attempt}/36): {last_status}")
+              if attempt < 36:
+                  time.sleep(5)
+          else:
+              raise SystemExit(
+                  "FAIL: GitHub Pages no entregó el HTML V7 exacto después de 3 minutos. "
+                  f"Último estado={last_status}; SHA recibido={last_hash}; esperado={expected}"
+              )
+
+          import re
+          html = body.decode("utf-8")
+          assets = sorted(set(re.findall(r"assets/([A-Za-z0-9._-]+)", html)))
+          for asset in assets:
+              asset_url = f"{base}/assets/{asset}?sendwayo_release={sha}"
+              request = urllib.request.Request(asset_url, headers=headers)
+              with urllib.request.urlopen(request, timeout=20) as response:
+                  if response.status != 200:
+                      raise SystemExit(f"FAIL: recurso no disponible: {asset}")
+          print(f"PASS: {len(assets)} recursos gráficos responden en la URL pública.")
+          PY
