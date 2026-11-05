@@ -151,6 +151,27 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 <style id="sendwayo-hide-fixed-number-bank-deposits">
 #view-cuentas table th:first-child,#view-cuentas table td:first-child,#view-depositos table th:first-child,#view-depositos table td:first-child{display:none!important}
 </style>
+
+<style id="sendwayo-v7-landing-critical-layout">
+/* V7 landing: diseño crítico independiente de Tailwind/CDN */
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#071426!important;color:#fff!important;font-family:Arial,sans-serif!important}
+#welcome-landing *{box-sizing:border-box}
+#welcome-landing>main{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:linear-gradient(135deg,#071426 0%,#102b4b 52%,#17466a 100%)!important}
+#welcome-landing header{display:block!important;width:100%!important;border-bottom:1px solid rgba(255,255,255,.12)!important}
+#welcome-landing header>div{max-width:1200px!important;margin:0 auto!important;padding:16px 24px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important}
+#welcome-landing header>div>div:first-child{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+#welcome-landing header img{display:block!important;flex:0 0 auto!important;height:52px!important;max-height:52px!important;width:auto!important;max-width:150px!important;object-fit:contain!important;margin:0!important}
+#welcome-landing section{width:100%!important;max-width:1200px!important;margin:0 auto!important;padding:48px 24px!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:40px!important;align-items:center!important;flex:1 0 auto!important}
+#welcome-landing section>div{min-width:0!important}
+#welcome-landing h1{font-size:clamp(34px,5vw,58px)!important;line-height:1.08!important;font-weight:800!important;margin:18px 0!important}
+#welcome-landing p{line-height:1.65!important}
+#welcome-landing section>div.relative{position:relative!important;width:100%!important;max-width:560px!important;justify-self:end!important}
+#welcome-landing section>div.relative>div.relative{position:relative!important;overflow:hidden!important;border-radius:24px!important;width:100%!important}
+#welcome-landing section>div.relative img{display:block!important;width:100%!important;max-width:100%!important;height:clamp(260px,42vw,440px)!important;max-height:440px!important;object-fit:cover!important;margin:0!important}
+#welcome-landing button{display:inline-flex!important;align-items:center!important;justify-content:center!important;max-width:100%!important;cursor:pointer!important}
+#welcome-landing footer{display:block!important;text-align:center!important;padding:18px 24px!important;border-top:1px solid rgba(255,255,255,.12)!important}
+@media(max-width:760px){#welcome-landing section{grid-template-columns:1fr!important;padding:32px 20px!important;gap:28px!important}#welcome-landing section>div.relative{justify-self:stretch!important;max-width:none!important}#welcome-landing section>div.relative img{height:280px!important}#welcome-landing header>div{padding:12px 18px!important}}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
