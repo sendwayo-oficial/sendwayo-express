@@ -2322,47 +2322,64 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 </style>
 
 <div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
-  <main class="min-h-screen flex flex-col text-white" style="background:linear-gradient(135deg,#071426 0%,#102b4b 52%,#17466a 100%);">
-    <header class="w-full border-b border-white/10">
-      <div class="max-w-7xl mx-auto px-5 md:px-8 py-5 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 min-w-0">
-          <img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="h-12 md:h-14 w-auto rounded-lg bg-white p-1 object-contain">
-          <div><div class="font-black tracking-wide text-sm md:text-base">SENDWAYO EXPRESS</div><div class="text-[10px] md:text-xs text-blue-100/75 tracking-widest uppercase">Conectamos destinos</div></div>
+  <main class="min-h-screen flex flex-col text-white" style="background:#f4f7fb;color:#0f2440;">
+    <header style="background:#fff;box-shadow:0 3px 16px rgba(15,36,64,.10);">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS">
+          <div><div style="font-weight:900;font-size:15px;color:#0f2440;">SENDWAYO EXPRESS</div><div style="font-size:11px;color:#64748b;">Envíos · Retiros · Paquetes · Recargas</div></div>
         </div>
-        <div class="text-[10px] md:text-xs text-blue-100/70 tracking-wide uppercase hidden sm:block">República Dominicana · Haití · Internacional</div>
+        <button type="button" onclick="v162_showLogin()" style="background:#0f2440;color:#fff;border:0;border-radius:999px;padding:13px 24px;font-weight:800;font-size:14px;box-shadow:0 5px 16px rgba(15,36,64,.18);">Ya tengo una cuenta</button>
       </div>
     </header>
-    <section class="flex-1 w-full max-w-7xl mx-auto px-5 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-      <div class="max-w-2xl">
-        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-cyan-100/10 px-4 py-2 text-[10px] md:text-xs font-bold tracking-[.16em] uppercase text-cyan-100 mb-6"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Servicio cercano, seguro y confiable</div>
-        <h1 class="text-4xl md:text-6xl font-black leading-[1.06] tracking-tight">Tus envíos y servicios, <span class="text-cyan-300">más cerca.</span></h1>
-        <p class="mt-6 text-sm md:text-lg leading-relaxed text-blue-100/85 max-w-xl">Una plataforma para gestionar envíos de dinero, retiros, paquetes, recargas y pagos entre República Dominicana, Haití y otros destinos.</p>
-        <div class="mt-9">
-          <button onclick="v162_showLogin()" class="inline-flex items-center justify-center gap-3 rounded-full bg-cyan-300 hover:bg-cyan-200 text-[#071426] font-extrabold text-sm md:text-base px-8 py-4 shadow-xl shadow-cyan-950/30 transition">Ya tengo una cuenta <span aria-hidden="true">→</span></button>
+    <section>
+      <div style="max-width:620px;">
+        <div style="display:inline-block;background:#e0f2fe;color:#075985;border-radius:999px;padding:8px 14px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">República Dominicana · Haití · Internacional</div>
+        <h1 style="color:#0f2440;">Envía y recibe donde estés.</h1>
+        <p style="font-size:16px;color:#475569;max-width:560px;">Una plataforma para gestionar envíos de dinero, retiros, paquetes, recargas y pagos entre República Dominicana, Haití y otros destinos.</p>
+        <div class="sendwayo-public-services">
+          <article><span>💸</span><strong>Envíos de dinero</strong><small>RD · Haití · Estados Unidos y otros destinos</small></article>
+          <article><span>💰</span><strong>Retiros</strong><small>Recibe tu dinero de forma organizada</small></article>
+          <article><span>📦</span><strong>Paquetes</strong><small>Recepción, seguimiento y distribución</small></article>
+          <article><span>📱</span><strong>Recargas y pagos</strong><small>Servicios y facturas</small></article>
         </div>
-        <p class="mt-4 text-xs text-blue-100/60">Acceso privado para administradores, agentes y remitentes.</p>
       </div>
-      <div class="relative">
-        <div class="absolute -inset-4 rounded-[2rem] bg-cyan-300/10 blur-2xl"></div>
-        <div class="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl">
-          <img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS" class="w-full h-[300px] md:h-[440px] object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-[#071426] via-[#071426]/10 to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-            <div class="text-xs font-bold uppercase tracking-[.2em] text-cyan-200">SENDWAYO EXPRESS</div>
-            <div class="mt-2 text-2xl md:text-3xl font-extrabold">Movemos lo que importa.</div>
-            <div class="mt-3 flex flex-wrap gap-2 text-[10px] md:text-xs text-white/90">
-              <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Envíos y retiros</span>
-              <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Paquetes</span>
-              <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Recargas y pagos</span>
-            </div>
+      <div class="relative" style="max-width:580px;">
+        <div class="relative" style="overflow:hidden;border-radius:24px;border:1px solid #dbe5ef;box-shadow:0 18px 45px rgba(15,36,64,.18);">
+          <img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS" style="display:block;width:100%;height:clamp(280px,42vw,440px);object-fit:cover;">
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:22px;background:linear-gradient(transparent,rgba(7,20,38,.88));color:#fff;">
+            <div style="font-size:11px;font-weight:800;letter-spacing:.16em;">SENDWAYO EXPRESS</div>
+            <div style="font-size:clamp(22px,3vw,32px);font-weight:900;margin-top:6px;">Movemos lo que importa.</div>
           </div>
         </div>
+        <p style="text-align:center;color:#64748b;font-size:12px;margin-top:12px;">Servicio cercano, seguro y confiable.</p>
       </div>
     </section>
-    <footer class="border-t border-white/10 px-5 md:px-8 py-5 text-center text-[10px] md:text-xs text-blue-100/55">© SENDWAYO EXPRESS · Plataforma de servicios y operaciones</footer>
+    <footer style="color:#64748b;">© SENDWAYO EXPRESS · Conectamos destinos</footer>
   </main>
 </div>
-
+<style id="sendwayo-v7-public-landing-clean">
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f4f7fb!important;color:#0f2440!important;font-family:Arial,sans-serif!important}
+#welcome-landing>main{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:#f4f7fb!important}
+#welcome-landing header{display:block!important;width:100%!important}
+#welcome-landing header>div{max-width:1200px!important;margin:0 auto!important;padding:14px 24px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important}
+#welcome-landing header>div>div:first-child{display:flex!important;align-items:center!important;gap:12px!important}
+#welcome-landing header img{height:48px!important;max-height:48px!important;width:auto!important;max-width:135px!important;object-fit:contain!important}
+#welcome-landing section{width:100%!important;max-width:1200px!important;margin:0 auto!important;padding:48px 24px!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:42px!important;align-items:center!important;flex:1 0 auto!important}
+#welcome-landing h1{font-size:clamp(36px,5vw,58px)!important;line-height:1.08!important;font-weight:900!important;margin:20px 0!important}
+#welcome-landing p{line-height:1.65!important}
+#welcome-landing section>div{min-width:0!important}
+#welcome-landing section>div.relative{width:100%!important;justify-self:end!important}
+#welcome-landing footer{display:block!important;text-align:center!important;padding:18px 24px!important;border-top:1px solid #e2e8f0!important;background:#fff!important}
+#welcome-landing .sendwayo-public-services{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;margin-top:28px!important}
+#welcome-landing .sendwayo-public-services article{display:flex!important;flex-direction:column!important;gap:6px!important;background:#fff!important;border:1px solid #e2e8f0!important;border-radius:16px!important;padding:16px!important;box-shadow:0 4px 14px rgba(15,36,64,.05)!important}
+#welcome-landing .sendwayo-public-services article span{font-size:24px!important}
+#welcome-landing .sendwayo-public-services article strong{font-size:14px!important;color:#0f2440!important}
+#welcome-landing .sendwayo-public-services article small{font-size:11px!important;line-height:1.5!important;color:#64748b!important}
+#login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:20000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;background:rgba(7,20,38,.96)!important}
+#login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important}
+@media(max-width:760px){#welcome-landing section{grid-template-columns:1fr!important;padding:30px 18px!important;gap:26px!important}#welcome-landing section>div.relative{justify-self:stretch!important}#welcome-landing section>div.relative img{height:280px!important}#welcome-landing header>div{padding:12px 16px!important}#welcome-landing header button{padding:11px 16px!important;font-size:12px!important}#welcome-landing .sendwayo-public-services{gap:8px!important}#welcome-landing .sendwayo-public-services article{padding:12px!important}}
+</style>
 <!-- MODAL ENVIO EXACTO CAPTURA - NO TOCAR -->
 <div id="modal-envio-v162" class="hidden fixed inset-0 bg-black/60 z-[550] flex items-center justify-center p-4">
   <div class="bg-white rounded-t-xl max-w-[500px] w-full shadow-2xl overflow-hidden">
@@ -2528,15 +2545,29 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   window.v162_next=function(){ carIdx=(carIdx+1)%carouselImgs.length; v162_setCar(carIdx); };
   window.v162_prev=function(){ carIdx=(carIdx-1+carouselImgs.length)%carouselImgs.length; v162_setCar(carIdx); };
 
-  window.v162_showLogin=function(){ document.getElementById('welcome-landing').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); v162_fixLogin(); };
-  window.v162_goWelcome=function(){ document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden'); };
+  window.v162_showLogin=function(){
+    document.body.classList.remove('sendwayo-authenticated');
+    document.body.classList.add('sendwayo-login-open');
+    const welcome=document.getElementById('welcome-landing');
+    if(welcome){welcome.classList.add('hidden');welcome.style.setProperty('display','none','important');}
+    const login=document.getElementById('login-screen');
+    if(login){v162_fixLogin();login.classList.remove('hidden');login.classList.add('sendwayo-login-visible');login.style.setProperty('display','flex','important');login.style.setProperty('visibility','visible','important');}
+    setTimeout(()=>document.getElementById('login-usuario')?.focus(),50);
+  };
+  window.v162_goWelcome=function(){
+    document.body.classList.remove('sendwayo-login-open');
+    const login=document.getElementById('login-screen');
+    if(login){login.classList.remove('sendwayo-login-visible');login.classList.add('hidden');login.style.setProperty('display','none','important');}
+    const welcome=document.getElementById('welcome-landing');
+    if(welcome){welcome.classList.remove('hidden');welcome.style.removeProperty('display');welcome.style.removeProperty('visibility');}
+  };
 
   function v162_fixLogin(){
     const ls=document.getElementById('login-screen');
     if(!ls) return;
     ls.innerHTML=`<div class="w-full max-w-[420px] mx-auto bg-white rounded-[24px] p-6 shadow-2xl border mt-10">
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
-      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:240px; margin:0 auto; border-radius:12px;"><p class="text-[10px] text-gray-500 mt-2">Ya tengo cuenta - Entrar con correo y contraseña</p></div>
+      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:96px; height:96px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
         <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
@@ -3971,8 +4002,7 @@ window.sendwayoShareReceipt=async function(){
     sendwayoModal('Solicitar servicio — '+service,`<div class="space-y-3">${inp('v7-public-name','Nombre y apellido','Nombre completo')}${inp('v7-public-phone','WhatsApp / celular','Número de teléfono','tel')}${inp('v7-public-email','Correo electrónico','correo@gmail.com','email')}${sel('v7-public-service','Servicio',`<option ${service==='Quiero enviar dinero'?'selected':''}>Quiero enviar dinero</option><option ${service==='Quiero enviar paquete'?'selected':''}>Quiero enviar paquete</option><option ${service==='Quiero recibir paquete'?'selected':''}>Quiero recibir paquete</option><option ${service==='Quiero hacer una recarga'?'selected':''}>Quiero hacer una recarga</option><option ${service==='Quiero hacer un paquetico'?'selected':''}>Quiero hacer un paquetico</option><option ${service==='Quiero pagar factura y servicio'?'selected':''}>Quiero pagar factura y servicio</option><option ${service==='Quiero recibir dinero'?'selected':''}>Quiero recibir dinero</option><option>Quiero ser remitente</option><option>Quiero ser agente</option>`)}${inp('v7-public-details','Datos de la solicitud','Número, referencia o detalles')}</div><button type="button" onclick="sendwayoSavePublicRequest()" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Enviar solicitud</button>`);
   };
   window.sendwayoSavePublicRequest=function(){const nombre=$('v7-public-name')?.value.trim()||'',celular=$('v7-public-phone')?.value.trim()||'',email=$('v7-public-email')?.value.trim()||'',servicio=$('v7-public-service')?.value||'',detalle=$('v7-public-details')?.value.trim()||'';if(!nombre||!celular||!email){alert('Complete nombre, celular y correo.');return;}const rows=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);rows.push({id:'SOL-SERV-'+Date.now(),nombre,email,celular,servicio,detalle,tipoSolicitud:'SERVICIO',role:'REMITENTE',fecha:new Date().toLocaleString('es-DO'),estado:'Pendiente'});writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);$('sendwayo-v7-modal')?.classList.add('hidden');alert('Solicitud enviada al administrador para revisión.');};
-  function installWelcomeExtras(){const w=$('welcome-landing');if(!w||$('sendwayo-welcome-extras'))return;const h=w.querySelector('header');const section=document.createElement('section');section.id='sendwayo-welcome-extras';section.className='max-w-7xl mx-auto px-4 py-7 text-white';section.innerHTML=`<div class="rounded-3xl bg-gradient-to-r from-orange-500 to-blue-900 p-6 md:p-10 shadow-xl"><p class="text-sm font-bold uppercase tracking-widest">SENDWAYO EXPRESS</p><h1 class="text-2xl md:text-4xl font-black mt-2">Hazlo todo sin moverte de la casa</h1><p class="text-base md:text-xl mt-2">Quédate cómodo y nosotros nos encargamos.</p><div class="flex flex-wrap gap-2 mt-5"><button onclick="v162_showLogin()" class="bg-white text-[#0f2440] font-bold rounded-full px-5 py-3">Ya tengo cuenta</button><button onclick="document.getElementById('v162-registro')?.scrollIntoView({behavior:'smooth'})" class="bg-[#0f2440] text-white font-bold rounded-full px-5 py-3">Crear cuenta / Registrarse</button><button onclick="sendwayoOpenPublicRequest('Quiero ser agente')" class="border border-white text-white font-bold rounded-full px-5 py-3">Quiero ser agente</button><button onclick="sendwayoOpenPublicRequest('Quiero ser remitente')" class="border border-white text-white font-bold rounded-full px-5 py-3">Quiero ser remitente</button></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5 text-[#0f2440]"><article class="bg-white rounded-2xl p-5 shadow"><h2 class="font-black text-lg">Nuestra misión</h2><p class="mt-2 text-sm">Conectar personas y comunidades con servicios confiables, ágiles y accesibles.</p></article><article class="bg-white rounded-2xl p-5 shadow"><h2 class="font-black text-lg">Nuestra visión</h2><p class="mt-2 text-sm">Ser una plataforma de referencia por la confianza, la transparencia y la calidad del servicio.</p></article><article class="bg-white rounded-2xl p-5 shadow"><h2 class="font-black text-lg">Nuestro objetivo</h2><p class="mt-2 text-sm">Facilitar operaciones, paquetes y pagos con seguimiento y atención organizada.</p></article></div><div class="bg-white text-[#0f2440] rounded-2xl p-5 mt-5 shadow"><h2 class="font-black text-lg text-center">Todos nuestros servicios y productos</h2><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-4">${['Quiero enviar dinero','Quiero recibir dinero','Quiero enviar paquete','Quiero recibir paquete','Quiero hacer una recarga','Quiero hacer un paquetico','Quiero pagar factura y servicio'].map(s=>`<button onclick="sendwayoOpenPublicRequest('${s}')" class="border border-blue-100 hover:bg-blue-50 rounded-xl p-3 text-xs font-bold">${s}</button>`).join('')}</div><p class="text-center font-bold mt-5">WhatsApp / Celular: 8297676665 · Correo: sendwayoexpress@gmail.com</p><p class="text-center text-sm mt-1">Quédate cómodo; nosotros nos encargamos.</p></div>`;if(h)h.insertAdjacentElement('afterend',section);else w.prepend(section);}
-  installWelcomeExtras();
+  function installWelcomeExtras(){ return; }
 
   // Render all requested standalone pages with standard controls, serial numbers, search, exports and actions.
   renderCustom = function(view){
@@ -7677,7 +7707,7 @@ window.sendwayoShareReceipt=async function(){
   window.intentarLogin=attemptLogin;
   // Never create accounts or reset credentials in localStorage; Firebase Authentication is the sole identity source.
   window.v162_registrar=function(){loginError('El registro local está desactivado por seguridad. El administrador debe habilitar su cuenta en Firebase Authentication.');};
-  window.v162_goWelcome=function(){loginError('Para solicitar acceso, contacte al administrador. Las cuentas se crean en Firebase Authentication.');};
+  // v162_goWelcome conserva el retorno funcional a la página pública.
   const recoverButton=document.getElementById('sendwayo-recover-password');
   if(recoverButton) recoverButton.onclick=async()=>{
     const candidate=txt(document.getElementById('login-usuario')?.value);
