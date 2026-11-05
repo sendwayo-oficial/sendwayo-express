@@ -3115,77 +3115,7 @@ body:not(.sendwayo-authenticated) #welcome-landing:not(.hidden){display:block!im
 body.sendwayo-authenticated > #welcome-landing{display:none!important}
 </style>
 
-<style id="sendwayo-login-interaction-hardening-v7">
-  body.sendwayo-login-open #login-screen {
-    position: fixed !important; inset: 0 !important; z-index: 2147483000 !important;
-    display: flex !important; visibility: visible !important; opacity: 1 !important;
-    pointer-events: auto !important; isolation: isolate !important;
-  }
-  body.sendwayo-login-open #welcome-landing { display: none !important; visibility: hidden !important; pointer-events: none !important; }
-  #login-screen, #login-screen > div, #login-screen input, #login-screen button {
-    pointer-events: auto !important;
-  }
-  #login-screen input { position: relative !important; z-index: 2 !important; user-select: text !important; -webkit-user-select: text !important; }
-</style>
-<script id="sendwayo-login-and-language-hardening-v7">
-(function () {
-  'use strict';
-  function openSendwayoLogin() {
-    var login = document.getElementById('login-screen');
-    if (!login) return false;
-    // Keep the login overlay directly under body so no hidden parent can block typing or clicks.
-    if (login.parentElement !== document.body) document.body.appendChild(login);
-    document.body.classList.remove('sendwayo-authenticated');
-    document.body.classList.add('sendwayo-login-open');
-    var welcome = document.getElementById('welcome-landing');
-    if (welcome) {
-      welcome.classList.add('hidden');
-      welcome.style.setProperty('display', 'none', 'important');
-      welcome.style.setProperty('visibility', 'hidden', 'important');
-      welcome.style.setProperty('pointer-events', 'none', 'important');
-    }
-    login.classList.remove('hidden');
-    login.style.setProperty('display', 'flex', 'important');
-    login.style.setProperty('visibility', 'visible', 'important');
-    login.style.setProperty('pointer-events', 'auto', 'important');
-    login.style.setProperty('z-index', '2147483000', 'important');
-    login.querySelectorAll('input').forEach(function (field) {
-      field.disabled = false;
-      field.readOnly = false;
-      field.removeAttribute('aria-disabled');
-      field.style.setProperty('pointer-events', 'auto', 'important');
-    });
-    var username = document.getElementById('login-usuario');
-    if (username) window.setTimeout(function () {
-      try { username.focus({ preventScroll: true }); } catch (_) { username.focus(); }
-    }, 50);
-    return false;
-  }
-  window.v162_showLogin = openSendwayoLogin;
-  document.addEventListener('click', function (event) {
-    var button = event.target && event.target.closest ? event.target.closest('#welcome-landing button[onclick*="v162_showLogin"]') : null;
-    if (!button) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    openSendwayoLogin();
-  }, true);
-  var loginButton = document.querySelector('#login-screen button[onclick*="intentarLogin"]');
-  if (loginButton) {
-    loginButton.type = 'button';
-    loginButton.onclick = function (event) {
-      if (event) event.preventDefault();
-      if (typeof window.intentarLogin === 'function') return window.intentarLogin();
-      return false;
-    };
-  }
-  // Reapply the selected language after dynamic sections are mounted.
-  function reapplyLanguage() {
-    var selected = document.getElementById('sendwayo-language-public') || document.getElementById('sendwayo-language-private');
-    if (selected && typeof window.sendwayoSetLanguage === 'function') window.sendwayoSetLanguage(selected.value);
-  }
-  window.addEventListener('load', reapplyLanguage);
-})();
-</script>
+
 
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); return;
@@ -7902,6 +7832,77 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
   const priorShow=window.showView;
   if(typeof priorShow==='function')window.showView=function(view){const r=priorShow.apply(this,arguments);if(['conciliacion','reportes','informes'].includes(view))setTimeout(()=>renderAudit(view),0);return r;};
   window.addEventListener('sendwayo:firebase-ready',()=>{const active=document.body.dataset.sendwayoActiveView||'';if(['conciliacion','reportes','informes'].includes(active))renderAudit(active);});
+})();
+</script>
+<style id="sendwayo-login-interaction-hardening-v7">
+  body.sendwayo-login-open #login-screen {
+    position: fixed !important; inset: 0 !important; z-index: 2147483000 !important;
+    display: flex !important; visibility: visible !important; opacity: 1 !important;
+    pointer-events: auto !important; isolation: isolate !important;
+  }
+  body.sendwayo-login-open #welcome-landing { display: none !important; visibility: hidden !important; pointer-events: none !important; }
+  #login-screen, #login-screen > div, #login-screen input, #login-screen button {
+    pointer-events: auto !important;
+  }
+  #login-screen input { position: relative !important; z-index: 2 !important; user-select: text !important; -webkit-user-select: text !important; }
+</style>
+<script id="sendwayo-login-and-language-hardening-v7">
+(function () {
+  'use strict';
+  function openSendwayoLogin() {
+    var login = document.getElementById('login-screen');
+    if (!login) return false;
+    // Keep the login overlay directly under body so no hidden parent can block typing or clicks.
+    if (login.parentElement !== document.body) document.body.appendChild(login);
+    document.body.classList.remove('sendwayo-authenticated');
+    document.body.classList.add('sendwayo-login-open');
+    var welcome = document.getElementById('welcome-landing');
+    if (welcome) {
+      welcome.classList.add('hidden');
+      welcome.style.setProperty('display', 'none', 'important');
+      welcome.style.setProperty('visibility', 'hidden', 'important');
+      welcome.style.setProperty('pointer-events', 'none', 'important');
+    }
+    login.classList.remove('hidden');
+    login.style.setProperty('display', 'flex', 'important');
+    login.style.setProperty('visibility', 'visible', 'important');
+    login.style.setProperty('pointer-events', 'auto', 'important');
+    login.style.setProperty('z-index', '2147483000', 'important');
+    login.querySelectorAll('input').forEach(function (field) {
+      field.disabled = false;
+      field.readOnly = false;
+      field.removeAttribute('aria-disabled');
+      field.style.setProperty('pointer-events', 'auto', 'important');
+    });
+    var username = document.getElementById('login-usuario');
+    if (username) window.setTimeout(function () {
+      try { username.focus({ preventScroll: true }); } catch (_) { username.focus(); }
+    }, 50);
+    return false;
+  }
+  window.v162_showLogin = openSendwayoLogin;
+  document.addEventListener('click', function (event) {
+    var button = event.target && event.target.closest ? event.target.closest('#welcome-landing button[onclick*="v162_showLogin"]') : null;
+    if (!button) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openSendwayoLogin();
+  }, true);
+  var loginButton = document.querySelector('#login-screen button[onclick*="intentarLogin"]');
+  if (loginButton) {
+    loginButton.type = 'button';
+    loginButton.onclick = function (event) {
+      if (event) event.preventDefault();
+      if (typeof window.intentarLogin === 'function') return window.intentarLogin();
+      return false;
+    };
+  }
+  // Reapply the selected language after dynamic sections are mounted.
+  function reapplyLanguage() {
+    var selected = document.getElementById('sendwayo-language-public') || document.getElementById('sendwayo-language-private');
+    if (selected && typeof window.sendwayoSetLanguage === 'function') window.sendwayoSetLanguage(selected.value);
+  }
+  window.addEventListener('load', reapplyLanguage);
 })();
 </script>
 </body>
