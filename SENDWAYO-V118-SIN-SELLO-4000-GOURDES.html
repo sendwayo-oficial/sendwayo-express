@@ -4699,10 +4699,7 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
   translationRows.forEach(row => row.forEach(phrase => phraseLookup.set(normalizeI18n(phrase), row)));
   const langIndex = {es:0,en:1,fr:2,ht:3,pt:4};
   const phraseEntries = Array.from(phraseLookup.entries()).filter(([key]) => key.length >= 4).sort((a,b) => b[0].length-a[0].length);
-  const escapeI18nRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\  function translatePhrase(value, lang) {
-    const row=phraseLookup.get(normalizeI18n(value));
-    return row ? row[langIndex[lang] ?? 0] : value;
-  }').replace(/\\\s+/g, '\\s+');
+  const escapeI18nRegex = value => value.replace(/[.*+?^$()|[\]\\{}]/g, char => '\\' + char).replace(/\s+/g, '\\s+');
   function translatePhrase(value, lang) {
     const original = String(value == null ? '' : value);
     const row = phraseLookup.get(normalizeI18n(original));
