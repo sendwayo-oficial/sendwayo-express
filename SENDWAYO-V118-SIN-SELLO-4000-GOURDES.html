@@ -237,6 +237,16 @@ body.sendwayo-login-open #login-screen h2,body.sendwayo-login-open #login-screen
 body.sendwayo-login-open #login-screen input{background:#fff!important;color:#10243d!important;opacity:1!important;filter:none!important;backdrop-filter:none!important;font-size:16px!important}
 body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!important;backdrop-filter:none!important}
 </style>
+<style id="sendwayo-v7-login-clarity-and-role-safety">
+/* El acceso se muestra nítido y los controles conservan sus permisos por rol. */
+#login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;background:rgba(5,18,36,.97)!important;filter:none!important;-webkit-filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;opacity:1!important}
+#login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important;pointer-events:auto!important;opacity:1!important}
+#login-screen,#login-screen *{filter:none!important;-webkit-filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important}
+#login-screen>div{width:min(100%,440px)!important;max-width:440px!important;margin:auto!important;background:#fff!important;color:#10243d!important;opacity:1!important;transform:none!important;box-shadow:0 24px 70px rgba(0,0,0,.38)!important}
+#login-screen label,#login-screen h2{color:#10243d!important;opacity:1!important}
+#login-screen input{display:block!important;width:100%!important;min-height:48px!important;box-sizing:border-box!important;background:#fff!important;color:#10243d!important;border:1px solid #cbd5e1!important;opacity:1!important;font-size:16px!important;filter:none!important}
+#login-screen button{min-height:44px!important;opacity:1!important;filter:none!important;pointer-events:auto!important}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
@@ -1245,24 +1255,7 @@ console.log('V143 EXACTO COMO FOTOS - RECARGAS, PAQUETIKOS, COMISIONES con Regis
 <script>
 // V144 FIX - HABILITAR TODO TABLERO, DESGLOSE VENTANILLA, SEPARAR ENVIOS RETIROS DEPOSITO, HAITI-HAITI 2000 GOURDES FEE 25 = 1975 COMPROBANTE
 
-// Habilitar todos los campos del tablero principal que estaban inactivados
-window.habilitarTablero = function(){
-  document.querySelectorAll('button').forEach(btn=>{
-    if(btn.disabled){
-      btn.disabled = false;
-      btn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
-    btn.style.pointerEvents = 'auto';
-  });
-  // Habilitar botones de rutas
-  document.querySelectorAll('[onclick*="filtrarRuta"]').forEach(btn=>{
-    btn.disabled = false;
-    btn.classList.remove('opacity-50');
-    btn.style.opacity = '1';
-  });
-}
-
-/* Se retira la activación global automática: cada rol conserva sus permisos. */
+/* Se retiró la habilitación global de botones: los permisos por rol deben permanecer vigentes. */
 
 // Calcular envio con tarifa Haiti-Haiti 25
 window.calcularEnvio = function(){
@@ -2249,24 +2242,10 @@ window.intentarLogin = function(){
   const topUser = document.getElementById('user-top'); if(topUser) topUser.innerText = user.nombre + ' ' + user.codigo;
   alert('Bienvenido '+user.nombre);
   // habilitar todo
-  document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; });
+  /* Sin desbloqueo general: cada botón conserva sus permisos. */
 }
 
-// Activar botones guardar - estaban inactivados
-window.activarGuardars = function(){
-  document.querySelectorAll('button').forEach(btn=>{
-    if(btn.textContent.toLowerCase().includes('guardar')){
-      btn.disabled=false;
-      btn.style.pointerEvents='auto';
-      btn.style.opacity='1';
-      /* removed invalid empty class token */;
-    }
-    // todos los botones habilitados
-    btn.disabled=false;
-    btn.style.pointerEvents='auto';
-  });
-}
-/* Se retira la activación global automática: cada rol conserva sus permisos. */
+/* Los botones Guardar solo se habilitan según el estado y los permisos de su formulario. */
 
 // Sugerencia inmediata al escribir - números y nombres registrados
 window.BENEF_DB = [];
@@ -2396,17 +2375,17 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
       <section class="sendwayo-home-hero">
         <div class="sendwayo-home-gallery">
           <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/sendwayo-servicios.jpg" alt="Servicios y operaciones SENDWAYO EXPRESS">
+            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
             <div class="sendwayo-home-photo-shade"></div>
             <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
             <div id="v162-dots" class="sendwayo-home-dots"></div>
             <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
           </div>
           <div class="sendwayo-home-thumbs">
-            <img src="assets/sendwayo-servicios.jpg" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/sendwayo-servicios.jpg" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/sendwayo-servicios.jpg" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/sendwayo-servicios.jpg" alt="Servicio 4" onclick="v162_setCar(4)">
+            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
+            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
+            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
+            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
           </div>
         </div>
         <aside class="sendwayo-home-aside">
@@ -2595,11 +2574,11 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros real ventanilla + beneficiario restaurado + recargas paquetikos esquina redondo sugerencias numeros');
 (function(){
   const carouselImgs = [
-    "assets/sendwayo-servicios.jpg",
-    "assets/sendwayo-servicios.jpg",
-    "assets/sendwayo-servicios.jpg",
-    "assets/sendwayo-servicios.jpg",
-    "assets/sendwayo-servicios.jpg"
+    "assets/ca43ab0c2b8e924cfacc.webp",
+    "assets/2fdc9be46456ec238812.webp",
+    "assets/d6ce41174c8bf68a01de.webp",
+    "assets/d0a323d74b9c3176a044.webp",
+    "assets/165bf5cfd643e8b3c495.webp"
   ];
   let carIdx=0;
   window.v162_bal={rd:0, htg:0, comRD:0, comHTG:0};
@@ -2697,7 +2676,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('welcome-landing').classList.add('hidden');
     const topUser=document.getElementById('user-top'); if(topUser) topUser.innerText=user.nombre+' '+user.codigo;
-    document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; });
+    /* Sin desbloqueo general: cada botón conserva sus permisos. */
     if(typeof renderPrincipal==='function') renderPrincipal();
   };
   window.cerrarSesion=function(){ if(confirm('Cerrar sesion?')){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('welcome-landing').classList.remove('hidden'); } };
@@ -2875,23 +2854,8 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   window.abrirModalSeparado=function(view){ if(view==='envios') document.getElementById('modal-envio-v162').classList.remove('hidden'); else if(view==='retiros') document.getElementById('modal-retiro-v162').classList.remove('hidden'); else if(view==='depositos'||view==='cuentas'){ const q=document.getElementById('v162-dep-quien'); if(q) q.value=(currentUser.nombre||'')+' - '+(currentUser.codigo||currentUser.id||'')+' ('+currentUser.role+')'; document.getElementById('modal-deposito-v162').classList.remove('hidden'); } else if(view==='recepcion') document.getElementById('modal-paquetes-v162').classList.remove('hidden'); else if(view==='recargas') document.getElementById('modal-recargas-v162').classList.remove('hidden'); else if(view==='paquetikos') document.getElementById('modal-paquetikos-v162').classList.remove('hidden'); else if(view==='facturas') document.getElementById('modal-facturas-v162').classList.remove('hidden'); else if(view==='comisiones') document.getElementById('modal-comisiones-v162').classList.remove('hidden'); else if(view==='creditos') document.getElementById('modal-creditos-v162').classList.remove('hidden'); };
   window.abrirVentanillaTablero=function(ruta, tipo){ if(tipo==='envio'){ document.getElementById('v162-envio-ruta').value=ruta; v162_onEnvioRuta(); document.getElementById('modal-envio-v162').classList.remove('hidden'); } else if(tipo==='retiro'){ document.getElementById('v162-retiro-ruta').value=ruta; v162_onRetiroRuta(); document.getElementById('modal-retiro-v162').classList.remove('hidden'); } };
 
-  // Inicialización ligera de la portada. No recorrer ni habilitar todos los botones:
-  // cada control conserva el estado que corresponda al rol y a la operación.
-  setTimeout(()=>{
-    if(typeof initCarousel==='function') initCarousel();
-    const welcome=document.getElementById('welcome-landing');
-    const login=document.getElementById('login-screen');
-    if(welcome) welcome.classList.remove('hidden');
-    if(login) login.classList.add('hidden');
-    document.addEventListener('click', e=>{
-      const target=e.target;
-      if(!target || typeof target.closest!=='function') return;
-      if(!target.closest('input') && !target.closest('[id^=v162-sug]') && !target.closest('[id^=v162-sug-num]')){
-        document.querySelectorAll('[id^=v162-sug]').forEach(el=>el.classList.add('hidden'));
-        document.querySelectorAll('[id^=v162-sug-num]').forEach(el=>el.classList.add('hidden'));
-      }
-    });
-  },600);
+  setTimeout(()=>{ initCarousel(); document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden'); /* Sin desbloqueo general: cada botón conserva sus permisos. */ document.addEventListener('click', e=>{ if(!e.target.closest('input') && !e.target.closest('[id^=v162-sug]') && !e.target.closest('[id^=v162-sug-num]')){ document.querySelectorAll('[id^=v162-sug]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^=v162-sug-num]').forEach(el=>el.classList.add('hidden')); } }); },600);
+  /* Eliminado el temporizador que reactivaba todos los botones cada dos segundos. */
 })();
 </script>
 
@@ -2899,7 +2863,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
 <script>
 // PARCHE MINIMO V170 - SOLO TARIFA HT->HT POR RANGO + HABILITAR TABLERO Y DEPOSITO - NO TOCAR NADA MAS
 (function(){
-  // No se habilitan controles de forma global ni después de cada clic. Las reglas de cada rol mandan.
+  /* No alterar automáticamente los permisos del tablero o de los depósitos. */
 
   // Corrección: las rutas Haití→Haití usan importes y tarifas en HTG.
   window.v162_calcRetiro_CORREGIDO = function(){
@@ -2984,23 +2948,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   // Inicializar
   setTimeout(()=>{ if(window.v162_calcRetiro_CORREGIDO) window.v162_calcRetiro_CORREGIDO(); }, 800);
 
-  // Asegurar que deposito tiene su pagina individual con Excel PDF CSV buscador numeracion
-  function asegurarDepositoPagina(){
-    let viewDep = document.getElementById('view-depositos');
-    if(!viewDep){
-      // Buscar view-mibanco o cuentas y clonar estructura
-      viewDep = document.getElementById('view-mibanco') || document.getElementById('view-cuentas');
-    }
-    // No tocamos estructura, solo habilitamos
-    if(viewDep){
-      viewDep.querySelectorAll('button, input, select').forEach(el=>{
-        el.disabled=false;
-        el.removeAttribute('disabled');
-        el.style.pointerEvents='auto';
-      });
-    }
-  }
-  setTimeout(asegurarDepositoPagina, 1000);
+  /* Los controles de depósitos permanecen sujetos a sus permisos de rol. */
 })();
 </script>
 
@@ -3138,25 +3086,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(hookAjusteButtons, 1000);
   setTimeout(hookAjusteButtons, 3000);
 
-  // Habilitar tablero y deposito - no tocar nada mas
-  function habilitarTableroDeposito(){
-    document.querySelectorAll('#view-tablero button, #view-tablero input, #view-tablero select').forEach(el=>{
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='auto';
-      el.style.opacity='1';
-    });
-    const depView = document.getElementById('view-mibanco') || document.getElementById('view-depositos') || document.getElementById('view-cuentas');
-    if(depView){
-      depView.querySelectorAll('button, input, select').forEach(el=>{
-        el.disabled=false;
-        el.removeAttribute('disabled');
-        el.style.pointerEvents='auto';
-        el.style.opacity='1';
-      });
-    }
-  }
-/* Se retira la activación global automática: cada rol conserva sus permisos. */
+  /* Los permisos del tablero y depósito los determina el rol autenticado. */
 });
 </script>
 
@@ -6842,7 +6772,13 @@ window.sendwayoShareReceipt=async function(){
   function setVisibleAfterLogin(user) {
     const login = document.getElementById('login-screen');
     const welcome = document.getElementById('welcome-landing');
-    if (login) login.classList.add('hidden');
+    if (login) {
+      login.classList.remove('sendwayo-login-visible');
+      login.classList.add('hidden');
+      login.style.setProperty('display', 'none', 'important');
+      login.style.setProperty('visibility', 'hidden', 'important');
+      login.style.setProperty('pointer-events', 'none', 'important');
+    }
     if (welcome) welcome.classList.add('hidden');
     document.body.classList.remove('sendwayo-login-open');
     document.body.classList.add('sendwayo-authenticated');
@@ -7609,7 +7545,6 @@ window.sendwayoShareReceipt=async function(){
   }
   function startCloudSync(){
     if(state.syncTimer)clearInterval(state.syncTimer);
-    // Firebase mantiene los cambios remotos mediante listeners; este barrido local queda como respaldo menos frecuente.
     state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},5000);
   }
   function scrubLegacyCredentials(){
@@ -8182,6 +8117,7 @@ window.sendwayoShareReceipt=async function(){
       welcome.style.setProperty('pointer-events', 'none', 'important');
     }
     login.classList.remove('hidden');
+    login.classList.add('sendwayo-login-visible');
     login.style.setProperty('display', 'flex', 'important');
     login.style.setProperty('visibility', 'visible', 'important');
     login.style.setProperty('pointer-events', 'auto', 'important');
@@ -8206,6 +8142,19 @@ window.sendwayoShareReceipt=async function(){
     event.stopImmediatePropagation();
     openSendwayoLogin();
   }, true);
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter') return;
+    var field = event.target;
+    if (!field || !field.matches || !field.matches('#login-screen input')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (typeof window.intentarLogin === 'function') {
+      window.intentarLogin();
+    } else {
+      var error = document.getElementById('login-error');
+      if (error) { error.textContent = 'El módulo seguro de acceso todavía no está disponible. Recargue la página e inténtelo otra vez.'; error.classList.remove('hidden'); }
+    }
+  }, true);
   var loginButton = document.querySelector('#login-screen button[onclick*="intentarLogin"]');
   if (loginButton) {
     loginButton.type = 'button';
@@ -8225,16 +8174,3 @@ window.sendwayoShareReceipt=async function(){
 </script>
 </body>
 </html>
-
-<style id="sendwayo-v7-reparacion-portada-login">
-/* Reparación puntual: recursos de portada existentes y acceso nítido. */
-#welcome-landing img{filter:none!important;opacity:1!important}
-#welcome-landing .sendwayo-home-header,
-#welcome-landing .sendwayo-home-services>div{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-#login-screen,#login-screen *{filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-#login-screen{background:rgba(5,18,36,.96)!important}
-#login-screen>div{background:#fff!important;opacity:1!important;filter:none!important;backdrop-filter:none!important}
-#login-screen input{display:block!important;width:100%!important;min-height:48px!important;background:#fff!important;color:#10243d!important;opacity:1!important;filter:none!important;font-size:16px!important;position:relative!important;z-index:2!important}
-#login-screen label{color:#10243d!important}
-#login-screen button{min-height:48px!important;opacity:1!important;filter:none!important}
-</style>
