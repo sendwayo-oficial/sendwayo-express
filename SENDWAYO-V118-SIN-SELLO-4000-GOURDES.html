@@ -147,6 +147,10 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style id="sendwayo-hide-fixed-number-bank-deposits">
+#view-cuentas table th:first-child,#view-cuentas table td:first-child,#view-depositos table th:first-child,#view-depositos table td:first-child{display:none!important}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
@@ -2297,86 +2301,45 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 </style>
 
 <div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
-  <header class="bg-white/95 backdrop-blur shadow sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" style="height:48px; width:auto;" class="rounded">
-        <div class="hidden md:block"><div class="font-black text-[14px] text-[#0a1931]">SENDWAYO EXPRESS</div><div class="text-[10px] text-gray-500 -mt-1">Envíos • Retiros • Paquetes • Recargas</div></div>
+  <main class="min-h-screen flex flex-col text-white" style="background:linear-gradient(135deg,#071426 0%,#102b4b 52%,#17466a 100%);">
+    <header class="w-full border-b border-white/10">
+      <div class="max-w-7xl mx-auto px-5 md:px-8 py-5 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="h-12 md:h-14 w-auto rounded-lg bg-white p-1 object-contain">
+          <div><div class="font-black tracking-wide text-sm md:text-base">SENDWAYO EXPRESS</div><div class="text-[10px] md:text-xs text-blue-100/75 tracking-widest uppercase">Conectamos destinos</div></div>
+        </div>
+        <div class="text-[10px] md:text-xs text-blue-100/70 tracking-wide uppercase hidden sm:block">República Dominicana · Haití · Internacional</div>
       </div>
-      <div class="flex gap-2">
-        <button onclick="v162_showLogin()" class="bg-[#0f2440] text-white px-5 py-2 rounded-full text-[12px] font-bold shadow">Ya tengo cuenta - Entrar</button>
-        <button onclick="document.getElementById('v162-registro').scrollIntoView({behavior:'smooth'})" class="bg-white border border-[#0f2440] text-[#0f2440] px-5 py-2 rounded-full text-[12px] font-bold">Crear cuenta</button>
+    </header>
+    <section class="flex-1 w-full max-w-7xl mx-auto px-5 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+      <div class="max-w-2xl">
+        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-cyan-100/10 px-4 py-2 text-[10px] md:text-xs font-bold tracking-[.16em] uppercase text-cyan-100 mb-6"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Servicio cercano, seguro y confiable</div>
+        <h1 class="text-4xl md:text-6xl font-black leading-[1.06] tracking-tight">Tus envíos y servicios, <span class="text-cyan-300">más cerca.</span></h1>
+        <p class="mt-6 text-sm md:text-lg leading-relaxed text-blue-100/85 max-w-xl">Una plataforma para gestionar envíos de dinero, retiros, paquetes, recargas y pagos entre República Dominicana, Haití y otros destinos.</p>
+        <div class="mt-9">
+          <button onclick="v162_showLogin()" class="inline-flex items-center justify-center gap-3 rounded-full bg-cyan-300 hover:bg-cyan-200 text-[#071426] font-extrabold text-sm md:text-base px-8 py-4 shadow-xl shadow-cyan-950/30 transition">Ya tengo una cuenta <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="mt-4 text-xs text-blue-100/60">Acceso privado para administradores, agentes y remitentes.</p>
       </div>
-    </div>
-  </header>
-
-  <div class="max-w-7xl mx-auto px-4 py-6">
-    <!-- Hero carousel -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-      <div class="lg:col-span-3">
-        <div class="relative h-[500px] rounded-[24px] overflow-hidden shadow-2xl bg-black">
-          <img loading="lazy" decoding="async" id="v162-car-main" src="assets/sendwayo-servicios.jpg" class="absolute inset-0 w-full h-full object-cover carousel-img">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <div class="inline-flex bg-white/20 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold mb-2">RD ↔ HT • USA • Canadá • Europa • Otros lugares</div>
-            <h1 class="text-[26px] font-black leading-tight">Envía y recibe donde estés</h1>
-            <p class="text-[12px] mt-2 opacity-90 max-w-[520px]">Quiero enviar dinero, quiero hacer retiro, quiero recibir paquete, quiero recargar, quiero pagar facturas EDH DGI NATCOM DIGICEL — servicio rápido y seguro para Haití, RD y otros lugares también</p>
-            <div class="flex gap-2 mt-4">
-              <button onclick="v162_showLogin()" class="bg-white text-[#0a1931] px-6 py-2.5 rounded-full font-bold text-[12px]">Ya tengo cuenta - Entrar con correo y contraseña</button>
-              <button onclick="document.getElementById('v162-registro').scrollIntoView({behavior:'smooth'})" class="bg-yellow-400 text-black px-6 py-2.5 rounded-full font-bold text-[12px]">Quiero crear cuenta</button>
+      <div class="relative">
+        <div class="absolute -inset-4 rounded-[2rem] bg-cyan-300/10 blur-2xl"></div>
+        <div class="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl">
+          <img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS" class="w-full h-[300px] md:h-[440px] object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#071426] via-[#071426]/10 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+            <div class="text-xs font-bold uppercase tracking-[.2em] text-cyan-200">SENDWAYO EXPRESS</div>
+            <div class="mt-2 text-2xl md:text-3xl font-extrabold">Movemos lo que importa.</div>
+            <div class="mt-3 flex flex-wrap gap-2 text-[10px] md:text-xs text-white/90">
+              <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Envíos y retiros</span>
+              <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Paquetes</span>
+              <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Recargas y pagos</span>
             </div>
           </div>
-          <div class="absolute top-4 left-4 flex gap-1.5" id="v162-dots"></div>
-          <div class="absolute top-4 right-4 flex gap-2">
-            <button onclick="v162_prev()" class="w-8 h-8 rounded-full bg-black/30 text-white backdrop-blur">‹</button>
-            <button onclick="v162_next()" class="w-8 h-8 rounded-full bg-black/30 text-white backdrop-blur">›</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-4 gap-2 mt-3">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(1)">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(2)">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(3)">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-xl cursor-pointer hover:opacity-80" onclick="v162_setCar(4)">
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-          <div onclick="v162_showLogin()" class="bg-white rounded-2xl p-4 shadow hover:shadow-xl cursor-pointer"><div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[18px]">💸</div><div class="font-bold text-[12px] mt-2">Quiero enviar dinero</div><div class="text-[10px] text-gray-500">RD, HT, USA, otros lugares también - Envíos rápidos</div></div>
-          <div onclick="v162_showLogin()" class="bg-white rounded-2xl p-4 shadow hover:shadow-xl cursor-pointer border-2 border-red-100"><div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-[18px]">💰</div><div class="font-bold text-[12px] mt-2">Quiero hacer retiro</div><div class="text-[10px] text-gray-500">Retiro Haití a Haití Naca a Naca, Montcash a Montcash - Gourdes</div></div>
-          <div onclick="v162_showLogin()" class="bg-white rounded-2xl p-4 shadow hover:shadow-xl cursor-pointer"><div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-[18px]">📦</div><div class="font-bold text-[12px] mt-2">Quiero recibir paquete</div><div class="text-[10px] text-gray-500">¿Dónde viene? ¿Dónde va? - Paquetes y paquetikos</div></div>
-          <div onclick="v162_showLogin()" class="bg-white rounded-2xl p-4 shadow hover:shadow-xl cursor-pointer"><div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-[18px]">📱</div><div class="font-bold text-[12px] mt-2">Quiero recargar y pagar</div><div class="text-[10px] text-gray-500">Natcom Digicel EDH DGI - Recargas, facturas</div></div>
         </div>
       </div>
-
-      <div class="lg:col-span-2 space-y-4">
-        <div id="v162-registro" class="bg-white rounded-[20px] p-6 shadow-2xl">
-          <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:190px; margin:0 auto;" class="rounded-lg"><h3 class="font-black text-[15px] mt-3">Crear cuenta - Registrarse</h3><p class="text-[10px] text-gray-500">Puede crear aunque no tiene cuenta dentro puede crear</p></div>
-          <div class="space-y-2.5">
-            <div class="grid grid-cols-2 gap-2"><input id="v162-reg-nombre" placeholder="Nombre" class="border rounded-full px-4 py-2.5 text-[12px]"><input id="v162-reg-apellido" placeholder="Apellido" class="border rounded-full px-4 py-2.5 text-[12px]"></div>
-            <input id="v162-reg-celular" placeholder="Número de celular - Ej: (809) 000 0000" class="w-full border rounded-full px-4 py-2.5 text-[12px]">
-            <input id="v162-reg-email" placeholder="Correo electrónico" class="w-full border rounded-full px-4 py-2.5 text-[12px]">
-            <input id="v162-reg-pass" type="password" placeholder="Contraseña" class="w-full border rounded-full px-4 py-2.5 text-[12px]">
-            <input id="v162-reg-pass2" type="password" placeholder="Confirmar contraseña" class="w-full border rounded-full px-4 py-2.5 text-[12px]">
-            <select id="v162-reg-tipo" class="w-full border rounded-full px-4 py-2.5 text-[12px]"><option value="REMITENTE">Quiero ser remitente - Enviar/recibir</option><option value="AGENTE">Quiero ser agente - Trabajar</option></select>
-            <button onclick="v162_registrar()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full text-[13px] shadow">Crear cuenta - Enviar al administrador</button>
-            <div class="text-[9px] text-gray-500 text-center">Al crear, notificación llega al administrador para seguimiento</div>
-            <div class="border-t pt-3 mt-3 text-center"><p class="text-[11px] font-bold">¿Ya tienes cuenta?</p><button onclick="v162_showLogin()" class="w-full mt-2 bg-gray-100 text-[#0f2440] font-bold py-2.5 rounded-full text-[12px]">Ya tengo cuenta - Entrar con correo y contraseña</button></div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-2xl">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-2xl">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-2xl">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-2xl">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-2xl">
-          <img loading="lazy" decoding="async" src="assets/sendwayo-servicios.jpg" class="h-20 w-full object-cover rounded-2xl">
-        </div>
-      </div>
-    </div>
-
-
-  </div>
+    </section>
+    <footer class="border-t border-white/10 px-5 md:px-8 py-5 text-center text-[10px] md:text-xs text-blue-100/55">© SENDWAYO EXPRESS · Plataforma de servicios y operaciones</footer>
+  </main>
 </div>
 
 <!-- MODAL ENVIO EXACTO CAPTURA - NO TOCAR -->
@@ -2558,7 +2521,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
         <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
-        <button onclick="v162_goWelcome()" class="w-full border text-[11px] py-2.5 rounded-full mt-2">Crear cuenta - Nombre apellido celular correo contraseña</button>
+        <p class="text-center text-[11px] text-slate-500 mt-3">¿Necesita acceso? Comuníquese con el administrador.</p>
       </div>
     </div>`;
   }
@@ -7535,6 +7498,7 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
+  auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut()).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy) return;
@@ -7571,6 +7535,7 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
       try{await auth.signOut()}catch(e){}showLogin();loginError(message);
     }finally{state.loginBusy=false;}
   });
+  }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLogin();loginError("Por seguridad, vuelva a iniciar sesión con su usuario y contraseña.");});
   window.sendwayoCloudStatus='Firebase Authentication y lecturas en tiempo real están conectados. Antes de usar dinero real, todavía deben validarse las reglas de escritura por rol y probarse las operaciones financieras en Firebase.';
 })();
 </script>
