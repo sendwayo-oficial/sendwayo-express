@@ -59,7 +59,7 @@ jobs:
               html = html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
               if 'sendwayo-v7-brand-and-login-performance-fix' not in html:
                   if '</body>' not in html: raise SystemExit(f'No se encontró </body> en {path}')
-                  html = html.replace('</body>', css + '\\n</body>')
+                  html = html.replace('</body>', css + '\n</body>')
               path.write_text(html, encoding='utf-8')
           print('PASS: correo administrador, limpieza no repetitiva y logo/diseño V7 aplicados.')
           PY
