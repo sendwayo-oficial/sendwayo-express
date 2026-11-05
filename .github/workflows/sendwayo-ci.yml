@@ -11,9 +11,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Validate Firebase rules JSON
         run: node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('database.rules.json OK')"
+      - name: Check server financial functions and policy tests
+        run: npm --prefix functions run check
+      - name: Install Java for Firebase Emulator Suite
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Firebase CLI and server dependencies
+        run: |
+          npm install --global firebase-tools
+          npm --prefix functions install
+      - name: Test real financial flows against Firebase Emulator Suite
+        run: firebase emulators:exec --only auth,database,functions --project sendwayo-express "npm --prefix functions run test:emulator"
+      - name: Validate deposit approval permissions
+        run: node scripts/check-deposit-approval-rules.mjs
       - name: Validate inline JavaScript
         run: |
           node <<'NODE'
