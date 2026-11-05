@@ -172,6 +172,48 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 #welcome-landing footer{display:block!important;text-align:center!important;padding:18px 24px!important;border-top:1px solid rgba(255,255,255,.12)!important}
 @media(max-width:760px){#welcome-landing section{grid-template-columns:1fr!important;padding:32px 20px!important;gap:28px!important}#welcome-landing section>div.relative{justify-self:stretch!important;max-width:none!important}#welcome-landing section>div.relative img{height:280px!important}#welcome-landing header>div{padding:12px 18px!important}}
 </style>
+
+<style id="sendwayo-v7-welcome-brand-redesign">
+/* Portada renovada: identidad visible, mejor jerarquía y fotografía amplia. */
+#welcome-landing{background:#06172b!important;color:#f8fafc!important}
+#welcome-landing .sendwayo-home-header{background:rgba(4,17,34,.94)!important;border-bottom:1px solid rgba(255,255,255,.14)!important;backdrop-filter:blur(14px)!important}
+#welcome-landing .sendwayo-home-header-inner{max-width:1320px!important;min-height:104px!important;padding:14px clamp(18px,4vw,54px)!important}
+#welcome-landing .sendwayo-home-brand{display:flex!important;align-items:center!important;gap:18px!important}
+#welcome-landing .sendwayo-home-brand img{width:112px!important;height:76px!important;max-width:112px!important;max-height:76px!important;object-fit:contain!important;background:#fff!important;border-radius:18px!important;padding:5px!important;box-shadow:0 8px 30px rgba(0,0,0,.28)!important}
+#welcome-landing .sendwayo-home-brand strong{display:block!important;font-size:clamp(19px,2.2vw,28px)!important;letter-spacing:.08em!important;color:#fff!important}
+#welcome-landing .sendwayo-home-brand span{display:block!important;margin-top:5px!important;color:#cbd5e1!important;font-size:12px!important;letter-spacing:.04em!important}
+#welcome-landing .sendwayo-home-login{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;color:#10243d!important;border:0!important;border-radius:999px!important;padding:14px 24px!important;font-weight:900!important;font-size:14px!important;box-shadow:0 8px 24px rgba(245,158,11,.25)!important}
+#welcome-landing .sendwayo-home-content{max-width:1320px!important;margin:0 auto!important;padding:clamp(24px,4vw,56px)!important}
+#welcome-landing .sendwayo-home-hero{display:grid!important;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr)!important;align-items:center!important;gap:clamp(24px,5vw,68px)!important}
+#welcome-landing .sendwayo-home-gallery{border:1px solid rgba(255,255,255,.18)!important;border-radius:30px!important;overflow:hidden!important;box-shadow:0 28px 70px rgba(0,0,0,.38)!important;background:#10243d!important}
+#welcome-landing .sendwayo-home-main-photo{position:relative!important;min-height:420px!important}
+#welcome-landing .sendwayo-home-main-photo>img{width:100%!important;height:clamp(320px,42vw,520px)!important;object-fit:cover!important;display:block!important}
+#welcome-landing .sendwayo-home-photo-shade{position:absolute!important;inset:0!important;background:linear-gradient(0deg,rgba(3,14,29,.88),rgba(3,14,29,.02) 72%)!important}
+#welcome-landing .sendwayo-home-photo-copy{position:absolute!important;left:clamp(18px,3vw,36px)!important;right:clamp(18px,3vw,36px)!important;bottom:clamp(20px,3vw,38px)!important}
+#welcome-landing .sendwayo-home-photo-copy span{color:#fbbf24!important;font-weight:800!important;font-size:11px!important;letter-spacing:.12em!important}
+#welcome-landing .sendwayo-home-photo-copy h1{font-size:clamp(27px,3.5vw,44px)!important;line-height:1.08!important;margin:12px 0!important}
+#welcome-landing .sendwayo-home-photo-copy p{color:#e2e8f0!important;max-width:520px!important}
+#welcome-landing .sendwayo-home-hero>div:first-child{min-width:0!important}
+#welcome-landing .sendwayo-home-hero h2{color:#fff!important;font-size:clamp(34px,4.6vw,58px)!important;line-height:1.06!important;font-weight:900!important;letter-spacing:-.035em!important}
+#welcome-landing .sendwayo-home-hero p{color:#dbeafe!important;font-size:clamp(15px,1.4vw,18px)!important;line-height:1.75!important}
+#welcome-landing .sendwayo-home-services{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important;margin-top:34px!important}
+#welcome-landing .sendwayo-home-services>div{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:20px!important;padding:20px!important;backdrop-filter:blur(8px)!important}
+#welcome-landing footer{color:#cbd5e1!important}
+@media(max-width:760px){
+ #welcome-landing .sendwayo-home-header-inner{min-height:82px!important;padding:10px 14px!important;gap:10px!important}
+ #welcome-landing .sendwayo-home-brand{gap:10px!important}
+ #welcome-landing .sendwayo-home-brand img{width:76px!important;height:58px!important;max-width:76px!important;max-height:58px!important}
+ #welcome-landing .sendwayo-home-brand strong{font-size:16px!important}
+ #welcome-landing .sendwayo-home-brand span{font-size:9px!important}
+ #welcome-landing .sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}
+ #welcome-landing .sendwayo-home-content{padding:22px 14px!important}
+ #welcome-landing .sendwayo-home-hero{grid-template-columns:1fr!important;gap:22px!important}
+ #welcome-landing .sendwayo-home-main-photo{min-height:280px!important}
+ #welcome-landing .sendwayo-home-main-photo>img{height:300px!important}
+ #welcome-landing .sendwayo-home-services{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
+
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
@@ -2608,7 +2650,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     if(!ls) return;
     ls.innerHTML=`<div class="w-full max-w-[420px] mx-auto bg-white rounded-[24px] p-6 shadow-2xl border mt-10">
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
-      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:96px; height:96px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
+      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
         <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
@@ -6725,7 +6767,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -7172,8 +7214,8 @@ window.sendwayoShareReceipt=async function(){
     const {key, data}=profileRow;
     const currentUid=txt(data.authUid);
     const loginEmail=norm(firebaseUser.email);
-    // The owner explicitly confirmed sendwayoexpress@gmail.com as the admin account.
-    // Only after Firebase accepts that email/password, repair the /users/admin link to this UID.
+    // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
+    // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
       const updates={};
       if(currentUid!==firebaseUser.uid) updates.authUid=firebaseUser.uid;
@@ -7575,8 +7617,7 @@ window.sendwayoShareReceipt=async function(){
     try{strip(ADMIN);(AGENTES||[]).forEach(strip);(REMITENTES||[]).forEach(strip);(window.USUARIOS_LOGIN||[]).forEach(strip);(state.directory||[]).forEach(r=>strip(r.data));}catch(e){}
     try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith('sendwayo_express_oficial_20261029_'))continue;const raw=localStorage.getItem(k);if(!raw||!/["'](?:password|password2|contrasena|allowedPasswords)["']\s*:/.test(raw))continue;try{const obj=JSON.parse(raw);const clean=x=>{if(Array.isArray(x))x.forEach(clean);else if(x&&typeof x==='object'){strip(x);Object.values(x).forEach(clean);}};clean(obj);localStorage.setItem(k,JSON.stringify(obj));}catch(e){localStorage.removeItem(k);}}}catch(e){}
   }
-  scrubLegacyCredentials();
-  setInterval(scrubLegacyCredentials,500);
+  // No ejecutar limpiezas repetitivas de localStorage: ralentizaban el portal y no forman parte del acceso.
   async function attemptLogin() {
     if (state.loginBusy || state.sessionEstablished) return;
     const input = txt(document.getElementById('login-usuario')?.value);
