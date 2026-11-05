@@ -15,9 +15,38 @@
       "scripts/**",
       "base.html",
       ".nojekyll",
-      "*.log"
+      "*.log",
+      "functions/**",
+      "private/**"
     ],
     "cleanUrls": false,
     "trailingSlash": false
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      ".runtimeconfig.json",
+      "*.local"
+    ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "database": {
+      "port": 9000
+    },
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
   }
 }

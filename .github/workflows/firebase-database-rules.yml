@@ -12,6 +12,7 @@ on:
       - 'firebase.json'
       - '.firebaserc'
       - 'database.rules.json'
+      - 'functions/**'
       - '.github/workflows/firebase-database-rules.yml'
 
 permissions:
@@ -86,6 +87,20 @@ jobs:
 
       - name: Instalar Firebase CLI
         run: npm install --global firebase-tools
+
+      # Publicar Functions primero. Si falta facturación/permisos o la función
+      # no compila, el flujo se detiene antes de tocar Hosting y reglas.
+      - name: Publicar funciones financieras del servidor
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${FIREBASE_AUTH_MODE:-}" = "token" ]; then
+            firebase deploy --only functions --project sendwayo-express --non-interactive --token "$FIREBASE_TOKEN"
+          else
+            firebase deploy --only functions --project sendwayo-express --non-interactive
+          fi
 
       - name: Publicar el sitio en el dominio de prueba de Firebase
         env:
