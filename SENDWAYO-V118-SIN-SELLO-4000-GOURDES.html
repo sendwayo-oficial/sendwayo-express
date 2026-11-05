@@ -3086,7 +3086,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(String(tipo||'').toLowerCase()==='retiro') window.v162_setRetiro(ruta);
   };
 
-  // Exportación de la tabla del módulo (PDF, Excel/CSV) sin insertar etiquetas script sin cerrar.
+  // Exportación limpia: no insertar etiquetas <script> dentro del HTML del PDF.
   function tablaActual(view){ return document.querySelector('#tabla-'+view+'-body')?.closest('table') || document.querySelector('#view-'+view+' table'); }
   function exportar(view, formato){
     const tabla=tablaActual(view);
@@ -3095,35 +3095,15 @@ document.addEventListener('DOMContentLoaded', function(){
     if(formato==='pdf'){
       const w=window.open('','_blank');
       if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
-      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'<script>window.onload=function(){window.print()}<\\/script>
-<script id="sendwayo-v7-png-share-fix">
-(function(){'use strict';
-function loadHtml2Canvas(){if(typeof window.html2canvas==='function')return Promise.resolve(window.html2canvas);if(window.__sendwayoHtml2CanvasPromise)return window.__sendwayoHtml2CanvasPromise;window.__sendwayoHtml2CanvasPromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';script.async=true;script.onload=()=>typeof window.html2canvas==='function'?resolve(window.html2canvas):reject(new Error('No se cargó el generador PNG'));script.onerror=()=>reject(new Error('No se pudo cargar el generador PNG'));document.head.appendChild(script);});return window.__sendwayoHtml2CanvasPromise;}
-window.sendwayoShareReceipt=async function(){const root=document.getElementById('receipt-print-root');if(!root){alert('No se encontró el comprobante abierto.');return false;}const button=document.querySelector('#modal-comprobante button[onclick*="sendwayoShareReceipt"]');const old=button?.textContent||'Compartir';if(button){button.disabled=true;button.textContent='Preparando imagen PNG…';}try{if(document.fonts?.ready)await document.fonts.ready;const render=await loadHtml2Canvas();const canvas=await render(root,{backgroundColor:'#ffffff',scale:Math.min(3,Math.max(2,window.devicePixelRatio||2)),useCORS:true,allowTaint:false,logging:false,removeContainer:true,scrollX:0,scrollY:0});const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('El navegador no pudo crear el PNG')),'image/png'));const file=new File([blob],'SENDWAYO-comprobante.png',{type:'image/png'});if(navigator.share&&navigator.canShare){try{if(navigator.canShare({files:[file]})){await navigator.share({title:'Comprobante SENDWAYO EXPRESS',files:[file]});return true;}}catch(e){if(e?.name==='AbortError')return false;console.warn('[SENDWAYO] Compartir no disponible; se descargará el PNG.',e);}}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);if(typeof window.sendwayoShowInlineNotice==='function')window.sendwayoShowInlineNotice('Comprobante PNG generado y descargado. Ya puede compartirlo.');else alert('Comprobante PNG generado y descargado. Ya puede compartirlo.');return true;}catch(error){console.error('[SENDWAYO] Error al generar PNG del comprobante:',error);alert('No se pudo generar el PNG. Compruebe la conexión e inténtelo otra vez.');return false;}finally{if(button){button.disabled=false;button.textContent=old;}}};
-})();
-</script>
-
-<style id="sendwayo-logout-private-shell">
-/* La sesión cerrada nunca debe dejar visible el panel privado ni sus datos de ejemplo. */
-body:not(.sendwayo-authenticated) > div.sticky,
-body:not(.sendwayo-authenticated) > div.flex,
-body:not(.sendwayo-authenticated) > #notif-panel,
-body:not(.sendwayo-authenticated) > [id^="modal-"],
-body:not(.sendwayo-authenticated) > #sendwayo-admin-account-modal {display:none!important;visibility:hidden!important;pointer-events:none!important}
-body:not(.sendwayo-authenticated) #sendwayo-admin-account-modal{display:none!important}
-body:not(.sendwayo-authenticated) #welcome-landing:not(.hidden){display:block!important;visibility:visible!important}
-body.sendwayo-authenticated > #welcome-landing{display:none!important}
-</style>
-
-
-
-</body></html>';
-      w.document.open(); w.document.write(html); w.document.close(); return;
+      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'</body></html>';
+      w.document.open(); w.document.write(html); w.document.close(); w.focus();
+      window.setTimeout(function(){ try{w.print();}catch(_){} },300);
+      return;
     }
-    const rows=[...tabla.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+td.innerText.replace(/\\s+/g,' ').trim().replace(/"/g,'""')+'"'));
-    const csv='\\ufeff'+rows.map(r=>r.join(',')).join('\\r\\n');
+    const rows=[...tabla.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+String(td.innerText||td.textContent||'').replace(/\s+/g,' ').trim().replace(/"/g,'""')+'"').join(','));
+    const csv='\ufeff'+rows.join('\r\n');
     const blob=new Blob([csv],{type:formato==='excel'?'application/vnd.ms-excel;charset=utf-8':'text/csv;charset=utf-8'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=nombre+(formato==='excel'?'.xls':'.csv'); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=nombre+(formato==='excel'?'.xls':'.csv'); document.body.appendChild(a); a.click(); a.remove(); window.setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   window.v162_exportarModulo=exportar;
   const renderOriginal=window.renderModuloSeparado;
@@ -3143,6 +3123,59 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
 })();
 </script>
 
+<style id="sendwayo-logout-private-shell">
+/* La sesión cerrada nunca debe dejar visible el panel privado ni sus datos de ejemplo. */
+body:not(.sendwayo-authenticated) > div.sticky,
+body:not(.sendwayo-authenticated) > div.flex,
+body:not(.sendwayo-authenticated) > #notif-panel,
+body:not(.sendwayo-authenticated) > [id^="modal-"],
+body:not(.sendwayo-authenticated) > #sendwayo-admin-account-modal {display:none!important;visibility:hidden!important;pointer-events:none!important}
+body:not(.sendwayo-authenticated) #sendwayo-admin-account-modal{display:none!important}
+body:not(.sendwayo-authenticated) #welcome-landing:not(.hidden){display:block!important;visibility:visible!important}
+body.sendwayo-authenticated > #welcome-landing{display:none!important}
+</style>
+
+<script id="sendwayo-v7-png-share-fix">
+(function(){'use strict';
+function loadHtml2Canvas(){
+  if(typeof window.html2canvas==='function')return Promise.resolve(window.html2canvas);
+  if(window.__sendwayoHtml2CanvasPromise)return window.__sendwayoHtml2CanvasPromise;
+  window.__sendwayoHtml2CanvasPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.async=true;
+    script.onload=()=>typeof window.html2canvas==='function'?resolve(window.html2canvas):reject(new Error('No se cargó el generador PNG'));
+    script.onerror=()=>reject(new Error('No se pudo cargar el generador PNG'));
+    document.head.appendChild(script);
+  });
+  return window.__sendwayoHtml2CanvasPromise;
+}
+window.sendwayoShareReceipt=async function(){
+  const root=document.getElementById('receipt-print-root');
+  if(!root){alert('No se encontró el comprobante abierto.');return false;}
+  const button=document.querySelector('#modal-comprobante button[onclick*="sendwayoShareReceipt"]');
+  const old=button?.textContent||'Compartir';
+  if(button){button.disabled=true;button.textContent='Preparando imagen PNG…';}
+  try{
+    if(document.fonts?.ready)await document.fonts.ready;
+    const render=await loadHtml2Canvas();
+    const canvas=await render(root,{backgroundColor:'#ffffff',scale:Math.min(3,Math.max(2,window.devicePixelRatio||2)),useCORS:true,allowTaint:false,logging:false,removeContainer:true,scrollX:0,scrollY:0});
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('El navegador no pudo crear el PNG')),'image/png'));
+    const file=new File([blob],'SENDWAYO-comprobante.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare){
+      try{if(navigator.canShare({files:[file]})){await navigator.share({title:'Comprobante SENDWAYO EXPRESS',files:[file]});return true;}}
+      catch(e){if(e?.name==='AbortError')return false;console.warn('[SENDWAYO] Compartir no disponible; se descargará el PNG.',e);}
+    }
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),5000);
+    if(typeof window.sendwayoShowInlineNotice==='function')window.sendwayoShowInlineNotice('Comprobante PNG generado y descargado. Ya puede compartirlo.');
+    else alert('Comprobante PNG generado y descargado. Ya puede compartirlo.');
+    return true;
+  }catch(error){console.error('[SENDWAYO] Error al generar PNG del comprobante:',error);alert('No se pudo generar el PNG. Compruebe la conexión e inténtelo otra vez.');return false;}
+  finally{if(button){button.disabled=false;button.textContent=old;}}
+};
+})();
+</script>
 
 <script id="sendwayo-final-mobile-navigation">
 (function(){
@@ -6613,14 +6646,25 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
       throw new Error('No se pudo obtener la identidad autenticada de Firebase.');
     }
     const idToken = await firebaseUser.getIdToken();
-    const response = await fetch(SENDWAYO_WORKER_VERIFY, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + idToken,
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store'
-    });
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutId = window.setTimeout(() => { if (controller) controller.abort(); }, 12000);
+    let response;
+    try {
+      response = await fetch(SENDWAYO_WORKER_VERIFY, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + idToken,
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store',
+        signal: controller ? controller.signal : undefined
+      });
+    } catch (error) {
+      if (error && error.name === 'AbortError') throw new Error('La verificación de seguridad tardó más de 12 segundos. Compruebe la conexión e inténtelo otra vez.');
+      throw new Error('No se pudo conectar con el servidor de verificación: ' + (error && error.message ? error.message : 'revise su conexión.'));
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
     let result = {};
     try { result = await response.json(); } catch (e) {}
     if (!response.ok || result.valid !== true || !result.user || result.user.uid !== firebaseUser.uid) {
