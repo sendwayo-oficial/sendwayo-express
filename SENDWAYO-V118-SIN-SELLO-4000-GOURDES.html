@@ -3139,6 +3139,18 @@ function loadHtml2Canvas(){if(typeof window.html2canvas==='function')return Prom
 window.sendwayoShareReceipt=async function(){const root=document.getElementById('receipt-print-root');if(!root){alert('No se encontró el comprobante abierto.');return false;}const button=document.querySelector('#modal-comprobante button[onclick*="sendwayoShareReceipt"]');const old=button?.textContent||'Compartir';if(button){button.disabled=true;button.textContent='Preparando imagen PNG…';}try{if(document.fonts?.ready)await document.fonts.ready;const render=await loadHtml2Canvas();const canvas=await render(root,{backgroundColor:'#ffffff',scale:Math.min(3,Math.max(2,window.devicePixelRatio||2)),useCORS:true,allowTaint:false,logging:false,removeContainer:true,scrollX:0,scrollY:0});const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('El navegador no pudo crear el PNG')),'image/png'));const file=new File([blob],'SENDWAYO-comprobante.png',{type:'image/png'});if(navigator.share&&navigator.canShare){try{if(navigator.canShare({files:[file]})){await navigator.share({title:'Comprobante SENDWAYO EXPRESS',files:[file]});return true;}}catch(e){if(e?.name==='AbortError')return false;console.warn('[SENDWAYO] Compartir no disponible; se descargará el PNG.',e);}}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);if(typeof window.sendwayoShowInlineNotice==='function')window.sendwayoShowInlineNotice('Comprobante PNG generado y descargado. Ya puede compartirlo.');else alert('Comprobante PNG generado y descargado. Ya puede compartirlo.');return true;}catch(error){console.error('[SENDWAYO] Error al generar PNG del comprobante:',error);alert('No se pudo generar el PNG. Compruebe la conexión e inténtelo otra vez.');return false;}finally{if(button){button.disabled=false;button.textContent=old;}}};
 })();
 </script>
+
+<style id="sendwayo-logout-private-shell">
+/* La sesión cerrada nunca debe dejar visible el panel privado ni sus datos de ejemplo. */
+body:not(.sendwayo-authenticated) > div.sticky,
+body:not(.sendwayo-authenticated) > div.flex,
+body:not(.sendwayo-authenticated) > #notif-panel,
+body:not(.sendwayo-authenticated) > [id^="modal-"],
+body:not(.sendwayo-authenticated) > #sendwayo-admin-account-modal {display:none!important;visibility:hidden!important;pointer-events:none!important}
+body:not(.sendwayo-authenticated) #sendwayo-admin-account-modal{display:none!important}
+body:not(.sendwayo-authenticated) #welcome-landing:not(.hidden){display:block!important;visibility:visible!important}
+body.sendwayo-authenticated > #welcome-landing{display:none!important}
+</style>
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); return;
     }
@@ -7613,57 +7625,48 @@ window.sendwayoShareReceipt=async function(){const root=document.getElementById(
   // Share the complete visible receipt; native share first, copy fallback second.
   window.sendwayoShareReceipt=async function(){
     const root=document.getElementById('receipt-print-root');
-    if(!root){window.alert('No se encontró el comprobante abierto.');return false;}
+    if(!root||!root.getClientRects().length){window.alert('Abra primero el comprobante aprobado.');return false;}
     const button=document.querySelector('#modal-comprobante button[onclick*="sendwayoShareReceipt"]');
     const oldText=button?.textContent||'Compartir';
-    if(button){button.disabled=true;button.textContent='Preparando imagen PNG…';}
-    let svgUrl='';
-    const restore=()=>{if(button){button.disabled=false;button.textContent=oldText;}};
+    if(button){button.disabled=true;button.textContent='Generando PNG…';}
+    let objectUrl='';
     try{
+      await Promise.all(Array.from(root.querySelectorAll('img')).map(img=>{
+        if(img.complete&&img.naturalWidth>0)return Promise.resolve();
+        return new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true});setTimeout(resolve,8000);});
+      }));
       if(document.fonts?.ready)await document.fonts.ready;
-      const clone=root.cloneNode(true);
-      clone.querySelectorAll('button,script').forEach(el=>el.remove());
-      const inlineComputed=(source,target)=>{
-        if(source.nodeType!==1||target.nodeType!==1)return;
-        const cs=window.getComputedStyle(source);let css='';
-        for(let n=0;n<cs.length;n++){const k=cs[n];css+=k+':'+cs.getPropertyValue(k)+';';}
-        target.setAttribute('style',css+(target.getAttribute('style')||''));
-        const a=source.children,b=target.children;
-        for(let n=0;n<Math.min(a.length,b.length);n++)inlineComputed(a[n],b[n]);
+      const loadRenderer=async()=>{
+        if(typeof window.html2canvas==='function')return window.html2canvas;
+        if(!window.__sendwayoHtml2CanvasPromise)window.__sendwayoHtml2CanvasPromise=new Promise((resolve,reject)=>{
+          const script=document.createElement('script');script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';script.async=true;
+          script.onload=()=>typeof window.html2canvas==='function'?resolve(window.html2canvas):reject(new Error('La biblioteca de imagen no está disponible.'));
+          script.onerror=()=>reject(new Error('No se pudo cargar el generador de imagen.'));
+          document.head.appendChild(script);
+        });
+        return window.__sendwayoHtml2CanvasPromise;
       };
-      inlineComputed(root,clone);
-      const rect=root.getBoundingClientRect();
-      const width=Math.max(1,Math.ceil(rect.width||root.scrollWidth||380));
-      const height=Math.max(1,Math.ceil(root.scrollHeight||rect.height||600));
-      clone.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
-      clone.style.width=width+'px';clone.style.height='auto';clone.style.maxWidth='none';clone.style.margin='0';clone.style.boxSizing='border-box';
-      const markup=new XMLSerializer().serializeToString(clone);
-      const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'"><foreignObject width="100%" height="100%">'+markup+'</foreignObject></svg>';
-      const svgBlob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
-      svgUrl=URL.createObjectURL(svgBlob);
-      const image=new Image();
-      await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error('No se pudo renderizar el comprobante'));image.src=svgUrl;});
-      const scale=Math.min(3,Math.max(2,window.devicePixelRatio||2));
-      const canvas=document.createElement('canvas');canvas.width=width*scale;canvas.height=height*scale;
-      const ctx=canvas.getContext('2d');if(!ctx)throw new Error('No se pudo crear el lienzo PNG');
-      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.scale(scale,scale);ctx.drawImage(image,0,0,width,height);
-      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-      if(!blob)throw new Error('No se pudo generar el archivo PNG');
+      const render=await loadRenderer();
+      const canvas=await render(root,{backgroundColor:'#ffffff',scale:Math.min(3,Math.max(2,window.devicePixelRatio||2)),useCORS:true,allowTaint:false,logging:false,imageTimeout:12000,removeContainer:true,scrollX:0,scrollY:0});
+      const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('El navegador no pudo crear el PNG.')),'image/png'));
+      if(!blob||blob.size<1000)throw new Error('El PNG generado está vacío.');
       const file=new File([blob],'SENDWAYO-comprobante.png',{type:'image/png'});
       if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({title:'Comprobante SENDWAYO EXPRESS',files:[file]});
-        return true;
+        try{await navigator.share({title:'Comprobante SENDWAYO EXPRESS',files:[file]});return true;}
+        catch(e){if(e?.name==='AbortError')return false;console.warn('[SENDWAYO] Compartir nativo no disponible; se descargará el PNG.',e);}
       }
-      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),3000);
-      window.alert('Se descargó la imagen PNG del comprobante para compartirla.');
+      objectUrl=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=objectUrl;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+      window.alert('Comprobante PNG generado y descargado. Ya puede compartirlo.');
       return true;
     }catch(error){
-      if(error?.name==='AbortError')return false;
-      console.error('[SENDWAYO] Error al compartir comprobante PNG:',error);
-      window.alert('No se pudo generar o compartir la imagen PNG del comprobante.');
+      console.error('[SENDWAYO] Error real al generar comprobante PNG:',error);
+      window.alert('No se pudo generar el PNG: '+(error?.message||'error del navegador')+'. Intente nuevamente.');
       return false;
-    }finally{if(svgUrl)URL.revokeObjectURL(svgUrl);restore();}
+    }finally{
+      if(objectUrl)setTimeout(()=>URL.revokeObjectURL(objectUrl),5000);
+      if(button){button.disabled=false;button.textContent=oldText;}
+    }
   };
 
   // Admin-only real Firebase account provisioning (secondary Auth instance preserves the admin session).
