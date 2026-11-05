@@ -144,9 +144,28 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 </style>
 
 <!-- SENDWAYO OFICIAL: autenticación y Realtime Database en Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script id="sendwayo-firebase-async-sdk-loader">
+(function(){
+  'use strict';
+  function loadScript(src){
+    return new Promise(function(resolve,reject){
+      var script=document.createElement('script');
+      var timer=window.setTimeout(function(){
+        script.onerror=null;script.onload=null;
+        reject(new Error('La descarga de una biblioteca de Firebase tardó demasiado.'));
+      },15000);
+      script.src=src;
+      script.onload=function(){window.clearTimeout(timer);resolve(true);};
+      script.onerror=function(){window.clearTimeout(timer);reject(new Error('No se pudo descargar una biblioteca de Firebase. Compruebe la conexión a Internet.'));};
+      document.head.appendChild(script);
+    });
+  }
+  window.sendwayoFirebaseSdkReady=loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
+    .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');})
+    .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');});
+  window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
+})();
+</script>
 
 <style id="sendwayo-hide-fixed-number-bank-deposits">
 #view-cuentas table th:first-child,#view-cuentas table td:first-child,#view-depositos table th:first-child,#view-depositos table td:first-child{display:none!important}
@@ -236,6 +255,19 @@ body.sendwayo-login-open #login-screen>div{background:#fff!important;color:#1024
 body.sendwayo-login-open #login-screen h2,body.sendwayo-login-open #login-screen label{color:#10243d!important;filter:none!important;opacity:1!important}
 body.sendwayo-login-open #login-screen input{background:#fff!important;color:#10243d!important;opacity:1!important;filter:none!important;backdrop-filter:none!important;font-size:16px!important}
 body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!important;backdrop-filter:none!important}
+</style>
+<style id="sendwayo-v7-welcome-no-blur">
+/* Mantener portada y acceso nítidos; no aplicar desenfoque que reduzca legibilidad. */
+#welcome-landing .sendwayo-home-header,
+#welcome-landing .sendwayo-home-services>div{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+#welcome-landing .sendwayo-home-main-photo img,
+#welcome-landing .sendwayo-home-thumbs img,
+#welcome-landing .sendwayo-home-aside-photo img{
+  filter:none!important;opacity:1!important;
+}
 </style>
 <style id="sendwayo-v7-login-clarity-and-role-safety">
 /* El acceso se muestra nítido y los controles conservan sus permisos por rol. */
@@ -3438,7 +3470,7 @@ window.sendwayoShareReceipt=async function(){
    const now=new Date();const d=$('sendwayo-v7-date'),c=$('sendwayo-v7-clock'),t=$('sendwayo-v7-duration');
    if(d)d.textContent=now.toLocaleDateString('es-DO');if(c)c.textContent=now.toLocaleTimeString('es-DO');
    if(t){const sec=Math.floor((Date.now()-start)/1000);t.textContent='Tiempo: '+String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
-   refreshDashboardAmounts();
+   if(document.body.classList.contains('sendwayo-authenticated')) refreshDashboardAmounts();
  }
  function init(){
    // Avoid any private screen flash while the public landing is visible.
@@ -6675,8 +6707,29 @@ window.sendwayoShareReceipt=async function(){
 <!-- END SENDWAYO V7 DOP LEDGER FIX -->
 
 <script id="sendwayo-oficial-firebase-identity">
-(() => {
+(async () => {
   'use strict';
+  window.sendwayoFirebaseReady = false;
+  window.sendwayoFirebaseLoginReady = null;
+  window.intentarLogin = function(){
+    const error=document.getElementById('login-error');
+    if(error){error.textContent='Preparando el acceso seguro a SENDWAYO EXPRESS…';error.classList.remove('hidden');}
+    return false;
+  };
+  try {
+    await window.sendwayoFirebaseSdkReady;
+  } catch (sdkError) {
+    const message=sdkError?.message||'No se pudo cargar Firebase.';
+    window.sendwayoFirebaseSdkError=sdkError;
+    window.intentarLogin=function(){
+      const error=document.getElementById('login-error');
+      if(error){error.textContent=message+' Recargue la página cuando recupere la conexión.';error.classList.remove('hidden');}
+      else window.alert(message);
+      return false;
+    };
+    console.error('[SENDWAYO] Carga asíncrona de Firebase falló:',sdkError);
+    return;
+  }
   if (!window.firebase || typeof window.firebase.initializeApp !== 'function' || !window.firebase.auth || !window.firebase.database) {
     window.sendwayoFirebaseReady = false;
     window.intentarLogin = () => window.alert('No se pudo conectar con Firebase. El inicio de sesión local está desactivado; revise la conexión a Internet e inténtelo de nuevo.');
@@ -7723,6 +7776,8 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   window.intentarLogin=attemptLogin;
+  window.sendwayoFirebaseLoginReady=attemptLogin;
+  window.sendwayoFirebaseReady=true;
   // Never create accounts or reset credentials in localStorage; Firebase Authentication is the sole identity source.
   window.v162_registrar=function(){loginError('El registro local está desactivado por seguridad. El administrador debe habilitar su cuenta en Firebase Authentication.');};
   // v162_goWelcome conserva el retorno funcional a la página pública.
