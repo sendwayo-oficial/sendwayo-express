@@ -2877,8 +2877,23 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   window.abrirModalSeparado=function(view){ if(view==='envios') document.getElementById('modal-envio-v162').classList.remove('hidden'); else if(view==='retiros') document.getElementById('modal-retiro-v162').classList.remove('hidden'); else if(view==='depositos'||view==='cuentas'){ const q=document.getElementById('v162-dep-quien'); if(q) q.value=(currentUser.nombre||'')+' - '+(currentUser.codigo||currentUser.id||'')+' ('+currentUser.role+')'; document.getElementById('modal-deposito-v162').classList.remove('hidden'); } else if(view==='recepcion') document.getElementById('modal-paquetes-v162').classList.remove('hidden'); else if(view==='recargas') document.getElementById('modal-recargas-v162').classList.remove('hidden'); else if(view==='paquetikos') document.getElementById('modal-paquetikos-v162').classList.remove('hidden'); else if(view==='facturas') document.getElementById('modal-facturas-v162').classList.remove('hidden'); else if(view==='comisiones') document.getElementById('modal-comisiones-v162').classList.remove('hidden'); else if(view==='creditos') document.getElementById('modal-creditos-v162').classList.remove('hidden'); };
   window.abrirVentanillaTablero=function(ruta, tipo){ if(tipo==='envio'){ document.getElementById('v162-envio-ruta').value=ruta; v162_onEnvioRuta(); document.getElementById('modal-envio-v162').classList.remove('hidden'); } else if(tipo==='retiro'){ document.getElementById('v162-retiro-ruta').value=ruta; v162_onRetiroRuta(); document.getElementById('modal-retiro-v162').classList.remove('hidden'); } };
 
-  setTimeout(()=>{ initCarousel(); document.getElementById('welcome-landing').classList.remove('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; }); document.addEventListener('click', e=>{ if(!e.target.closest('input') && !e.target.closest('[id^=v162-sug]') && !e.target.closest('[id^=v162-sug-num]')){ document.querySelectorAll('[id^=v162-sug]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^=v162-sug-num]').forEach(el=>el.classList.add('hidden')); } }); },600);
-  setInterval(()=>{ document.querySelectorAll('button').forEach(b=>{ b.disabled=false; b.style.pointerEvents='auto'; b.style.opacity='1'; }); },2000);
+  // Inicialización ligera de la portada. No recorrer ni habilitar todos los botones:
+  // cada control conserva el estado que corresponda al rol y a la operación.
+  setTimeout(()=>{
+    if(typeof initCarousel==='function') initCarousel();
+    const welcome=document.getElementById('welcome-landing');
+    const login=document.getElementById('login-screen');
+    if(welcome) welcome.classList.remove('hidden');
+    if(login) login.classList.add('hidden');
+    document.addEventListener('click', e=>{
+      const target=e.target;
+      if(!target || typeof target.closest!=='function') return;
+      if(!target.closest('input') && !target.closest('[id^=v162-sug]') && !target.closest('[id^=v162-sug-num]')){
+        document.querySelectorAll('[id^=v162-sug]').forEach(el=>el.classList.add('hidden'));
+        document.querySelectorAll('[id^=v162-sug-num]').forEach(el=>el.classList.add('hidden'));
+      }
+    });
+  },600);
 })();
 </script>
 
@@ -2886,34 +2901,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
 <script>
 // PARCHE MINIMO V170 - SOLO TARIFA HT->HT POR RANGO + HABILITAR TABLERO Y DEPOSITO - NO TOCAR NADA MAS
 (function(){
-  // 1. Habilitar tablero principal y deposito - todos los campos habilitados
-  function habilitarTodo(){
-    document.querySelectorAll('#view-tablero button, #view-tablero input, #view-tablero select, #view-tablero a').forEach(el=>{
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='auto';
-      el.style.opacity='1';
-    });
-    document.querySelectorAll('button[onclick*="deposito"], button[onclick*="deposito"], #modal-deposito-v162 input, #modal-deposito-v162 select, #modal-deposito-v162 button').forEach(el=>{
-      el.disabled=false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents='auto';
-      el.style.opacity='1';
-    });
-    // Habilitar todos los botones agregar nuevo
-    document.querySelectorAll('button').forEach(b=>{
-      if(b.textContent.toLowerCase().includes('agregar nuevo') || b.textContent.includes('Excel') || b.textContent.includes('PDF') || b.textContent.includes('CSV')){
-        b.disabled=false;
-        b.removeAttribute('disabled');
-        b.style.pointerEvents='auto';
-        b.style.opacity='1';
-      }
-    });
-  }
-  setTimeout(habilitarTodo, 500);
-  setTimeout(habilitarTodo, 2000);
-  setTimeout(habilitarTodo, 4000);
-  document.addEventListener('click', function(){ setTimeout(habilitarTodo, 100); });
+  // No se habilitan controles de forma global ni después de cada clic. Las reglas de cada rol mandan.
 
   // Corrección: las rutas Haití→Haití usan importes y tarifas en HTG.
   window.v162_calcRetiro_CORREGIDO = function(){
@@ -6753,7 +6741,7 @@ window.sendwayoShareReceipt=async function(){
   window.addEventListener('pageshow',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('load',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5'].includes(e.key)){setTimeout(()=>{syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()},50)}});
-  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},2500);
+  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},5000);
   window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
 })();
 </script>
@@ -7624,7 +7612,8 @@ window.sendwayoShareReceipt=async function(){
   }
   function startCloudSync(){
     if(state.syncTimer)clearInterval(state.syncTimer);
-    state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},900);
+    // Firebase mantiene los cambios remotos mediante listeners; este barrido local queda como respaldo menos frecuente.
+    state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},5000);
   }
   function scrubLegacyCredentials(){
     const strip=o=>{if(!o||typeof o!=='object')return;for(const k of ['password','password2','contrasena','allowedPasswords','clave','passwordHash'])if(k in o)delete o[k];};
