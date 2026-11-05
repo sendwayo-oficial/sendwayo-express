@@ -3114,6 +3114,9 @@ body:not(.sendwayo-authenticated) #sendwayo-admin-account-modal{display:none!imp
 body:not(.sendwayo-authenticated) #welcome-landing:not(.hidden){display:block!important;visibility:visible!important}
 body.sendwayo-authenticated > #welcome-landing{display:none!important}
 </style>
+
+
+
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); return;
     }
@@ -4582,13 +4585,63 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
     ['Ingrese un número de celular válido para el paquetico.','Enter a valid phone number for the mobile package.','Saisissez un numéro de téléphone valide pour le forfait.','Antre yon nimewo telefòn ki valab pou pakè a.','Digite um número de celular válido para o pacote.'],
     ['Plan','Plan','Forfait','Plan','Plano'],['Seleccione un plan','Select a plan','Sélectionnez un forfait','Chwazi yon plan','Selecione um plano'],['1 día — RD$ 50','1 day — RD$ 50','1 jour — RD$ 50','1 jou — RD$ 50','1 dia — RD$ 50'],['1 día — RD$ 65','1 day — RD$ 65','1 jour — RD$ 65','1 jou — RD$ 65','1 dia — RD$ 65'],['3 días — RD$ 100','3 days — RD$ 100','3 jours — RD$ 100','3 jou — RD$ 100','3 dias — RD$ 100'],['3 días — RD$ 120','3 days — RD$ 120','3 jours — RD$ 120','3 jou — RD$ 120','3 dias — RD$ 120'],['5 días — RD$ 160','5 days — RD$ 160','5 jours — RD$ 160','5 jou — RD$ 160','5 dias — RD$ 160'],['5 días — RD$ 170','5 days — RD$ 170','5 jours — RD$ 170','5 jou — RD$ 170','5 dias — RD$ 170'],['7 días — RD$ 200','7 days — RD$ 200','7 jours — RD$ 200','7 jou — RD$ 200','7 dias — RD$ 200'],['7 días — RD$ 225','7 days — RD$ 225','7 jours — RD$ 225','7 jou — RD$ 225','7 dias — RD$ 225'],['7 días — RD$ 270','7 days — RD$ 270','7 jours — RD$ 270','7 jou — RD$ 270','7 dias — RD$ 270'],['7 días — RD$ 275','7 days — RD$ 275','7 jours — RD$ 275','7 jou — RD$ 275','7 dias — RD$ 275']
   ];
+  translationRows.push(
+    ['Ya tengo una cuenta','I already have an account','J’ai déjà un compte','Mwen deja gen yon kont','Já tenho uma conta'],
+    ['Tus envíos y servicios,','Your transfers and services,','Vos transferts et services,','Transfè ak sèvis ou yo,','Seus envios e serviços,'],
+    ['más cerca.','closer.','plus proches.','pi pre.','mais perto.'],
+    ['Servicio cercano, seguro y confiable','Nearby, safe and reliable service','Un service proche, sûr et fiable','Sèvis toupre, an sekirite e fyab','Serviço próximo, seguro e confiável'],
+    ['Conectamos destinos','Connecting destinations','Nous connectons les destinations','Nou konekte destinasyon yo','Conectamos destinos'],
+    ['República Dominicana · Haití · Internacional','Dominican Republic · Haiti · International','République dominicaine · Haïti · International','Repiblik Dominikèn · Ayiti · Entènasyonal','República Dominicana · Haiti · Internacional'],
+    ['Acceso privado para administradores, agentes y remitentes.','Private access for administrators, agents and senders.','Accès privé pour administrateurs, agents et expéditeurs.','Aksè prive pou administratè, ajan ak moun k ap voye.','Acesso privado para administradores, agentes e remetentes.'],
+    ['Envíos y retiros','Transfers and withdrawals','Envois et retraits','Voye lajan ak retrè','Envios e saques'],
+    ['Paquetes','Packages','Colis','Pakè','Pacotes'],
+    ['Recargas y pagos','Top-ups and payments','Recharges et paiements','Rechaj ak peman','Recargas e pagamentos'],
+    ['Movemos lo que importa.','We move what matters.','Nous transportons ce qui compte.','Nou deplase sa ki enpòtan.','Movemos o que importa.'],
+    ['¿Necesita acceso? Comuníquese con el administrador.','Need access? Contact the administrator.','Besoin d’accès ? Contactez l’administrateur.','Ou bezwen aksè? Kontakte administratè a.','Precisa de acesso? Entre em contato com o administrador.'],
+    ['Correo, código o teléfono','Email, code or phone','E-mail, code ou téléphone','Imèl, kòd oswa telefòn','E-mail, código ou telefone'],
+    ['Contraseña','Password','Mot de passe','Modpas','Senha'],
+    ['Es obligatorio introducir usuario/correo e contraseña.','Username/email and password are required.','Le nom d’utilisateur/e-mail et le mot de passe sont obligatoires.','Ou dwe antre non itilizatè/imèl ak modpas.','É obrigatório informar usuário/e-mail e senha.'],
+    ['Verificando acceso…','Verifying access…','Vérification de l’accès…','Ap verifye aksè…','Verificando acesso…'],
+    ['El correo o la contraseña no son válidos en Firebase Authentication.','The email or password is invalid in Firebase Authentication.','L’e-mail ou le mot de passe est invalide dans Firebase Authentication.','Imèl la oswa modpas la pa valab nan Firebase Authentication.','O e-mail ou a senha não são válidos no Firebase Authentication.'],
+    ['No se pudo iniciar sesión.','Unable to sign in.','Impossible de se connecter.','Pa t kapab konekte.','Não foi possível entrar.'],
+    ['Inicio','Home','Accueil','Akèy','Início'],
+    ['Tablero','Dashboard','Tableau de bord','Tablo','Painel'],
+    ['Saldo','Balance','Solde','Balans','Saldo'],
+    ['Comisión','Commission','Commission','Komisyon','Comissão'],
+    ['Beneficiarios','Beneficiaries','Bénéficiaires','Benefisyè','Beneficiários'],
+    ['Depósitos','Deposits','Dépôts','Depo','Depósitos'],
+    ['Envíos','Transfers','Envois','Voye lajan','Envios'],
+    ['Retiros','Withdrawals','Retraits','Retrè','Saques'],
+    ['Recargas','Top-ups','Recharges','Rechaj','Recargas'],
+    ['Guardar','Save','Enregistrer','Anrejistre','Salvar'],
+    ['Cancelar','Cancel','Annuler','Anile','Cancelar'],
+    ['Buscar','Search','Rechercher','Chèche','Pesquisar'],
+    ['Modificar','Edit','Modifier','Modifye','Editar'],
+    ['Eliminar','Delete','Supprimer','Efase','Excluir'],
+    ['Aprobar','Approve','Approuver','Apwouve','Aprovar'],
+    ['Rechazar','Reject','Rejeter','Refize','Rejeitar'],
+    ['Pendiente','Pending','En attente','An atant','Pendente'],
+    ['Aprobado','Approved','Approuvé','Apwouve','Aprovado'],
+    ['Rechazado','Rejected','Rejeté','Refize','Rejeitado']
+  );
   const phraseLookup = new Map();
   const normalizeI18n = value => String(value == null ? '' : value).trim().replace(/\s+/g,' ').toLocaleLowerCase();
   translationRows.forEach(row => row.forEach(phrase => phraseLookup.set(normalizeI18n(phrase), row)));
   const langIndex = {es:0,en:1,fr:2,ht:3,pt:4};
+  const phraseEntries = Array.from(phraseLookup.entries()).filter(([key]) => key.length >= 4).sort((a,b) => b[0].length-a[0].length);
+  const escapeI18nRegex = value => value.replace(/[.*+?^$()|[\]\\{}]/g, char => '\\' + char).replace(/\s+/g, '\\s+');
   function translatePhrase(value, lang) {
-    const row=phraseLookup.get(normalizeI18n(value));
-    return row ? row[langIndex[lang] ?? 0] : value;
+    const original = String(value == null ? '' : value);
+    const row = phraseLookup.get(normalizeI18n(original));
+    if (row) return row[langIndex[lang] ?? 0];
+    let translated = original;
+    for (const [phrase, translations] of phraseEntries) {
+      const replacement = translations[langIndex[lang] ?? 0];
+      if (!replacement || replacement === phrase) continue;
+      const pattern = new RegExp(escapeI18nRegex(phrase), 'giu');
+      translated = translated.replace(pattern, replacement);
+    }
+    return translated;
   }
   function translateInterface(root, lang) {
     if (!root || lang==='es') {
@@ -4625,6 +4678,7 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
     translateInterface(document.body, lang);
     installTranslationObserver();
   }
+  window.sendwayoSetLanguage = setLanguage;
   function makeLanguageControl(id, wrapId) {
     if ($(wrapId)) return;
     const wrap = document.createElement('label'); wrap.id = wrapId;
@@ -7778,6 +7832,77 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
   const priorShow=window.showView;
   if(typeof priorShow==='function')window.showView=function(view){const r=priorShow.apply(this,arguments);if(['conciliacion','reportes','informes'].includes(view))setTimeout(()=>renderAudit(view),0);return r;};
   window.addEventListener('sendwayo:firebase-ready',()=>{const active=document.body.dataset.sendwayoActiveView||'';if(['conciliacion','reportes','informes'].includes(active))renderAudit(active);});
+})();
+</script>
+<style id="sendwayo-login-interaction-hardening-v7">
+  body.sendwayo-login-open #login-screen {
+    position: fixed !important; inset: 0 !important; z-index: 2147483000 !important;
+    display: flex !important; visibility: visible !important; opacity: 1 !important;
+    pointer-events: auto !important; isolation: isolate !important;
+  }
+  body.sendwayo-login-open #welcome-landing { display: none !important; visibility: hidden !important; pointer-events: none !important; }
+  #login-screen, #login-screen > div, #login-screen input, #login-screen button {
+    pointer-events: auto !important;
+  }
+  #login-screen input { position: relative !important; z-index: 2 !important; user-select: text !important; -webkit-user-select: text !important; }
+</style>
+<script id="sendwayo-login-and-language-hardening-v7">
+(function () {
+  'use strict';
+  function openSendwayoLogin() {
+    var login = document.getElementById('login-screen');
+    if (!login) return false;
+    // Keep the login overlay directly under body so no hidden parent can block typing or clicks.
+    if (login.parentElement !== document.body) document.body.appendChild(login);
+    document.body.classList.remove('sendwayo-authenticated');
+    document.body.classList.add('sendwayo-login-open');
+    var welcome = document.getElementById('welcome-landing');
+    if (welcome) {
+      welcome.classList.add('hidden');
+      welcome.style.setProperty('display', 'none', 'important');
+      welcome.style.setProperty('visibility', 'hidden', 'important');
+      welcome.style.setProperty('pointer-events', 'none', 'important');
+    }
+    login.classList.remove('hidden');
+    login.style.setProperty('display', 'flex', 'important');
+    login.style.setProperty('visibility', 'visible', 'important');
+    login.style.setProperty('pointer-events', 'auto', 'important');
+    login.style.setProperty('z-index', '2147483000', 'important');
+    login.querySelectorAll('input').forEach(function (field) {
+      field.disabled = false;
+      field.readOnly = false;
+      field.removeAttribute('aria-disabled');
+      field.style.setProperty('pointer-events', 'auto', 'important');
+    });
+    var username = document.getElementById('login-usuario');
+    if (username) window.setTimeout(function () {
+      try { username.focus({ preventScroll: true }); } catch (_) { username.focus(); }
+    }, 50);
+    return false;
+  }
+  window.v162_showLogin = openSendwayoLogin;
+  document.addEventListener('click', function (event) {
+    var button = event.target && event.target.closest ? event.target.closest('#welcome-landing button[onclick*="v162_showLogin"]') : null;
+    if (!button) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openSendwayoLogin();
+  }, true);
+  var loginButton = document.querySelector('#login-screen button[onclick*="intentarLogin"]');
+  if (loginButton) {
+    loginButton.type = 'button';
+    loginButton.onclick = function (event) {
+      if (event) event.preventDefault();
+      if (typeof window.intentarLogin === 'function') return window.intentarLogin();
+      return false;
+    };
+  }
+  // Reapply the selected language after dynamic sections are mounted.
+  function reapplyLanguage() {
+    var selected = document.getElementById('sendwayo-language-public') || document.getElementById('sendwayo-language-private');
+    if (selected && typeof window.sendwayoSetLanguage === 'function') window.sendwayoSetLanguage(selected.value);
+  }
+  window.addEventListener('load', reapplyLanguage);
 })();
 </script>
 </body>
