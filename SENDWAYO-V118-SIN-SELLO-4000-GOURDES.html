@@ -6588,6 +6588,30 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
   const auth = authApp.auth();
+
+  // Verificación adicional de identidad mediante el Worker SENDWAYO.
+  const SENDWAYO_WORKER_VERIFY = 'https://sendwayo-express-backend.ideletteismorin.workers.dev/api/verify';
+  async function verifyWorkerIdentity(firebaseUser) {
+    if (!firebaseUser || typeof firebaseUser.getIdToken !== 'function') {
+      throw new Error('No se pudo obtener la identidad autenticada de Firebase.');
+    }
+    const idToken = await firebaseUser.getIdToken();
+    const response = await fetch(SENDWAYO_WORKER_VERIFY, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + idToken,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+    let result = {};
+    try { result = await response.json(); } catch (e) {}
+    if (!response.ok || result.valid !== true || !result.user || result.user.uid !== firebaseUser.uid) {
+      throw new Error(result.error || 'El servidor no pudo verificar tu identidad. No se concedió acceso.');
+    }
+    return result.user;
+  }
+
   const db = authApp.database();
   const userRoot = db.ref(userRootPath);
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
@@ -7383,6 +7407,7 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
       await auth.signOut().catch(()=>{});
       const credential=await auth.signInWithEmailAndPassword(email,password);
       const firebaseUser=credential.user;
+      await verifyWorkerIdentity(firebaseUser);
       const found=await readProfile(firebaseUser);
       if(!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil de SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
       const role=canonicalRole(found.data,found.key);
@@ -7521,6 +7546,7 @@ body.sendwayo-authenticated > #welcome-landing{display:none!important}
     if(state.loginBusy||state.readReady) return;
     state.loginBusy=true;
     try{
+      await verifyWorkerIdentity(user);
       const found=await readProfile(user);
       if(!found) throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise el directorio.');
       const role=canonicalRole(found.data,found.key);
