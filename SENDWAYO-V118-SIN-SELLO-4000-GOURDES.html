@@ -5160,7 +5160,7 @@ window.sendwayoShareReceipt=async function(){
     const actorKeys = [current()?.id,current()?.dbUserKey,current()?.uid,current()?.email].filter(Boolean).map(String);
     const raw = t._cloudRaw || {}, creatorKeys = [t.creadorId,t.creadoPorId,t.usuarioId,t.createdByUserId,t.createdByAuthUid,raw.createdByUserId,raw.createdByAuthUid].filter(Boolean).map(String);
     const own = creatorKeys.some(value => actorKeys.includes(value)), admin = isAdmin();
-    const agentMayReview = isAgent() && !own && (pending || noCoincide);
+    const agentMayReview = isAgent() && !own && !norm(t.tipo || t.type).includes('deposit') && (pending || noCoincide);
     const ownerMayEdit = own && noCoincide && (isRemitter() || isAgent());
     let out = `<button type="button" style="background:#1e3a5f;color:white" onclick="window.sendwayoModuleAction('${view}','ver','${id}')">Ver</button>`;
     if (approved) {
