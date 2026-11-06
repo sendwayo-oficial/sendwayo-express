@@ -1,0 +1,19 @@
+name = "sendwayo-express-payments-v7"
+main = "src/index.js"
+compatibility_date = "2026-11-06"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = true
+
+[vars]
+FIREBASE_PROJECT_ID = "sendwayo-express"
+FIREBASE_DATABASE_URL = "https://sendwayo-express-default-rtdb.firebaseio.com"
+ADMIN_EMAIL = "ideletteismorin@gmail.com"
+ALLOWED_ORIGINS = "https://sendwayo-oficial.github.io"
+PUBLIC_APP_URL = "https://sendwayo-oficial.github.io/sendwayo-express"
+CARDNET_MODE = "sandbox"
+CARDNET_API_BASE = "https://labservicios.cardnet.com.do"
+CARDNET_AUTHORIZE_URL = "https://labservicios.cardnet.com.do/authorize"
+CARDNET_ACQUIRER_CODE = "349"
