@@ -1,3 +1,4 @@
+# Updated browser smoke diagnostics for the public SENDWAYO login flow.
 name: Publish approved SENDWAYO EXPRESS - shared balances
 
 on:
