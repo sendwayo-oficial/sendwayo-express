@@ -65,26 +65,61 @@ jobs:
                 throw new Error('La página pública no respondió correctamente.');
               }
 
-              await page.waitForFunction(() => {
+              await page.waitForTimeout(5000);
+              const initial = await page.evaluate(() => {
                 const welcome = document.querySelector('#welcome-landing');
-                return welcome && getComputedStyle(welcome).display !== 'none' &&
-                  getComputedStyle(welcome).visibility !== 'hidden';
-              }, { timeout: 30000 });
+                const login = document.querySelector('#login-screen');
+                const button = document.querySelector('#welcome-landing button[onclick*="v162_showLogin"]');
+                return {
+                  readyState: document.readyState,
+                  title: document.title,
+                  bodyClass: document.body && document.body.className,
+                  welcomeExists: !!welcome,
+                  welcomeClass: welcome && welcome.className,
+                  welcomeDisplay: welcome && getComputedStyle(welcome).display,
+                  welcomeVisibility: welcome && getComputedStyle(welcome).visibility,
+                  loginExists: !!login,
+                  loginClass: login && login.className,
+                  loginFunction: typeof window.v162_showLogin,
+                  attemptLoginFunction: typeof window.intentarLogin,
+                  loginButtonExists: !!button,
+                  bodyText: (document.body && document.body.innerText || '').slice(0,1200)
+                };
+              });
+              console.log('INITIAL PAGE STATE:', JSON.stringify(initial, null, 2));
+              if (!initial.welcomeExists || initial.welcomeDisplay === 'none' || initial.welcomeVisibility === 'hidden') {
+                console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
+                console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
+                await page.screenshot({ path: 'sendwayo-page-failed.png', fullPage: false });
+                throw new Error('La bienvenida no se muestra en la página pública.');
+              }
 
               const loginButton = page.locator(
                 '#welcome-landing button[onclick*="v162_showLogin"]'
               ).first();
               await loginButton.click({ timeout: 15000 });
-
-              await page.waitForFunction(() => {
+              await page.waitForTimeout(1500);
+              const loginState = await page.evaluate(() => {
                 const login = document.querySelector('#login-screen');
                 const username = document.querySelector('#login-usuario');
                 const password = document.querySelector('#login-password');
-                return login && username && password &&
-                  getComputedStyle(login).display !== 'none' &&
-                  getComputedStyle(login).visibility !== 'hidden' &&
-                  !login.classList.contains('hidden');
-              }, { timeout: 20000 });
+                return {
+                  loginExists: !!login,
+                  loginClass: login && login.className,
+                  loginDisplay: login && getComputedStyle(login).display,
+                  loginVisibility: login && getComputedStyle(login).visibility,
+                  usernameEnabled: !!username && !username.disabled,
+                  passwordEnabled: !!password && !password.disabled,
+                  loginFunction: typeof window.intentarLogin
+                };
+              });
+              console.log('LOGIN PAGE STATE:', JSON.stringify(loginState, null, 2));
+              if (!loginState.loginExists || loginState.loginDisplay === 'none' || loginState.loginVisibility === 'hidden' || loginState.loginClass.includes('hidden')) {
+                console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
+                console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
+                await page.screenshot({ path: 'sendwayo-login-failed.png', fullPage: false });
+                throw new Error('El formulario no se mostró.');
+              }
 
               const ready = await page.evaluate(() => ({
                 usernameEnabled: !document.querySelector('#login-usuario').disabled,
@@ -99,7 +134,7 @@ jobs:
                 console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
                 throw new Error('Hay errores JavaScript al abrir el acceso.');
               }
-              console.log('PASS: bienvenida visible; botón abre el formulario; usuario y contraseña habilitados; módulo de acceso presente.');
+              console.log('PASS: bienvenida y formulario visibles; campos de acceso habilitados.');
             } finally {
               await browser.close();
             }
