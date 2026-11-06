@@ -7203,7 +7203,7 @@ window.sendwayoShareReceipt=async function(){
     if(role==='REMITENTE') notifQuery=notifQuery.orderByChild('targetUserId').equalTo(profileRow.key);
     else if(role==='AGENTE') notifQuery=notifQuery.orderByChild('targetRole').equalTo('AGENTE');
     await attach('notifications',notifQuery,snapshot=>{
-      const rows=snapshotRows(snapshot).map(r=>({...r.data,id:txt(r.data.id||r.key),firebaseKey:r.key}));
+      const rows=snapshotRows(snapshot).filter(r=>role!=='ADMIN'||r.data?.targetRole!=='AGENTE').map(r=>({...r.data,id:txt(r.data.id||r.key),firebaseKey:r.key}));
       window.SENDWAYO_NOTIFICATIONS=rows;
       try{if(typeof notificaciones!=='undefined'&&Array.isArray(notificaciones))replaceArrayContents(notificaciones,rows);}catch(e){}
       try{window.sendwayoRenderSavedNotifications?.();}catch(e){}
