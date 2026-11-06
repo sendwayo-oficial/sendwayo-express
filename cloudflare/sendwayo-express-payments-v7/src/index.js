@@ -6,6 +6,7 @@ const FIREBASE_JWKS = "https://www.googleapis.com/service_accounts/v1/jwk/secure
 const FIREBASE_TOKEN_ISSUER = "https://securetoken.google.com/";
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const ZERO_DECIMAL = new Set(["BIF","CLP","DJF","GNF","ISK","JPY","KMF","KRW","PYG","RWF","UGX","VND","VUV","XAF","XOF","XPF"]);
+const STRIPE_ACCOUNT_COUNTRIES = new Set("AU AT BE BG BR CA HR CY CZ DK EE FI FR DE GI GR HK HU IE IT JP LV LI LT LU MY MT MX NL NZ NO PL PT RO SG SK SI ES SE CH TH AE GB US".split(" "));
 let jwkCache = { value: null, until: 0 };
 let serviceTokenCache = { value: "", until: 0 };
 
@@ -76,7 +77,7 @@ export function validatePayoutInput(payout) {
   const currency = normalizeCurrency(payout?.targetCurrency || payout?.currency);
   const receiver = clean(payout?.receiver || payout?.phoneOrAccount,40).replace(/[ +()-]/g,"");
   if (!["moncash","natcash"].includes(network)) throw new Error("Red de dispersión no compatible.");
-  if (currency !== "HTG" || !Number.isInteger(amount) || amount < 1) throw new Error("MonCash/NatCash exige un importe entero en HTG.");
+  if (currency !== "HTG" || !Number.isInteger(amount) || amount < 25) throw new Error("MonCash/NatCash exige un importe entero mínimo de 25 HTG.");
   if (!/^(509)?\d{8}$/.test(receiver)) throw new Error("El teléfono haitiano debe tener ocho dígitos, opcionalmente con 509.");
   return { network, amount, currency, receiver: receiver.startsWith("509") ? receiver : "509" + receiver };
 }
@@ -248,29 +249,34 @@ function getAppUrl(request,env) {
   if(!base||(!allow.includes(base)&&!allow.includes(origin))) throw new Error("PUBLIC_APP_URL/ALLOWED_ORIGINS no está configurado para este sitio.");
   return base.replace(/\/+$/,"");
 }
-function transactionRecord(id,ctx,input,validated,provider) {
-  const now=Date.now();
+function transactionRecord(id,ctx,input,validated,provider,ownerProfile=ctx.profile) {
+  const now=Date.now(),owner=ownerProfile?.data||{},actor=ctx.profile?.data||{};
+  const operation=clean(input.operationType||"Envío",40),recipient=validated.recipientInfo;
+  const beneficiary=clean(recipient.fullName||recipient.name||recipient.phoneOrAccount,120);
+  const sender={...validated.senderInfo,fullName:clean(owner.name||owner.nombre||validated.senderInfo.fullName,120),phone:clean(owner.phone||owner.telefono||owner.celular||validated.senderInfo.phone,40),country:validated.countryFrom};
+  const sourceText=validated.sourceAmount.toFixed(2)+" "+validated.sourceCurrency;
   return {
-    transactionId:id,id, userId:ctx.profile.data?.authUid||ctx.profile.key||ctx.claims.sub, ownerUserId:ctx.profile.key, type:clean(input.operationType||"Envío",40), tipo:clean(input.operationType||"Envío",40),
-    senderInfo:validated.senderInfo,
-    recipientInfo:validated.recipientInfo,
-    paymentDetails:{gateway:provider,sourceCurrency:validated.sourceCurrency,sourceAmount:validated.sourceAmount,totalCharged:validated.totalCharged,status:"creating",providerReference:"",createdAtMs:now},
-    payoutDetails:{
-      settlementType:clean(validated.payoutDetails.settlementType||(["MONCASH","NATCASH"].includes(validated.recipientInfo.provider.toUpperCase())?"AGENT_NETWORK":validated.recipientInfo.destinationType==="BANK"?"BANK_TRANSFER":"MERCHANT_PAYMENT"),40).toUpperCase(),
-      agentInfo:validated.payoutDetails.agentInfo||null,
-      targetCurrency:validated.targetCurrency,targetAmount:validated.targetAmount,
-      payoutReference:"",status:"not_started"
-    },
-    countryFrom:validated.countryFrom,countryTo:validated.countryTo,
-    route:validated.countryFrom+" -> "+validated.countryTo,
-    status:"Pendiente",reviewStatus:"Pendiente",
+    transactionId:id,id,
+    userId:owner.authUid||ownerProfile?.key||ctx.claims.sub,
+    ownerUserId:ownerProfile?.key||ctx.profile.key,
+    type:operation,tipo:operation,
+    senderInfo:sender,recipientInfo:recipient,
+    paymentDetails:{gateway:provider,sourceCurrency:validated.sourceCurrency,sourceAmount:validated.sourceAmount,totalCharged:validated.totalCharged,feeAmount:money(validated.totalCharged-validated.sourceAmount),status:"creating",providerReference:"",createdAtMs:now},
+    payoutDetails:{settlementType:clean(validated.payoutDetails.settlementType||(["MONCASH","NATCASH"].includes(recipient.provider.toUpperCase())?"AGENT_NETWORK":recipient.destinationType==="BANK"?"BANK_TRANSFER":"MERCHANT_PAYMENT"),40).toUpperCase(),agentInfo:validated.payoutDetails.agentInfo||null,targetCurrency:validated.targetCurrency,targetAmount:validated.targetAmount,payoutReference:"",status:"not_started"},
+    countryFrom:validated.countryFrom,countryTo:validated.countryTo,route:validated.countryFrom+" -> "+validated.countryTo,
+    status:"Pendiente",estado:"Pendiente",reviewStatus:"Pendiente",
+    timestamp:now,fecha:new Date(now).toLocaleString("es-DO"),monto:sourceText,montoValue:validated.sourceAmount,moneda:validated.sourceCurrency,fee:money(validated.totalCharged-validated.sourceAmount),
+    beneficiario:beneficiary,beneficiarioTel:recipient.phoneOrAccount||"",ruta:validated.countryFrom+" → "+validated.countryTo,rutaExacta:validated.countryFrom+" → "+validated.countryTo+"; "+beneficiary,
+    remitenteId:clean(owner.id||owner.staffId||owner.code||ownerProfile?.key),creadorId:clean(actor.id||actor.staffId||actor.code||ctx.profile?.key),
     timestamps:{created:now,updated:now,dispatched:null,completed:null},
-    createdByAuthUid:ctx.claims.sub,createdByUserId:ctx.profile.key,createdByRole:ctx.role,
+    createdByAuthUid:ctx.claims.sub,createdByUserId:ctx.profile.key,createdByRole:ctx.role,createdByUserName:clean(actor.name||actor.nombre,120),
     sinConversionAutomatica:true
   };
 }
 async function createStripeCheckout(env,tx,appUrl) {
   if(!env.STRIPE_SECRET_KEY) throw new Error("Falta el secreto STRIPE_SECRET_KEY.");
+  const accountCountry=normalizeCountry(env.STRIPE_ACCOUNT_COUNTRY);
+  if(!STRIPE_ACCOUNT_COUNTRIES.has(accountCountry)) throw new Error("Stripe no está habilitado para cuentas comerciales en "+(accountCountry||"el país configurado")+". Configure STRIPE_ACCOUNT_COUNTRY con una entidad legal y una cuenta bancaria válida en un país admitido; que el cliente tenga tarjeta extranjera no elimina este requisito.");
   const amount=amountToMinor(tx.paymentDetails.totalCharged,tx.paymentDetails.sourceCurrency).toString();
   const form=new URLSearchParams({
     mode:"payment",
@@ -367,7 +373,7 @@ async function createPayment(request,env,ctx,input) {
     }
     throw new Error("No se pudo reservar la clave de idempotencia.");
   }
-  const tx=transactionRecord(id,{...ctx,profile:owner},input,validated,provider);
+  const tx=transactionRecord(id,ctx,input,validated,provider,owner);
   const created=await atomicCreate(env,transactionUrl(id),tx);
   if(!created) throw new Error("La referencia de transacción ya existe. Use una clave de idempotencia nueva.");
   const appUrl=getAppUrl(request,env);
@@ -429,27 +435,34 @@ async function tranzakWebhook(request,env,isPayout=false) {
   const raw=await request.text(),signature=request.headers.get("X-Tranzak-Signature")||"",secret=isPayout?env.TRANZAK_PAYOUT_WEBHOOK_SECRET:env.TRANZAK_WEBHOOK_SECRET;
   if(!await verifyHmacSha256(secret,raw,signature)) return json({error:"Firma Tranzak no válida."},403);
   const event=JSON.parse(raw),data=event.data||{},eventType=clean(event.event||request.headers.get("X-Tranzak-Event"),60);
-  const reference=clean(data.reference,180);
+  const reference=clean(data.reference||data.payout_reference,180);
   if(!reference) return json({received:true,ignored:true});
   const eventKey=eventType+":"+(data.transaction_id||data.payout_id||reference);
   const eventHash=await hmacSha256Hex(env.FIREBASE_PROJECT_ID||"sendwayo",eventKey);
-  const provider=isPayout?"tranzak-payout":"tranzak-payment";
-  const eventPath=ROOT+"/providerEvents/"+provider+"/"+eventHash;
+  const provider=isPayout?"tranzak-payout":"tranzak-payment",eventPath=ROOT+"/providerEvents/"+provider+"/"+eventHash;
   if((await firebaseRequest(env,eventPath)).data) return json({received:true,duplicate:true});
-  const tx=await getTransaction(env,reference);
+  let transactionId=reference;
+  if(isPayout){
+    const referenceHash=await hmacSha256Hex(env.FIREBASE_PROJECT_ID||"sendwayo","tranzak-payout-reference:"+reference);
+    const mapped=(await firebaseRequest(env,ROOT+"/payoutReferenceLookup/"+referenceHash)).data;
+    if(mapped?.transactionId) transactionId=mapped.transactionId;
+  }
+  const tx=await getTransaction(env,transactionId);
   if(!tx) return json({error:"Transacción no encontrada."},404);
-  if(isPayout) {
+  if(isPayout){
     const status=eventType==="payout.completed"?"completed":eventType==="payout.failed"?"failed":"processing";
-    const latest=await getTransaction(env,reference);
+    const latest=await getTransaction(env,transactionId);
     const payoutDetails={...latest.payoutDetails,status,providerReference:data.payout_id||latest.payoutDetails.payoutReference,fee:Number(data.fee||0),totalDebited:Number(data.total_debited||0),failureCode:data.failure_code||data.failure_reason||"",refunded:data.refund_status==="refunded",completedAtMs:data.completed_at?Date.parse(data.completed_at):null,updatedAtMs:Date.now()};
-    await atomicUpdate(env,transactionUrl(reference),{payoutDetails,timestamps:{...latest.timestamps,updated:Date.now(),dispatched:latest.timestamps.dispatched||Date.now(),completed:status==="completed"?Date.now():latest.timestamps.completed}});
-  } else {
+    const patch={payoutDetails,timestamps:{...latest.timestamps,updated:Date.now(),dispatched:latest.timestamps.dispatched||Date.now(),completed:status==="completed"?Date.now():latest.timestamps.completed}};
+    if(status==="completed") Object.assign(patch,{status:"Completado",estado:"Completado",reviewStatus:"Aprobado"});
+    await atomicUpdate(env,transactionUrl(transactionId),patch);
+  }else{
     if(data.currency&&String(data.currency).toUpperCase()!==tx.paymentDetails.sourceCurrency) return json({error:"La moneda del webhook no coincide."},409);
     if(data.amount!=null&&money(data.amount)!==tx.paymentDetails.totalCharged) return json({error:"El importe del webhook no coincide."},409);
     if(eventType==="payment.success") await markPayment(env,tx,"paid",{event:eventType,providerTransactionId:data.transaction_id});
     else if(eventType==="payment.failed"||eventType==="payment.refunded") await markPayment(env,tx,eventType==="payment.refunded"?"refunded":"failed",{event:eventType,providerTransactionId:data.transaction_id});
   }
-  await atomicCreate(env,eventPath,{provider,eventId:eventKey,processedAtMs:Date.now()});
+  await atomicCreate(env,eventPath,{provider,eventId:eventKey,transactionId,processedAtMs:Date.now()});
   return json({received:true});
 }
 async function confirmCardnet(request,env,ctx,txid) {
@@ -482,7 +495,8 @@ async function reviewTransaction(request,env,ctx,body) {
   if(ctx.role==="AGENTE"&&(isOwn||isDeposit||tx.createdByRole==="ADMIN")) return json({error:"El agente no puede revisar esta transacción."},403);
   if(ctx.role!=="ADMIN"&&ctx.role!=="AGENTE") return json({error:"Rol no autorizado."},403);
   if(action!=="approve"&&!reason) return json({error:"Debe indicar un motivo o instrucciones."},400);
-  if(["Aprobado","Rechazado"].includes(tx.status)) return json({error:"La transacción ya fue resuelta."},409);
+  const currentReview=clean(tx.reviewStatus||tx.status);
+  if(["Aprobado","Rechazado","Completado"].includes(currentReview)||tx.payoutDetails?.status==="completed") return json({error:"La transacción ya fue resuelta."},409);
   if(action==="approve"&&tx.paymentDetails?.gateway&&tx.paymentDetails.status!=="paid") return json({error:"El pago aún no está confirmado por el proveedor."},409);
   const status=action==="approve"?"Aprobado":action==="reject"?"Rechazado":"No coincide";
   const patch={
@@ -497,7 +511,7 @@ async function claimPayoutDispatch(env,id,actorUid) {
   const path=transactionUrl(id);
   const current=await firebaseRequest(env,path,{headers:{"X-Firebase-ETag":"true"}});
   const tx=current.data;
-  if(!tx||tx.status!=="Aprobado") throw new Error("La transacción no está aprobada.");
+  if(!tx||clean(tx.reviewStatus||tx.status)!=="Aprobado") throw new Error("La transacción no está aprobada.");
   if(["processing","pending","completed","dispatching","outcome_unknown","manual_pending"].includes(tx.payoutDetails?.status)) throw new Error("La dispersión ya fue iniciada o está pendiente.");
   if(tx.payoutDetails?.status==="failed"&&!tx.payoutDetails?.refunded) throw new Error("El proveedor no ha confirmado la devolución. No se puede reintentar.");
   const next={...tx,payoutDetails:{...tx.payoutDetails,status:"dispatching",startedAtMs:Date.now(),startedBy:actorUid},timestamps:{...tx.timestamps,updated:Date.now()}};
@@ -508,7 +522,7 @@ async function dispatchPayout(request,env,ctx,body) {
   if(ctx.role!=="ADMIN") return json({error:"Solo Administración puede dispersar fondos."},403);
   const id=safeKey(body.transactionId),tx=await getTransaction(env,id);
   if(!tx) return json({error:"Transacción no encontrada."},404);
-  if(tx.status!=="Aprobado") return json({error:"Solo se dispersan operaciones aprobadas por Administración."},409);
+  if(clean(tx.reviewStatus||tx.status)!=="Aprobado") return json({error:"Solo se dispersan operaciones aprobadas por Administración."},409);
   if(tx.paymentDetails?.gateway&&tx.paymentDetails.status!=="paid") return json({error:"El pago de origen no está confirmado."},409);
   const settle=clean(tx.payoutDetails?.settlementType||"",40).toUpperCase();
   if(settle==="AGENT_NETWORK") {
@@ -518,9 +532,11 @@ async function dispatchPayout(request,env,ctx,body) {
     const priorReference=clean(tx.payoutDetails?.payoutReference,90);
     const ref=clean(body.payoutReference,90)||(priorReference?tx.transactionId+"-"+Date.now():tx.transactionId);
     if(!/^[A-Za-z0-9._-]{4,100}$/.test(ref)) return json({error:"Referencia de dispersión no válida."},400);
+    const referenceHash=await hmacSha256Hex(env.FIREBASE_PROJECT_ID||"sendwayo","tranzak-payout-reference:"+ref);
     const api=TRANZAK_TREASURY+"/payouts";
     try { await claimPayoutDispatch(env,id,ctx.claims.sub); }
     catch(error) { return json({error:error.message||"No se pudo bloquear la dispersión."},409); }
+    await atomicCreate(env,ROOT+"/payoutReferenceLookup/"+referenceHash,{transactionId:id,reference:ref,createdAtMs:Date.now()});
     let sendStarted=false;
     try {
       const authResponse=await fetch(api+"/authorize",{method:"POST",headers:{"X-API-Key":env.TRANZAK_API_KEY,"content-type":"application/json"},body:JSON.stringify({amount:payout.amount,network:payout.network,receiver:payout.receiver,reference:ref,description:"SENDWAYO "+id})});
@@ -555,7 +571,7 @@ async function completeManualPayout(request,env,ctx,body) {
   if(!reference||!proof) return json({error:"Se exige referencia de banco/comercio y evidencia del comprobante."},400);
   const tx=await getTransaction(env,id);if(!tx) return json({error:"Transacción no encontrada."},404);
   if(tx.payoutDetails?.status!=="manual_pending") return json({error:"La operación no está en espera de dispersión manual."},409);
-  await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...tx.payoutDetails,status:"completed",payoutReference:reference,manualDispatch:{...tx.payoutDetails.manualDispatch,completedBy:ctx.claims.sub,completedAtMs:Date.now(),proofReference:proof}},timestamps:{...tx.timestamps,updated:Date.now(),completed:Date.now()}});
+  await atomicUpdate(env,transactionUrl(id),{status:"Completado",estado:"Completado",reviewStatus:"Aprobado",payoutDetails:{...tx.payoutDetails,status:"completed",payoutReference:reference,manualDispatch:{...tx.payoutDetails.manualDispatch,completedBy:ctx.claims.sub,completedAtMs:Date.now(),proofReference:proof}},timestamps:{...tx.timestamps,updated:Date.now(),completed:Date.now()}});
   return json({transactionId:id,status:"completed",payoutReference:reference});
 }
 async function getTransactionForUser(env,ctx,id) {
