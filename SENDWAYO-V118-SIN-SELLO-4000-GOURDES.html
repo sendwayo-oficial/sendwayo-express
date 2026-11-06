@@ -7381,7 +7381,7 @@ window.sendwayoShareReceipt=async function(){
       _cloudRaw:d
     };
   }
-  const CATEGORIES=['envios','accountWithdrawals','deposits','recargas','paqueticos','pagos','paquetes','commissions','credits'];
+  const CATEGORIES=['envios','accountWithdrawals','deposits','recargas','paqueticos','pagos','paquetes','commissions','credits','transactions'];
   function stopListeners(){ state.listeners.forEach(off=>{try{off()}catch(e){}}); state.listeners=[]; }
   function renderCloudTransactions(){
     const rows=Object.values(state.remoteTransactions).flat().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -7405,7 +7405,7 @@ window.sendwayoShareReceipt=async function(){
   }
   async function loadCloudTransactions(profileRow, role, uid) {
     state.remoteTransactions={};
-    const agentCategories=['envios','accountWithdrawals','recargas','paqueticos','pagos','paquetes'];
+    const agentCategories=['envios','accountWithdrawals','recargas','paqueticos','pagos','paquetes','transactions'];
     const categories=role==='AGENTE'?agentCategories:(role==='REMITENTE'?CATEGORIES.filter(c=>!['credits','commissions'].includes(c)):CATEGORIES);
     const qFor=category=>{
       const ref=db.ref(ROOT+'/'+category);
@@ -7419,10 +7419,10 @@ window.sendwayoShareReceipt=async function(){
       const snap=await q.once('value');
       successfulReads++;
       const rows=[];
-      snap.forEach(child=>{ const mapped=mapTransaction(category,child.key,child.val()); if(mapped) rows.push(mapped); });
+      snap.forEach(child=>{ const value=child.val(); if(role==='AGENTE'&&category==='transactions'&&(value?.createdByAuthUid===uid||value?.createdByRole==='ADMIN'))return; const mapped=mapTransaction(category,child.key,value); if(mapped) rows.push(mapped); });
       state.remoteTransactions[category]=rows;
       const cb=snapshot=>{
-        const next=[]; snapshot.forEach(child=>{const mapped=mapTransaction(category,child.key,child.val());if(mapped)next.push(mapped);});
+        const next=[]; snapshot.forEach(child=>{const value=child.val();if(role==='AGENTE'&&category==='transactions'&&(value?.createdByAuthUid===uid||value?.createdByRole==='ADMIN'))return;const mapped=mapTransaction(category,child.key,value);if(mapped)next.push(mapped);});
         state.remoteTransactions[category]=next;
         renderCloudTransactions();
         state.lastTxSnapshot=makeTransactionSnapshot();
