@@ -2,6 +2,8 @@
 # Nunca subir este archivo a GitHub.
 FIREBASE_SERVICE_ACCOUNT_JSON=""
 STRIPE_SECRET_KEY=""
+# País ISO de dos letras de la entidad legal titular de Stripe; no el país del cliente.
+STRIPE_ACCOUNT_COUNTRY=""
 STRIPE_WEBHOOK_SECRET=""
 TRANZAK_API_KEY=""
 TRANZAK_WEBHOOK_SECRET=""
