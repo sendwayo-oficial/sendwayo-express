@@ -28,11 +28,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Chromium browser test
+      - name: Install Playwright client
         run: |
           npm init -y
           npm install --no-save playwright
-          npx playwright install --with-deps chromium
 
       - name: Open the published site and press the login button
         env:
@@ -43,6 +42,7 @@ jobs:
 
           (async () => {
             const browser = await chromium.launch({
+              channel: 'chrome',
               headless: true,
               args: ['--no-sandbox', '--disable-dev-shm-usage']
             });
