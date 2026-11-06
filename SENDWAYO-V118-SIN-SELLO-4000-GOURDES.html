@@ -1606,12 +1606,13 @@ window.renderModuloSeparado = function(view){
   else if(view==='retiros'){ tipoFiltro='Retiro'; titulo='RETIROS'; }
   else if(view==='depositos'){ tipoFiltro='Depósito'; titulo='DEPÓSITOS'; }
   
-  const sorted=[...TRANSACCIONES].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  const txTime=t=>{const raw=Number(t.timestamp||t.createdAtMs||t.fechaTimestamp||0);if(raw>0)return raw<1e12?raw*1000:raw;const parsed=Date.parse(t.fecha||t.createdAt||'');return Number.isFinite(parsed)?parsed:0;};
+  const sorted=[...TRANSACCIONES].sort((a,b)=>txTime(b)-txTime(a));
   let filtrados=sorted.filter(t=>t.tipo===tipoFiltro);
   
   cont.innerHTML=`
     <div class="p-3 border-2 border-yellow-400 rounded-xl bg-[#eef6ff] flex flex-wrap justify-between items-center gap-2">
-      <span class="font-bold text-[11px] tracking-tight flex-1 min-w-[300px]">${titulo} - TODOS LOS CAMPOS REQUISITOS BÁSICOS: Registro nuevo/Agregar nuevo, Buscador, Excel, PDF, CSV, Numeración 01 02 03 Antiguo a reciente Último número uno, Acciones Modificar Borrar Aprobado Rechazado No coincide Comprobante solo después aprobado - NO CAMBIAR - SUPERBIEN - HABILITADO</span>
+      <span class="font-bold text-[11px] tracking-tight flex-1 min-w-[120px]">${titulo}</span>
       <div class="flex items-center gap-2">
         <button onclick="abrirModalSeparado('${view}')" class="bg-[#2a5aa8] text-white text-[10px] font-bold w-[70px] h-[70px] rounded-full flex flex-col items-center justify-center leading-tight shadow"><span class="text-[14px]">+</span><span>Registro</span><span>nuevo /</span><span>Agregar</span><span>nuevo</span></button>
         <div class="bg-white border rounded-full px-4 py-2 flex items-center gap-1 w-[160px] h-[70px] shadow"><span>🔍</span><input id="busc-${view}" placeholder="Buscador..." class="outline-none text-[11px] w-full bg-transparent" onkeyup="filtrarTabla('tabla-${view}-body', this.value)"></div>
@@ -1622,7 +1623,7 @@ window.renderModuloSeparado = function(view){
     </div>
     <div class="overflow-x-auto mt-3">
       <table class="w-full text-[10px]">
-        <thead><tr class="bg-gray-50 text-[9px] tracking-tight"><th class="p-3 text-left">N°</th><th class="p-3 text-left">ID / FECHA</th><th class="p-3 text-left">RUTA EXACTA SEPARADA</th><th class="p-3 text-left">MONTO / FEE 8% - Haiti-Haiti 25 fee = 1975</th><th class="p-3 text-left">ESTADO</th><th class="p-3 text-left">ACCIONES - Remitente solo Modificar Borrar - Admin Modificar Borrar Aprobado Rechazado No coincide Comprobante después aprobado</th></tr></thead>
+        <thead><tr class="bg-gray-50 text-[9px] tracking-tight"><th class="p-3 text-left">N°</th><th class="p-3 text-left">ID / FECHA</th><th class="p-3 text-left">REGISTRADO POR</th><th class="p-3 text-left">RUTA / DETALLE</th><th class="p-3 text-left">MONTO / FEE 8% - Haiti-Haiti 25 fee = 1975</th><th class="p-3 text-left">ESTADO</th><th class="p-3 text-left">ACCIONES - Remitente solo Modificar Borrar - Admin Modificar Borrar Aprobado Rechazado No coincide Comprobante después aprobado</th></tr></thead>
         <tbody id="tabla-${view}-body"></tbody>
       </table>
     </div>
@@ -1631,7 +1632,7 @@ window.renderModuloSeparado = function(view){
   const tbody=document.getElementById(`tabla-${view}-body`);
   tbody.innerHTML='';
   if(filtrados.length===0){
-    tbody.innerHTML=`<tr><td colspan="6" class="p-8 text-center text-gray-500">No hay transacciones en ${view} - Pero tiene agregar nuevo, buscador, Excel, PDF, CSV, numeración 01 02 03, acciones - Habilitado - Click abrir ventanilla desglose</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="7" class="p-8 text-center text-gray-500">No hay transacciones en ${view}.</td></tr>`;
     return;
   }
   filtrados.forEach((t,idx)=>{
@@ -1657,7 +1658,10 @@ window.renderModuloSeparado = function(view){
         acciones=`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Admin agente</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Admin agente</button> <button onclick="aprobar('${t.id}')" class="bg-green-600 text-white px-2 py-1 rounded-full text-[9px]">Aprobado</button> <button onclick="rechazar('${t.id}')" class="bg-red-600 text-white px-2 py-1 rounded-full text-[9px]">Rechazado</button> <button onclick="noCoincide('${t.id}')" class="bg-purple-600 text-white px-2 py-1 rounded-full text-[9px]">No coincide</button>`;
       }
     }
-    tr.innerHTML=`<td class="p-3 font-bold">${num} - Antiguo a reciente</td><td class="p-3"><div class="font-bold">${t.id}</div><div class="text-[9px] text-gray-500">${t.fecha}</div></td><td class="p-3"><span class="bg-blue-50 px-2 py-1 rounded-full text-[9px] font-bold">${t.ruta}</span><div class="text-[9px] text-gray-500 mt-1">${t.rutaExacta}</div></td><td class="p-3"><div class="font-bold">${t.monto}</div><div class="text-[9px] text-orange-600">${t.feeText} - Recibido: ${t.montoRecibido} - ${t.ruta.includes('HT → HT')?'Haiti-Haiti 2000-25=1975 comprobante':''}</div></td><td class="p-3"><span class="px-3 py-1 rounded-full text-[9px] font-bold ${estadoClass}">${t.estado}</span></td><td class="p-3"><div class="flex flex-wrap gap-1">${acciones}</div></td>`;
+    const creatorId=t.creadorId||t.creadoPorId||t.usuarioId||t.createdByUserId||'';
+    const creator=(t.creadorNombre||t.createdByUserName||t.cuentaOrigenNombre||(window.USUARIOS_LOGIN||[]).find(x=>String(x.id)===String(creatorId))?.nombre||creatorId||'No identificado');
+    const net=t.montoRecibido||((Number(t.neto)>0)?Number(t.neto).toFixed(2)+' '+(t.moneda||'DOP'):'Pendiente de cálculo');
+    tr.innerHTML=`<td class="p-3 font-bold">${num}</td><td class="p-3"><div class="font-bold">${t.id}</div><div class="text-[9px] text-gray-500">${t.fecha||''}</div></td><td class="p-3"><div class="font-semibold">${creator}</div><div class="text-[9px] text-gray-500">ID: ${creatorId||'—'}</div></td><td class="p-3"><span class="bg-blue-50 px-2 py-1 rounded-full text-[9px] font-bold">${t.ruta||t.tipo}</span><div class="text-[9px] text-gray-500 mt-1">${t.rutaExacta||''}</div></td><td class="p-3"><div class="font-bold">${t.monto||''}</div><div class="text-[9px] text-orange-600">${t.feeText||''} · Neto a recibir: ${net}</div></td><td class="p-3"><span class="px-3 py-1 rounded-full text-[9px] font-bold ${estadoClass}">${t.estado||'Pendiente'}</span></td><td class="p-3"><div class="flex flex-wrap gap-1">${acciones}</div></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -3654,7 +3658,7 @@ window.sendwayoShareReceipt=async function(){
   };
   function dibujarRetiros(){
     const cont=asegurarVista();
-    const registros=transacciones().filter(t=>t && t.tipo==='Retiro').slice().sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));
+    const registros=transacciones().filter(t=>t && t.tipo==='Retiro').slice().sort((a,b)=>{const time=t=>{const n=Number(t.timestamp||t.createdAtMs||t.fechaTimestamp||0);if(n>0)return n<1e12?n*1000:n;const d=Date.parse(t.fecha||t.createdAt||'');return Number.isFinite(d)?d:0;};return time(b)-time(a);});
     cont.innerHTML=`
       <section class="p-3 md:p-4 space-y-3 bg-[#f7f9fc] rounded-xl">
         <header class="bg-white border rounded-xl p-3 shadow-sm">
@@ -5124,7 +5128,7 @@ window.sendwayoShareReceipt=async function(){
       const id = txt(current()?.id);
       rows = rows.filter(t => [t.remitenteId,t.cuentaOrigenId,t.depositanteId,t.destinoId,t.saldoAcreditadoDestinoId,t.saldoAcreditadoCuentaId,t.creadorId,t.creadoPorId,t.usuarioId].some(v => v != null && txt(v) === id));
     }
-    return rows.sort((a,b) => (Number(b.timestamp)||0) - (Number(a.timestamp)||0));
+    return rows.sort((a,b) => {const time=t=>{const n=Number(t.timestamp||t.createdAtMs||t.fechaTimestamp||0);if(n>0)return n<1e12?n*1000:n;const d=Date.parse(t.fecha||t.createdAt||'');return Number.isFinite(d)?d:0;};return time(b)-time(a);});
   }
   const modulePageState = window.__sendwayoModulePageState || (window.__sendwayoModulePageState = Object.create(null));
   function renderModulePager(view, total, page, pageCount) {
@@ -8353,6 +8357,31 @@ window.sendwayoShareReceipt=async function(){
     if (selected && typeof window.sendwayoSetLanguage === 'function') window.sendwayoSetLanguage(selected.value);
   }
   window.addEventListener('load', reapplyLanguage);
+})();
+</script>
+
+<script id="sendwayo-v7-ui-cleanup-and-mobile-polish">
+(function(){
+ 'use strict';
+ const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ function cleanText(){
+  const root=document.body;if(!root)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  nodes.forEach(n=>{if(!n.parentElement||/^(SCRIPT|STYLE|NOSCRIPT)$/i.test(n.parentElement.tagName))return;const v=n.nodeValue||'';const next=v.replace(/\bseparad[oa]s?\b/gi,'').replace(/\bno\s+con\s+env[ií]o\b/gi,'');if(next!==v)n.nodeValue=next;});
+  document.querySelectorAll('[placeholder],[aria-label],[title]').forEach(el=>['placeholder','aria-label','title'].forEach(a=>{const v=el.getAttribute(a);if(v)el.setAttribute(a,v.replace(/\bseparad[oa]s?\b/gi,'').replace(/\bno\s+con\s+env[ií]o\b/gi,''));}));
+  document.querySelectorAll('button,a').forEach(el=>{const label=norm(el.innerText||el.textContent);if(!label.includes('cuenta bancaria')&&!label.includes('depositos'))return;el.querySelectorAll('span,small,b,strong').forEach(b=>{if((b.textContent||'').trim()==='3'&&(b.className||'').toString().match(/badge|count|rounded-full|absolute/i))b.remove();});});
+ }
+ function mobilePolish(){
+  if(document.getElementById('sendwayo-v7-mobile-polish'))return;
+  const style=document.createElement('style');style.id='sendwayo-v7-mobile-polish';
+  style.textContent='@media(max-width:767px){#view-envios,#view-retiros,#view-depositos,#view-recargas,#view-paquetikos,#view-facturas{min-width:0!important;width:100%!important;max-width:100vw!important;overflow-x:hidden!important}#view-envios table,#view-retiros table,#view-depositos table,#view-recargas table,#view-paquetikos table,#view-facturas table{min-width:760px}#view-envios header,#view-retiros header,#view-depositos header,#view-recargas header,#view-paquetikos header{gap:8px!important}#sendwayo-main-sidebar{padding-bottom:env(safe-area-inset-bottom)}#sendwayo-mobile-menu{top:max(10px,env(safe-area-inset-top))!important;left:max(10px,env(safe-area-inset-left))!important;box-shadow:0 5px 18px #0f244033!important}#sendwayo-v7-modal>div{max-height:calc(100dvh - 20px)!important;border-radius:18px!important}#sendwayo-v7-modal input,#sendwayo-v7-modal select,#sendwayo-v7-modal textarea{font-size:16px!important;min-height:44px}}';
+  document.head.appendChild(style);
+ }
+ function run(){cleanText();mobilePolish();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+ const obs=new MutationObserver(()=>{if(!run.queued){run.queued=true;setTimeout(()=>{run.queued=false;cleanText();},80);}});
+ if(document.body)obs.observe(document.body,{childList:true,subtree:true,characterData:true});
 })();
 </script>
 </body>
