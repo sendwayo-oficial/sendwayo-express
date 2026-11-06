@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  amountToMinor, validatePaymentInput, validatePayoutInput,
+  amountToMinor, validatePaymentInput, validatePayoutInput, isStripeAccountCountrySupported,
   hmacSha256Hex, verifyHmacSha256, verifyStripeSignature
 } from "../src/index.js";
 
@@ -42,7 +42,14 @@ test("normaliza los datos y rechaza códigos ISO incompletos",()=>{
 test("valida payout MonCash/NatCash solo en HTG entero y teléfono haitiano",()=>{
   assert.deepEqual(validatePayoutInput({network:"moncash",targetAmount:1000,targetCurrency:"HTG",receiver:"+509 3700-0000"}),{network:"moncash",amount:1000,currency:"HTG",receiver:"50937000000"});
   assert.throws(()=>validatePayoutInput({network:"moncash",targetAmount:1000.25,targetCurrency:"HTG",receiver:"50937000000"}),/entero en HTG/);
+  assert.throws(()=>validatePayoutInput({network:"moncash",targetAmount:24,targetCurrency:"HTG",receiver:"50937000000"}),/mínimo de 25 HTG/);
   assert.throws(()=>validatePayoutInput({network:"wire",targetAmount:1000,targetCurrency:"USD",receiver:"123"}),/no compatible/);
+});
+
+test("restringe Stripe al país de la entidad comercial, no al país de la tarjeta",()=>{
+  assert.equal(isStripeAccountCountrySupported("US"),true);
+  assert.equal(isStripeAccountCountrySupported("DO"),false);
+  assert.equal(isStripeAccountCountrySupported("ES"),true);
 });
 test("valida HMAC Tranzak sobre el cuerpo sin modificar",async()=>{
   const raw='{"event":"payment.success","data":{"transaction_id":"123"}}';
