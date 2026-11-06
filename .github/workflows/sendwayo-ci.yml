@@ -12,6 +12,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Validate and test payments Worker
+        run: |
+          cd cloudflare/sendwayo-express-payments-v7
+          npm run check
+          npm test
       - name: Validate Firebase rules JSON
         run: node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('database.rules.json OK')"
       - name: Validate inline JavaScript
