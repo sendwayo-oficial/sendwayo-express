@@ -45,7 +45,14 @@ jobs:
             try {
               const page = await browser.newPage();
               const pageErrors = [];
-              page.on('pageerror', error => pageErrors.push(error.message));
+              const consoleErrors = [];
+              page.on('pageerror', error => pageErrors.push({ message: error.message, stack: error.stack }));
+              page.on('console', message => {
+                if (message.type() === 'error') {
+                  const location = message.location();
+                  consoleErrors.push({ text: message.text(), url: location.url, line: location.lineNumber, column: location.columnNumber });
+                }
+              });
               const response = await page.goto(process.env.PAGE_URL, {
                 waitUntil: 'domcontentloaded',
                 timeout: 60000
@@ -83,8 +90,10 @@ jobs:
               if (!ready.usernameEnabled || !ready.passwordEnabled || !ready.loginFunction) {
                 throw new Error('El formulario apareció, pero no quedó listo para escribir e iniciar sesión.');
               }
-              if (pageErrors.length) {
-                throw new Error('Error JavaScript al abrir el acceso: ' + pageErrors.join(' | '));
+              if (pageErrors.length || consoleErrors.length) {
+                console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
+                console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
+                throw new Error('Hay errores JavaScript al abrir el acceso.');
               }
               console.log('PASS: bienvenida visible; botón abre el formulario; usuario y contraseña habilitados; módulo de acceso presente.');
             } finally {
