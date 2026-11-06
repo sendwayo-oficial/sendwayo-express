@@ -324,6 +324,24 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
+<script id="sendwayo-early-notice-fallback">
+  // Available before any older form handler can request a notice.
+  // The financial audit module replaces this fallback with the styled notice later.
+  window.sendwayoShowInlineNotice = window.sendwayoShowInlineNotice || function(message, kind) {
+    try {
+      let node = document.getElementById('sendwayo-inline-notice');
+      if (!node) {
+        node = document.createElement('div');
+        node.id = 'sendwayo-inline-notice';
+        node.setAttribute('role', 'status');
+        node.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2147483647;max-width:min(92vw,560px);padding:12px 16px;border-radius:12px;background:' + (kind === 'error' ? '#fee2e2' : '#e0f2fe') + ';color:' + (kind === 'error' ? '#991b1b' : '#075985') + ';font:600 13px/1.45 Arial,sans-serif;text-align:center;box-shadow:0 8px 28px #0003;';
+        (document.body || document.documentElement).appendChild(node);
+      }
+      node.textContent = String(message == null ? '' : message);
+      node.hidden = false;
+    } catch (error) { console.warn('[SENDWAYO] No se pudo mostrar el aviso:', error); }
+  };
+</script>
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
     <div class="text-center mb-6">
