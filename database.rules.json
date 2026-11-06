@@ -45,7 +45,8 @@
         ".indexOn": [
           "targetUserId",
           "createdAtMs",
-          "createdAt"
+          "createdAt",
+          "targetRole"
         ]
       },
       "requests": {
