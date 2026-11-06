@@ -6153,12 +6153,14 @@ window.sendwayoShareReceipt=async function(){
       if(!cloud||!authUid||!actor||!item)return;
       const isAdmin=role(actor).includes('ADMIN');
       const recipients=[];
-      if(item.kind==='pending'||!isAdmin)recipients.push('admin');
-      if(item.kind==='status'&&isAdmin&&Array.isArray(item.targetIds))item.targetIds.forEach(id=>{if(id&&String(id)!==String(uid(actor)))recipients.push(String(id));});
-      [...new Set(recipients)].forEach(targetUserId=>{
-        const safePart=value=>String(value||'').replace(/[^A-Za-z0-9_-]/g,'_').slice(0,100)||'x';
-        const key='tx_'+safePart(item.txId||item.id)+'_'+safePart(item.kind)+'_'+safePart(targetUserId)+'_'+safePart(item.id);
-        const payload={id:key,kind:item.kind||'notice',txId:String(item.txId||''),msg:String(item.msg||''),tipo:String(item.tipo||'Avisos'),targetUserId,targetRole:targetUserId==='admin'?'ADMIN':'REMITENTE',createdByAuthUid:authUid,createdAtMs:Date.now(),createdAt:new Date().toISOString(),leida:false,read:false};
+      if(item.kind==='pending'||!isAdmin)recipients.push({id:'admin',role:'ADMIN'});
+      if(item.kind==='pending'&&item.tipo!=='Depósitos')recipients.push({id:'admin',role:'AGENTE'});
+      if(item.kind==='status'&&isAdmin&&Array.isArray(item.targetIds))item.targetIds.forEach(id=>{if(id&&String(id)!==String(uid(actor)))recipients.push({id:String(id),role:'REMITENTE'});});
+      const safePart=value=>String(value||'').replace(/[^A-Za-z0-9_-]/g,'_').slice(0,100)||'x';
+      [...new Map(recipients.map(r=>[r.id+'|'+r.role,r])).values()].forEach(recipient=>{
+        const targetUserId=recipient.id,targetRole=recipient.role;
+        const key='tx_'+safePart(item.txId||item.id)+'_'+safePart(item.kind)+'_'+safePart(targetUserId)+'_'+safePart(targetRole);
+        const payload={id:key,kind:item.kind||'notice',txId:String(item.txId||''),msg:String(item.msg||''),tipo:String(item.tipo||'Avisos'),targetUserId,targetRole,createdByAuthUid:authUid,createdAtMs:Date.now(),createdAt:new Date().toISOString(),leida:false,read:false};
         cloud.ref('sendwayo_express_v2/notifications/'+key).transaction(existing=>existing||payload).catch(error=>console.warn('[SENDWAYO] Aviso Firebase no enviado:',error?.code||error?.message||error));
       });
     }catch(error){console.warn('[SENDWAYO] No se pudo preparar el aviso Firebase:',error?.message||error);}
@@ -7198,7 +7200,8 @@ window.sendwayoShareReceipt=async function(){
       window.BENEFICIARIOS_DB=[];window.BENEF_DB=[];
     }
     let notifQuery=db.ref(ROOT+'/notifications');
-    if(role==='REMITENTE'||role==='AGENTE') notifQuery=notifQuery.orderByChild('targetUserId').equalTo(profileRow.key);
+    if(role==='REMITENTE') notifQuery=notifQuery.orderByChild('targetUserId').equalTo(profileRow.key);
+    else if(role==='AGENTE') notifQuery=notifQuery.orderByChild('targetRole').equalTo('AGENTE');
     await attach('notifications',notifQuery,snapshot=>{
       const rows=snapshotRows(snapshot).map(r=>({...r.data,id:txt(r.data.id||r.key),firebaseKey:r.key}));
       window.SENDWAYO_NOTIFICATIONS=rows;
