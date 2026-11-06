@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   welcome-and-login:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the deployed revision
