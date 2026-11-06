@@ -393,28 +393,36 @@ async function createPayment(request,env,ctx,input) {
   }
 }
 async function markPayment(env,tx,status,data={}) {
+  const latest=await getTransaction(env,tx.transactionId);
+  if(!latest) throw new Error("Transacción desaparecida durante la confirmación.");
+  const previous=String(latest.paymentDetails?.status||"creating");
+  if(previous==="refunded"||(["paid","failed"].includes(previous)&&status!=="refunded")) return latest;
   const patch={
-    paymentDetails:{...tx.paymentDetails,status,providerEvent:data.event||tx.paymentDetails.providerEvent||"",providerTransactionId:data.providerTransactionId||tx.paymentDetails.providerTransactionId||"",paidAtMs:status==="paid"?Date.now():tx.paymentDetails.paidAtMs||null,updatedAtMs:Date.now()},
-    timestamps:{...tx.timestamps,updated:Date.now()}
+    paymentDetails:{...latest.paymentDetails,status,providerEvent:data.event||latest.paymentDetails.providerEvent||"",providerTransactionId:data.providerTransactionId||latest.paymentDetails.providerTransactionId||"",paidAtMs:status==="paid"?Date.now():latest.paymentDetails.paidAtMs||null,updatedAtMs:Date.now()},
+    timestamps:{...latest.timestamps,updated:Date.now()}
   };
   return atomicUpdate(env,transactionUrl(tx.transactionId),patch);
 }
 async function stripeWebhook(request,env) {
   const raw=await request.text(),sig=request.headers.get("Stripe-Signature")||"";
   if(!await verifyStripeSignature(raw,sig,env.STRIPE_WEBHOOK_SECRET)) return json({error:"Firma Stripe no válida."},400);
-  const event=JSON.parse(raw);
-  const object=event.data?.object||{};
+  const event=JSON.parse(raw),object=event.data?.object||{};
   const txid=object.metadata?.transactionId||object.client_reference_id;
-  if(!txid) return json({received:true,ignored:true});
-  if(!await eventOnce(env,"stripe",event.id)) return json({received:true,duplicate:true});
-  const tx=await getTransaction(env,txid);if(!tx) return json({error:"Transacción no encontrada."},404);
+  if(!txid||!event.id) return json({received:true,ignored:true});
+  const eventHash=await hmacSha256Hex(env.FIREBASE_PROJECT_ID||"sendwayo","stripe:"+event.id);
+  const eventPath=ROOT+"/providerEvents/stripe/"+eventHash;
+  if((await firebaseRequest(env,eventPath)).data) return json({received:true,duplicate:true});
+  const tx=await getTransaction(env,txid);
+  if(!tx) return json({error:"Transacción no encontrada."},404);
   if(event.type==="checkout.session.completed"||event.type==="checkout.session.async_payment_succeeded") {
     if(object.payment_status!=="paid") return json({received:true,awaitingPayment:true});
-    const paidAmount=Number(object.amount_total);
-    const expected=amountToMinor(tx.paymentDetails.totalCharged,tx.paymentDetails.sourceCurrency);
+    const paidAmount=Number(object.amount_total),expected=amountToMinor(tx.paymentDetails.totalCharged,tx.paymentDetails.sourceCurrency);
     if(paidAmount!==expected||String(object.currency).toUpperCase()!==tx.paymentDetails.sourceCurrency) return json({error:"Importe o moneda Stripe no coinciden."},409);
     await markPayment(env,tx,"paid",{event:event.type,providerTransactionId:object.payment_intent||object.id});
-  } else if(event.type==="checkout.session.async_payment_failed") await markPayment(env,tx,"failed",{event:event.type});
+  } else if(event.type==="checkout.session.async_payment_failed") {
+    await markPayment(env,tx,"failed",{event:event.type,providerTransactionId:object.payment_intent||object.id});
+  }
+  await atomicCreate(env,eventPath,{provider:"stripe",eventId:event.id,processedAtMs:Date.now()});
   return json({received:true});
 }
 async function tranzakWebhook(request,env,isPayout=false) {
@@ -423,19 +431,25 @@ async function tranzakWebhook(request,env,isPayout=false) {
   const event=JSON.parse(raw),data=event.data||{},eventType=clean(event.event||request.headers.get("X-Tranzak-Event"),60);
   const reference=clean(data.reference,180);
   if(!reference) return json({received:true,ignored:true});
-  const eventKey=(eventType+":"+(data.transaction_id||data.payout_id||reference));
-  if(!await eventOnce(env,isPayout?"tranzak-payout":"tranzak-payment",eventKey)) return json({received:true,duplicate:true});
-  const tx=await getTransaction(env,reference);if(!tx) return json({error:"Transacción no encontrada."},404);
+  const eventKey=eventType+":"+(data.transaction_id||data.payout_id||reference);
+  const eventHash=await hmacSha256Hex(env.FIREBASE_PROJECT_ID||"sendwayo",eventKey);
+  const provider=isPayout?"tranzak-payout":"tranzak-payment";
+  const eventPath=ROOT+"/providerEvents/"+provider+"/"+eventHash;
+  if((await firebaseRequest(env,eventPath)).data) return json({received:true,duplicate:true});
+  const tx=await getTransaction(env,reference);
+  if(!tx) return json({error:"Transacción no encontrada."},404);
   if(isPayout) {
     const status=eventType==="payout.completed"?"completed":eventType==="payout.failed"?"failed":"processing";
-    const payoutDetails={...tx.payoutDetails,status,providerReference:data.payout_id||tx.payoutDetails.payoutReference,fee:Number(data.fee||0),totalDebited:Number(data.total_debited||0),failureCode:data.failure_code||data.failure_reason||"",refunded:data.refund_status==="refunded",completedAtMs:data.completed_at?Date.parse(data.completed_at):null,updatedAtMs:Date.now()};
-    await atomicUpdate(env,transactionUrl(reference),{payoutDetails,timestamps:{...tx.timestamps,updated:Date.now(),dispatched:tx.timestamps.dispatched||Date.now(),completed:status==="completed"?Date.now():tx.timestamps.completed}});
+    const latest=await getTransaction(env,reference);
+    const payoutDetails={...latest.payoutDetails,status,providerReference:data.payout_id||latest.payoutDetails.payoutReference,fee:Number(data.fee||0),totalDebited:Number(data.total_debited||0),failureCode:data.failure_code||data.failure_reason||"",refunded:data.refund_status==="refunded",completedAtMs:data.completed_at?Date.parse(data.completed_at):null,updatedAtMs:Date.now()};
+    await atomicUpdate(env,transactionUrl(reference),{payoutDetails,timestamps:{...latest.timestamps,updated:Date.now(),dispatched:latest.timestamps.dispatched||Date.now(),completed:status==="completed"?Date.now():latest.timestamps.completed}});
   } else {
-    if(data.currency && String(data.currency).toUpperCase()!==tx.paymentDetails.sourceCurrency) return json({error:"La moneda del webhook no coincide."},409);
-    if(data.amount!=null && money(data.amount)!==tx.paymentDetails.totalCharged) return json({error:"El importe del webhook no coincide."},409);
+    if(data.currency&&String(data.currency).toUpperCase()!==tx.paymentDetails.sourceCurrency) return json({error:"La moneda del webhook no coincide."},409);
+    if(data.amount!=null&&money(data.amount)!==tx.paymentDetails.totalCharged) return json({error:"El importe del webhook no coincide."},409);
     if(eventType==="payment.success") await markPayment(env,tx,"paid",{event:eventType,providerTransactionId:data.transaction_id});
     else if(eventType==="payment.failed"||eventType==="payment.refunded") await markPayment(env,tx,eventType==="payment.refunded"?"refunded":"failed",{event:eventType,providerTransactionId:data.transaction_id});
   }
+  await atomicCreate(env,eventPath,{provider,eventId:eventKey,processedAtMs:Date.now()});
   return json({received:true});
 }
 async function confirmCardnet(request,env,ctx,txid) {
@@ -444,15 +458,17 @@ async function confirmCardnet(request,env,ctx,txid) {
   if(ctx.role!=="ADMIN"&&tx.userId!==ctx.claims.sub) return json({error:"No tiene permiso para consultar esta transacción."},403);
   if(tx.paymentDetails?.gateway!=="cardnet") return json({error:"Esta transacción no es CardNET."},400);
   const p=tx.paymentDetails.providerData||{};
-  if(!p.session||!p.sessionKey) return json({error:"Falta la sesión CardNET."},409);
-  const response=await fetch(cardnetBase(env)+"/sessions/"+encodeURIComponent(p.session)+"?sk="+encodeURIComponent(p.sessionKey));
+  const privateData=(await firebaseRequest(env,ROOT+"/paymentPrivate/"+encodeURIComponent(txid))).data||{};
+  if(!p.session||!privateData.sessionKey) return json({error:"Falta la sesión privada CardNET."},409);
+  const response=await fetch(cardnetBase(env)+"/sessions/"+encodeURIComponent(p.session)+"?sk="+encodeURIComponent(privateData.sessionKey));
   const data=await response.json();
   if(!response.ok) return json({error:"CardNET no devolvió el resultado de la transacción."},502);
+  if(String(data.TransactionID||data.TransactionId||"")!==String(p.shortTransactionId||"")) return json({error:"La referencia devuelta por CardNET no coincide con la transacción."},409);
   if(data.ResponseCode==="00"&&String(data.RemoteResponseCode||"00")==="00") {
     await markPayment(env,tx,"paid",{event:"cardnet.server-verification",providerTransactionId:data.RetrievalReferenceNumber||data.TransactionID});
     return json({status:"paid",reference:data.RetrievalReferenceNumber||"",transactionId:txid});
   }
-  if(data.ResponseCode) await markPayment(env,tx,"failed",{event:"cardnet.server-verification"});
+  if(data.ResponseCode&&data.ResponseCode!=="09") await markPayment(env,tx,"failed",{event:"cardnet.server-verification"});
   return json({status:data.ResponseCode==="09"?"processing":"failed",responseCode:data.ResponseCode||"unknown"},200);
 }
 async function reviewTransaction(request,env,ctx,body) {
@@ -460,7 +476,7 @@ async function reviewTransaction(request,env,ctx,body) {
   if(!tx) return json({error:"Transacción no encontrada."},404);
   const action=clean(body.action,30).toLowerCase(),reason=clean(body.reason,500);
   const isOwn=tx.createdByAuthUid===ctx.claims.sub;
-  const isDeposit=clean(tx.paymentDetails?.type||tx.recipientInfo?.destinationType).toLowerCase()==="deposit";
+  const isDeposit=/dep[oó]sit/i.test(clean(tx.type||tx.tipo||tx.paymentDetails?.type||""))||clean(tx.recipientInfo?.destinationType).toLowerCase()==="deposit";
   if(!["approve","reject","no_match"].includes(action)) return json({error:"Acción no válida."},400);
   if(ctx.role==="REMITENTE") return json({error:"El remitente no puede revisar transacciones."},403);
   if(ctx.role==="AGENTE"&&(isOwn||isDeposit||tx.createdByRole==="ADMIN")) return json({error:"El agente no puede revisar esta transacción."},403);
@@ -477,42 +493,58 @@ async function reviewTransaction(request,env,ctx,body) {
   await atomicUpdate(env,transactionUrl(id),patch);
   return json({transactionId:id,status});
 }
+async function claimPayoutDispatch(env,id,actorUid) {
+  const path=transactionUrl(id);
+  const current=await firebaseRequest(env,path,{headers:{"X-Firebase-ETag":"true"}});
+  const tx=current.data;
+  if(!tx||tx.status!=="Aprobado") throw new Error("La transacción no está aprobada.");
+  if(["processing","pending","completed","dispatching","outcome_unknown","manual_pending"].includes(tx.payoutDetails?.status)) throw new Error("La dispersión ya fue iniciada o está pendiente.");
+  if(tx.payoutDetails?.status==="failed"&&!tx.payoutDetails?.refunded) throw new Error("El proveedor no ha confirmado la devolución. No se puede reintentar.");
+  const next={...tx,payoutDetails:{...tx.payoutDetails,status:"dispatching",startedAtMs:Date.now(),startedBy:actorUid},timestamps:{...tx.timestamps,updated:Date.now()}};
+  await firebaseRequest(env,path,{method:"PUT",headers:{"content-type":"application/json","If-Match":current.etag||""},body:JSON.stringify(next)});
+  return next;
+}
 async function dispatchPayout(request,env,ctx,body) {
   if(ctx.role!=="ADMIN") return json({error:"Solo Administración puede dispersar fondos."},403);
   const id=safeKey(body.transactionId),tx=await getTransaction(env,id);
   if(!tx) return json({error:"Transacción no encontrada."},404);
   if(tx.status!=="Aprobado") return json({error:"Solo se dispersan operaciones aprobadas por Administración."},409);
   if(tx.paymentDetails?.gateway&&tx.paymentDetails.status!=="paid") return json({error:"El pago de origen no está confirmado."},409);
-  if(["processing","pending","completed","dispatching","outcome_unknown"].includes(tx.payoutDetails?.status)) return json({error:"Esta dispersión ya se inició o está pendiente. No se debe duplicar."},409);
-  const settle=clean(tx.payoutDetails?.settlementType||"","40").toUpperCase();
+  const settle=clean(tx.payoutDetails?.settlementType||"",40).toUpperCase();
   if(settle==="AGENT_NETWORK") {
     const agent=tx.payoutDetails?.agentInfo||{};
     const payout=validatePayoutInput({network:agent.network||tx.recipientInfo?.provider,targetAmount:tx.payoutDetails.targetAmount,targetCurrency:tx.payoutDetails.targetCurrency,receiver:tx.recipientInfo?.phoneOrAccount});
     if(!env.TRANZAK_API_KEY) return json({error:"Falta TRANZAK_API_KEY; la dispersión no se envió."},503);
-    const ref=tx.transactionId.replace(/[^A-Za-z0-9._-]/g,"-").slice(0,90);
-    const path=TRANZAK_TREASURY+"/payouts";
-    await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...tx.payoutDetails,status:"dispatching",payoutReference:ref,network:payout.network,startedAtMs:Date.now()},timestamps:{...tx.timestamps,updated:Date.now()}});
+    const priorReference=clean(tx.payoutDetails?.payoutReference,90);
+    const ref=clean(body.payoutReference,90)||(priorReference?tx.transactionId+"-"+Date.now():tx.transactionId);
+    if(!/^[A-Za-z0-9._-]{4,100}$/.test(ref)) return json({error:"Referencia de dispersión no válida."},400);
+    const api=TRANZAK_TREASURY+"/payouts";
+    try { await claimPayoutDispatch(env,id,ctx.claims.sub); }
+    catch(error) { return json({error:error.message||"No se pudo bloquear la dispersión."},409); }
+    let sendStarted=false;
     try {
-      const authResponse=await fetch(path+"/authorize",{method:"POST",headers:{"X-API-Key":env.TRANZAK_API_KEY,"content-type":"application/json"},body:JSON.stringify({amount:payout.amount,network:payout.network,receiver:payout.receiver,reference:ref,description:"SENDWAYO "+id})});
+      const authResponse=await fetch(api+"/authorize",{method:"POST",headers:{"X-API-Key":env.TRANZAK_API_KEY,"content-type":"application/json"},body:JSON.stringify({amount:payout.amount,network:payout.network,receiver:payout.receiver,reference:ref,description:"SENDWAYO "+id})});
       const authData=await authResponse.json();
       const authorizationToken=authData.authorization?.authorization_token;
-      if(!authResponse.ok||!authorizationToken) throw new Error("Tranzak rechazó la autorización de la dispersión.");
-      const sendResponse=await fetch(path,{method:"POST",headers:{"X-API-Key":env.TRANZAK_API_KEY,"content-type":"application/json"},body:JSON.stringify({authorization_token:authorizationToken})});
+      if(!authResponse.ok||!authorizationToken) throw new Error(clean(authData.error||authData.message||"Tranzak rechazó la autorización.",180));
+      sendStarted=true;
+      const sendResponse=await fetch(api,{method:"POST",headers:{"X-API-Key":env.TRANZAK_API_KEY,"content-type":"application/json"},body:JSON.stringify({authorization_token:authorizationToken})});
       const sent=await sendResponse.json();
-      if(!sendResponse.ok||!sent.payout) {
-        await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...tx.payoutDetails,status:"outcome_unknown",payoutReference:ref,warning:"Verifique el estado con Tranzak antes de volver a intentar."}});
-        return json({error:"No fue posible confirmar la respuesta de envío. La operación se marcó outcome_unknown para evitar un doble pago."},502);
-      }
-      const status=sent.payout.status||"processing";
-      await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...tx.payoutDetails,status,payoutReference:ref,providerReference:sent.payout.payout_id,network:payout.network,fee:Number(sent.payout.fee||0),totalDebited:Number(sent.payout.total_debited||0),startedAtMs:tx.payoutDetails.startedAtMs||Date.now()},timestamps:{...tx.timestamps,updated:Date.now(),dispatched:Date.now()}});
+      if(!sendResponse.ok||!sent.payout) throw new Error("La respuesta de envío de Tranzak no permite confirmar el resultado.");
+      const latest=await getTransaction(env,id),status=sent.payout.status||"processing";
+      await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...latest.payoutDetails,status,payoutReference:ref,providerReference:sent.payout.payout_id,network:payout.network,fee:Number(sent.payout.fee||0),totalDebited:Number(sent.payout.total_debited||0),startedAtMs:latest.payoutDetails.startedAtMs||Date.now()},timestamps:{...latest.timestamps,updated:Date.now(),dispatched:Date.now()}});
       return json({transactionId:id,payout:sent.payout});
     } catch(error) {
-      await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...tx.payoutDetails,status:"outcome_unknown",payoutReference:ref,warning:"La solicitud tuvo resultado incierto; revisar en el panel del proveedor antes de reintentar."},timestamps:{...tx.timestamps,updated:Date.now()}});
-      return json({error:error.message||"Resultado de dispersión incierto. No reintente sin verificar."},502);
+      const latest=await getTransaction(env,id);
+      const uncertain=sendStarted;
+      await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...latest.payoutDetails,status:uncertain?"outcome_unknown":"failed_authorization",payoutReference:ref,warning:uncertain?"Verifique el estado con Tranzak antes de volver a intentar.":clean(error?.message||"Autorización rechazada",180)},timestamps:{...latest.timestamps,updated:Date.now()}});
+      return json({error:uncertain?"El resultado del envío no es concluyente. La operación quedó bloqueada para impedir un doble pago.":clean(error?.message||"Tranzak rechazó la autorización.",180)},502);
     }
   }
   if(["BANK","BANK_TRANSFER","MERCHANT","MERCHANT_PAYMENT"].includes(settle)) {
-    await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...tx.payoutDetails,status:"manual_pending",manualDispatch:{createdBy:ctx.claims.sub,createdAtMs:Date.now(),reason:"No existe un adaptador bancario/comercial contratado y configurado."}},timestamps:{...tx.timestamps,updated:Date.now()}});
+    try { await claimPayoutDispatch(env,id,ctx.claims.sub); } catch(error) { return json({error:error.message||"No se pudo bloquear la orden."},409); }
+    const latest=await getTransaction(env,id);
+    await atomicUpdate(env,transactionUrl(id),{payoutDetails:{...latest.payoutDetails,status:"manual_pending",manualDispatch:{createdBy:ctx.claims.sub,createdAtMs:Date.now(),reason:"No existe un adaptador bancario/comercial contratado y configurado."}},timestamps:{...latest.timestamps,updated:Date.now()}});
     return json({transactionId:id,status:"manual_pending",message:"Orden creada para dispersión manual. No se ha enviado dinero al banco o comercio."});
   }
   return json({error:"Tipo de dispersión no soportado o no contratado."},400);
