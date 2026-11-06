@@ -466,12 +466,12 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
       <button onclick="abrirVentanillaTablero('USA → RD (8%)', 'envio')" class="bg-green-500 text-white rounded-lg p-3 text-left relative"><div class="text-[8px] absolute top-1 right-2 bg-white/20 px-2 py-0.5 rounded-full">USA to RD</div><div class="text-[10px]">✈️</div><div class="text-[10px] font-bold mt-1">+ USA->RD (8%)</div></button>
       <button onclick="abrirVentanillaTablero('USA → HT (8%)', 'envio')" class="bg-pink-400 text-white rounded-lg p-3 text-left relative"><div class="text-[8px] absolute top-1 right-2 bg-white/20 px-2 py-0.5 rounded-full">USA to HT</div><div class="text-[10px]">🌎</div><div class="text-[10px] font-bold mt-1">+ USA->HT (8%)</div></button>
       <button onclick="abrirVentanillaTablero('HT → USA (8%)', 'envio')" class="bg-cyan-400 text-white rounded-lg p-3 text-left relative"><div class="text-[8px] absolute top-1 right-2 bg-white/20 px-2 py-0.5 rounded-full">HT to USA</div><div class="text-[10px]">💸</div><div class="text-[10px] font-bold mt-1">+ HT->USA (8%)</div></button>
-      <button onclick="abrirVentanillaTablero('Deposito (3 cuentas)', 'deposito')" class="bg-green-600 text-white rounded-lg p-3 text-left relative"><div class="text-[8px] absolute top-1 right-2 bg-white/20 px-2 py-0.5 rounded-full">3 cuentas</div><div class="text-[10px]">➕</div><div class="text-[10px] font-bold mt-1">+ Deposito</div></button>
+      <button onclick="abrirVentanillaTablero('Deposito', 'deposito')" class="bg-green-600 text-white rounded-lg p-3 text-left relative"><div class="text-[10px]">➕</div><div class="text-[10px] font-bold mt-1">+ Deposito</div></button>
     </div>
 
     <div id="view-tablero" class="view bg-white rounded-xl border shadow-sm">
       <div class="p-3 border-b flex justify-between items-center">
-        <span class="font-bold text-[10px] tracking-widest">TRANSACCIONES RECIENTES • N° CORRELATIVO • EJEMPLO 01 SW-2024-10-12-180939 Deposito (3 cuentas) NatCash - Deposito 5000 RD$ Fee 8%: 0 Neto:5000 Aprobado</span>
+        <span class="font-bold text-[10px] tracking-widest">TRANSACCIONES RECIENTES • N° CORRELATIVO • EJEMPLO 01 SW-2024-10-12-180939 Deposito NatCash - Deposito 5000 RD$ Fee 8%: 0 Neto:5000 Aprobado</span>
         <span class="bg-gray-100 px-3 py-1 rounded-full text-[10px]"><span id="total-registros">6</span> registros</span>
       </div>
       <div class="overflow-x-auto">
@@ -8329,6 +8329,166 @@ window.sendwayoShareReceipt=async function(){
     if (selected && typeof window.sendwayoSetLanguage === 'function') window.sendwayoSetLanguage(selected.value);
   }
   window.addEventListener('load', reapplyLanguage);
+})();
+</script>
+<script id="sendwayo-admin-audit-maintenance-v7">
+(function(){
+'use strict';
+var ROOT='sendwayo_express_v2',bankRef=null,bankCb=null;
+var $=function(id){return document.getElementById(id);};
+var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var norm=function(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();};
+var n=function(v){var x=typeof v==='number'?v:Number(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return Number.isFinite(x)?Math.round(x*100)/100:0;};
+var fb=function(){return window.sendwayoFirebase||null;},me=function(){return window.currentUser||null;};
+var admin=function(){var u=me();return !!u&&(['admin','administrador','administration'].includes(norm(u.role||u.rol))||['ADMINADMIN','ADMIN-000'].includes(String(u.id||'').toUpperCase()));};
+var key=function(a){return String(a&&(a.dbUserKey||a.rtdbUserKey||a.firebaseKey||a.id)||'');};
+var accts=function(){var a=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)a.push(ADMIN);}catch(e){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))a=a.concat(AGENTES);}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))a=a.concat(REMITENTES);}catch(e){}var seen={};return a.filter(function(x){var k=key(x);if(!x||!k||seen[k])return false;seen[k]=1;return true;});};
+var acct=function(k){return accts().find(function(a){return [a.id,a.dbUserKey,a.rtdbUserKey,a.codigo,a.email,a.authUid].some(function(v){return String(v||'')===String(k||'');});})||null;};
+var adminAcct=function(){return accts().find(function(a){return norm(a.role||a.rol)==='admin'||String(a.dbUserKey)==='admin'||['ADMINADMIN','ADMIN-000'].includes(String(a.id||'').toUpperCase());})||null;};
+var txs=function(){try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))return TRANSACCIONES;}catch(e){}return Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];};
+var tx=function(id){return txs().find(function(t){return String(t&&t.id)===String(id);})||null;};
+var safe=function(v){return String(v||'').replace(/[.#$\[\]\/]/g,'_');};
+var view=function(){return document.body&&document.body.dataset.sendwayoActiveView||'';};
+function audit(action,type,id,before,after,note){
+ var f=fb();if(!f||!f.auth||!f.auth.currentUser)throw new Error('Sesión Firebase no disponible.');
+ var now=Date.now(),id2='AUD-'+now+'-'+Math.random().toString(36).slice(2,8);
+ return {id:id2,action:action,recordType:type,recordId:String(id||''),before:before||null,after:after||null,note:note||'',createdByAuthUid:f.auth.currentUser.uid,createdByUserId:String(me()&&(me().dbUserKey||me().id)||''),createdAt:new Date(now).toISOString(),createdAtMs:now};
+}
+
+// Mi banco privado: lectura de todos los registros solo para Administración.
+window.SENDWAYO_PRIVATE_BANK_DETAILS={};
+function stopBank(){if(bankRef&&bankCb){try{bankRef.off('value',bankCb);}catch(e){}}bankRef=null;bankCb=null;}
+function loadBank(){
+ var f=fb(),u=me();if(!f||!f.db||!f.auth||!f.auth.currentUser||!u)return;
+ stopBank();var k=key(u);if(!k)return;var ref=admin()?f.db.ref(ROOT+'/privateBankDetails'):f.db.ref(ROOT+'/privateBankDetails/'+safe(k));
+ var cb=function(s){var val=s&&s.val?s.val():null;if(admin())window.SENDWAYO_PRIVATE_BANK_DETAILS=val&&typeof val==='object'?val:{};else{var o={};if(val)o[k]=val;window.SENDWAYO_PRIVATE_BANK_DETAILS=o;}if(view()==='mibanco')renderBank();};
+ bankRef=ref;bankCb=cb;ref.on('value',cb,function(e){console.warn('[SENDWAYO] Error leyendo Mi banco',e&&e.message||e);});
+}
+window.addEventListener('sendwayo:firebase-ready',loadBank);
+if(fb()&&fb().auth&&fb().auth.onAuthStateChanged)fb().auth.onAuthStateChanged(function(u){if(!u){stopBank();window.SENDWAYO_PRIVATE_BANK_DETAILS={};}else if(me())loadBank();});
+function input(id,label,value){return '<label class="block text-xs font-bold">'+esc(label)+'<input id="'+id+'" value="'+esc(value||'')+'" class="mt-1 w-full border rounded-xl p-2.5 font-normal"></label>';}
+function renderBank(){
+ var root=$('view-mibanco'),data=window.SENDWAYO_PRIVATE_BANK_DETAILS||{};if(!root||!me())return;
+ if(admin()){
+  var rows=accts().map(function(a,i){var k=key(a),d=data[k]||a.bankDetails||{},name=a.nombre||a.name||a.email||k,has=Object.keys(d||{}).length>0;
+   return '<tr class="border-t"><td class="p-3">'+(i+1)+'</td><td class="p-3">'+esc(name)+'<br><small>'+esc(String(a.role||a.rol||''))+' · '+esc(a.codigo||a.id||'')+'</small></td><td class="p-3">'+esc(d.banco||'—')+'</td><td class="p-3">'+esc(d.cuenta||'—')+'</td><td class="p-3">'+esc(d.titular||name)+'</td><td class="p-3">'+esc(d.documento||'—')+'</td><td class="p-3">'+esc(d.moneda||'—')+'</td><td class="p-3"><button type="button" data-bank-edit="'+esc(k)+'" class="border rounded-full px-3 py-1">Modificar</button> '+(has?'<button type="button" data-bank-delete="'+esc(k)+'" class="border border-red-300 text-red-700 rounded-full px-3 py-1">Borrar</button>':'')+'</td></tr>';
+  }).join('');
+  root.innerHTML='<section class="p-3 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black">Mi banco — todas las cuentas</h2><p class="text-xs mt-1">Administración puede consultar, modificar y borrar los datos bancarios de todos los agentes y remitentes. Los demás usuarios solo ven sus propios datos.</p></header><div class="bg-white border rounded-xl overflow-x-auto"><table class="w-full text-xs min-w-[950px]"><thead><tr><th class="p-3">N°</th><th class="p-3">Cuenta / rol</th><th class="p-3">Banco</th><th class="p-3">Número de cuenta</th><th class="p-3">Titular</th><th class="p-3">Documento</th><th class="p-3">Moneda</th><th class="p-3">Acciones</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8">No hay cuentas.</td></tr>')+'</tbody></table></div></section>';
+  root.querySelectorAll('[data-bank-edit]').forEach(function(b){b.onclick=function(){openBank(b.getAttribute('data-bank-edit'));};});
+  root.querySelectorAll('[data-bank-delete]').forEach(function(b){b.onclick=function(){delBank(b.getAttribute('data-bank-delete'));};});
+ }else{
+  var u=me(),k=key(u),d=data[k]||{};
+  root.innerHTML='<section class="p-3 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black">Mi banco</h2><p class="text-xs">Guarde sus datos bancarios para que Administración pueda consultarlos. Solo usted y Administración tendrán acceso.</p></header><div class="bg-white border rounded-xl p-4 grid sm:grid-cols-2 gap-3">'+input('sw-own-banco','Banco',d.banco)+input('sw-own-cuenta','Número de cuenta',d.cuenta)+input('sw-own-titular','Titular',d.titular||u.nombre||u.name)+input('sw-own-doc','Cédula / pasaporte',d.documento)+'<label class="block text-xs font-bold">Moneda<select id="sw-own-moneda" class="mt-1 w-full border rounded-xl p-2.5"><option value="DOP"'+((d.moneda||'DOP')==='DOP'?' selected':'')+'>DOP</option><option value="HTG"'+(d.moneda==='HTG'?' selected':'')+'>HTG</option><option value="AMBAS"'+(d.moneda==='AMBAS'?' selected':'')+'>DOP y HTG</option></select></label><div class="sm:col-span-2"><button id="sw-own-save" class="bg-green-700 text-white rounded-full px-5 py-2.5 font-bold">Guardar datos bancarios</button></div></div></section>';
+  $('sw-own-save').onclick=function(){saveBank(k,false);};
+ }
+}
+function openBank(k){
+ if(!admin())return;var a=acct(k);if(!a)return;var d=(window.SENDWAYO_PRIVATE_BANK_DETAILS||{})[k]||a.bankDetails||{},m=$('sw-bank-modal');
+ if(!m){m=document.createElement('div');m.id='sw-bank-modal';m.className='fixed inset-0 z-[2147483600] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(m);}
+ m.innerHTML='<div class="w-full max-w-xl bg-white rounded-2xl p-4 space-y-3"><div class="flex justify-between"><b>Datos bancarios — '+esc(a.nombre||a.name||a.id)+'</b><button id="sw-bank-close">✕</button></div><div class="grid sm:grid-cols-2 gap-3">'+input('sw-edit-banco','Banco',d.banco)+input('sw-edit-cuenta','Número de cuenta',d.cuenta)+input('sw-edit-titular','Titular',d.titular||a.nombre||a.name)+input('sw-edit-doc','Cédula / pasaporte',d.documento)+'<label class="block text-xs font-bold">Moneda<select id="sw-edit-moneda" class="mt-1 w-full border rounded-xl p-2.5"><option value="DOP"'+((d.moneda||'DOP')==='DOP'?' selected':'')+'>DOP</option><option value="HTG"'+(d.moneda==='HTG'?' selected':'')+'>HTG</option><option value="AMBAS"'+(d.moneda==='AMBAS'?' selected':'')+'>DOP y HTG</option></select></label></div><button id="sw-edit-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar en Firebase</button></div>';
+ m.querySelector('#sw-bank-close').onclick=function(){m.remove();};m.querySelector('#sw-edit-save').onclick=function(){saveBank(k,true);};
+}
+async function saveBank(k,editing){
+ var f=fb(),a=editing?acct(k):me();if(!f||!f.db||!f.auth||!f.auth.currentUser||!a)return false;if(editing&&!admin())return false;
+ var p=editing?'sw-edit-':'sw-own-',get=function(s){return String(($((p+s))||{}).value||'').trim();},banco=get('banco'),cuenta=get('cuenta'),titular=get('titular'),documento=get('doc'),moneda=String(($((p+'moneda'))||{}).value||'DOP');
+ if(!banco||!cuenta||!titular){window.alert('Complete banco, número de cuenta y titular.');return false;}
+ var now=Date.now(),old=(window.SENDWAYO_PRIVATE_BANK_DETAILS||{})[k]||{},row={ownerUserId:k,ownerAuthUid:a.authUid||a.uid||old.ownerAuthUid||(!editing?f.auth.currentUser.uid:''),banco:banco,cuenta:cuenta,titular:titular,documento:documento,moneda:moneda,createdAtMs:old.createdAtMs||now,updatedAtMs:now,updatedByAuthUid:f.auth.currentUser.uid};
+ var aRow=audit('DATOS_BANCARIOS_MODIFICADOS','privateBankDetails',k,old,row,'Actualización de datos bancarios privados.'),u={};u[ROOT+'/privateBankDetails/'+safe(k)]=row;u[ROOT+'/audit/'+safe(aRow.id)]=aRow;
+ try{await f.db.ref().update(u);window.SENDWAYO_PRIVATE_BANK_DETAILS[k]=row;if($('sw-bank-modal'))$('sw-bank-modal').remove();renderBank();window.alert('Datos bancarios guardados en Firebase.');return true;}catch(e){window.alert('No se pudieron guardar los datos: '+(e&&e.message||'error Firebase'));return false;}
+}
+window.sendwayoSaveMyBank=function(){
+ var u=me(),k=key(u),f=fb();if(!u||!f||!f.auth||!f.auth.currentUser)return;
+ var vals={banco:String(($('v7-bank-name')||{}).value||'').trim(),cuenta:String(($('v7-bank-account')||{}).value||'').trim(),titular:String(($('v7-bank-holder')||{}).value||'').trim(),documento:String(($('v7-bank-doc')||{}).value||'').trim(),moneda:String(($('v7-bank-currency')||{}).value||'DOP')};
+ if(!vals.banco||!vals.cuenta||!vals.titular){window.alert('Complete banco, número de cuenta y titular.');return;}
+ var old=(window.SENDWAYO_PRIVATE_BANK_DETAILS||{})[k]||{},now=Date.now(),row=Object.assign({},vals,{ownerUserId:k,ownerAuthUid:f.auth.currentUser.uid,createdAtMs:old.createdAtMs||now,updatedAtMs:now,updatedByAuthUid:f.auth.currentUser.uid}),a=audit('DATOS_BANCARIOS_MODIFICADOS','privateBankDetails',k,old,row,'Actualización desde Mi banco.'),u={};
+ u[ROOT+'/privateBankDetails/'+safe(k)]=row;u[ROOT+'/audit/'+safe(a.id)]=a;
+ f.db.ref().update(u).then(function(){window.SENDWAYO_PRIVATE_BANK_DETAILS[k]=row;renderBank();window.alert('Datos bancarios guardados en Firebase.');}).catch(function(e){window.alert('No se pudieron guardar los datos: '+(e&&e.message||'error Firebase'));});
+};
+async function delBank(k){
+ if(!admin()||!window.confirm('¿Borrar los datos bancarios de esta cuenta?'))return;var f=fb(),old=(window.SENDWAYO_PRIVATE_BANK_DETAILS||{})[k];if(!f||!old)return;
+ var a=audit('DATOS_BANCARIOS_ELIMINADOS','privateBankDetails',k,old,null,'Eliminación por Administración.'),u={};u[ROOT+'/privateBankDetails/'+safe(k)]=null;u[ROOT+'/audit/'+safe(a.id)]=a;
+ try{await f.db.ref().update(u);delete window.SENDWAYO_PRIVATE_BANK_DETAILS[k];renderBank();}catch(e){window.alert('No se pudieron borrar los datos: '+(e&&e.message||'error Firebase'));}
+}
+
+// Beneficiarios: modificación para el titular; modificación y borrado para Administración.
+var oldBenSave=window.v162_guardarBen,oldBenOpen=window.v162_abrirBen;
+window.v162_abrirEditarBen=function(id){
+ var b=(window.BENEFICIARIOS_DB||[]).find(function(x){return String(x.id)===String(id);});if(!b)return;
+ window._v162_editBenId=String(id);if(typeof oldBenOpen==='function')oldBenOpen('beneficiarios');
+ [['v162-ben-nom',b.nombre||b.name],['v162-ben-pais',b.codigoPais||'+509'],['v162-ben-tel',b.telefono||b.phone],['v162-ben-dir',b.direccion],['v162-ben-est',b.estado||(b.active===false?'Inactivo':'Activo')]].forEach(function(x){if($(x[0]))$(x[0]).value=x[1]||'';});
+};
+window.v162_renderBen=function(){
+ var root=$('view-beneficiarios');if(!root)return;var list=window.BENEFICIARIOS_DB||[],u=me(),my=String(u&&(u.dbUserKey||u.id)||''),isA=admin(),bal=window.v162_bal||{};
+ var rows=list.map(function(b,i){var can=isA||(my&&String(b.userId||b.ownerUserId||'')===my),act=can?'<button data-ben-edit="'+esc(b.id)+'" class="border rounded-full px-3 py-1">Modificar</button>':'';if(isA)act+=' <button data-ben-delete="'+esc(b.id)+'" class="border border-red-300 text-red-700 rounded-full px-3 py-1">Borrar</button>';
+ return '<tr class="border-b"><td class="p-3">'+(i+1)+'</td><td class="p-2">'+esc(b.nombre||b.name)+'</td><td class="p-2">'+esc(b.telefonoCompleto||((b.codigoPais||'')+' '+(b.telefono||b.phone||'')))+'</td><td class="p-2">'+esc(b.direccion||'')+'</td><td class="p-2">'+esc(b.estado||(b.active===false?'Inactivo':'Activo'))+'</td><td class="p-2">'+(act||'—')+'</td></tr>';}).join('');
+ root.innerHTML='<div class="bg-white rounded-2xl border p-4"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa HT→RD: 2.30</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes '+esc(bal.htg||0)+' HTG</div><div>Balance Pesos RD$ '+esc(bal.rd||0)+'</div><div>Comisión RD$ '+esc(bal.comRD||0)+' / HTG '+esc(bal.comHTG||0)+'</div></div></div><div class="bg-white rounded-2xl border p-4 flex flex-wrap justify-between mt-3 gap-2"><b>Beneficiarios</b><div><input placeholder="Buscar por nombre o teléfono" class="border rounded-full px-4 py-2 text-[11px] w-[200px]" onkeyup="v162_filtrarBen(this.value)"> <button type="button" onclick="v162_abrirBen(\'beneficiarios\')" class="bg-[#0f2440] text-white px-4 py-2 rounded-full">+ Agregar nuevo beneficiario</button></div></div><div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full text-[11px]"><thead><tr><th class="p-3">N°</th><th class="p-2">NOMBRE</th><th class="p-2">TELÉFONO</th><th class="p-2">DIRECCIÓN</th><th class="p-2">ESTADO</th><th class="p-3">ACCIONES</th></tr></thead><tbody id="v162-tabla-ben">'+(rows||'<tr><td colspan="6" class="p-6 text-center">No hay beneficiarios.</td></tr>')+'</tbody></table></div>';
+ root.querySelectorAll('[data-ben-edit]').forEach(function(b){b.onclick=function(){window.v162_abrirEditarBen(b.getAttribute('data-ben-edit'));};});
+ root.querySelectorAll('[data-ben-delete]').forEach(function(b){b.onclick=function(){window.v162_borrarBen(b.getAttribute('data-ben-delete'));};});
+};
+window.v162_guardarBen=async function(){
+ var id=String(window._v162_editBenId||'');if(!id)return typeof oldBenSave==='function'?oldBenSave.apply(this,arguments):false;
+ var f=fb(),u=me(),rows=window.BENEFICIARIOS_DB||[],old=rows.find(function(b){return String(b.id)===id;});if(!f||!f.db||!f.auth||!f.auth.currentUser||!u||!old)return false;
+ if(!admin()&&String(old.userId||old.ownerUserId||'')!==String(u.dbUserKey||u.id||'')){window.alert('Solo puede modificar sus propios beneficiarios.');return false;}
+ var get=function(k){return String(($((k))||{}).value||'').trim();},name=get('v162-ben-nom'),country=get('v162-ben-pais')||'+509',phone=get('v162-ben-tel'),address=get('v162-ben-dir'),status=get('v162-ben-est')||'Activo';
+ if(!name||!phone){window.alert('Complete nombre y teléfono.');return false;}
+ if(rows.some(function(b){return String(b.id)!==id&&String(b.userId||b.ownerUserId||'')===String(old.userId||old.ownerUserId||'')&&String(b.telefono||b.phone||'').replace(/\D/g,'')===phone.replace(/\D/g,'');})){window.alert('Ese teléfono ya está registrado.');return false;}
+ var patch={nombre:name,name:name,telefono:phone,phone:phone,codigoPais:country,telefonoCompleto:country+' '+phone,direccion:address,estado:status,active:status==='Activo',updatedAtMs:Date.now(),updatedByAuthUid:f.auth.currentUser.uid};
+ try{await f.db.ref(ROOT+'/beneficiaries/'+safe(id)).update(patch);Object.assign(old,patch);window._v162_editBenId='';if($('modal-beneficiario-v162'))$('modal-beneficiario-v162').classList.add('hidden');window.v162_renderBen();window.alert('Beneficiario modificado y guardado en Firebase.');return true;}catch(e){window.alert('Error al modificar beneficiario: '+(e&&e.message||'Firebase'));return false;}
+};
+window.v162_borrarBen=async function(id){
+ if(!admin()){window.alert('Solo Administración puede borrar beneficiarios.');return false;}var f=fb(),row=(window.BENEFICIARIOS_DB||[]).find(function(b){return String(b.id)===String(id);});if(!f||!row||!window.confirm('¿Borrar este beneficiario de Firebase?'))return false;
+ try{var a=audit('BENEFICIARIO_ELIMINADO','beneficiary',id,row,null,'Eliminado por Administración.'),u={};u[ROOT+'/beneficiaries/'+safe(id)]=null;u[ROOT+'/audit/'+safe(a.id)]=a;await f.db.ref().update(u);window.BENEFICIARIOS_DB=(window.BENEFICIARIOS_DB||[]).filter(function(b){return String(b.id)!==String(id);});window.v162_renderBen();return true;}catch(e){window.alert('No se pudo borrar: '+(e&&e.message||'Firebase'));return false;}
+};
+
+// Depósitos: modificar aprobado por diferencia; borrar aprobado con reversión y auditoría.
+function depCur(t){var c=norm(t&&(t.moneda||t.currency||t.currencyCode||''));return c.indexOf('htg')>=0||c.indexOf('gourde')>=0||c.indexOf('gdes')>=0?'HTG':'DOP';}
+function walletKey(t,r){var raw=String(r&&r.userId||t&&(t.dbUserKey||t.firebaseOwnerKey)||''),a=acct(raw)||acct(t&&(t.saldoAcreditadoCuentaId||t.destinoId||t.depositanteId||t.remitenteId||t.creadorId));if(a&&norm(a.role||a.rol)==='agente')a=adminAcct();return key(a);}
+function localWallet(k,c,v){var a=acct(k);if(!a)return;a.balances=a.balances||{};a.balances[c]=v;if(c==='DOP'){a.balance=v;a.balanceDOP=v;a.balanceRD=v;}else{a.balanceHTG=v;a.balanceHtg=v;}}
+window.sendwayoAdminDepositAction=async function(action,id){
+ if(!admin()){window.alert('Solo Administración puede modificar o borrar depósitos.');return false;}
+ var f=fb(),t=tx(id);if(!f||!f.db||!f.auth||!f.auth.currentUser||!t)return false;
+ var raw=t._cloudRaw||{},category=String(t.firebaseCategory||'deposits'),record=safe(t.firebaseKey||t.id);if(category!=='deposits')return false;
+ var status=norm(t.estado||raw.status||raw.estado),approved=status==='aprobado'||status==='approved',old=n(raw.amount!=null?raw.amount:(t.montoValue!=null?t.montoValue:t.amount)),cur=depCur(t),now=Date.now(),newAmount=old;
+ var before={id:String(t.id),status:String(t.estado||raw.status||'Pendiente'),amount:old,currency:cur,beneficiary:String(t.beneficiario||raw.beneficiary||''),userId:String(raw.userId||t.remitenteId||t.destinoId||'')},updates={},wKey='';
+ if(action==='modificar'){var value=window.prompt('Nuevo monto del depósito ('+cur+'):',String(old));if(value===null)return false;newAmount=n(value);if(!(newAmount>0)){window.alert('El monto debe ser mayor que cero.');return false;}if(Math.abs(newAmount-old)<0.0001)return false;}
+ else if(action==='borrar'){if(!window.confirm(approved?'Depósito aprobado: se revertirá el crédito del balance y se eliminará el registro; quedará constancia en auditoría. ¿Continuar?':'¿Borrar este depósito pendiente? Quedará constancia en auditoría.'))return false;}else return false;
+ try{
+  if(approved){
+   wKey=walletKey(t,raw);if(!wKey)throw new Error('No se identificó la cuenta que recibió el depósito.');
+   var snap=await f.db.ref(ROOT+'/users/'+safe(wKey)).once('value');if(!snap.exists())throw new Error('No existe el perfil Firebase del destinatario.');
+   var p=snap.val()||{},bs=p.balances||{},balance=cur==='DOP'?n(bs.DOP!=null?bs.DOP:(p.balanceDOP!=null?p.balanceDOP:(p.balanceRD!=null?p.balanceRD:p.balance))):n(bs.HTG!=null?bs.HTG:(p.balanceHTG!=null?p.balanceHTG:p.balanceHtg));
+   var next=Math.round((balance+(action==='modificar'?newAmount-old:-old))*100)/100;if(next < -0.0001)throw new Error('La cuenta ya utilizó parte de este depósito y la reversión dejaría un balance negativo. Regularice primero ese balance.');if(next<0)next=0;
+   if(cur==='DOP'){updates[ROOT+'/users/'+safe(wKey)+'/balance']=next;updates[ROOT+'/users/'+safe(wKey)+'/balanceDOP']=next;updates[ROOT+'/users/'+safe(wKey)+'/balanceRD']=next;updates[ROOT+'/users/'+safe(wKey)+'/balances/DOP']=next;}
+   else{updates[ROOT+'/users/'+safe(wKey)+'/balanceHTG']=next;updates[ROOT+'/users/'+safe(wKey)+'/balanceHtg']=next;updates[ROOT+'/users/'+safe(wKey)+'/balances/HTG']=next;}
+   if(action==='modificar'){updates[ROOT+'/users/'+safe(wKey)+'/depositCredits/'+record]=newAmount;updates[ROOT+'/users/'+safe(wKey)+'/depositCurrencies/'+record]=cur;}
+   localWallet(wKey,cur,next);
+  }
+  if(action==='modificar'){updates[ROOT+'/deposits/'+record+'/amount']=newAmount;updates[ROOT+'/deposits/'+record+'/net']=newAmount;updates[ROOT+'/deposits/'+record+'/receivedAmount']=newAmount.toFixed(2)+' '+cur;updates[ROOT+'/deposits/'+record+'/updatedAtMs']=now;updates[ROOT+'/deposits/'+record+'/updatedByAuthUid']=f.auth.currentUser.uid;}
+  else updates[ROOT+'/deposits/'+record]=null;
+  var a=audit(action==='borrar'?(approved?'DEPOSITO_APROBADO_ANULADO_Y_ELIMINADO':'DEPOSITO_ELIMINADO'):(approved?'DEPOSITO_APROBADO_MODIFICADO':'DEPOSITO_MODIFICADO'),'deposit',t.id,before,action==='borrar'?null:{amount:newAmount,currency:cur,status:String(t.estado||'Pendiente')},'Cambio realizado por Administración con trazabilidad.');
+  updates[ROOT+'/audit/'+safe(a.id)]=a;await f.db.ref().update(updates);
+  if(action==='modificar'){t.amount=newAmount;t.montoValue=newAmount;t.monto=newAmount.toFixed(2)+' '+cur;t.neto=newAmount;t.montoRecibido=newAmount.toFixed(2)+' '+cur;t._cloudRaw=Object.assign({},raw,{amount:newAmount,net:newAmount,receivedAmount:newAmount.toFixed(2)+' '+cur,updatedAtMs:now});}
+  else{var arr=txs(),i=arr.indexOf(t);if(i>=0)arr.splice(i,1);}
+  try{if(typeof window.updateVisibleMoney==='function')window.updateVisibleMoney();if(typeof window.renderPrincipal==='function')window.renderPrincipal();localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txs()));}catch(e){}
+  window.alert(action==='modificar'?'Depósito modificado en Firebase; balance ajustado por la diferencia.':'Depósito eliminado y balance revertido. Se guardó constancia en auditoría.');return true;
+ }catch(e){console.error('[SENDWAYO depósito]',e);window.alert('No se completó: '+(e&&e.message||'Firebase'));return false;}
+};
+function decorateDeposits(){
+ if(!admin())return;var body=document.querySelector('#view-depositos #tabla-sendwayo-depositos-body');if(!body)return;
+ body.querySelectorAll('tr').forEach(function(row){
+  if(row.dataset.sendwayoAdminDepositActions==='1')return;var first=row.querySelector('button[onclick*="sendwayoActionGeneric"]');if(!first)return;
+  var m=String(first.getAttribute('onclick')||'').match(/sendwayoActionGeneric\('depositos','ver','([^']+)'\)/);if(!m)return;var t=tx(m[1]);if(!t||norm(t.tipo||t.type).indexOf('deposit')<0)return;
+  var cell=row.cells[row.cells.length-1],host=cell&&(cell.querySelector('div')||cell);if(!host)return;
+  var edit=document.createElement('button');edit.type='button';edit.className='border rounded-full px-3 py-1';edit.textContent='Modificar';edit.onclick=function(){window.sendwayoAdminDepositAction('modificar',t.id);};
+  var del=document.createElement('button');del.type='button';del.className='border border-red-300 text-red-700 rounded-full px-3 py-1';del.textContent='Borrar';del.onclick=function(){window.sendwayoAdminDepositAction('borrar',t.id);};
+  host.appendChild(edit);host.appendChild(del);row.dataset.sendwayoAdminDepositActions='1';
+ });
+}
+function watchDeposits(){var root=$('view-depositos');if(!root||root.dataset.sendwayoDepositObserver==='1')return;root.dataset.sendwayoDepositObserver='1';new MutationObserver(decorateDeposits).observe(root,{childList:true,subtree:true});decorateDeposits();}
+var oldShow=window.showView;if(typeof oldShow==='function'&&!oldShow.__sendwayoAdminAuditPatch){var wrapped=function(v){var r=oldShow.apply(this,arguments);if(v==='mibanco')[100,400,1000,2000].forEach(function(ms){setTimeout(renderBank,ms);});if(v==='depositos')setTimeout(decorateDeposits,120);return r;};wrapped.__sendwayoAdminAuditPatch=true;window.showView=wrapped;}
+window.addEventListener('sendwayo:firebase-ready',function(){loadBank();if(view()==='mibanco')setTimeout(renderBank,150);if(view()==='depositos')setTimeout(decorateDeposits,150);});
+watchDeposits();window.addEventListener('DOMContentLoaded',watchDeposits);
+if(me()){loadBank();if(view()==='mibanco')setTimeout(renderBank,300);if(view()==='depositos')setTimeout(decorateDeposits,300);}
 })();
 </script>
 </body>
