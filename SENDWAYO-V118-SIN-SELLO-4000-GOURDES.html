@@ -6828,7 +6828,22 @@ window.sendwayoShareReceipt=async function(){
   }
 
   const db = authApp.database();
-  const userRoot = db.ref(userRootPath);
+  let userRoot = db.ref(userRootPath);
+  async function selectExistingUserRoot(){
+    try {
+      const current = await userRoot.once('value');
+      if (current.exists()) return;
+    } catch (error) {
+      console.warn('[SENDWAYO] Ruta principal de perfiles no disponible; comprobando users:', error);
+    }
+    try {
+      const legacyRoot = db.ref('users');
+      const legacy = await legacyRoot.once('value');
+      if (legacy.exists()) userRoot = legacyRoot;
+    } catch (error) {
+      console.warn('[SENDWAYO] No se pudo comprobar la ruta alternativa users:', error);
+    }
+  }
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
   window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;} };
 
@@ -6933,6 +6948,7 @@ window.sendwayoShareReceipt=async function(){
     return found;
   }
   async function readProfile(firebaseUser) {
+    await selectExistingUserRoot();
     const email=norm(firebaseUser.email);
     if(email===ADMIN_EMAIL){
       const adminSnap=await userRoot.child('admin').once('value');
