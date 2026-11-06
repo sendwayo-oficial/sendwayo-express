@@ -7298,7 +7298,7 @@ window.sendwayoShareReceipt=async function(){
     if(role==='ADMIN') return 'ADMINADMIN';
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
     const supplied=txt(profile.id || profile.accountId || profile.staffId || profile.code || profile.legacyId || profile.idUsuario);
-    let id=known?.id || supplied || key;
+    let id=supplied || known?.id || key;
     if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
     if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
     return id;
@@ -8524,7 +8524,7 @@ window.sendwayoShareReceipt=async function(){
 (function(){
  'use strict';
  var getFb=function(){return window.sendwayoFirebase||null;},rootPath='sendwayo_express_v2',editId='',countries=[],countryPromise=null,displayNames=null;
- var codes='AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DM DO DZ EC EE EG ER ES ET FI FJ FK FO FR GA GD GE GF GG GH GI GL GM GN GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
+ var codes='AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DM DO DZ EC EE EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
  var dialFallback={HT:'+509',DO:'+1-809',US:'+1',CA:'+1',MX:'+52',PR:'+1-787',JM:'+1-876',CU:'+53',PA:'+507',CR:'+506',CO:'+57',VE:'+58',EC:'+593',PE:'+51',AR:'+54',BR:'+55',CL:'+56',ES:'+34',FR:'+33',GB:'+44',IT:'+39',DE:'+49',NL:'+31',CH:'+41',CN:'+86',IN:'+91',AU:'+61',BS:'+1-242',TT:'+1-868',BB:'+1-246',GD:'+1-473',DM:'+1-767',KN:'+1-869',LC:'+1-758',VC:'+1-784',AG:'+1-268',BZ:'+501',GT:'+502',HN:'+504',SV:'+503',NI:'+505'};
  try{displayNames=new Intl.DisplayNames(['es'],{type:'region'});}catch(e){}
  function byId(id){return document.getElementById(id);}function txt(x){return String(x==null?'':x).trim();}
@@ -8545,7 +8545,7 @@ window.sendwayoShareReceipt=async function(){
  function options(selected){return '<option value="">Seleccione un país</option>'+countries.slice().sort(function(a,b){return a.name.localeCompare(b.name,'es');}).map(function(c){return '<option value="'+safe(c.alpha2)+'" '+(c.alpha2===selected?'selected':'')+'>'+safe(c.flag)+' '+safe(c.name)+' ('+safe(c.alpha2)+')</option>';}).join('');}
  function installBeneficiaryCountry(){
    var sel=byId('v162-ben-pais'),phone=byId('v162-ben-tel');if(!sel||!phone)return;
-   sel.innerHTML=options(sel.value||'HT');sel.className='w-full border rounded-full px-3 py-3 text-[13px]';sel.style.width='100%';
+   if(!countries.length)return;if(sel.dataset.sendwayoCountries!=='1'){sel.innerHTML=options(sel.value||'HT');sel.dataset.sendwayoCountries='1';}sel.className='w-full border rounded-full px-3 py-3 text-[13px]';sel.style.width='100%';
    var group=sel.parentElement;if(group)group.className='grid grid-cols-[1fr_115px] gap-2';
    var dial=byId('v7-ben-dial');if(!dial){dial=document.createElement('input');dial.id='v7-ben-dial';dial.type='tel';dial.inputMode='tel';dial.placeholder='+509';dial.className='w-full border rounded-full px-3 py-3 text-[13px]';sel.insertAdjacentElement('afterend',dial);}
    phone.placeholder='Teléfono sin prefijo internacional';
@@ -8553,11 +8553,11 @@ window.sendwayoShareReceipt=async function(){
    if(!dial.value){var c=getCountry(sel.value);dial.value=c&&c.callingCode||dialFallback[sel.value]||'';}
  }
  function routePanel(kind){
-   var route=byId(kind==='envio'?'v162-envio-ruta':'v162-retiro-ruta'),id='v7-'+kind+'-route-fields';if(!route||byId(id))return;
-   var box=document.createElement('div');box.id=id;box.className='rounded-xl border border-blue-200 bg-blue-50 p-3 space-y-2';
+   var route=byId(kind==='envio'?'v162-envio-ruta':'v162-retiro-ruta'),id='v7-'+kind+'-route-fields';if(!route)return;
+   var box=byId(id);if(!box){box=document.createElement('div');box.id=id;box.className='rounded-xl border border-blue-200 bg-blue-50 p-3 space-y-2';
    box.innerHTML='<b class="text-xs">Transacción internacional — ruta entre países</b><div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><label class="text-[10px] font-bold">País de origen<select id="v7-'+kind+'-origin" class="w-full border rounded-lg p-2 text-xs"></select></label><label class="text-[10px] font-bold">País de destino<select id="v7-'+kind+'-destination" class="w-full border rounded-lg p-2 text-xs"></select></label><label class="text-[10px] font-bold">Moneda que se debita<select id="v7-'+kind+'-debit" class="w-full border rounded-lg p-2 text-xs"><option value="DOP">DOP — Pesos dominicanos</option><option value="HTG">HTG — Gourdes haitianos</option></select></label><label class="text-[10px] font-bold">Moneda de entrega (ISO)<input id="v7-'+kind+'-receive-currency" maxlength="3" class="w-full border rounded-lg p-2 text-xs uppercase" placeholder="USD, EUR, HTG"></label><label class="text-[10px] font-bold">Monto exacto a entregar<input id="v7-'+kind+'-receive-amount" type="number" min="0" step="0.01" class="w-full border rounded-lg p-2 text-xs" placeholder="Importe que recibirá"></label><label class="text-[10px] font-bold">Banco o servicio (opcional)<input id="v7-'+kind+'-channel" class="w-full border rounded-lg p-2 text-xs" placeholder="Banco, billetera, ventanilla"></label></div><p class="text-[10px] text-slate-600">El país y el importe de destino quedan registrados. No se hace conversión automática de monedas.</p>';
-   route.insertAdjacentElement('afterend',box);
-   ['origin','destination'].forEach(function(side){var sel=byId('v7-'+kind+'-'+side);if(sel)sel.innerHTML=options('');});
+   route.insertAdjacentElement('afterend',box);}
+   ['origin','destination'].forEach(function(side){var sel=byId('v7-'+kind+'-'+side);if(sel&&countries.length&&sel.dataset.sendwayoCountries!=='1'){sel.innerHTML=options('');sel.dataset.sendwayoCountries='1';}});
  }
  function rows(){var list=Array.isArray(window.BENEFICIARIOS_DB)?window.BENEFICIARIOS_DB:[];return list.length?list:(Array.isArray(window.BENEFICIARIOS)?window.BENEFICIARIOS:[]);}
  function canManage(row){var uid=getFb()?.auth?.currentUser?.uid;return isAdmin()||!!uid&&txt(row.ownerAuthUid)===txt(uid);}
@@ -8626,9 +8626,9 @@ window.sendwayoShareReceipt=async function(){
    ['AG','RE'].forEach(function(prefix){groups[prefix].sort(function(a,b){return Number(a.data.createdAtMs||0)-Number(b.data.createdAtMs||0)||a.key.localeCompare(b.key);});groups[prefix].forEach(function(row,index){var id=prefix+String(index+1).padStart(6,'0'),old=row.data.id,aliases=Array.isArray(row.data.idAliases)?row.data.idAliases.slice():[];if(old&&old!==id)aliases.push(old);aliases=[...new Set(aliases.filter(Boolean))];if(old!==id||row.data.accountId!==id||JSON.stringify(aliases)!==JSON.stringify(row.data.idAliases||[]))updates[row.key]={id:id,accountId:id,idAliases:aliases,idUpdatedAtMs:Date.now(),idUpdatedByAuthUid:f.auth.currentUser.uid};});});
    if(Object.keys(updates).length)await ref.update(updates);
  }
- var migrationBusy=false;async function runMigration(){if(migrationBusy||!isAdmin()||!getFb()?.readReady)return;migrationBusy=true;try{await migrateIds();}catch(error){migrationBusy=false;console.warn('[SENDWAYO] Migración de IDs pendiente:',error?.message||error);}}
+ var migrationBusy=false,migrationDone=false,migrationRetries=0;async function runMigration(){if(migrationBusy||migrationDone||!isAdmin()||!getFb()?.auth?.currentUser)return;if(!getFb()?.readReady){if(migrationRetries++<90)setTimeout(runMigration,1000);return;}migrationBusy=true;try{await migrateIds();migrationDone=true;}catch(error){migrationBusy=false;console.warn('[SENDWAYO] Migración de IDs pendiente:',error?.message||error);}}
  async function init(){await loadCountries();installBeneficiaryCountry();routePanel('envio');routePanel('retiro');runMigration();}
- window.addEventListener('sendwayo:firebase-ready',function(){migrationBusy=false;setTimeout(runMigration,1800);});
+ window.addEventListener('sendwayo:firebase-ready',function(){migrationBusy=false;migrationDone=false;migrationRetries=0;setTimeout(runMigration,1200);});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
  var observer=new MutationObserver(function(){installBeneficiaryCountry();routePanel('envio');routePanel('retiro');});if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 })();
