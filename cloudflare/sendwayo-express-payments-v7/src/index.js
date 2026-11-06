@@ -7,6 +7,7 @@ const FIREBASE_TOKEN_ISSUER = "https://securetoken.google.com/";
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const ZERO_DECIMAL = new Set(["BIF","CLP","DJF","GNF","ISK","JPY","KMF","KRW","PYG","RWF","UGX","VND","VUV","XAF","XOF","XPF"]);
 const STRIPE_ACCOUNT_COUNTRIES = new Set("AU AT BE BG BR CA HR CY CZ DK EE FI FR DE GI GR HK HU IE IT JP LV LI LT LU MY MT MX NL NZ NO PL PT RO SG SK SI ES SE CH TH AE GB US".split(" "));
+export function isStripeAccountCountrySupported(country) { return STRIPE_ACCOUNT_COUNTRIES.has(normalizeCountry(country)); }
 let jwkCache = { value: null, until: 0 };
 let serviceTokenCache = { value: "", until: 0 };
 
@@ -276,7 +277,7 @@ function transactionRecord(id,ctx,input,validated,provider,ownerProfile=ctx.prof
 async function createStripeCheckout(env,tx,appUrl) {
   if(!env.STRIPE_SECRET_KEY) throw new Error("Falta el secreto STRIPE_SECRET_KEY.");
   const accountCountry=normalizeCountry(env.STRIPE_ACCOUNT_COUNTRY);
-  if(!STRIPE_ACCOUNT_COUNTRIES.has(accountCountry)) throw new Error("Stripe no está habilitado para cuentas comerciales en "+(accountCountry||"el país configurado")+". Configure STRIPE_ACCOUNT_COUNTRY con una entidad legal y una cuenta bancaria válida en un país admitido; que el cliente tenga tarjeta extranjera no elimina este requisito.");
+  if(!isStripeAccountCountrySupported(accountCountry)) throw new Error("Stripe no está habilitado para cuentas comerciales en "+(accountCountry||"el país configurado")+". Configure STRIPE_ACCOUNT_COUNTRY con una entidad legal y una cuenta bancaria válida en un país admitido; que el cliente tenga tarjeta extranjera no elimina este requisito.");
   const amount=amountToMinor(tx.paymentDetails.totalCharged,tx.paymentDetails.sourceCurrency).toString();
   const form=new URLSearchParams({
     mode:"payment",
