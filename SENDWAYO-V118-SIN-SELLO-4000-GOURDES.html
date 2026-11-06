@@ -8417,6 +8417,16 @@ window.sendwayoShareReceipt=async function(){
  function refundOnce(t){if(!t.fondosDebitados||t.fondosDevueltos)return false;const cash=accountById(t.debitAccountId)||accountById(t.cuentaOrigenId)||accountById(t.remitenteId)||accountById(t.creadorId);if(!cash)return false;const cur=(/htg|gdes|gourde/i.test(txt(t.moneda)+' '+txt(t.monto))||t.esHT)?'HTG':'DOP',bal=cash.balances||(cash.balances={DOP:0,HTG:0});bal[cur]=Math.round(((Number(bal[cur])||0)+(Number(t.debitAmount)||Number(t.montoValue)||0))*100)/100;cash.balance=bal;cash.commissions=cash.commissions||cash.comisiones||{DOP:0,HTG:0};cash.comisiones=cash.commissions;t.fondosDevueltos=true;t.fechaDevolucion=new Date().toLocaleString('es-DO');t.devolucionMotivo='Eliminación de operación rechazada/no coincidente';return true}
  window.borrar=function(id){const t=find(id);if(!t)return false;const allowed=isAdmin()||(own(t)&&['rechazado','no coincide'].includes(state(t)));if(!allowed){window.alert('Solo Administración puede borrar operaciones pendientes. El creador puede eliminar su operación rechazada o No coincide.');return false}if(state(t)==='aprobado'){window.alert('Una operación aprobada no devuelve dinero y no puede eliminarse desde aquí. Solicite una reversión auditada.');return false}if(!window.confirm('¿Eliminar la operación '+t.id+'? Si fue rechazada o No coincide, el importe descontado será devuelto una sola vez.'))return false;const refunded=refundOnce(t);notify(t,refunded?'Eliminada y dinero devuelto':'Operación eliminada');const arr=txs(),ix=arr.indexOf(t);if(ix>=0)arr.splice(ix,1);persist();window.alert(refunded?'Operación eliminada. El importe fue devuelto al balance de origen.':'Operación eliminada. No había un descuento pendiente que devolver.');return true};
  txs().forEach(t=>{if(!t.creadorNombre&&t.creadorId){const a=accountById(t.creadorId);if(a){t.creadorNombre=aname(a);t.creadorCodigo=acode(a);t.creadorIdVisible=aid(a)}}});
+
+  function stampTransactionModals(){
+    const a=actor();if(!a)return;
+    const ids=['modal-envio-v162','modal-retiro-v162','modal-recargas-v162','modal-paquetikos-v162','modal-facturas-v162','modal-recargas-exacto','modal-paquetikos-exacto','modal-paquetes-v162','modal-deposito-v162','modal-depositos-v162'];
+    ids.forEach(mid=>{const modal=$(mid);if(!modal||modal.classList.contains('hidden'))return;const host=modal.querySelector('.p-4,.space-y-4,.space-y-3')||modal.firstElementChild||modal;let card=modal.querySelector('[data-sendwayo-actor-stamp]');if(!card){card=document.createElement('div');card.dataset.sendwayoActorStamp='1';card.style.cssText='margin:8px 0 12px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:12px;background:#f1f5f9;color:#10243d;font-size:11px;line-height:1.5';host.insertBefore(card,host.firstChild)}card.innerHTML='<strong>REALIZA LA OPERACIÓN</strong><br>'+esc(aname(a)||'Usuario')+'<br>ID: '+esc(aid(a)||'—')+' · Código: '+esc(acode(a)||'—')});
+  }
+  const modalObserver=new MutationObserver(()=>stampTransactionModals());
+  if(document.body)modalObserver.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',stampTransactionModals,{once:true});else stampTransactionModals();
+  window.addEventListener('load',stampTransactionModals);
 })();
 </script>
 
