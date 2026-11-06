@@ -4831,11 +4831,22 @@ window.sendwayoShareReceipt=async function(){
       ['placeholder','aria-label','title'].forEach(attr=>{if(el.hasAttribute(attr)){const old=el.getAttribute(attr);const val=translatePhrase(old,lang);if(val!==old)el.setAttribute(attr,val);}});
     });
   }
-  let translationObserver=null;
+  let translationObserver=null, translationObserverTimer=null;
   function installTranslationObserver(){
     if(translationObserver||!document.body)return;
-    translationObserver=new MutationObserver(()=>translateInterface(document.body,languageValue()));
-    translationObserver.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
+    // Clock counters and other text updates must not trigger a translation scan
+    // of the entire 800 KB interface every second.
+    translationObserver=new MutationObserver(records=>{
+      const hasNewElements=records.some(record=>record.addedNodes&&record.addedNodes.length>0);
+      if(!hasNewElements||translationObserverTimer!==null)return;
+      translationObserverTimer=window.setTimeout(()=>{
+        translationObserverTimer=null;
+        try{translateInterface(document.body,languageValue());}
+        catch(error){console.warn('[SENDWAYO] No se pudo actualizar el idioma:',error);}
+      },250);
+    });
+    // New sections are translated; characterData/attribute edits are ignored.
+    translationObserver.observe(document.body,{subtree:true,childList:true});
   }
   function languageValue() {
     try { const v = sessionStorage.getItem('sendwayo_express_oficial_20261029_ui_language'); if (languages.some(x => x[0] === v)) return v; } catch (_) {}
