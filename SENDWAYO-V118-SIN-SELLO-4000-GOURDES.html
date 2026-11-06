@@ -6162,7 +6162,7 @@ window.sendwayoShareReceipt=async function(){
       if(item.kind==='status'&&Array.isArray(item.targetIds)){const targets=isAdmin?item.targetIds:item.targetIds.slice(0,1);targets.forEach(id=>{if(id&&String(id)!==String(uid(actor)))recipients.push({id:String(id),role:'REMITENTE'});});}
       const safePart=value=>String(value||'').replace(/[^A-Za-z0-9_-]/g,'_').slice(0,100)||'x';
       [...new Map(recipients.map(r=>[r.id+'|'+r.role,r])).values()].forEach(recipient=>{
-        const targetUserId=recipient.id,targetRole=recipient.role;
+        const targetAccount=recipient.role==='REMITENTE'?account(recipient.id):null;const targetUserId=targetAccount?.dbUserKey||targetAccount?.rtdbUserKey||recipient.id,targetRole=recipient.role;
         const key='tx_'+safePart(item.txId||item.id)+'_'+safePart(item.kind)+'_'+safePart(targetUserId)+'_'+safePart(targetRole);
         const payload={id:key,kind:item.kind||'notice',txId:String(item.txId||''),msg:String(item.msg||''),tipo:String(item.tipo||'Avisos'),targetUserId,targetRole,createdByAuthUid:authUid,createdAtMs:Date.now(),createdAt:new Date().toISOString(),leida:false,read:false};
         cloud.ref('sendwayo_express_v2/notifications/'+key).transaction(existing=>existing||payload).catch(error=>console.warn('[SENDWAYO] Aviso Firebase no enviado:',error?.code||error?.message||error));
