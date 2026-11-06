@@ -147,6 +147,38 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 <script id="sendwayo-firebase-async-sdk-loader">
 (function(){
   'use strict';
+  // Bloquear los manejadores antiguos mientras el acceso Firebase seguro termina de inicializarse.
+  // Así, el primer clic no cae en una versión local anterior del login.
+  window.__sendwayoFirebaseSecureLoginReady = false;
+  window.__sendwayoLoginPending = false;
+  function holdEarlyLogin(event){
+    const button=event.target&&event.target.closest
+      ? event.target.closest('#login-screen button[onclick*="intentarLogin"], #login-screen button[type="submit"]')
+      : null;
+    if(!button||window.__sendwayoFirebaseSecureLoginReady)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.__sendwayoLoginPending=true;
+    const error=document.getElementById('login-error');
+    if(error){
+      error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
+      error.classList.remove('hidden');
+    }
+  }
+  document.addEventListener('click',holdEarlyLogin,true);
+  document.addEventListener('keydown',function(event){
+    if(event.key!=='Enter'||window.__sendwayoFirebaseSecureLoginReady)return;
+    const input=event.target&&event.target.closest?event.target.closest('#login-screen input'):null;
+    if(!input)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.__sendwayoLoginPending=true;
+    const error=document.getElementById('login-error');
+    if(error){
+      error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
+      error.classList.remove('hidden');
+    }
+  },true);
   function loadScript(src){
     return new Promise(function(resolve,reject){
       var script=document.createElement('script');
@@ -6719,6 +6751,8 @@ window.sendwayoShareReceipt=async function(){
   try {
     await window.sendwayoFirebaseSdkReady;
   } catch (sdkError) {
+    window.__sendwayoFirebaseSecureLoginReady = true;
+    window.__sendwayoLoginPending = false;
     const message=sdkError?.message||'No se pudo cargar Firebase.';
     window.sendwayoFirebaseSdkError=sdkError;
     window.intentarLogin=function(){
@@ -6731,6 +6765,8 @@ window.sendwayoShareReceipt=async function(){
     return;
   }
   if (!window.firebase || typeof window.firebase.initializeApp !== 'function' || !window.firebase.auth || !window.firebase.database) {
+    window.__sendwayoFirebaseSecureLoginReady = true;
+    window.__sendwayoLoginPending = false;
     window.sendwayoFirebaseReady = false;
     window.intentarLogin = () => window.alert('No se pudo conectar con Firebase. El inicio de sesión local está desactivado; revise la conexión a Internet e inténtelo de nuevo.');
     console.error('[SENDWAYO] SDK de Firebase no disponible; acceso local bloqueado.');
@@ -7899,6 +7935,19 @@ window.sendwayoShareReceipt=async function(){
   });
   }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLogin();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
   window.sendwayoCloudStatus='Firebase Authentication y lecturas en tiempo real están conectados. Antes de usar dinero real, todavía deben validarse las reglas de escritura por rol y probarse las operaciones financieras en Firebase.';
+  // Liberar el acceso solo cuando el manejador final y el arranque de Firebase ya existen.
+  window.__sendwayoFirebaseSecureLoginReady = true;
+  if(window.__sendwayoLoginPending){
+    window.__sendwayoLoginPending = false;
+    Promise.resolve(state.authReadyPromise).then(function(){
+      window.setTimeout(function(){ attemptLogin(); },0);
+    }).catch(function(error){
+      const message=error?.message||'Firebase no pudo preparar el acceso. Recargue la página e inténtelo otra vez.';
+      const loginError=document.getElementById('login-error');
+      if(loginError){loginError.textContent=message;loginError.classList.remove('hidden');}
+      console.error('[SENDWAYO] No se pudo continuar el primer clic de acceso:',error);
+    });
+  }
 })();
 </script>
 
