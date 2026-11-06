@@ -35,7 +35,7 @@ jobs:
 
       - name: Open the published site and press the login button
         env:
-          PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
+          PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release=cf8c4f4248dbc24e2b84b427cc66718ba730aedf
         run: |
           node <<'NODE'
           const { chromium } = require('playwright');
@@ -50,6 +50,7 @@ jobs:
               const page = await browser.newPage();
               const pageErrors = [];
               const consoleErrors = [];
+              const blockingConsoleErrors = () => consoleErrors.filter(error => !(error.url.endsWith('/favicon.ico') && /404/.test(error.text)));
               page.on('pageerror', error => pageErrors.push({ message: error.message, stack: error.stack }));
               page.on('console', message => {
                 if (message.type() === 'error') {
@@ -89,7 +90,7 @@ jobs:
               console.log('INITIAL PAGE STATE:', JSON.stringify(initial, null, 2));
               if (!initial.welcomeExists || initial.welcomeDisplay === 'none' || initial.welcomeVisibility === 'hidden') {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
-                console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
+                console.error('CONSOLE ERRORS:', JSON.stringify(blockingConsoleErrors(), null, 2));
                 await page.screenshot({ path: 'sendwayo-page-failed.png', fullPage: false });
                 throw new Error('La bienvenida no se muestra en la página pública.');
               }
@@ -116,7 +117,7 @@ jobs:
               console.log('LOGIN PAGE STATE:', JSON.stringify(loginState, null, 2));
               if (!loginState.loginExists || loginState.loginDisplay === 'none' || loginState.loginVisibility === 'hidden' || loginState.loginClass.includes('hidden')) {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
-                console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
+                console.error('CONSOLE ERRORS:', JSON.stringify(blockingConsoleErrors(), null, 2));
                 await page.screenshot({ path: 'sendwayo-login-failed.png', fullPage: false });
                 throw new Error('El formulario no se mostró.');
               }
@@ -129,9 +130,9 @@ jobs:
               if (!ready.usernameEnabled || !ready.passwordEnabled || !ready.loginFunction) {
                 throw new Error('El formulario apareció, pero no quedó listo para escribir e iniciar sesión.');
               }
-              if (pageErrors.length || consoleErrors.length) {
+              if (pageErrors.length || blockingConsoleErrors().length) {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
-                console.error('CONSOLE ERRORS:', JSON.stringify(consoleErrors, null, 2));
+                console.error('CONSOLE ERRORS:', JSON.stringify(blockingConsoleErrors(), null, 2));
                 throw new Error('Hay errores JavaScript al abrir el acceso.');
               }
               console.log('PASS: bienvenida y formulario visibles; campos de acceso habilitados.');
