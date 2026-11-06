@@ -173,7 +173,10 @@ async function firebaseAccessToken(env) {
 async function firebaseRequest(env,path,options={}) {
   const base=(env.FIREBASE_DATABASE_URL||("https://"+env.FIREBASE_PROJECT_ID+"-default-rtdb.firebaseio.com")).replace(/\/+$/,"");
   const token=await firebaseAccessToken(env);
-  const split=path.indexOf("?");\n  const route=split<0?path:path.slice(0,split);\n  const query=split<0?"":path.slice(split+1);\n  const url=pathUrl(base,route)+".json"+(query?"?"+query:"");
+  const split=path.indexOf("?");
+  const route=split<0?path:path.slice(0,split);
+  const query=split<0?"":path.slice(split+1);
+  const url=pathUrl(base,route)+".json"+(query?"?"+query:"");
   const response=await fetch(url,{...options,headers:{...(options.headers||{}),Authorization:"Bearer "+token}});
   const text=await response.text();
   let data=null;try{data=text?JSON.parse(text):null;}catch{}
@@ -311,7 +314,8 @@ async function createCardnetSession(request,env,tx,input,appUrl) {
   const currency=tx.paymentDetails.sourceCurrency;
   if(!["DOP","USD"].includes(currency)) throw new Error("CardNET solo se habilitó para DOP o USD.");
   const amount=amountToMinor(tx.paymentDetails.totalCharged,currency);
-  const taxValue=Number(input.tax||0);\n  const tax=taxValue>0?amountToMinor(taxValue,currency):0;
+  const taxValue=Number(input.tax||0);
+  const tax=taxValue>0?amountToMinor(taxValue,currency):0;
   const shortId=tx.transactionId.replace(/[^0-9]/g,"").slice(-6).padStart(6,"0");
   const ip=request.headers.get("CF-Connecting-IP")||"0.0.0.0";
   const body={
