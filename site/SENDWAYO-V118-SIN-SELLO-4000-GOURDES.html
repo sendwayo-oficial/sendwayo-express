@@ -151,33 +151,44 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
   // Así, el primer clic no cae en una versión local anterior del login.
   window.__sendwayoFirebaseSecureLoginReady = false;
   window.__sendwayoLoginPending = false;
+  function dispatchLogin(){
+    if(!window.__sendwayoFirebaseSecureLoginReady){
+      window.__sendwayoLoginPending=true;
+      const waiting=document.getElementById('login-error');
+      if(waiting){
+        waiting.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
+        waiting.classList.remove('hidden');
+      }
+      return false;
+    }
+    // Llamar al manejador Firebase actual, nunca al onclick antiguo capturado durante la carga.
+    const handler=typeof window.sendwayoFirebaseLoginReady==='function'
+      ? window.sendwayoFirebaseLoginReady
+      : window.intentarLogin;
+    if(typeof handler==='function') return handler();
+    const error=document.getElementById('login-error');
+    if(error){error.textContent='El acceso seguro todavía no está disponible. Recargue la página.';error.classList.remove('hidden');}
+    return false;
+  }
+  window.__sendwayoDispatchLogin=dispatchLogin;
   function holdEarlyLogin(event){
     const button=event.target&&event.target.closest
       ? event.target.closest('#login-screen button[onclick*="intentarLogin"], #login-screen button[type="submit"]')
       : null;
-    if(!button||window.__sendwayoFirebaseSecureLoginReady)return;
+    if(!button)return;
+    // Interceptar siempre: el onclick inline puede conservar una referencia vieja al placeholder.
     event.preventDefault();
     event.stopImmediatePropagation();
-    window.__sendwayoLoginPending=true;
-    const error=document.getElementById('login-error');
-    if(error){
-      error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
-      error.classList.remove('hidden');
-    }
+    dispatchLogin();
   }
   document.addEventListener('click',holdEarlyLogin,true);
   document.addEventListener('keydown',function(event){
-    if(event.key!=='Enter'||window.__sendwayoFirebaseSecureLoginReady)return;
+    if(event.key!=='Enter')return;
     const input=event.target&&event.target.closest?event.target.closest('#login-screen input'):null;
     if(!input)return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    window.__sendwayoLoginPending=true;
-    const error=document.getElementById('login-error');
-    if(error){
-      error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
-      error.classList.remove('hidden');
-    }
+    dispatchLogin();
   },true);
   function loadScript(src){
     return new Promise(function(resolve,reject){
@@ -6752,6 +6763,7 @@ window.sendwayoShareReceipt=async function(){
     await window.sendwayoFirebaseSdkReady;
   } catch (sdkError) {
     window.__sendwayoFirebaseSecureLoginReady = true;
+    const pendingLogin=window.__sendwayoLoginPending;
     window.__sendwayoLoginPending = false;
     const message=sdkError?.message||'No se pudo cargar Firebase.';
     window.sendwayoFirebaseSdkError=sdkError;
@@ -6762,14 +6774,16 @@ window.sendwayoShareReceipt=async function(){
       return false;
     };
     console.error('[SENDWAYO] Carga asíncrona de Firebase falló:',sdkError);
+    if(pendingLogin&&typeof window.__sendwayoDispatchLogin==='function') window.setTimeout(window.__sendwayoDispatchLogin,0);
     return;
   }
   if (!window.firebase || typeof window.firebase.initializeApp !== 'function' || !window.firebase.auth || !window.firebase.database) {
     window.__sendwayoFirebaseSecureLoginReady = true;
     window.__sendwayoLoginPending = false;
     window.sendwayoFirebaseReady = false;
-    window.intentarLogin = () => window.alert('No se pudo conectar con Firebase. El inicio de sesión local está desactivado; revise la conexión a Internet e inténtelo de nuevo.');
+    window.intentarLogin = () => { const error=document.getElementById('login-error'); const message='No se pudo conectar con Firebase. Compruebe Internet y recargue la página.'; if(error){error.textContent=message;error.classList.remove('hidden');}else window.alert(message); return false; };
     console.error('[SENDWAYO] SDK de Firebase no disponible; acceso local bloqueado.');
+    if(window.__sendwayoLoginPending&&typeof window.__sendwayoDispatchLogin==='function'){window.__sendwayoLoginPending=false;window.setTimeout(window.__sendwayoDispatchLogin,0);}
     return;
   }
   const CONFIG = {
@@ -7940,7 +7954,10 @@ window.sendwayoShareReceipt=async function(){
   if(window.__sendwayoLoginPending){
     window.__sendwayoLoginPending = false;
     Promise.resolve(state.authReadyPromise).then(function(){
-      window.setTimeout(function(){ attemptLogin(); },0);
+      window.setTimeout(function(){
+        if(typeof window.__sendwayoDispatchLogin==='function') window.__sendwayoDispatchLogin();
+        else attemptLogin();
+      },0);
     }).catch(function(error){
       const message=error?.message||'Firebase no pudo preparar el acceso. Recargue la página e inténtelo otra vez.';
       const loginError=document.getElementById('login-error');
