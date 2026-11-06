@@ -5,7 +5,7 @@ Este Worker es un servicio separado del HTML de GitHub Pages. No sustituye el Wo
 ## Qué contiene
 
 - Verificación de Firebase ID tokens y lectura de perfiles SENDWAYO.
-- Stripe Checkout para tarjetas internacionales; el estado pagado se fija únicamente con un webhook firmado.
+- Stripe Checkout para tarjetas internacionales desde cuentas comerciales en países habilitados; el estado pagado se fija únicamente con un webhook firmado.
 - CardNET Botón de Pago (sesión REST + formulario POST alojado + consulta de sesión desde el servidor). DOP usa `CurrencyCode=214`; USD usa `840`.
 - Tranzak para cobros MonCash/NatCash en HTG, con webhook HMAC.
 - Dispersión Tranzak a billeteras prefondeadas MonCash/NatCash, en dos pasos authorize/send; el resultado final llega por webhook.
@@ -16,11 +16,17 @@ Este Worker es un servicio separado del HTML de GitHub Pages. No sustituye el Wo
 
 1. No se confirma un pago al regresar al navegador. Stripe, Tranzak y CardNET se consultan o verifican desde el servidor.
 2. No se convierte dinero automáticamente. La moneda y el importe de origen y de entrega deben enviarse explícitamente.
-3. Tranzak MonCash/NatCash exige HTG para evitar que el proveedor convierta una orden USD sin que SENDWAYO haya aceptado una tasa.
+3. Tranzak MonCash/NatCash exige HTG para evitar que el proveedor convierta una orden USD sin que SENDWAYO haya aceptado una tasa. Los payouts exigen HTG entero y un mínimo de 25 HTG; el proveedor aplica la tarifa vigente y puede exigir más fondos en la billetera prefondeada.
 4. El payout MonCash/NatCash usa una billetera de pagos prefondeada y debe estar habilitado en la cuenta comercial Tranzak.
 5. Los payouts a bancos/comercios se quedan en `manual_pending` hasta que el administrador registre referencia y evidencia. El Worker no afirma que se hizo una transferencia bancaria.
 6. Un error de red durante el envío de un payout se marca `outcome_unknown`. No se reintenta automáticamente, para evitar pagar dos veces.
 7. Las tarjetas se capturan en las páginas alojadas por los proveedores. SENDWAYO no recoge PAN, CVV ni fechas de expiración.
+
+## País de la entidad Stripe y AZUL
+
+- El Worker comprueba `STRIPE_ACCOUNT_COUNTRY` antes de crear Checkout. Este valor es el país de registro legal de la empresa titular de la cuenta Stripe, no el país de la tarjeta ni el país de destino.
+- La lista permitida se basa en países donde Stripe ofrece apertura de cuentas comerciales estándar. República Dominicana no aparece en la lista vigente de disponibilidad comercial de Stripe; no se debe configurar `DO` para intentar cobrar con una cuenta dominicana. Una entidad legal real y una cuenta bancaria válida en un país admitido deben existir y superar la verificación de Stripe.
+- CardNET es la pasarela local implementada para DOP/USD, inicialmente en QA. AZUL no está habilitado en este Worker: sus modalidades Página de Pagos/API requieren afiliación, credenciales y certificación del comercio. No se simula una respuesta AZUL ni se marca el pago como aprobado.
 
 ## Configuración local
 
