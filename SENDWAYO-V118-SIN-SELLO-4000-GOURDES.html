@@ -6167,7 +6167,7 @@ window.sendwayoShareReceipt=async function(){
   }
   function addQueue(item){const q=readArray(QUEUE_KEY);if(q.some(x=>x.id===item.id))return;item.createdAt=Date.now();item.deliveredBy=[];q.unshift(item);try{localStorage.setItem(QUEUE_KEY,JSON.stringify(q.slice(0,1500)))}catch(_){}publishQueueToFirebase(item);deliverQueue();}
   function queuePending(t){if(!t||!t.id||status(t)==='aprobado'||status(t)==='rechazado')return;const isDep=isDeposit(t);const creator=text(t.creadorId||t.creadoPorId||t.usuarioId);const amount=text(t.monto||fmt(t.montoValue)+' '+(t.moneda||'DOP'));const type=t.tipo||'Operación';const msg=(isDep?'Nuevo depósito pendiente':'Nueva solicitud pendiente')+': '+type+' '+amount+' — ID '+t.id;addQueue({id:'tx:'+String(t.id)+':pending',kind:'pending',txId:String(t.id),msg,tipo:isDep?'Depósitos':type,targetRoles:isDep?['ADMIN']:['ADMIN','AGENTE'],excludeUserId:creator});}
-  function queueStatus(t,state){if(!t||!t.id)return;const sourceId=text(t.cuentaOrigenId||t.remitenteId||t.depositanteId||t.creadorId);const creatorId=text(t.creadorId||t.creadoPorId||t.usuarioId);const targetIds=[...new Set([sourceId,creatorId].filter(Boolean))];const reason=text(t.motivoRechazo||t.instruccionesNoCoincide||t.motivoNoCoincide);const msg='Su operación '+t.id+' ('+(t.tipo||'Transacción')+') cambió a: '+state.toUpperCase()+'.'+(reason?' Instrucciones: '+reason:'');addQueue({id:'tx:'+String(t.id)+':status:'+norm(state),kind:'status',txId:String(t.id),msg,tipo:t.tipo||'Envío',targetIds,excludeUserId:text(current()&&current().id)});}
+  function queueStatus(t,state){if(!t||!t.id)return;const sourceId=text(t.cuentaOrigenId||t.remitenteId||t.depositanteId||t.creadorId);const creatorId=text(t.creadorId||t.creadoPorId||t.usuarioId);const targetIds=[...new Set([creatorId,sourceId].filter(Boolean))];const reason=text(t.motivoRechazo||t.instruccionesNoCoincide||t.motivoNoCoincide);const msg='Su operación '+t.id+' ('+(t.tipo||'Transacción')+') cambió a: '+state.toUpperCase()+'.'+(reason?' Instrucciones: '+reason:'');addQueue({id:'tx:'+String(t.id)+':status:'+norm(state),kind:'status',txId:String(t.id),msg,tipo:t.tipo||'Envío',targetIds,excludeUserId:text(current()&&current().id)});}
   function deliverQueue(){const u=current();if(!u)return;const id=uid(u);const roleKey=role(u).includes('ADMIN')?'ADMIN':role(u).includes('AGENTE')?'AGENTE':role(u).includes('REMITENTE')?'REMITENTE':'';if(!roleKey)return;const q=readArray(QUEUE_KEY);const delivered=readArray(DELIVERED_PREFIX+id);let changed=false;for(const item of q){if(!item||delivered.some(x=>x===item.id))continue;if(item.excludeUserId&&item.excludeUserId===id)continue;const idMatch=Array.isArray(item.targetIds)&&item.targetIds.some(x=>String(x)===id);const roleMatch=Array.isArray(item.targetRoles)&&item.targetRoles.includes(roleKey);if(!idMatch&&!roleMatch)continue;const arr=notiArray();const already=arr&&arr.some(noti=>String(noti.id)===String(item.id));if(!already&&typeof window.addNotificacion==='function'){window.addNotificacion(item.msg,item.tipo||'Envío');const fresh=notiArray();if(fresh&&fresh[0]){fresh[0].id=item.id;fresh[0].txId=item.txId||'';fresh[0].targetView=routeForType(item.tipo||'');}}delivered.push(item.id);changed=true;}if(changed){try{localStorage.setItem(DELIVERED_PREFIX+id,JSON.stringify(delivered.slice(-1500)))}catch(_){}persistCurrentNotifications();renderSavedNotifications();}}
   window.sendwayoDeliverQueue=deliverQueue;window.sendwayoRenderSavedNotifications=renderSavedNotifications;window.sendwayoQueuePending=queuePending;window.sendwayoQueueStatus=queueStatus;
   function detectNew(before){const created=txArray().filter(t=>t&&!before.has(String(t.id)));created.forEach(queuePending);}
@@ -8182,7 +8182,7 @@ window.sendwayoShareReceipt=async function(){
 
   window.sendwayoSaveAccountForm=async function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede guardar cuentas.');
-    const name=$('v7-admin-name')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';const nameParts=name.trim().split(/\\s+/),code=((view==='agentes'?'AG-':'RE-')+(nameParts[0]||'USR').slice(0,3).toUpperCase()+(nameParts.length>1?nameParts[nameParts.length-1]:(nameParts[0]||'USR')).slice(0,3).toUpperCase());
+    const name=$('v7-admin-name')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';const nameParts=name.trim().split(/\s+/),code=((view==='agentes'?'AG-':'RE-')+(nameParts[0]||'USR').slice(0,3).toUpperCase()+(nameParts.length>1?nameParts[nameParts.length-1]:(nameParts[0]||'USR')).slice(0,3).toUpperCase());
     if(!name||!username||!email||!phone)return deny('Complete nombre, usuario, correo y celular.');
     if(!/^\S+@\S+\.\S+$/.test(email))return deny('El correo no es válido.');
     const fb=window.sendwayoFirebase;if(!fb?.db||!fb?.auth?.currentUser)return deny('No hay una sesión administrativa confirmada en Firebase.');
@@ -8415,6 +8415,58 @@ window.sendwayoShareReceipt=async function(){
  function refundOnce(t){if(!t.fondosDebitados||t.fondosDevueltos)return false;const cash=accountById(t.debitAccountId)||accountById(t.cuentaOrigenId)||accountById(t.remitenteId)||accountById(t.creadorId);if(!cash)return false;const cur=(/htg|gdes|gourde/i.test(txt(t.moneda)+' '+txt(t.monto))||t.esHT)?'HTG':'DOP',bal=cash.balances||(cash.balances={DOP:0,HTG:0});bal[cur]=Math.round(((Number(bal[cur])||0)+(Number(t.debitAmount)||Number(t.montoValue)||0))*100)/100;cash.balance=bal;cash.commissions=cash.commissions||cash.comisiones||{DOP:0,HTG:0};cash.comisiones=cash.commissions;t.fondosDevueltos=true;t.fechaDevolucion=new Date().toLocaleString('es-DO');t.devolucionMotivo='Eliminación de operación rechazada/no coincidente';return true}
  window.borrar=function(id){const t=find(id);if(!t)return false;const allowed=isAdmin()||(own(t)&&['rechazado','no coincide'].includes(state(t)));if(!allowed){window.alert('Solo Administración puede borrar operaciones pendientes. El creador puede eliminar su operación rechazada o No coincide.');return false}if(state(t)==='aprobado'){window.alert('Una operación aprobada no devuelve dinero y no puede eliminarse desde aquí. Solicite una reversión auditada.');return false}if(!window.confirm('¿Eliminar la operación '+t.id+'? Si fue rechazada o No coincide, el importe descontado será devuelto una sola vez.'))return false;const refunded=refundOnce(t),arr=txs(),ix=arr.indexOf(t);if(ix>=0)arr.splice(ix,1);persist();window.alert(refunded?'Operación eliminada. El importe fue devuelto al balance de origen.':'Operación eliminada. No había un descuento pendiente que devolver.');return true};
  txs().forEach(t=>{if(!t.creadorNombre&&t.creadorId){const a=accountById(t.creadorId);if(a){t.creadorNombre=aname(a);t.creadorCodigo=acode(a);t.creadorIdVisible=aid(a)}}});
+})();
+</script>
+
+<script id="sendwayo-v7-held-funds-edit-and-password-gate">
+(function(){
+ 'use strict';
+ const txt=v=>String(v==null?'':v).trim(),norm=v=>txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const txs=()=>{try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))return TRANSACCIONES}catch(_){}return Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[]};
+ const find=id=>txs().find(t=>String(t.id)===String(id));
+ const current=()=>{try{if(window.currentUser)return window.currentUser}catch(_){}try{if(typeof currentUser!=='undefined')return currentUser}catch(_){}return null};
+ const accounts=()=>{const a=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)a.push(ADMIN)}catch(_){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))a.push(...AGENTES)}catch(_){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))a.push(...REMITENTES)}catch(_){}return a};
+ const accountById=v=>accounts().find(a=>[a.id,a.dbUserKey,a.rtdbUserKey,a.uid,a.codigo,a.code].some(x=>txt(x)===txt(v)))||null;
+ const money=t=>{const v=Number(t?.montoValue);if(Number.isFinite(v)&&v>0)return Math.round(v*100)/100;const n=Number(String(t?.monto||'').replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?Math.round(n*100)/100:0};
+ const cur=t=>(/htg|gdes|gourde/i.test(txt(t?.moneda)+' '+txt(t?.monto))||t?.esHT)?'HTG':'DOP';
+ const persist=()=>{try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txs()))}catch(_){}try{window.sendwayoPersistTx?.()}catch(_){}try{window.sendwayoSaveAccountValues?.()}catch(_){}};
+ // Editing a No coincide operation adjusts only the difference in its existing reservation.
+ function reconcileHeld(t,oldAmount,oldCurrency,oldMonto,oldValue,oldDebit){
+  if(!t||!t.fondosDebitados||t.fondosDevueltos||norm(t.estado)!=='no coincide')return;
+  const nextCurrency=cur(t),nextAmount=money(t);
+  if(nextCurrency!==oldCurrency){t.moneda=oldCurrency;t.esHT=oldCurrency==='HTG';t.monto=oldMonto;t.montoValue=oldValue;window.alert('No se puede cambiar la moneda de una operación con fondos reservados.');return}
+  if(!(nextAmount>0)){t.monto=oldMonto;t.montoValue=oldValue;window.alert('El monto debe ser mayor que cero.');return}
+  const cash=accountById(t.debitAccountId)||accountById(t.cuentaOrigenId);
+  if(!cash){t.monto=oldMonto;t.montoValue=oldValue;window.alert('No se encontró la cuenta donde están reservados los fondos.');return}
+  const b=cash.balances||(cash.balances={DOP:0,HTG:0}),delta=Math.round((nextAmount-oldDebit)*100)/100;
+  if(delta>0&&Number(b[oldCurrency]||0)+0.000001<delta){t.monto=oldMonto;t.montoValue=oldValue;window.alert('No hay balance suficiente para aumentar el monto.');return}
+  b[oldCurrency]=Math.round(((Number(b[oldCurrency])||0)-delta)*100)/100;t.debitAmount=nextAmount;t.monto=String(nextAmount)+' '+oldCurrency;t.montoValue=nextAmount;cash.balance=b;persist();
+ }
+ const oldGeneric=window.sendwayoActionGeneric;
+ if(typeof oldGeneric==='function')window.sendwayoActionGeneric=function(view,action,id){
+  const t=find(id),a=norm(action).replace(/[^a-z]/g,'');
+  if(t&&['modificar','editar'].includes(a)&&norm(t.estado)==='no coincide'){
+   const oldAmount=money(t),oldCurrency=cur(t),oldMonto=t.monto,oldValue=t.montoValue,oldDebit=Number(t.debitAmount)||oldAmount;
+   const result=oldGeneric.apply(this,arguments);reconcileHeld(t,oldAmount,oldCurrency,oldMonto,oldValue,oldDebit);return result;
+  }
+  return oldGeneric.apply(this,arguments);
+ };
+ // Enforce first-login password update for newly provisioned Firebase accounts.
+ function forcePasswordChange(auth,profile,profileRef){
+  if(!profile||profile.mustChangePassword!==true||!auth?.currentUser)return;
+  if(document.getElementById('sendwayo-force-password-modal'))return;
+  const overlay=document.createElement('div');overlay.id='sendwayo-force-password-modal';overlay.style.cssText='position:fixed;inset:0;z-index:2000000;background:#07172eeb;display:flex;align-items:center;justify-content:center;padding:18px';
+  overlay.innerHTML='<section style="width:min(460px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 25px 80px #0007"><h2 style="font-size:20px;font-weight:900;color:#10243d;margin:0 0 8px">Cambie su contraseña para continuar</h2><p style="font-size:13px;color:#526174;margin:0 0 14px">Por seguridad, la contraseña inicial 12345678 debe cambiarse antes de utilizar SENDWAYO EXPRESS.</p><label style="display:block;font-size:12px;font-weight:800;margin-bottom:8px">Nueva contraseña<input id="sendwayo-force-password-new" type="password" autocomplete="new-password" style="display:block;width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:12px;margin-top:5px"></label><label style="display:block;font-size:12px;font-weight:800">Repita la contraseña<input id="sendwayo-force-password-confirm" type="password" autocomplete="new-password" style="display:block;width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:12px;margin-top:5px"></label><p id="sendwayo-force-password-error" style="color:#b91c1c;font-size:12px;min-height:18px;margin:8px 0"></p><button id="sendwayo-force-password-submit" type="button" style="width:100%;background:#10243d;color:#fff;border-radius:999px;padding:12px;font-weight:900">Guardar contraseña y continuar</button></section>';
+  document.body.appendChild(overlay);
+  $('sendwayo-force-password-submit').onclick=async()=>{const p=$('sendwayo-force-password-new').value,c=$('sendwayo-force-password-confirm').value,err=$('sendwayo-force-password-error'),btn=$('sendwayo-force-password-submit');if(p.length<8){err.textContent='Use al menos 8 caracteres.';return}if(p!==c){err.textContent='Las contraseñas no coinciden.';return}btn.disabled=true;btn.textContent='Actualizando…';try{await auth.currentUser.updatePassword(p);await profileRef.update({mustChangePassword:false,passwordChangedAtMs:Date.now(),passwordChangeRequired:false});overlay.remove();window.alert('Contraseña actualizada. Ya puede utilizar SENDWAYO EXPRESS.')}catch(e){err.textContent='No se pudo actualizar: '+(e?.message||'intente iniciar sesión nuevamente.');btn.disabled=false;btn.textContent='Guardar contraseña y continuar'}};
+ }
+ function installPasswordGate(){
+  const fb=window.sendwayoFirebase;if(!fb?.auth||!fb?.db||fb.__sendwayoPasswordGate)return;
+  fb.__sendwayoPasswordGate=true;
+  fb.auth.onAuthStateChanged(async user=>{if(!user)return;try{const ref=fb.db.ref('sendwayo_express_v2/users/'+user.uid),snap=await ref.once('value');forcePasswordChange(fb.auth,snap.val(),ref)}catch(e){console.warn('[SENDWAYO] no se pudo revisar el cambio inicial de contraseña',e)}});
+  if(fb.auth.currentUser){const user=fb.auth.currentUser;fb.db.ref('sendwayo_express_v2/users/'+user.uid).once('value').then(s=>forcePasswordChange(fb.auth,s.val(),fb.db.ref('sendwayo_express_v2/users/'+user.uid))).catch(()=>{})}
+ }
+ installPasswordGate();
 })();
 </script>
 </body>
