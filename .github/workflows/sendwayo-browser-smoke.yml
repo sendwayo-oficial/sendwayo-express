@@ -1,6 +1,10 @@
 name: SENDWAYO browser smoke test
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sendwayo-browser-smoke.yml'
   workflow_run:
     workflows: ["Publish approved SENDWAYO EXPRESS - shared balances"]
     types: [completed]
@@ -17,7 +21,7 @@ jobs:
       - name: Check out the deployed revision
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
