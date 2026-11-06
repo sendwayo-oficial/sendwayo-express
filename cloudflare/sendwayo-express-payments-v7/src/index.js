@@ -173,7 +173,7 @@ async function firebaseAccessToken(env) {
 async function firebaseRequest(env,path,options={}) {
   const base=(env.FIREBASE_DATABASE_URL||("https://"+env.FIREBASE_PROJECT_ID+"-default-rtdb.firebaseio.com")).replace(/\/+$/,"");
   const token=await firebaseAccessToken(env);
-  const url=pathUrl(base,path)+".json";
+  const split=path.indexOf("?");\n  const route=split<0?path:path.slice(0,split);\n  const query=split<0?"":path.slice(split+1);\n  const url=pathUrl(base,route)+".json"+(query?"?"+query:"");
   const response=await fetch(url,{...options,headers:{...(options.headers||{}),Authorization:"Bearer "+token}});
   const text=await response.text();
   let data=null;try{data=text?JSON.parse(text):null;}catch{}
@@ -248,12 +248,12 @@ function getAppUrl(request,env) {
 function transactionRecord(id,ctx,input,validated,provider) {
   const now=Date.now();
   return {
-    transactionId:id,id, userId:ctx.claims.sub, ownerUserId:ctx.profile.key,
+    transactionId:id,id, userId:ctx.profile.data?.authUid||ctx.profile.key||ctx.claims.sub, ownerUserId:ctx.profile.key, type:clean(input.operationType||"Envío",40), tipo:clean(input.operationType||"Envío",40),
     senderInfo:validated.senderInfo,
     recipientInfo:validated.recipientInfo,
     paymentDetails:{gateway:provider,sourceCurrency:validated.sourceCurrency,sourceAmount:validated.sourceAmount,totalCharged:validated.totalCharged,status:"creating",providerReference:"",createdAtMs:now},
     payoutDetails:{
-      settlementType:clean(validated.payoutDetails.settlementType||"AGENT_NETWORK",40).toUpperCase(),
+      settlementType:clean(validated.payoutDetails.settlementType||(["MONCASH","NATCASH"].includes(validated.recipientInfo.provider.toUpperCase())?"AGENT_NETWORK":validated.recipientInfo.destinationType==="BANK"?"BANK_TRANSFER":"MERCHANT_PAYMENT"),40).toUpperCase(),
       agentInfo:validated.payoutDetails.agentInfo||null,
       targetCurrency:validated.targetCurrency,targetAmount:validated.targetAmount,
       payoutReference:"",status:"not_started"
@@ -311,7 +311,7 @@ async function createCardnetSession(request,env,tx,input,appUrl) {
   const currency=tx.paymentDetails.sourceCurrency;
   if(!["DOP","USD"].includes(currency)) throw new Error("CardNET solo se habilitó para DOP o USD.");
   const amount=amountToMinor(tx.paymentDetails.totalCharged,currency);
-  const tax=amountToMinor(Number(input.tax||0),currency);
+  const taxValue=Number(input.tax||0);\n  const tax=taxValue>0?amountToMinor(taxValue,currency):0;
   const shortId=tx.transactionId.replace(/[^0-9]/g,"").slice(-6).padStart(6,"0");
   const ip=request.headers.get("CF-Connecting-IP")||"0.0.0.0";
   const body={
@@ -334,7 +334,7 @@ async function createCardnetSession(request,env,tx,input,appUrl) {
   return {
     redirectForm:{action:cardnetBase(env)+"/authorize",method:"POST",fields:{SESSION:data.SESSION}},
     reference:data.SESSION,status:"processing",
-    providerData:{session:data.SESSION,sessionKey:data["session-key"],shortTransactionId:shortId}
+    providerData:{session:data.SESSION,shortTransactionId:shortId},privateData:{sessionKey:data["session-key"]}
   };
 }
 async function createPayment(request,env,ctx,input) {
@@ -349,31 +349,44 @@ async function createPayment(request,env,ctx,input) {
   const provider=clean(input.provider,20).toLowerCase();
   if(!["stripe","tranzak","cardnet"].includes(provider)) throw new Error("Pasarela no disponible.");
   const id=safeKey(input.transactionId||newId());
-  const tx=transactionRecord(id,{...ctx,profile:owner},input,validated,provider);
   const idempotency=clean(request.headers.get("Idempotency-Key")||input.idempotencyKey,120);
   if(!idempotency) throw new Error("Falta Idempotency-Key.");
   const idemHash=await hmacSha256Hex(env.FIREBASE_PROJECT_ID||"sendwayo",ctx.claims.sub+":"+idempotency);
   const idemPath=ROOT+"/paymentIdempotency/"+ctx.claims.sub+"/"+idemHash;
-  const prior=(await firebaseRequest(env,idemPath)).data;
-  if(prior?.transactionId) {
-    const existing=await getTransaction(env,prior.transactionId);
-    return {transaction:existing,checkout:existing.paymentDetails.checkout||null,reused:true};
+  const reserved=await atomicCreate(env,idemPath,{transactionId:id,status:"creating",createdAtMs:Date.now()});
+  if(!reserved) {
+    const prior=(await firebaseRequest(env,idemPath)).data;
+    if(prior?.transactionId) {
+      const existing=await getTransaction(env,prior.transactionId);
+      if(existing) return {transaction:existing,checkout:existing.paymentDetails.checkout||null,reused:true};
+      return {transactionId:prior.transactionId,status:"creating",reused:true,retryAfterSeconds:2};
+    }
+    throw new Error("No se pudo reservar la clave de idempotencia.");
   }
-  const appUrl=getAppUrl(request,env);
-  let checkout;
-  if(provider==="stripe") checkout=await createStripeCheckout(env,tx,appUrl);
-  else if(provider==="tranzak") checkout=await createTranzakPayment(env,tx,input);
-  else checkout=await createCardnetSession(request,env,tx,input,appUrl);
-  tx.paymentDetails.status="processing";
-  tx.paymentDetails.providerReference=checkout.reference;
-  tx.paymentDetails.checkout=checkout.redirectUrl?{url:checkout.redirectUrl}:checkout.redirectForm||null;
-  tx.paymentDetails.providerData=checkout.providerData||{};
-  tx.paymentDetails.updatedAtMs=Date.now();
-  tx.timestamps.updated=Date.now();
+  const tx=transactionRecord(id,{...ctx,profile:owner},input,validated,provider);
   const created=await atomicCreate(env,transactionUrl(id),tx);
   if(!created) throw new Error("La referencia de transacción ya existe. Use una clave de idempotencia nueva.");
-  await atomicCreate(env,idemPath,{transactionId:id,createdAtMs:Date.now()});
-  return {transaction:tx,checkout,reused:false};
+  const appUrl=getAppUrl(request,env);
+  try {
+    let checkout;
+    if(provider==="stripe") checkout=await createStripeCheckout(env,tx,appUrl);
+    else if(provider==="tranzak") checkout=await createTranzakPayment(env,tx,input);
+    else checkout=await createCardnetSession(request,env,tx,input,appUrl);
+    tx.paymentDetails.status="processing";
+    tx.paymentDetails.providerReference=checkout.reference;
+    tx.paymentDetails.checkout=checkout.redirectUrl?{url:checkout.redirectUrl}:checkout.redirectForm||null;
+    tx.paymentDetails.providerData=checkout.providerData||{};
+    tx.paymentDetails.updatedAtMs=Date.now();
+    tx.timestamps.updated=Date.now();
+    if(checkout.privateData) await atomicCreate(env,ROOT+"/paymentPrivate/"+id,checkout.privateData);
+    await atomicUpdate(env,transactionUrl(id),tx);
+    await atomicUpdate(env,idemPath,{status:"ready",updatedAtMs:Date.now()});
+    return {transaction:tx,checkout,reused:false};
+  } catch(error) {
+    await atomicUpdate(env,transactionUrl(id),{paymentDetails:{...tx.paymentDetails,status:"failed",failureReason:clean(error?.message||"Provider error",250),updatedAtMs:Date.now()},timestamps:{...tx.timestamps,updated:Date.now()}});
+    await atomicUpdate(env,idemPath,{status:"failed",error:clean(error?.message||"Provider error",200),updatedAtMs:Date.now()});
+    throw error;
+  }
 }
 async function markPayment(env,tx,status,data={}) {
   const patch={
