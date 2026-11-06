@@ -11,6 +11,8 @@ enabled = true
 FIREBASE_PROJECT_ID = "sendwayo-express"
 FIREBASE_DATABASE_URL = "https://sendwayo-express-default-rtdb.firebaseio.com"
 ADMIN_EMAIL = "ideletteismorin@gmail.com"
+# Debe ser el país de la entidad legal Stripe; vacío bloquea Stripe hasta configurarlo.
+STRIPE_ACCOUNT_COUNTRY = ""
 ALLOWED_ORIGINS = "https://sendwayo-oficial.github.io"
 PUBLIC_APP_URL = "https://sendwayo-oficial.github.io/sendwayo-express"
 CARDNET_MODE = "sandbox"
