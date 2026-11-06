@@ -6744,6 +6744,8 @@ window.sendwayoShareReceipt=async function(){
   window.sendwayoFirebaseReady = false;
   window.sendwayoFirebaseLoginReady = null;
   window.intentarLogin = function(){
+    // Si el usuario pulsa Entrar mientras Firebase termina de cargar, conservar ese clic.
+    window.__sendwayoLoginPending = true;
     const error=document.getElementById('login-error');
     if(error){error.textContent='Preparando el acceso seguro a SENDWAYO EXPRESS…';error.classList.remove('hidden');}
     return false;
