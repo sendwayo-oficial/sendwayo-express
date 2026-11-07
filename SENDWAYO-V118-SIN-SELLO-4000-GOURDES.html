@@ -9154,7 +9154,7 @@ window.sendwayoShareReceipt=async function(){
  }
  function showAccountInvestigation(q){
   const root=ensureInvestigationView(),a=findAccount(q);
-  if(!a){root.innerHTML='<section class="p-4 md:p-6 space-y-3"><h2 class="font-black text-lg">Investigación de cuentas</h2><div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró una cuenta con ese ID o código. Compruebe el dato e inténtelo nuevamente.</div><button id="sendwayo-investigation-back" class="border rounded-full px-4 py-2 text-sm">Nueva búsqueda</button></section>';const b=$('sendwayo-investigation-back');if(b)b.onclick=()=>{const i=$('sendwayo-investigation-id');if(i){i.value='';i.focus();}};return;}
+  if(!a){const msg=q?'<div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró una cuenta con ese ID o código. Compruebe el dato e inténtelo nuevamente.</div>':'<div class="rounded-xl border bg-slate-50 p-4 text-sm">Escriba el ID o código del administrador, agente o remitente para consultar su información.</div>';root.innerHTML='<section class="p-3 md:p-5 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black text-lg">Investigación individual de cuentas</h2><p class="text-xs text-slate-500 mt-1">Consulta reservada a Administración.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+msg+'</section>';const form=$('sendwayo-investigation-form');if(form)form.addEventListener('submit',function(ev){ev.preventDefault();showAccountInvestigation($('sendwayo-investigation-id').value);});if(!q)setTimeout(()=>$('sendwayo-investigation-id')?.focus(),0);return;}
   const tokens=tokenSet(a),tx=accountTransactions(a,tokens),ben=beneficiaryRows(a,tokens),m=accountMoney(a);
   const userId=txt(a.id),status=a.active===false||a.activo===false||norm(a.estado||a.status).includes('inactivo')?'Inactivo':'Activo';
   const transactionHtml=tx.map((t,i)=>{
@@ -9234,6 +9234,13 @@ window.sendwayoShareReceipt=async function(){
    if(typeof window.showView==='function')window.showView('secretas');
   }catch(error){console.error('[SENDWAYO admin profile update]',error);alert('No se pudieron guardar los cambios en Firebase: '+(error.message||'error'));if(button){button.disabled=false;button.textContent='Guardar datos en Firebase';}}
  }
+ const priorAdminEdit=window.sendwayoAdminEditAccount;
+ window.sendwayoAdminEditAccount=function(id,mode){const a=findAccount(id);if(a&&role(a)==='ADMIN'){adminProfileModal();return;}if(typeof priorAdminEdit==='function')return priorAdminEdit.apply(this,arguments);};
+ window.sendwayoRenderAccountInvestigation=function(query){if(!isAdmin())return alert('Solo Administración puede investigar cuentas.');showAccountInvestigation(query||'');};
+ function enhanceBeneficiaryViewButton(){
+  const body=$('sendwayo-v7-beneficiary-rows');if(!body)return;
+  body.querySelectorAll('tr').forEach(tr=>{if(tr.dataset.sendwayoViewAdded==='1')return;const cells=tr.querySelectorAll('td');if(cells.length<8)return;const id=txt(cells[1].textContent).trim();const actions=cells[7].querySelector('.sendwayo-v7-beneficiary-actions')||cells[7];if(!id)return;tr.dataset.sendwayoViewAdded='1';const b=document.createElement('button');b.type='button';b.textContent='Ver';b.className='border rounded-full px-3 py-1 text-xs';b.addEventListener('click',function(){const row=(window.BENEFICIARIOS_DB||[]).find(x=>txt(x.id)===id||txt(x.firebaseKey)===id);if(!row)return alert('No se encontró el beneficiario.');alert('BENEFICIARIO\\n\\nID: '+txt(row.id)+'\\nNombre: '+txt(row.nombre||row.name)+'\\nPaís: '+txt(row.paisNombre||row.paisIso2)+'\\nTeléfono: '+txt(row.telefonoE164||row.telefonoCompleto||row.telefono)+'\\nDirección: '+txt(row.direccion)+'\\nEstado: '+txt(row.estado||row.status)+'\\nPropietario: '+txt(row.userId||row.ownerUserId));});actions.insertBefore(b,actions.firstChild);});
+ }
  function makeUserCode(view,name){
   const parts=txt(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean);
   const first=(parts[0]||'USR').slice(0,3).padEnd(3,'X'),last=(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).padEnd(3,'X');
@@ -9306,13 +9313,14 @@ window.sendwayoShareReceipt=async function(){
   wrapped.__sendwayoNavWrapped=true;window.intentarLogin=wrapped;
  }
  function initialize(){
-  installInvestigationViewRoute();installAccountFormDefaults();installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();wrapLoginForNav();
+  installInvestigationViewRoute();installAccountFormDefaults();installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();wrapLoginForNav();enhanceBeneficiaryViewButton();
   const existingShow=window.showView;
   if(existingShow&&existingShow.__sendwayoInvestigationWrapped!==true)installInvestigationViewRoute();
   if(window.addEventListener)window.addEventListener('load',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();installAccountFormDefaults();});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
- document.addEventListener('sendwayo:firebase-ready',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();});
+ document.addEventListener('sendwayo:firebase-ready',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();enhanceBeneficiaryViewButton();});
+ const benObserver=new MutationObserver(enhanceBeneficiaryViewButton);const benRoot=$('view-beneficiarios');if(benRoot)benObserver.observe(benRoot,{childList:true,subtree:true});
  const observer=new MutationObserver(()=>{if($('sendwayo-main-sidebar')){installInvestigationNav();clearFakeDepositBadge();}});
  if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 })();
