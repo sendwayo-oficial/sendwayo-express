@@ -548,11 +548,11 @@ let ADMIN = {
   role:'ADMIN'
 };
 let AGENTES = [
-  {id:'AGE00001', idAnterior:'AG-HERACE', codigo:'AGE-HERFLE', codigoAnterior:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00002', idAnterior:'AG-JULIE', codigo:'AGE-JULOCC', codigoAnterior:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00003', idAnterior:'AG-BETINA', codigo:'AGE-BETLIN', codigoAnterior:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00004', idAnterior:'AGE00004', codigo:'AGE-IDEISM', codigoAnterior:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00005', idAnterior:'AG-MIKE', codigo:'AGE-MIKMYK', codigoAnterior:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
+  {id:'AGE00001', idAnterior:'AG-HERACE', codigo:'AG-HERFLE', codigoAnterior:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00002', idAnterior:'AG-JULIE', codigo:'AG-JULOCC', codigoAnterior:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00003', idAnterior:'AG-BETINA', codigo:'AG-BETLIN', codigoAnterior:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00004', idAnterior:'AGE00004', codigo:'AG-IDEISM', codigoAnterior:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00005', idAnterior:'AG-MIKE', codigo:'AG-MIKMYK', codigoAnterior:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
 ];
 let REMITENTES = [
   {id:'REM00001', idAnterior:'REM-DANIA', codigo:'REM-DANSAI', codigoAnterior:'REM-001', numero:'01', name:'DANIA SAINTHILAIRE', nombre:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', telefono:'+1-849 8493727884', celular:'+1-849 8493727884', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
@@ -608,7 +608,7 @@ function renderPrincipal(){
     let estadoClass=t.estado==='Aprobado'?'bg-green-100 text-green-700':t.estado==='Pendiente'?'bg-amber-100 text-amber-700':t.estado==='No coincide'?'bg-purple-100 text-purple-700':'bg-red-100 text-red-700';
     let acciones='';
     if(t.estado==='Aprobado'){
-      if(currentUser.id==='ADMINADMIN') acciones=`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Admin puede aún aprobado</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Admin puede aún aprobado</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button>`;
+      if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) acciones=`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Admin puede aún aprobado</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Admin puede aún aprobado</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button>`;
       else acciones=`<button onclick="verComprobante('${t.id}')" class="bg-slate-800 text-white px-2 py-1 rounded-full text-[9px]">🧾 Comprobante</button>`;
     } else if(t.estado==='Pendiente'){
       if(currentUser.id.startsWith('REM')){
@@ -679,7 +679,7 @@ function renderModulo(view){
     const tr=document.createElement('tr');
     tr.className='border-b hover:bg-blue-50';
     let estadoClass=t.estado==='Aprobado'?'bg-green-100 text-green-700':t.estado==='Pendiente'?'bg-amber-100 text-amber-700':t.estado==='No coincide'?'bg-purple-100 text-purple-700':'bg-red-100 text-red-700';
-    let acciones=t.estado==='Aprobado'?(currentUser.id==='ADMINADMIN'?`<button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Admin puede aún aprobado</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Admin puede aún aprobado</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button>`:`<button onclick="verComprobante('${t.id}')" class="bg-slate-800 text-white px-2 py-1 rounded-full text-[9px]">🧾 Comprobante</button>`):(currentUser.id.startsWith('REM')?`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Remitente solo modificar borrar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Solamente esto y nada más</button>`:`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button> <button onclick="aprobar('${t.id}')" class="bg-green-600 text-white px-2 py-1 rounded-full text-[9px]">Aprobado</button> <button onclick="rechazar('${t.id}')" class="bg-red-600 text-white px-2 py-1 rounded-full text-[9px]">Rechazado</button> <button onclick="noCoincide('${t.id}')" class="bg-purple-600 text-white px-2 py-1 rounded-full text-[9px]">No coincide</button>`);
+    let acciones=t.estado==='Aprobado'?((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))?`<button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Admin puede aún aprobado</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Admin puede aún aprobado</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button>`:`<button onclick="verComprobante('${t.id}')" class="bg-slate-800 text-white px-2 py-1 rounded-full text-[9px]">🧾 Comprobante</button>`):(currentUser.id.startsWith('REM')?`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Remitente solo modificar borrar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Solamente esto y nada más</button>`:`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button> <button onclick="aprobar('${t.id}')" class="bg-green-600 text-white px-2 py-1 rounded-full text-[9px]">Aprobado</button> <button onclick="rechazar('${t.id}')" class="bg-red-600 text-white px-2 py-1 rounded-full text-[9px]">Rechazado</button> <button onclick="noCoincide('${t.id}')" class="bg-purple-600 text-white px-2 py-1 rounded-full text-[9px]">No coincide</button>`);
     tr.innerHTML=`<td class="p-3 font-bold">${num} - Antiguo a reciente - Último ${String(filtrados.length).padStart(2,'0')} más reciente</td><td class="p-3"><div class="font-bold">${t.id}</div><div class="text-[9px] text-gray-500">${t.fecha}</div></td><td class="p-3"><span class="bg-blue-50 px-2 py-1 rounded-full text-[9px] font-bold">${t.ruta}</span><div class="text-[9px] text-gray-500 mt-1">${t.rutaExacta}</div></td><td class="p-3"><div class="font-bold">${t.monto}</div><div class="text-[9px] text-orange-600">${t.feeText}</div></td><td class="p-3"><span class="px-3 py-1 rounded-full text-[9px] font-bold ${estadoClass}">${t.estado}</span></td><td class="p-3"><div class="flex flex-wrap gap-1">${acciones}</div></td>`;
     tbody.appendChild(tr);
   });
@@ -691,7 +691,7 @@ function abrirNuevo(tipo){
   const monto=prompt('Monto '+tipo+' DOP - Ej 100 - Si hago envío de una vez en envío debo ver eso pendiente:')||'100';
   if(!monto || isNaN(monto)) return;
   const montoNum=parseFloat(monto);
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=montoNum;
+  if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=montoNum;
   else if(currentUser.id.startsWith('AG')){ const ag=AGENTES.find(a=>a.id===currentUser.id); if(ag) ag.balances.DOP-=montoNum; ADMIN_BAL.DOP-=montoNum; }
   else{ const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=montoNum; }
   
@@ -968,7 +968,7 @@ window.guardarRecargaExacto = function(){
   if(!(montoNum>0)){ window.sendwayoShowInlineNotice('Introduzca un monto válido.', 'error'); return; }
   
   // Descontar balance inmediato
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=montoNum;
+  if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=montoNum;
   else { const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=montoNum; }
   
   // Comprobante limpio sin comentario - 100 = 100 DOP sin quitar nada - interno queda entre nosotros
@@ -1014,7 +1014,7 @@ window.guardarPaquetikoExacto = function(){
   
   if(!numero || numero.length < 7){ alert('Ponga número de celular obligatorio'); return; }
   
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=montoNum;
+  if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=montoNum;
   else { const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=montoNum; }
   
   const nueva={
@@ -1053,7 +1053,7 @@ window.guardarFacturaExacto = function(){
   const monto = document.getElementById('fact-monto-exacto')?.value || '500';
   const montoNum = parseFloat(monto) || 500;
   
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=montoNum;
+  if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=montoNum;
   else { const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=montoNum; }
   
   const nueva={
@@ -1174,7 +1174,7 @@ window.abrirNuevo = function(tipo){
   else {
     const monto=prompt('Monto '+tipo+' DOP:')||'100';
     const montoNum=parseFloat(monto)||100;
-    if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=montoNum;
+    if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=montoNum;
     const nueva={id:'SW-'+Date.now().toString().slice(-6), fecha:new Date().toLocaleString('es-DO'), tipo:tipo, ruta:tipo, rutaExacta:tipo, monto:montoNum+' DOP', montoValue:montoNum, fee:Math.round(montoNum*0.08), neto:montoNum-Math.round(montoNum*0.08), feeText:'Fee 8%', moneda:'DOP', beneficiario:'Beneficiario', estado:'Pendiente', timestamp:Date.now(), creadorId:currentUser.id, remitenteId:currentUser.id, montoRecibido:montoNum+' DOP'};
     TRANSACCIONES.unshift(nueva);
     renderPrincipal();
@@ -1432,7 +1432,7 @@ window.guardarEnvioCompacto = function(){
     moneda = 'DOP';
   }
   
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=monto;
+  if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=monto;
   else { const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=monto; }
   
   const beneficiarioFinal = benNombreManual || benSel;
@@ -1489,7 +1489,7 @@ window.guardarRetiroCompacto = function(){
     montoRecibido = neto.toFixed(2) + ' DOP';
   }
   
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=monto;
+  if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase()))) ADMIN_BAL.DOP-=monto;
   else { const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=monto; }
   
   const nueva={
@@ -1642,7 +1642,7 @@ window.renderModuloSeparado = function(view){
     let acciones='';
     if(t.estado==='Aprobado'){
       // Todos comprobantes deben salir después ser aprobado - también para remitentes deben aparecer comprobante después aprobado
-      if(currentUser.id==='ADMINADMIN' || currentUser.id.startsWith('AG')){
+      if((String(currentUser.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(currentUser.id||'').toUpperCase())) || currentUser.id.startsWith('AG')){
         acciones=`<button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante - Después aprobado - Remitente y admin</button>`;
       } else {
         // Remitente: solo modificar y eliminar/borrar, pero comprobante después aprobado debe aparecer
@@ -3735,7 +3735,7 @@ window.sendwayoShareReceipt=async function(){
  const senders=()=>{try{return typeof REMITENTES!=='undefined'?REMITENTES:[]}catch(e){return []}};
  const txs=()=>{try{return typeof TRANSACCIONES!=='undefined'?TRANSACCIONES:(window.TRANSACCIONES||[])}catch(e){return window.TRANSACCIONES||[]}};
  const user=()=>{try{return window.currentUser||(typeof currentUser!=='undefined'&&currentUser?currentUser:null)}catch(e){return window.currentUser||null}};
- const isAdmin=()=>{const u=user();return !!u&&(String(u.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADM'].includes(String(u.id||'').toUpperCase()))};
+ const isAdmin=()=>{const u=user();return !!u&&(String(u.role||'').toUpperCase().includes('ADMIN')||['ADMINADMIN','ADMIN-ADM','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase()))};
  const roleOf=a=>String(a&&a.role||'').toUpperCase();
  const norm=s=>text(s).toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  const formatMoney=(n)=>Number(n||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -4531,7 +4531,7 @@ window.sendwayoShareReceipt=async function(){
   };
   const currentRole = () => norm(current()?.role || current()?.rol || '').toUpperCase();
   const accountRole = a => { const r=norm(a?.role || a?.rol || '').toUpperCase(); if (r.includes('ADMIN') || norm(a?.id)==='adminadmin') return 'ADMIN'; if (r.includes('AGENTE') || r.includes('AGENT')) return 'AGENTE'; if (r.includes('REMITENTE') || r.includes('SENDER')) return 'REMITENTE'; return r; };
-  const isAdmin = () => currentRole().includes('ADMIN') || norm(current()?.id) === 'adminadmin';
+  const isAdmin = () => currentRole().includes('ADMIN') || ['adminadmin','admin-administrador'].includes(norm(current()?.id));
   const isAgent = () => currentRole().includes('AGENTE');
   const isRemitter = () => currentRole().includes('REMITENTE');
   let successfulLoginThisPage = false;
@@ -6904,7 +6904,7 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
-  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;} };
+  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, updateProfileByKey:(key,patch)=>userRoot.child(safeDbKey(key)).update(patch) };
 
   const norm = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   const txt = v => String(v ?? '').trim();
@@ -7011,9 +7011,13 @@ window.sendwayoShareReceipt=async function(){
     const email=norm(firebaseUser.email);
     if(email===ADMIN_EMAIL){
       const adminSnap=await userRoot.child('admin').once('value');
-      if(adminSnap.exists()) return {key:'admin',data:adminSnap.val()};
+      if(adminSnap.exists()){
+        const existing=adminSnap.val()||{};
+        const identity={id:'ADMIN-ADMINISTRADOR',accountId:'ADMIN-ADMINISTRADOR',code:'ADMIN-ADMINISTRADOR',codigo:'ADMIN-ADMINISTRADOR',staffId:'ADMIN-ADMINISTRADOR',idAnterior:'ADMINADMIN',idAliases:[...new Set([...(Array.isArray(existing.idAliases)?existing.idAliases:[]),existing.id,existing.legacyId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(existing.codeAliases)?existing.codeAliases:[]),existing.code,'ADMIN-000'].filter(Boolean))]};
+        await userRoot.child('admin').update(identity);Object.assign(existing,identity);return {key:'admin',data:existing};
+      }
       const adminSeed=seedProfileFromAccount(typeof ADMIN!=='undefined'?ADMIN:{},'ADMIN');
-      adminSeed.id='ADMINADMIN';adminSeed.code='ADMIN-000';adminSeed.codigo='ADMIN-000';
+      adminSeed.id='ADMIN-ADMINISTRADOR';adminSeed.accountId='ADMIN-ADMINISTRADOR';adminSeed.legacyId='ADMINADMIN';adminSeed.code='ADMIN-ADMINISTRADOR';adminSeed.codigo='ADMIN-ADMINISTRADOR';adminSeed.staffId='ADMIN-ADMINISTRADOR';adminSeed.idAnterior='ADMINADMIN';adminSeed.idAliases=['ADMINADMIN','ADMIN-000'];adminSeed.codeAliases=['ADMIN-000'];
       adminSeed.authEmail=ADMIN_EMAIL;adminSeed.email=ADMIN_EMAIL;adminSeed.authUid=firebaseUser.uid;
       await userRoot.child('admin').set(adminSeed);
       return {key:'admin',data:adminSeed};
@@ -7060,8 +7064,17 @@ window.sendwayoShareReceipt=async function(){
     const accounts=[...(Array.isArray(AGENTES)?AGENTES:[]),...(Array.isArray(REMITENTES)?REMITENTES:[])];
     for(const account of accounts){
       const email=norm(account.email||account.usuario);
-      if(!email||knownEmails.has(email)) continue;
+      if(!email) continue;
       const role=String(account.role||'').toUpperCase()==='AGENTE'?'AGENTE':'REMITENTE';
+      const previous=existing.find(r=>norm(r.data.authEmail||r.data.email)===email);
+      if(previous){
+        const data=previous.data||{};const oldId=txt(data.id||data.legacyId||data.accountId||data.staffId||data.code||previous.key);
+        const oldCode=txt(data.code||data.codigo||data.staffId||'');
+        const aliases=[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,account.id,account.idAnterior].filter(Boolean))];
+        const codeAliases=[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,account.codigoAnterior,account.codigo2].filter(Boolean))];
+        const patch={id:account.id,accountId:account.id,code:account.codigo,codigo:account.codigo,staffId:account.codigo,number:txt(account.numero),idAnterior:oldId!==account.id?oldId:txt(data.idAnterior||''),idAliases:aliases,codeAliases,aliases:[...new Set([...(Array.isArray(data.aliases)?data.aliases:[]),oldId,oldCode,account.id,account.codigo].filter(Boolean))]};
+        await userRoot.child(previous.key).update(patch);Object.assign(data,patch);knownEmails.add(email);continue;
+      }
       const key=safeDbKey(account.id||account.codigo||email);
       const existingKey=await userRoot.child(key).once('value');
       if(existingKey.exists()){knownEmails.add(email);continue;}
@@ -7074,11 +7087,13 @@ window.sendwayoShareReceipt=async function(){
     const name=txt(data.displayName||data.name||data.fullName||data.nombre||data.email||'Usuario SENDWAYO');
     const email=txt(data.authEmail||data.email||'').toLowerCase();
     const phone=txt(data.phone||data.telefono||data.celular);
-    const id=role==='ADMIN'?'ADMINADMIN':txt(data.id||data.legacyId||data.accountId||data.staffId||data.code||data.codigo||key);
+    const known=collectAliases().find(a=>norm(a.email)===email);
+    const oldId=txt(data.id||data.legacyId||data.accountId||data.staffId||data.code||data.codigo||key);
+    const id=role==='ADMIN'?'ADMIN-ADMINISTRADOR':txt(known&&known.id||oldId);
     let money=accountMoney(data);
     if(role==='AGENTE'){const adminRow=(state.directory||[]).find(r=>canonicalRole(r.data,r.key)==='ADMIN');if(adminRow)money=accountMoney(adminRow.data);else {try{if(typeof ADMIN!=='undefined'&&ADMIN)money=accountMoney(ADMIN);}catch(e){}}}
-    return {...data,id,dbUserKey:key,rtdbUserKey:key,legacyId:txt(data.legacyId||data.accountId||data.staffId||data.code||id),
-      codigo:txt(data.code||data.codigo||data.staffId||id),staffId:txt(data.staffId||data.code||data.codigo||id),
+    return {...data,id,idAnterior:txt(data.idAnterior||(oldId!==id?oldId:'')),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,id].filter(Boolean))],dbUserKey:key,rtdbUserKey:key,legacyId:txt(data.legacyId||data.accountId||data.staffId||oldId||id),
+      codigo:role==='ADMIN'?'ADMIN-ADMINISTRADOR':txt(data.code||data.codigo||data.staffId||(known&&known.codigo)||id),staffId:role==='ADMIN'?'ADMIN-ADMINISTRADOR':txt(data.staffId||data.code||data.codigo||(known&&known.codigo)||id),
       name,nombre:name,displayName:name,email,usuario:email,phone,telefono:phone,celular:phone,
       role,balances:money.balances,commissions:money.commissions,comisiones:money.commissions};
   }
@@ -7094,7 +7109,7 @@ window.sendwayoShareReceipt=async function(){
     const code=txt(d.code||d.codigo||d.staffId||d.id||row.key);
     const phone=txt(d.phone||d.telefono||d.celular);
     const role=canonicalRole(d,row.key);
-    return role==='ADMIN' ? `ADMIN-000 — ${name}` : `${code} — ${name}${phone?' — '+phone:''}`;
+    return role==='ADMIN' ? `ADMIN-ADMINISTRADOR — ${name}` : `${code} — ${name}${phone?' — '+phone:''}`;
   }
   function refreshAccountSelects() {
     const role=canonicalRole(state.profile||{},state.profileKey||'');
@@ -7151,7 +7166,7 @@ window.sendwayoShareReceipt=async function(){
     state.directory=rows;
     const mapped=rows.map(r=>uiProfileFromRecord(r.key,r.data)).filter(r=>r.role);
     const adminRow=mapped.find(a=>a.role==='ADMIN');
-    if(adminRow&&typeof ADMIN!=='undefined') Object.assign(ADMIN,adminRow,{id:'ADMINADMIN'});
+    if(adminRow&&typeof ADMIN!=='undefined') Object.assign(ADMIN,adminRow,{id:'ADMIN-ADMINISTRADOR',codigo:'ADMIN-ADMINISTRADOR',codigo2:'ADMIN-ADMINISTRADOR',role:'ADMIN'});
     if(adminRow){
       const adminMoney=accountMoney(adminRow);
       try{if(typeof ADMIN_BAL!=='undefined')Object.assign(ADMIN_BAL,adminMoney.balances);if(typeof ADMIN_COM!=='undefined')Object.assign(ADMIN_COM,adminMoney.commissions);}catch(e){}
@@ -7294,7 +7309,7 @@ window.sendwayoShareReceipt=async function(){
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN') return 'ADMINADMIN';
+    if(role==='ADMIN') return 'ADMIN-ADMINISTRADOR';
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
     const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
     let id=supplied || known?.id || key;
@@ -7320,7 +7335,7 @@ window.sendwayoShareReceipt=async function(){
     // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
-      const updates={};
+      const updates={id:'ADMIN-ADMINISTRADOR',accountId:'ADMIN-ADMINISTRADOR',code:'ADMIN-ADMINISTRADOR',codigo:'ADMIN-ADMINISTRADOR',staffId:'ADMIN-ADMINISTRADOR',idAnterior:'ADMINADMIN',idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),data.id,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),data.code,'ADMIN-000'].filter(Boolean))]};
       if(currentUid!==firebaseUser.uid) updates.authUid=firebaseUser.uid;
       if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;
       if(Object.keys(updates).length){
