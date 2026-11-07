@@ -39,11 +39,12 @@
 
 **Files:**
 - Modify: `SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html`
+- Deliver: `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`
 - Test: `tests/sendwayo-expediente-performance.test.cjs`
 
 **Interfaces:**
-- Consumes: `window.SENDWAYO_REQUESTS`, `window.SENDWAYO_BANKS`, `window.BENEFICIARIOS_DB`, `TRANSACCIONES`, account identity aliases.
-- Produces: private admin navigation label `Expediente por ID`; existing read-only profile, financial summary, movement and beneficiary tables, extended by a scoped enhancer for requests and linked bank accounts.
+- Consumes: already synchronized Firebase arrays `window.SENDWAYO_REQUESTS`, `window.SENDWAYO_BANKS`, `window.BENEFICIARIOS_DB`, `TRANSACCIONES`, and visible ID/código aliases.
+- Produces: admin-only, read-only Expediente por ID; existing profile/balances/commissions/movement/beneficiary tables extended by a scoped enhancer that links requests and bank accounts using owner/creator identifiers.
 
 - [x] **Step 1: Restrict lookup subjects** — resolve exact ID/aliases for AGENTE or REMITENTE only.
 - [x] **Step 2: Add linked-data helpers** — `accountRequests(account,tokens)` and `bankRows(account,tokens)`.
@@ -55,6 +56,7 @@
 
 **Files:**
 - Modify: `SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html`
+- Deliver: `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`
 - Test: `tests/sendwayo-expediente-performance.test.cjs`
 
 - [x] **Step 1: Make translation incremental** — translate only newly inserted element subtrees.
@@ -116,3 +118,30 @@
 - Current HTML includes 250 unique country/territory ISO alpha-2 records in local data.
 - A legacy receipt fallback had generated a fictitious approved transaction when an ID was missing; it was removed. An unknown transaction ID now returns an error instead of showing a fabricated receipt.
 - Remaining: real browser tests and full financial lifecycle tests. These are release gates, not presumed results.
+
+
+### Task 8: Consolidated V7 delivery and full static verification
+
+**Files:**
+- Deliver: `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`
+- Test: `tests/sendwayo-top-header-layout.test.cjs`
+- Test: `tests/sendwayo-workspace-header.test.cjs`
+- Test: `tests/sendwayo-expediente-performance.test.cjs`
+- Test: `tests/sendwayo-countries.test.cjs`
+- Document: `docs/SENDWAYO-CONSOLIDADO-REQUISITOS-Y-ESTADO-2026-11-07.md`
+- Document: `docs/ESTADO-INTEGRAL-SENDWAYO-V7.md`
+
+- [x] Copy the complete updated source HTML into the agreed V7 delivery filename on the development branch.
+- [x] Point every static test at the V7 delivery file rather than the old V118 filename.
+- [x] Recover the morning work inventory and commit evidence in the integral V7 status document.
+- [x] Consolidate all operating, financial, role, international-country, payment and release requirements in the single requirements/status document.
+- [x] Run the four test scripts against the fetched V7 candidate: header layout 18 assertions; workspace header 23; expediente/performance 40; countries 12.
+- [x] Compile all 43 inline JavaScript blocks: 0 syntax errors. A duplicated menu backdrop declaration was found, recorded as a failing regression assertion, corrected, and re-run successfully.
+- [x] Compare development branch with main; development is ahead and not behind. No merge, Pages deploy or Firebase production mutation.
+- [ ] Real-browser functional and visual test on desktop and mobile, including Firebase sign-in, route switching, menu open/close, 40-minute idle lock and actual measured page-load performance. This remains a release gate; no browser session was available to load the repo copy during this pass.
+
+## Final review
+
+- Self-review performed because no independent reviewer/subagent execution tool is available in this session.
+- Critical known gaps: browser/device validation and full financial lifecycle tests have not been performed; card/acquiring and payout providers are not connected because onboarding/credentials are still missing.
+- Do not publish or merge until the release gates above are satisfied and the owner authorizes publication.
