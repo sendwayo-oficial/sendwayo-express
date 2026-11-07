@@ -9394,6 +9394,8 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
  function ensureMenu(){
   const bar=$('sendwayo-brand-bar'),side=findSidebar(),btn=$('sendwayo-mobile-menu');
   if(!bar||!side||!btn)return;
+  let shade=$('sendwayo-menu-shade');
+  if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
   side.setAttribute('aria-label','Menú de navegación SENDWAYO EXPRESS');
   btn.classList.add('sendwayo-top-menu-toggle');
   btn.setAttribute('aria-controls','sendwayo-main-sidebar');
