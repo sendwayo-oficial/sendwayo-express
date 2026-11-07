@@ -9402,7 +9402,7 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');
   // Neutralize handlers installed by the older mobile-only navigation controllers.
   btn.onclick=null;
-  const shade=$('sendwayo-menu-shade');if(shade)shade.onclick=null;
+  shade=$('sendwayo-menu-shade');if(shade)shade.onclick=null;
   if(!btn.dataset.sendwayoCanonicalMenu){
    btn.dataset.sendwayoCanonicalMenu='1';
    btn.addEventListener('click',ev=>{
