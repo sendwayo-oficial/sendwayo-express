@@ -4,7 +4,7 @@
 **Repositorio:** `sendwayo-oficial/sendwayo-express`  
 **Cuenta GitHub de trabajo:** `ideletteismorin@gmail.com`  
 **Rama:** `work/sendwayo-international-payments-session`  
-**Versión de producto objetivo:** V7. La página pública conserva su URL actual hasta una publicación autorizada.
+**Versión de producto objetivo:** V7. Archivo consolidado de entrega: `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`. La página pública conserva su URL actual hasta una publicación autorizada.
 
 Este documento reúne las decisiones y requisitos tratados durante el trabajo del 7 de noviembre. No significa que todas las integraciones estén habilitadas: distingue lo que ya está reflejado en la rama, lo que necesita prueba real y lo que depende de contratos, afiliaciones o credenciales externas.
 
@@ -84,9 +84,9 @@ Este documento reúne las decisiones y requisitos tratados durante el trabajo de
 
 | Área | Estado observado |
 |---|---|
-| Cabecera superior y ancho completo | Implementación unificada en esta revisión; verificaciones estáticas aprobadas. Prueba visual real pendiente. |
-| Navegación lateral | Convertida a panel superpuesto cerrado por defecto; prueba de escritorio/móvil pendiente. |
-| Expediente por ID | Implementado como consulta administrativa de solo lectura; límites por registros disponibles documentados. |
+| Cabecera superior y ancho completo | Una única barra superior con marca, identidad, ID/código, fecha/hora, duración, campanita y Salir; menú superpuesto cerrado por defecto; contenido al 100% de ancho. Verificaciones estáticas aprobadas. Prueba visual real pendiente. |
+| Navegación | Panel superpuesto, no una columna reservada; fondo de cierre incluido; prueba de escritorio/móvil pendiente. |
+| Expediente por ID | Implementado como consulta administrativa de solo lectura para remitentes/agentes; incluye movimientos, solicitudes, beneficiarios, bancos y balances; rechaza ID duplicado o inexistente. |
 | Sesión Firebase | El código conserva persistencia de sesión y contiene límite de inactividad de 40 minutos; falta prueba real de refresco/expiración. |
 | Catálogo internacional | 250 entradas ISO/country-territory están integradas en el HTML para uso local; faltan validaciones de prefijos específicos y recorrido de formularios por país. |
 | Balances DOP/HTG | Campos separados presentes en el código; falta prueba de cálculos y conciliación con casos reales controlados. |
@@ -109,3 +109,14 @@ Este documento reúne las decisiones y requisitos tratados durante el trabajo de
 10. Revisar logs y conciliación sin modificar saldos reales.
 
 **Criterio de entrega:** un solo paquete V7 revisado, con pruebas documentadas, sin parches sueltos. Ningún despliegue público se considera hecho hasta que el propietario autorice publicar y la prueba visual/funcional esté completada.
+
+
+## 11. Consolidación V7 en la rama de desarrollo
+
+- Se creó el archivo de entrega **`SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`** copiando el HTML completo revisado. Su contenido fue comparado con el archivo fuente de la rama y ambos tienen el mismo SHA de contenido.
+- Se corrigió una redeclaración de la variable de fondo del menú que provocaba un error de sintaxis; se agregó una comprobación específica que primero falló y luego pasó.
+- Pruebas estáticas de distribución superior: **18 comprobaciones aprobadas**.
+- Pruebas estáticas de expediente/performance: **40 comprobaciones aprobadas**.
+- JavaScript embebido: **43 bloques compilados; 0 errores de sintaxis**.
+- Estos resultados son pruebas estáticas sobre el archivo de entrega. No son una medición de velocidad ni una prueba visual/funcional en navegador real.
+- Archivo V7 y documentación permanecen en la rama de desarrollo. GitHub Pages, `main` y los datos de producción no se actualizaron.
