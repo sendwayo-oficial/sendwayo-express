@@ -3522,7 +3522,14 @@ window.sendwayoShareReceipt=async function(){
    if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
    else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
    const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
-   strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name">'+esc(nm)+'</div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role">'+esc(roleName(u))+'</span><span>ID: <strong id="sendwayo-v7-id">'+esc(id)+'</strong></span><span>Código: <strong id="sendwayo-v7-code">'+esc(code)+'</strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+   if(strip.dataset.sendwayoHeaderReady!=='1'){
+     strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span>Código: <strong id="sendwayo-v7-code"></strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+     strip.dataset.sendwayoHeaderReady='1';
+   }
+   if($('sendwayo-v7-name'))$('sendwayo-v7-name').textContent=nm;
+   if($('sendwayo-v7-role'))$('sendwayo-v7-role').textContent=roleName(u);
+   if($('sendwayo-v7-id'))$('sendwayo-v7-id').textContent=id;
+   if($('sendwayo-v7-code'))$('sendwayo-v7-code').textContent=code;
    strip.setAttribute('aria-label','Datos de la sesión y cuenta activa');
  }
  window.sendwayoRefreshIdentityHeader=buildIdentityStrip;
