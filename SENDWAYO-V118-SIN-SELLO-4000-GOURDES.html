@@ -8848,7 +8848,7 @@ window.sendwayoShareReceipt=async function(){
    if(duplicateLogin){alert('Ese usuario o código ya está asignado a otra cuenta.');return false;}
    var oldId=String(a.id||''),oldCode=String(a.codigo||a.code||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
    aliases=[...new Set(aliases)];
-   const uniqueCodeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),oldCode].filter(function(v){return v&&norm(v)!==norm(code);})))];
+   const uniqueCodeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),oldCode].filter(function(v){return v&&norm(v)!==norm(code);} ))];
    var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,codeAliases:uniqueCodeAliases,name:name,nombre:name,displayName:name,username:username,login:username,code:code,codigo:code,codigo2:code,staffId:code,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
    try{
     await db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
