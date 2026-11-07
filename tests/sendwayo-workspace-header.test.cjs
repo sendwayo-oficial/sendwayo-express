@@ -10,6 +10,7 @@ assert.match(focused, /brandBar\.insertAdjacentElement\('afterend',strip\)/, 'la
 assert.doesNotMatch(focused, /root\.insertBefore\(strip,root\.firstChild\)/, 'la identidad no debe quedar dentro de la columna de contenido');
 assert.match(html, /#sendwayo-v7-user-strip\.sendwayo-workspace-identity\s*\{[^}]*top:\s*48px[^}]*width:\s*100%/s, 'la franja superior debe ocupar el ancho completo debajo de la marca');
 assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/, 'los distintivos antiguos no deben duplicar datos junto a la marca');
+assert.match(html, /top-bal-rd[^;]*[\s\S]{0,180}display:\s*none|sendwayo-brand-balances-hidden/, 'los balances y comisiones no deben ocupar la fila del nombre del negocio');
 const moveFn = html.match(/function moveBusinessNameAboveUser\(\)\{[\s\S]*?function installInvestigationViewRoute/)?.[0] || '';
 assert.ok(moveFn, 'debe existir el control que evita el antiguo movimiento lateral');
 assert.match(moveFn, /return;/, 'la rutina antigua debe dejar de mover el usuario junto al negocio');
