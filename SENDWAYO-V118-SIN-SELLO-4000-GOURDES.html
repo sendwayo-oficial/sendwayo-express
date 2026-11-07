@@ -3245,7 +3245,10 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 // SENDWAYO: herramientas de administración de usuarios e identificadores normalizados.
 (function(){
- const adminAccount=()=>typeof ADMIN!=='undefined'?ADMIN:null;\n const agentList=()=>typeof AGENTES!=='undefined'?AGENTES:[];\n const senderList=()=>typeof REMITENTES!=='undefined'?REMITENTES:[];\n const normName=s=>String(s||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+ const adminAccount=()=>typeof ADMIN!=='undefined'?ADMIN:null;
+ const agentList=()=>typeof AGENTES!=='undefined'?AGENTES:[];
+ const senderList=()=>typeof REMITENTES!=='undefined'?REMITENTES:[];
+ const normName=s=>String(s||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
  const initials=s=>normName(s).split(/\s+/).filter(Boolean);
  const codeFor=(role,name)=>{const p=initials(name);const first=(p[0]||'USR').slice(0,3).padEnd(3,'X');const last=(p.length>1?p[p.length-1]:p[0]||'USR').slice(0,3).padEnd(3,'X');return (role==='AGENTE'?'AGE-':role==='REMITENTE'?'REM-':'')+first+last;};
  window.sendwayoAdminEditAccount=function(id,mode){
