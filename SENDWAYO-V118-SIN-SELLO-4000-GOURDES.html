@@ -5565,7 +5565,7 @@ window.sendwayoShareReceipt=async function(){
     const roots=new Set();
     for(const rec of records)for(const node of rec.addedNodes){
       if(node.nodeType!==1||node.closest?.('.sendwayo-generic-pager'))continue;
-      if(node.matches?.('table,.view,[id^="view-"]')||node.querySelector?.('table,.view,[id^="view-"]'))roots.add(node);
+      if(node.matches?.('table,tbody,.view,[id^="view-"]')||node.querySelector?.('table,.view,[id^="view-"]'))roots.add(node.matches?.('tbody')?(node.closest('table')||node):node);
     }
     roots.forEach(root=>scanTables(root));
   });
