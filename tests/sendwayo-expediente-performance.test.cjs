@@ -9,12 +9,15 @@ assert.match(html, /Expediente por ID/, 'el menú y la pantalla deben llamarse E
 assert.match(html, /function subjects\(\)/, 'la consulta debe resolver remitentes y agentes');
 assert.match(html, /typeof AGENTES!=='undefined'/, 'el directorio debe usar el arreglo global real de agentes');
 assert.match(html, /typeof REMITENTES!=='undefined'/, 'el directorio debe usar el arreglo global real de remitentes');
+assert.match(html, /function identity\(a\)\{return \[a\.id,a\.idAnterior,a\.legacyId,a\.accountId,a\.staffId/, 'la búsqueda debe usar identificadores visibles y alias, no correo o UID');
+assert.match(html, /placeholder="Introduzca ID del remitente o agente"/, 'el campo debe solicitar el ID');
 assert.match(html, /window\.SENDWAYO_REQUESTS/, 'el expediente debe reunir solicitudes sincronizadas');
 assert.match(html, /Solicitudes y revisiones relacionadas/, 'el expediente debe mostrar solicitudes');
 assert.match(html, /window\.SENDWAYO_BANKS/, 'el expediente debe reunir cuentas bancarias sincronizadas');
 assert.match(html, /Cuentas bancarias vinculadas/, 'el expediente debe mostrar cuentas bancarias');
 assert.match(html, /function validate\(event\)/, 'el formulario debe validar remitente/agente');
 assert.match(html, /password\|contrasena\|clave\|secret\|token/, 'los detalles deben omitir credenciales y secretos');
+assert.match(html, /sendwayo:transactions-updated/, 'los datos del expediente y los avisos deben refrescarse con los cambios en tiempo real');
 assert.match(html, /translateInterface\(node,languageValue\(\)\)/, 'la traducción debe procesar solo nodos añadidos');
 assert.match(html, /roots\.forEach\(root=>scanTables\(root\)\)/, 'la paginación debe revisar solo vistas/tablas insertadas');
 assert.match(html, /setInterval\(refresh,30000\)/, 'el resumen diario no debe recalcularse cada cuatro segundos');
