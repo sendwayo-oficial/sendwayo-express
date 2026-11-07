@@ -5540,7 +5540,9 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   function scanTables(root=document){
-    const tables=root.querySelectorAll?root.querySelectorAll('table'):[];
+    const tables=[];
+    if(root&&root.matches&&root.matches('table'))tables.push(root);
+    if(root&&root.querySelectorAll)tables.push(...root.querySelectorAll('table'));
     tables.forEach(table=>{
       if(specialTables.has(table.id)) return;
       const viewName=viewKey(table); if(viewName && !transactionViews.has(viewName)) return;
@@ -5558,16 +5560,13 @@ window.sendwayoShareReceipt=async function(){
     setTimeout(()=>{const view=ev.target.closest('.view,[id^="view-"]');if(view) view.querySelectorAll('table').forEach(t=>applyPagination(t,true));},0);
   },true);
   const bodyObserver=new MutationObserver(records=>{
-    let scan=false;
-    for(const rec of records){
-      for(const node of [...rec.addedNodes,...rec.removedNodes]){
-        if(node.nodeType!==1) continue;
-        if(node.closest?.('.sendwayo-generic-pager')) continue;
-        if(node.matches?.('table,tr,tbody,.view,[id^="view-"]') || node.querySelector?.('table,.view,[id^="view-"]')) { scan=true; break; }
-      }
-      if(scan) break;
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const roots=new Set();
+    for(const rec of records)for(const node of rec.addedNodes){
+      if(node.nodeType!==1||node.closest?.('.sendwayo-generic-pager'))continue;
+      if(node.matches?.('table,.view,[id^="view-"]')||node.querySelector?.('table,.view,[id^="view-"]'))roots.add(node);
     }
-    if(scan) scanTables(document);
+    roots.forEach(root=>scanTables(root));
   });
 
   /* D. Evita repetir un teléfono en las cuentas/solicitudes/beneficiarios de ESTE almacenamiento local. */
