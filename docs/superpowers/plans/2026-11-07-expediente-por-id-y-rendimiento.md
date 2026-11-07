@@ -45,11 +45,11 @@
 - Consumes: `window.SENDWAYO_REQUESTS`, `window.SENDWAYO_BANKS`, `window.BENEFICIARIOS_DB`, `TRANSACCIONES`, account identity aliases.
 - Produces: private admin navigation label `Expediente por ID`; read-only profile, financial summary, linked movement, request, beneficiary and bank tables.
 
-- [ ] **Step 1: Restrict lookup subjects** — resolve exact ID/aliases for AGENTE or REMITENTE only.
-- [ ] **Step 2: Add linked-data helpers** — `accountRequests(account,tokens)` and `bankRows(account,tokens)`.
-- [ ] **Step 3: Render complete read-only expediente** — profile, balances/commissions, movements, requests, beneficiaries and bank accounts; redact sensitive keys from JSON details.
-- [ ] **Step 4: Rename navigation and headings** — exact phrase `Expediente por ID`.
-- [ ] **Step 5: Run static regression checks** — all assertions pass.
+- [x] **Step 1: Restrict lookup subjects** — resolve exact ID/aliases for AGENTE or REMITENTE only.
+- [x] **Step 2: Add linked-data helpers** — `accountRequests(account,tokens)` and `bankRows(account,tokens)`.
+- [x] **Step 3: Render complete read-only expediente** — profile, balances/commissions, movements, requests, beneficiaries and bank accounts; redact sensitive keys from JSON details.
+- [x] **Step 4: Rename navigation and headings** — exact phrase `Expediente por ID`.
+- [x] **Step 5: Run static regression checks** — all assertions pass.
 
 ### Task 3: Reduce repeated work on page load
 
@@ -57,15 +57,23 @@
 - Modify: `SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html`
 - Test: `tests/sendwayo-expediente-performance.test.cjs`
 
-- [ ] **Step 1: Make translation incremental** — translate only newly inserted element subtrees.
-- [ ] **Step 2: Scope observers** — avoid table/UI/toolbar/nav scans on public landing; scan only added table/view subtrees.
-- [ ] **Step 3: Reduce noncritical polling** — 2.5s storage fallback to 15s; 4s daily panel fallback to 30s; 5s badge fallback to 15s; keep Firebase realtime listeners and 5s financial reconciliation.
-- [ ] **Step 4: Parallelize Firebase compat SDK downloads after app SDK** — Auth and Database scripts load concurrently.
-- [ ] **Step 5: Run static regression checks and inspect final diff.**
+- [x] **Step 1: Make translation incremental** — translate only newly inserted element subtrees.
+- [x] **Step 2: Scope observers** — avoid table/UI/toolbar/nav scans on public landing; scan only added table/view subtrees.
+- [x] **Step 3: Reduce noncritical polling** — 2.5s storage fallback to 15s; 4s daily panel fallback to 30s; 5s badge fallback to 15s; keep Firebase realtime listeners and 5s financial reconciliation.
+- [x] **Step 4: Parallelize Firebase compat SDK downloads after app SDK** — Auth and Database scripts load concurrently.
+- [x] **Step 5: Run static regression checks and inspect final diff.**
 
 ### Task 4: Verification and handoff
 
-- [ ] Fetch the updated branch file and confirm all expected source changes.
-- [ ] Run the static test script against the updated source where execution is available.
-- [ ] Confirm branch-only changes and that `main`/production were not modified.
-- [ ] Report that browser/device testing is still required before publication; do not claim the page is fully performance-tested without it.
+- [x] Fetch the updated branch file and confirm all expected source changes.
+- [x] Execute the test assertions against the fetched branch source in the verification harness; all assertions passed. The standalone Node command was not run in a local checkout.
+- [x] Compare `main` with the development branch; the branch is ahead and not behind. `main` and production were not changed.
+- [x] Record that real browser/device testing is still required before publication; do not claim the page is fully performance-tested without it.
+
+
+## Verification record
+
+- All 20 static assertions in `tests/sendwayo-expediente-performance.test.cjs` were executed against the freshly fetched branch HTML and passed.
+- All 42 inline JavaScript blocks in the HTML were compiled with `new Function`; 0 syntax errors.
+- No browser/Playwright tool is connected in this session, so sign-in, ID lookup with real Firebase records, mobile rendering and measured load time remain unverified.
+- Final review: self-review (no subagent tool available). Production publication intentionally deferred.
