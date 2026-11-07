@@ -9078,3 +9078,242 @@ window.sendwayoShareReceipt=async function(){
  },true);
 })();
 </script>
+
+<script id="sendwayo-account-investigation-v2">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const txt=v=>String(v==null?'':v);
+ const norm=v=>txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+ const esc=v=>txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const fmt=v=>Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
+ function adminAccount(){try{return typeof ADMIN!=='undefined'?ADMIN:window.ADMIN||null;}catch(e){return window.ADMIN||null;}}
+ function agentAccounts(){try{return typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:(window.AGENTES||[]);}catch(e){return window.AGENTES||[];}}
+ function senderAccounts(){try{return typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:(window.REMITENTES||[]);}catch(e){return window.REMITENTES||[];}}
+ function accounts(){return [adminAccount(),...agentAccounts(),...senderAccounts()].filter(Boolean);}
+ function current(){return window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();}
+ function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
+ function role(a){return txt(a&&(a.role||a.rol)).toUpperCase();}
+ function identityValues(a){
+  return [a.id,a.idAnterior,a.legacyId,a.accountId,a.codigo,a.codigo2,a.codigoAnterior,a.code,a.staffId,a.username,a.login,a.usuario,a.email,a.authEmail,a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid,a.phone,a.telefono,a.celular]
+   .concat(Array.isArray(a.idAliases)?a.idAliases:[])
+   .concat(Array.isArray(a.aliases)?a.aliases:[])
+   .concat(Array.isArray(a.codeAliases)?a.codeAliases:[])
+   .filter(Boolean).map(txt);
+ }
+ function findAccount(q){
+  const wanted=norm(q);if(!wanted)return null;
+  return accounts().find(a=>identityValues(a).some(v=>norm(v)===wanted))||null;
+ }
+ function accountKey(a){return txt(a&&(a.dbUserKey||a.rtdbUserKey||a.firebaseKey))||(role(a)==='ADMIN'?'admin':'');}
+ function transactionRows(){
+  try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))return TRANSACCIONES;}catch(e){}
+  if(Array.isArray(window.TRANSACCIONES))return window.TRANSACCIONES;
+  try{const report=window.sendwayoBuildFinancialAudit&&window.sendwayoBuildFinancialAudit();if(report&&Array.isArray(report.rows))return report.rows.map(x=>x.raw||x);}catch(e){}
+  return [];
+ }
+ function tokenSet(a){return new Set(identityValues(a).map(norm).filter(Boolean));}
+ function collectLinkedValues(obj,out,depth){
+  if(!obj||typeof obj!=='object'||depth>3)return;
+  const keys=/(userid|userkey|accountid|accountkey|senderid|remitterid|remitenteid|creatorid|creadorid|createdby|authuid|ownerid|owneruserid|beneficiaryowner|actorid|approvedby|reviewedby|updatedby|uid|legacyid|staffid|^user_id$|^account_id$|^sender_id$|^owner_id$)/i;
+  Object.keys(obj).forEach(k=>{
+   const v=obj[k];
+   if(keys.test(k)){
+    if(v!==null&&v!==undefined&&(typeof v==='string'||typeof v==='number'))out.push(txt(v));
+    else if(Array.isArray(v))v.forEach(x=>{if(typeof x==='string'||typeof x==='number')out.push(txt(x));});
+   }
+   if(v&&typeof v==='object')collectLinkedValues(v,out,depth+1);
+  });
+ }
+ function transactionBelongs(t,a,tokens){
+  const values=[];
+  const fields=['userId','ownerLegacyId','ownerCode','ownerId','remitenteId','creadorId','createdByUserId','createdById','createdByAuthUid','actorLegacyId','actorId','authUid','uid','dbUserKey','accountId','senderId','senderUserId','fromUserId','toUserId','approvedByUserId','approvedByAuthUid','reviewedByUserId','reviewedByAuthUid','updatedByUserId','updatedByAuthUid','ownerUserId','beneficiaryOwnerUserId'];
+  fields.forEach(k=>{if(t&&t[k]!=null)values.push(txt(t[k]));});
+  collectLinkedValues(t&&t._cloudRaw,t?values:values,0);
+  collectLinkedValues(t,values,0);
+  return values.some(v=>tokens.has(norm(v)));
+ }
+ function beneficiaryBelongs(b,a,tokens){
+  const fields=['userId','ownerUserId','createdByUserId','ownerId','ownerAuthUid','createdByAuthUid','firebaseKey','ownerLegacyId','remitenteId','accountId'];
+  return fields.some(k=>b&&b[k]!=null&&tokens.has(norm(b[k])));
+ }
+ function dateLabel(t){
+  const n=Number(t&&(t.timestamp||t.createdAtMs||t.fechaMs))||Date.parse(txt(t&&(t.fecha||t.date))||'');
+  return n?new Date(n).toLocaleString('es-DO'):'—';
+ }
+ function beneficiaryRows(a,tokens){
+  const source=Array.isArray(window.BENEFICIARIOS_DB)?window.BENEFICIARIOS_DB:(Array.isArray(window.BENEFICIARIOS)?window.BENEFICIARIOS:[]);
+  return source.filter(b=>beneficiaryBelongs(b,a,tokens));
+ }
+ function accountTransactions(a,tokens){return transactionRows().filter(t=>transactionBelongs(t,a,tokens)).sort((x,y)=>(Number(y.timestamp||y.createdAtMs)||0)-(Number(x.timestamp||x.createdAtMs)||0));}
+ function accountMoney(a){const b=a.balances||{},c=a.commissions||a.comisiones||{};return {dop:Number(b.DOP??a.balanceDOP??a.balance??0)||0,htg:Number(b.HTG??a.balanceHTG??0)||0,cdop:Number(c.DOP??a.commissionDOP??0)||0,chtg:Number(c.HTG??a.commissionHTG??0)||0};}
+ function ensureInvestigationView(){
+  let root=$('view-investigacion');
+  if(!root){const parent=$('view-tablero')&&$('view-tablero').parentElement||document.querySelector('main')||document.body;root=document.createElement('div');root.id='view-investigacion';root.className='view hidden bg-white rounded-xl border shadow-sm';parent.appendChild(root);}
+  return root;
+ }
+ function showAccountInvestigation(q){
+  const root=ensureInvestigationView(),a=findAccount(q);
+  if(!a){root.innerHTML='<section class="p-4 md:p-6 space-y-3"><h2 class="font-black text-lg">Investigación de cuentas</h2><div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró una cuenta con ese ID o código. Compruebe el dato e inténtelo nuevamente.</div><button id="sendwayo-investigation-back" class="border rounded-full px-4 py-2 text-sm">Nueva búsqueda</button></section>';const b=$('sendwayo-investigation-back');if(b)b.onclick=()=>{const i=$('sendwayo-investigation-id');if(i){i.value='';i.focus();}};return;}
+  const tokens=tokenSet(a),tx=accountTransactions(a,tokens),ben=beneficiaryRows(a,tokens),m=accountMoney(a);
+  const userId=txt(a.id),status=a.active===false||a.activo===false||norm(a.estado||a.status).includes('inactivo')?'Inactivo':'Activo';
+  const transactionHtml=tx.map((t,i)=>{
+   const amount=t.monto??t.montoValue??t.amount??'',currency=txt(t.moneda||t.currency||'DOP');
+   const raw=(()=>{try{return JSON.stringify(t._cloudRaw||t,null,2);}catch(e){return txt(t.rutaExacta||t.descripcion||'');}})();
+   return '<tr class="border-t align-top"><td class="p-2">'+String(i+1).padStart(2,'0')+'</td><td class="p-2">'+esc(dateLabel(t))+'</td><td class="p-2">'+esc(t.tipo||t.type||t.firebaseCategory||'Movimiento')+'<br><span class="text-slate-500">'+esc(t.firebaseCategory||'')+'</span></td><td class="p-2">'+esc(t.ruta||t.route||t.rutaExacta||t.description||'—')+'</td><td class="p-2">'+esc(t.beneficiario||t.beneficiary||'—')+'</td><td class="p-2">'+esc(amount)+' '+esc(currency)+'</td><td class="p-2">'+esc(t.estado||t.status||'Pendiente')+'</td><td class="p-2"><details><summary class="cursor-pointer text-blue-700 font-bold">Detalles</summary><pre class="max-w-[480px] whitespace-pre-wrap break-all text-[10px] bg-slate-50 p-2 rounded">'+esc(raw)+'</pre></details></td></tr>';
+  }).join('')||'<tr><td colspan="8" class="p-5 text-center text-slate-500">No se encontraron movimientos vinculados a esta cuenta en los registros sincronizados.</td></tr>';
+  const beneficiariesHtml=ben.map((b,i)=>'<tr class="border-t"><td class="p-2">'+String(i+1).padStart(2,'0')+'</td><td class="p-2">'+esc(b.id||b.firebaseKey||'')+'</td><td class="p-2">'+esc(b.nombre||b.name||'')+'</td><td class="p-2">'+esc(b.paisNombre||b.paisIso2||'')+' '+esc(b.codigoPais||'')+'</td><td class="p-2">'+esc(b.telefonoE164||b.telefonoCompleto||b.telefono||b.phone||'')+'</td><td class="p-2">'+esc(b.direccion||'')+'</td><td class="p-2">'+esc(b.estado||(b.active===false?'Inactivo':'Activo'))+'</td></tr>').join('')||'<tr><td colspan="7" class="p-5 text-center text-slate-500">No se encontraron beneficiarios asociados a esta cuenta en el directorio sincronizado.</td></tr>';
+  root.innerHTML='<section class="p-3 md:p-5 space-y-4 bg-slate-50 rounded-xl">'+
+   '<header class="bg-white border rounded-xl p-4"><div class="font-black text-lg">Investigación individual de cuentas</div><p class="text-xs text-slate-500 mt-1">Consulta de datos y movimientos asociados a un único administrador, agente o remitente.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+
+   '<section class="bg-white border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-black text-base">'+esc(a.nombre||a.name||'Cuenta')+'</h3><p class="text-xs text-slate-500">'+esc(role(a))+' · '+esc(status)+'</p></div><div class="text-right text-xs"><b>ID: '+esc(userId)+'</b><br><b>Código: '+esc(a.codigo||a.code||'—')+'</b></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 text-xs"><div class="border rounded-lg p-3"><span class="text-slate-500">Correo</span><div class="font-bold break-all">'+esc(a.email||a.usuario||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Celular</span><div class="font-bold">'+esc(a.celular||a.telefono||a.phone||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Clave interna Firebase</span><div class="font-bold break-all">'+esc(accountKey(a)||'No disponible')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">UID de autenticación</span><div class="font-bold break-all">'+esc(a.authUid||'No disponible')+'</div></div></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3"><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance DOP</span><div class="font-black">RD$ '+fmt(m.dop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance HTG</span><div class="font-black">HTG '+fmt(m.htg)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión DOP</span><div class="font-black">RD$ '+fmt(m.cdop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión HTG</span><div class="font-black">HTG '+fmt(m.chtg)+'</div></div></div></section>'+
+   '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Movimientos vinculados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+tx.length+' registros</span></div><div class="overflow-x-auto mt-3 max-h-[520px]"><table class="w-full min-w-[1050px] text-xs"><thead class="bg-slate-100 sticky top-0"><tr><th class="p-2">N°</th><th class="p-2 text-left">Fecha</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-left">Ruta / detalle</th><th class="p-2 text-left">Beneficiario</th><th class="p-2 text-left">Monto</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Registro</th></tr></thead><tbody>'+transactionHtml+'</tbody></table></div></section>'+
+   '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Beneficiarios asociados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+ben.length+' registros</span></div><div class="overflow-x-auto mt-3"><table class="w-full min-w-[850px] text-xs"><thead class="bg-slate-100"><tr><th class="p-2">N°</th><th class="p-2 text-left">ID</th><th class="p-2 text-left">Nombre</th><th class="p-2 text-left">País</th><th class="p-2 text-left">Teléfono</th><th class="p-2 text-left">Dirección</th><th class="p-2 text-left">Estado</th></tr></thead><tbody>'+beneficiariesHtml+'</tbody></table></div></section>'+
+   '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">La consulta utiliza la cuenta individual y los movimientos y beneficiarios que Firebase ya sincronizó para esta sesión. No crea datos ni modifica balances.</p></section>';
+  const form=$('sendwayo-investigation-form');if(form)form.addEventListener('submit',function(ev){ev.preventDefault();showAccountInvestigation($('sendwayo-investigation-id').value);});
+ }
+ function installInvestigationNav(){
+  const side=$('sendwayo-main-sidebar')||Array.from(document.querySelectorAll('body *')).find(el=>el.classList&&el.classList.contains('w-[220px]')&&el.querySelector&&el.querySelector('button[onclick*="retiros"]'));
+  if(!side)return;
+  if(isAdmin()){
+   let b=side.querySelector('[data-sendwayo-nav="investigacion"]');
+   if(!b){b=document.createElement('button');b.type='button';b.dataset.sendwayoNav='investigacion';const ref=Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('informaciones secretas'))||Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('remitentes'));b.className=ref?ref.className:'w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2';b.textContent='🔎 Investigación de cuentas';b.addEventListener('click',()=>window.showView('investigacion'));if(ref)ref.insertAdjacentElement('beforebegin',b);else side.appendChild(b);}
+   b.hidden=false;
+  }else{const b=side.querySelector('[data-sendwayo-nav="investigacion"]');if(b)b.remove();}
+ }
+ function enhanceAccountActions(view){
+  if(!isAdmin()||!['secretas','agentes','remitentes'].includes(view))return;
+  const body=$('tabla-sendwayo-'+view+'-body');if(!body)return;
+  body.querySelectorAll('tr').forEach(tr=>{
+   const cells=tr.querySelectorAll('td');if(cells.length<7)return;
+   const id=txt(view==='secretas'?cells[1].textContent:cells[3].textContent).trim();if(!id||tr.dataset.sendwayoActionsEnhanced==='1')return;
+   tr.dataset.sendwayoActionsEnhanced='1';
+   const cell=cells[cells.length-1],buttons=cell.querySelector('div')||cell;
+   if(view==='secretas'&&norm(cells[3].textContent)==='admin'){
+    const modify=Array.from(buttons.querySelectorAll('button')).find(b=>norm(b.textContent).includes('modificar'));
+    if(modify)modify.onclick=()=>window.sendwayoAdminEditAccount(id);
+   }
+   const add=(label,fn,cls)=>{
+    if(Array.from(buttons.querySelectorAll('button')).some(b=>norm(b.textContent)===norm(label)))return;
+    const b=document.createElement('button');b.type='button';b.textContent=label;b.className=cls||'border rounded-full px-2 py-1 text-xs';b.addEventListener('click',fn);buttons.appendChild(b);
+   };
+   add('Ver',()=>window.sendwayoAdminViewAccount(id));
+   add('Acreditar',()=>window.sendwayoAdminCreditAccount(id),'bg-green-700 text-white rounded-full px-2 py-1 text-xs');
+   add('Desacreditar',()=>window.sendwayoAdminDebitAccount(id),'bg-amber-700 text-white rounded-full px-2 py-1 text-xs');
+   add('Balance / comisiones',()=>window.sendwayoAdminViewMoney(id));
+   add('Borrar',()=>window.sendwayoAdminDeleteAccount(id),'border border-red-300 text-red-700 rounded-full px-2 py-1 text-xs');
+  });
+ }
+ function adminProfileModal(){
+  if(!isAdmin())return alert('Solo Administración puede modificar su perfil.');
+  const a=adminAccount();if(!a)return alert('No se encontró el perfil de Administración.');
+  let modal=$('sendwayo-admin-profile-editor');
+  if(!modal){modal=document.createElement('div');modal.id='sendwayo-admin-profile-editor';modal.className='fixed inset-0 z-[40000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(modal);}
+  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'ideletteismorin@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
+  $('sendwayo-admin-profile-close').onclick=()=>modal.remove();
+  $('sendwayo-admin-profile-save').onclick=saveAdminProfile;
+ }
+ async function saveAdminProfile(){
+  if(!isAdmin())return alert('Solo Administración puede guardar estos cambios.');
+  const a=adminAccount(),name=txt($('sendwayo-admin-profile-name')&&$('sendwayo-admin-profile-name').value).trim(),id=txt($('sendwayo-admin-profile-id')&&$('sendwayo-admin-profile-id').value).trim(),code=txt($('sendwayo-admin-profile-code')&&$('sendwayo-admin-profile-code').value).trim();
+  if(!name||!id||!code)return alert('Nombre, ID y código son obligatorios.');
+  if(!/^[A-Za-z0-9_-]{3,40}$/.test(id)||!/^[A-Za-z0-9_-]{3,48}$/.test(code))return alert('El ID y el código deben contener únicamente letras, números, guion o guion bajo.');
+  if(accounts().some(x=>x!==a&&(norm(x.id)===norm(id)||norm(x.codigo||x.code)===norm(code))))return alert('Ese ID o código pertenece a otra cuenta.');
+  const f=window.sendwayoFirebase,auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db;
+  if(!db||!auth)return alert('No hay una sesión administrativa confirmada en Firebase.');
+  const key=txt(a.dbUserKey||a.rtdbUserKey||a.firebaseKey||'admin'),oldId=txt(a.id),oldCode=txt(a.codigo);
+  const idAliases=Array.from(new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),oldId].filter(x=>x&&x!==id)));
+  const codeAliases=Array.from(new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),oldCode].filter(x=>x&&x!==code)));
+  const patch={id:id,accountId:id,legacyId:id,idAnterior:oldId!==id?oldId:txt(a.idAnterior||''),idAliases:idAliases,code:code,codigo:code,staffId:code,codeAliases:codeAliases,name:name,nombre:name,displayName:name,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
+  const button=$('sendwayo-admin-profile-save');if(button){button.disabled=true;button.textContent='Guardando…';}
+  try{
+   await db.ref('sendwayo_express_v2/users/'+key).update(patch);
+   Object.assign(a,patch,{codigo2:code,dbUserKey:key,rtdbUserKey:key});
+   (window.USUARIOS_LOGIN||[]).forEach(u=>{if(norm(u.email||u.usuario)===norm(a.email||auth.email)||role(u)==='ADMIN'){u.id=id;u.codigo=code;u.codigo2=code;u.nombre=name;u.name=name;u.aliases=Array.from(new Set([...(u.aliases||[]),oldId,oldCode,id,code].filter(Boolean)));u.idAliases=idAliases;u.codeAliases=codeAliases;}});
+   if(window.currentUser&&norm(window.currentUser.email||window.currentUser.usuario)===norm(a.email||auth.email))Object.assign(window.currentUser,{id:id,codigo:code,nombre:name,name:name});
+   $('sendwayo-admin-profile-editor')?.remove();alert('Datos de Administración actualizados en Firebase. ID y código anteriores conservados como alias.');
+   if(typeof window.showView==='function')window.showView('secretas');
+  }catch(error){console.error('[SENDWAYO admin profile update]',error);alert('No se pudieron guardar los cambios en Firebase: '+(error.message||'error'));if(button){button.disabled=false;button.textContent='Guardar datos en Firebase';}}
+ }
+ function makeUserCode(view,name){
+  const parts=txt(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean);
+  const first=(parts[0]||'USR').slice(0,3).padEnd(3,'X'),last=(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).padEnd(3,'X');
+  return (view==='agentes'?'AGE-':'REM-')+first+last;
+ }
+ function installAccountFormDefaults(){
+  const open=window.sendwayoOpenAccountForm;if(typeof open!=='function'||open.__sendwayoDefaultsWrapped)return;
+  const wrapped=function(view,id){
+   const out=open.apply(this,arguments);
+   const name=$('v7-admin-name'),code=$('v7-admin-code'),password=$('v7-admin-password');
+   if(!id){
+    if(password){password.value='12345678';password.readOnly=true;password.autocomplete='new-password';}
+    if(name&&code){
+     const update=()=>{if(!code.dataset.sendwayoManualCode){code.value=makeUserCode(view,name.value);code.dataset.sendwayoAutoCode=code.value;}};
+     if(!code.dataset.sendwayoIdCodeBound){code.dataset.sendwayoIdCodeBound='1';code.addEventListener('input',()=>{if(code.value!==code.dataset.sendwayoAutoCode)code.dataset.sendwayoManualCode='1';});name.addEventListener('input',update);}
+     if(!code.dataset.sendwayoManualCode)update();
+    }
+   }
+   return out;
+  };
+  wrapped.__sendwayoDefaultsWrapped=true;window.sendwayoOpenAccountForm=wrapped;
+ }
+ function clearFakeDepositBadge(){
+  const side=$('sendwayo-main-sidebar')||Array.from(document.querySelectorAll('body *')).find(el=>el.classList&&el.classList.contains('w-[220px]')&&el.querySelector&&el.querySelector('button[onclick*="retiros"]'));
+  if(!side)return;
+  side.querySelectorAll('button,a').forEach(b=>{
+   if(!norm(b.textContent).includes('cuenta bancaria y depositos'))return;
+   Array.from(b.querySelectorAll('span,small,b,strong,i,em,div')).forEach(n=>{
+    if(n.id==='bell-count')return;
+    if(/^\s*\d{1,4}\s*$/.test(n.textContent||''))n.remove();
+   });
+   Array.from(b.childNodes).forEach(n=>{if(n.nodeType===3&&/^\s*\d{1,4}\s*$/.test(n.nodeValue||''))n.remove();});
+  });
+ }
+ function installBadgeCleanup(){
+  clearFakeDepositBadge();
+  const side=$('sendwayo-main-sidebar');if(side&&!side.dataset.sendwayoDepositBadgeObserver){side.dataset.sendwayoDepositBadgeObserver='1';new MutationObserver(clearFakeDepositBadge).observe(side,{childList:true,subtree:true,characterData:true});}
+ }
+ function moveBusinessNameAboveUser(){
+  const userBadge=$('user-top'),hour=$('hora-top');if(!userBadge||userBadge.dataset.sendwayoPositioned==='1'||!hour)return;
+  const header=hour.parentElement&&hour.parentElement.parentElement,left=header&&header.firstElementChild;
+  if(!left)return;
+  const title=Array.from(left.querySelectorAll('span')).find(x=>norm(x.textContent)==='sendwayo express');
+  if(!title)return;
+  const wrap=document.createElement('div');wrap.className='sendwayo-business-user-stack';wrap.style.cssText='display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;line-height:1.15;flex:0 0 auto;';
+  title.parentNode.insertBefore(wrap,title);wrap.appendChild(title);wrap.appendChild(userBadge);
+  userBadge.dataset.sendwayoPositioned='1';userBadge.style.cssText+=';margin:0!important;display:inline-flex!important;max-width:180px;white-space:normal;font-size:9px!important;padding:3px 8px!important;';
+  left.style.flexWrap='wrap';left.style.alignItems='center';
+ }
+ function installInvestigationViewRoute(){
+  const previous=window.showView;if(typeof previous!=='function'||previous.__sendwayoInvestigationWrapped)return;
+  const wrapped=function(view){
+   if(view==='investigacion'){
+    if(!isAdmin())return alert('La investigación individual está disponible solamente para Administración.');
+    document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+    const root=ensureInvestigationView();root.classList.remove('hidden');document.body.dataset.sendwayoActiveView='investigacion';
+    const side=$('sendwayo-main-sidebar');if(side)side.classList.remove('sendwayo-menu-open');const shade=$('sendwayo-menu-shade');if(shade)shade.classList.remove('open');
+    showAccountInvestigation('');
+    return;
+   }
+   const result=previous.apply(this,arguments);
+   setTimeout(()=>{enhanceAccountActions(view);installInvestigationNav();clearFakeDepositBadge();},0);
+   return result;
+  };
+  wrapped.__sendwayoInvestigationWrapped=true;window.showView=wrapped;
+ }
+ function wrapLoginForNav(){
+  const prior=window.intentarLogin;if(typeof prior!=='function'||prior.__sendwayoNavWrapped)return;
+  const wrapped=function(){const result=prior.apply(this,arguments);Promise.resolve(result).then(()=>setTimeout(()=>{installInvestigationNav();moveBusinessNameAboveUser();clearFakeDepositBadge();},100)).catch(()=>{});return result;};
+  wrapped.__sendwayoNavWrapped=true;window.intentarLogin=wrapped;
+ }
+ function initialize(){
+  installInvestigationViewRoute();installAccountFormDefaults();installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();wrapLoginForNav();
+  const existingShow=window.showView;
+  if(existingShow&&existingShow.__sendwayoInvestigationWrapped!==true)installInvestigationViewRoute();
+  if(window.addEventListener)window.addEventListener('load',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();installAccountFormDefaults();});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
+ document.addEventListener('sendwayo:firebase-ready',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();});
+ const observer=new MutationObserver(()=>{if($('sendwayo-main-sidebar')){installInvestigationNav();clearFakeDepositBadge();}});
+ if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
