@@ -3743,7 +3743,7 @@ window.sendwayoShareReceipt=async function(){
  const allAccounts=()=>[...(admin()?[admin()]:[]),...agents(),...senders()];
  const balanceObject=a=>{if(!a)return null;if(!a.balances)a.balances={DOP:0,HTG:0};if(a.balances.DOP==null)a.balances.DOP=0;if(a.balances.HTG==null)a.balances.HTG=0;return a.balances};
  const commissionObject=a=>{if(!a)return null;if(!a.commissions)a.commissions=a.comisiones||{DOP:0,HTG:0};if(!a.comisiones)a.comisiones=a.commissions;if(a.commissions.DOP==null)a.commissions.DOP=0;if(a.commissions.HTG==null)a.commissions.HTG=0;a.comisiones.DOP=a.commissions.DOP;a.comisiones.HTG=a.commissions.HTG;return a.commissions};
- const accountById=id=>allAccounts().find(a=>String(a.id)===String(id)||String(a.idAnterior||'')===String(id)||String(a.codigo||'')===String(id)||String(a.codigoAnterior||'')===String(id))||null;
+ const accountById=id=>allAccounts().find(a=>String(a.id)===String(id)||String(a.idAnterior||'')===String(id)||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v)===String(id);}))||String(a.codigo||'')===String(id)||String(a.codigoAnterior||'')===String(id))||null;
  const accountByInput=raw=>{
    const q=norm(raw);if(!q)return null;
    let a=allAccounts().find(x=>[x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(y=>norm(y)===q));
@@ -5659,7 +5659,7 @@ window.sendwayoShareReceipt=async function(){
     const resets=loadArray(PASSWORD_RESET_KEY);
     resets.forEach(st=>{
       if(!st||!st.id||!st.password)return;
-      const account=allAccounts().find(a=>String(a.id)===String(st.id)||String(a.idAnterior||'')===String(st.id));
+      const account=allAccounts().find(a=>String(a.id)===String(st.id)||String(a.idAnterior||'')===String(st.id)||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v)===String(st.id);})));
       if(account){account.password=st.password;account.contrasena=st.password;account.password2='';account.allowedPasswords=[];}
       const rec=(window.USUARIOS_LOGIN||[]).find(a=>String(a.id)===String(st.id));
       if(rec){rec.password=st.password;rec.password2='';rec.allowedPasswords=[];}
@@ -5668,7 +5668,7 @@ window.sendwayoShareReceipt=async function(){
   function saveResetPassword(rec,newPassword){
     const id=txt(rec.id),mail=norm(rec.email||rec.usuario),phone=txt(rec.celular||rec.telefono).replace(/\D/g,'');
     rec.password=newPassword;rec.password2='';rec.allowedPasswords=[];
-    const account=allAccounts().find(a=>String(a.id)===id||String(a.idAnterior||'')===id);
+    const account=allAccounts().find(a=>String(a.id)===id||String(a.idAnterior||'')===id||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v)===id;})));
     if(account){account.password=newPassword;account.contrasena=newPassword;account.password2='';account.allowedPasswords=[];}
     const resets=loadArray(PASSWORD_RESET_KEY).filter(x=>String(x.id)!==id);
     resets.push({id,password:newPassword,changedAt:new Date().toISOString()});saveArray(PASSWORD_RESET_KEY,resets);
@@ -6980,7 +6980,7 @@ window.sendwayoShareReceipt=async function(){
       if(!a || typeof a!=='object') return;
       const email=txt(a.email || a.usuario).toLowerCase();
       if(!email.includes('@')) return;
-      const aliases=[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
+      const aliases=[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
       rows.push({email, id:txt(a.id), codigo:txt(a.codigo || a.staffId), nombre:txt(a.nombre || a.name), role:role || a.role, aliases});
     };
     try { add(typeof ADMIN!=='undefined'?ADMIN:null,'ADMIN'); } catch(e){}
@@ -7159,7 +7159,7 @@ window.sendwayoShareReceipt=async function(){
     }
     replaceArrayContents(AGENTES,mapped.filter(a=>a.role==='AGENTE'));
     replaceArrayContents(REMITENTES,mapped.filter(a=>a.role==='REMITENTE'));
-    window.USUARIOS_LOGIN=mapped.map(a=>({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.dbUserKey,a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.staffId,a.email].filter(Boolean),nombre:a.nombre,role:a.role,dbUserKey:a.dbUserKey}));
+    window.USUARIOS_LOGIN=mapped.map(a=>({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.dbUserKey,a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.staffId,a.email].filter(Boolean),nombre:a.nombre,role:a.role,dbUserKey:a.dbUserKey}));
     const currentUi=mapped.find(a=>a.dbUserKey===profileRow?.key);
     if(currentUi&&role==='REMITENTE'){
       replaceArrayContents(AGENTES,[]);
@@ -8158,7 +8158,7 @@ window.sendwayoShareReceipt=async function(){
     try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))out.push(...REMITENTES);}catch(e){};
     return out;
   };
-  const findAccount=id=>accountArrays().find(a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),...(Array.isArray(a.idAliases)?a.idAliases:[]),a.dbUserKey,a.codigo,a.email,a.username].some(v=>text(v)===text(id)))||null;
+  const findAccount=id=>accountArrays().find(a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.dbUserKey,a.codigo,a.email,a.username].some(v=>text(v)===text(id)))||null;
   function accountModal(title,body){let m=$('sendwayo-admin-account-modal');if(!m){m=document.createElement('div');m.id='sendwayo-admin-account-modal';m.className='fixed inset-0 z-[30000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(m);}m.innerHTML=`<div class="w-full max-w-xl max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>${esc(title)}</b><button type="button" onclick="document.getElementById('sendwayo-admin-account-modal').remove()">✕</button></div><div class="p-4 space-y-3">${body}<button type="button" id="sendwayo-admin-account-save" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Guardar</button></div></div>`;return m;}
   window.sendwayoOpenAccountForm=function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede crear o modificar cuentas.');
@@ -8189,7 +8189,7 @@ window.sendwayoShareReceipt=async function(){
     if(!/^\S+@\S+\.\S+$/.test(email))return deny('El correo no es válido.');
     const fb=window.sendwayoFirebase;if(!fb?.db||!fb?.auth?.currentUser)return deny('No hay una sesión administrativa confirmada en Firebase.');
     let a=id?findAccount(id):null;const ag=view==='agentes',roleValue=ag?'agente':'remitente';
-    const duplicate=accountArrays().find(x=>x!==a&&(norm(x.id)===norm(ident)||norm(x.username)===norm(username)||norm(x.codigo||x.code)===norm(code)));
+    const duplicate=accountArrays().find(x=>x!==a&&(norm(x.id)===norm(ident)||(Array.isArray(x.idAliases)&&x.idAliases.some(v=>norm(v)===norm(ident)))||norm(x.username)===norm(username)||norm(x.codigo||x.code)===norm(code)));
     if(duplicate)return deny('Ese usuario o código ya está asignado a otra cuenta.');
     const btn=$('sendwayo-admin-account-save');if(btn){btn.disabled=true;btn.textContent='Guardando en Firebase…';}
     try{
@@ -8739,7 +8739,7 @@ window.sendwayoShareReceipt=async function(){
    var accounts=[];
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
-   var a=accounts.find(function(x){return [x.id,x.idAnterior,x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id||'');});})||null;
+   var a=accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id||'');});})||null;
    var prefix=view==='agentes'?'AGE':'REM',num=1;
    if(!a){while(accounts.some(function(x){return String(x.id||'')===prefix+String(num).padStart(5,'0');}))num++;}
    var visibleId=a?String(a.id):prefix+String(num).padStart(5,'0');
@@ -8764,8 +8764,8 @@ window.sendwayoShareReceipt=async function(){
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
    var a=accounts.find(function(x){return [x.id,x.idAnterior,x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'')===String(id||'');});})||null;
-   var duplicate=accounts.find(function(x){return x!==a&&String(x.id||'').toLowerCase()===ident.toLowerCase();});
-   if(duplicate){alert('Ese ID ya está asignado a otra cuenta.');return false;}
+   var duplicate=accounts.find(function(x){return x!==a&&(String(x.id||'').toLowerCase()===ident.toLowerCase()||(Array.isArray(x.idAliases)&&x.idAliases.some(function(v){return String(v).toLowerCase()===ident.toLowerCase();})));});
+   if(duplicate){alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
    if(!a){
     // Para una cuenta nueva, el formulario de Firebase conserva su flujo de creación y utiliza el ID automático.
     return originalSave.call(this,view,id||'');
@@ -8779,6 +8779,8 @@ window.sendwayoShareReceipt=async function(){
    var code=String($('v7-admin-code')&&$('v7-admin-code').value||'').trim();
    var phone=String($('v7-admin-phone')&&$('v7-admin-phone').value||'').trim();
    if(!name||!username||!code||!phone){alert('Complete nombre, usuario, código y celular.');return false;}
+   var duplicateLogin=accounts.find(function(x){return x!==a&&(norm(x.username||x.login)===norm(username)||norm(x.codigo||x.code)===norm(code));});
+   if(duplicateLogin){alert('Ese usuario o código ya está asignado a otra cuenta.');return false;}
    var oldId=String(a.id||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
    aliases=[...new Set(aliases)];
    var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,name:name,nombre:name,displayName:name,username:username,login:username,code:code,codigo:code,staffId:code,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
