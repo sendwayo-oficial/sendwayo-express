@@ -43,7 +43,7 @@
 
 **Interfaces:**
 - Consumes: `window.SENDWAYO_REQUESTS`, `window.SENDWAYO_BANKS`, `window.BENEFICIARIOS_DB`, `TRANSACCIONES`, account identity aliases.
-- Produces: private admin navigation label `Expediente por ID`; read-only profile, financial summary, linked movement, request, beneficiary and bank tables.
+- Produces: private admin navigation label `Expediente por ID`; existing read-only profile, financial summary, movement and beneficiary tables, extended by a scoped enhancer for requests and linked bank accounts.
 
 - [x] **Step 1: Restrict lookup subjects** — resolve exact ID/aliases for AGENTE or REMITENTE only.
 - [x] **Step 2: Add linked-data helpers** — `accountRequests(account,tokens)` and `bankRows(account,tokens)`.
@@ -73,7 +73,7 @@
 
 ## Verification record
 
-- All 20 static assertions in `tests/sendwayo-expediente-performance.test.cjs` were executed against the freshly fetched branch HTML and passed.
+- All static assertions in `tests/sendwayo-expediente-performance.test.cjs` were executed against the freshly fetched branch HTML and passed.
 - All 42 inline JavaScript blocks in the HTML were compiled with `new Function`; 0 syntax errors.
 - No browser/Playwright tool is connected in this session, so sign-in, ID lookup with real Firebase records, mobile rendering and measured load time remain unverified.
 - Final review: self-review (no subagent tool available). Production publication intentionally deferred.
