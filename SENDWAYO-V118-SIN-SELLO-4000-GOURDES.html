@@ -3256,7 +3256,7 @@ document.addEventListener('DOMContentLoaded', function(){
 (function(){
  'use strict';
  const key='sendwayo_express_oficial_20261029_registros_pendientes_v5';
- const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
  const $=id=>document.getElementById(id);
  const readRows=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
  const writeRows=rows=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO registration approval]',e);}};
@@ -3287,7 +3287,7 @@ document.addEventListener('DOMContentLoaded', function(){
    if(norm(request.tipoSolicitud)==='servicio'){if(typeof priorAction==='function')return priorAction.apply(this,arguments);return;}
    if(norm(request.estado)==='aprobado'){window.alert('Esta solicitud ya fue aprobada.');return;}
    const email=String(request.email||'').trim().toLowerCase();
-   if(!/^\\S+@\\S+\\.\\S+$/.test(email)){window.alert('La solicitud no contiene un correo válido.');return;}
+   if(!/^\S+@\S+\.\S+$/.test(email)){window.alert('La solicitud no contiene un correo válido.');return;}
    if(allAccounts().some(a=>norm(a.email||a.usuario)===norm(email))||(window.USUARIOS_LOGIN||[]).some(a=>norm(a.email||a.usuario)===norm(email))){
     window.alert('Este correo ya pertenece a una cuenta registrada.');return;
    }
@@ -3309,7 +3309,7 @@ document.addEventListener('DOMContentLoaded', function(){
     password.value='12345678';
     password.readOnly=true;
     password.autocomplete='new-password';
-    if(!code.dataset.sendwayoManualCode){code.value=(accountView==='agentes'?'AG-':'REM-')+fullName.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().split(/\\s+/).filter(Boolean).map((x,i)=>x.slice(0,3)).filter((x,i)=>i===0||i===fullName.trim().split(/\\s+/).filter(Boolean).length-1).join('');code.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(!code.dataset.sendwayoManualCode){code.value=(accountView==='agentes'?'AG-':'REM-')+fullName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean).map((x,i)=>x.slice(0,3)).filter((x,i)=>i===0||i===fullName.trim().split(/\s+/).filter(Boolean).length-1).join('');code.dispatchEvent(new Event('input',{bubbles:true}));}
    },80);
    return;
   }
