@@ -53,7 +53,8 @@ assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?left:0!important;right:0!imp
 assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateY\(0\)/);
 assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(/);
 assert.match(html, /#sendwayo-main-content\{display:block!important;flex:none!important;width:100%!important/);
-assert.match(html, /sendwayo-brand-actions\.insertBefore\(btn/);
+assert.match(html, /const actions=bar\.querySelector\('\.sendwayo-brand-actions'\)/);
+assert.match(html, /actions\.insertBefore\(btn,actions\.firstChild\)/);
 assert.match(html, /window\.sendwayoRefreshIdentityHeader=refreshIdentity/);
 
 // Comprobante auténtico en imagen PNG.
