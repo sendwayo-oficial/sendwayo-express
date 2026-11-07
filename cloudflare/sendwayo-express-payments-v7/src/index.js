@@ -80,7 +80,7 @@ export function validatePayoutInput(payout) {
   if (!["moncash","natcash"].includes(network)) throw new Error("Red de dispersión no compatible.");
   if (currency !== "HTG") throw new Error("MonCash/NatCash solo permite pagos de salida en HTG.");
   if (!Number.isInteger(amount)) throw new Error("El importe de dispersión debe ser entero en HTG.");
-  if (amount < 25) throw new Error("El importe mínimo de dispersión es 25 HTG.");
+  if (amount < 25) throw new Error("El importe debe cumplir un mínimo de 25 HTG.");
   if (!/^(509)?\d{8}$/.test(receiver)) throw new Error("El teléfono haitiano debe tener ocho dígitos, opcionalmente con 509.");
   return { network, amount, currency, receiver: receiver.startsWith("509") ? receiver : "509" + receiver };
 }
