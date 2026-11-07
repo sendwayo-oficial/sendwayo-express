@@ -5686,8 +5686,8 @@ window.sendwayoShareReceipt=async function(){
   function fixAdminCode(){
     try{
       const a=allAccounts().find(x=>String(x.role||'').toUpperCase().includes('ADMIN')||String(x.id||'').toUpperCase()==='ADMINADMIN');
-      if(a){a.id='ADMIN-ADMINISTRADOR';a.codigo='ADMIN-ADMINISTRADOR';a.codigo2='ADMIN-ADMINISTRADOR';a.idAnterior='ADMINADMIN';a.codigoAnterior='ADMIN-000';a.role='ADMIN';}
-      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){u.id='ADMIN-ADMINISTRADOR';u.codigo='ADMIN-ADMINISTRADOR';u.codigo2='ADMIN-ADMINISTRADOR';if(!Array.isArray(u.aliases))u.aliases=[];['ADMINADMIN','ADMIN-000'].forEach(x=>{if(!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
+      if(a){const previousId=String(a.id||'');const previousCode=String(a.codigo||'');if(!a.id||['ADMINADMIN'].includes(previousId.toUpperCase()))a.id='ADMIN-ADMINISTRADOR';if(!a.codigo||previousCode.toUpperCase()==='ADMIN-000')a.codigo=a.id;a.codigo2=a.codigo;if(previousId&&previousId!==a.id){a.idAnterior=a.idAnterior||previousId;a.idAliases=[...new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),previousId].filter(Boolean))];}if(previousCode&&previousCode!==a.codigo)a.codeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),previousCode].filter(Boolean))];a.role='ADMIN';}
+      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='ideletteismorin@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
     }catch(_){ }
   }
 
@@ -7013,7 +7013,7 @@ window.sendwayoShareReceipt=async function(){
       const adminSnap=await userRoot.child('admin').once('value');
       if(adminSnap.exists()){
         const existing=adminSnap.val()||{};
-        const identity={id:'ADMIN-ADMINISTRADOR',accountId:'ADMIN-ADMINISTRADOR',code:'ADMIN-ADMINISTRADOR',codigo:'ADMIN-ADMINISTRADOR',staffId:'ADMIN-ADMINISTRADOR',idAnterior:'ADMINADMIN',idAliases:[...new Set([...(Array.isArray(existing.idAliases)?existing.idAliases:[]),existing.id,existing.legacyId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(existing.codeAliases)?existing.codeAliases:[]),existing.code,'ADMIN-000'].filter(Boolean))]};
+        const previousId=txt(existing.id||existing.legacyId||'ADMINADMIN'),previousCode=txt(existing.code||existing.codigo||'ADMIN-000');const visibleId=!previousId||previousId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':previousId,visibleCode=!previousCode||previousCode==='ADMIN-000'?visibleId:previousCode;const identity={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:previousId!==visibleId?previousId:txt(existing.idAnterior||''),idAliases:[...new Set([...(Array.isArray(existing.idAliases)?existing.idAliases:[]),previousId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(existing.codeAliases)?existing.codeAliases:[]),previousCode,'ADMIN-000'].filter(Boolean))]};
         await userRoot.child('admin').update(identity);Object.assign(existing,identity);return {key:'admin',data:existing};
       }
       const adminSeed=seedProfileFromAccount(typeof ADMIN!=='undefined'?ADMIN:{},'ADMIN');
@@ -7089,11 +7089,11 @@ window.sendwayoShareReceipt=async function(){
     const phone=txt(data.phone||data.telefono||data.celular);
     const known=collectAliases().find(a=>norm(a.email)===email);
     const oldId=txt(data.id||data.legacyId||data.accountId||data.staffId||data.code||data.codigo||key);
-    const id=role==='ADMIN'?'ADMIN-ADMINISTRADOR':txt(known&&known.id||oldId);
+    const id=role==='ADMIN'?(['','ADMINADMIN'].includes(oldId.toUpperCase())?'ADMIN-ADMINISTRADOR':oldId):txt(known&&known.id||oldId);
     let money=accountMoney(data);
     if(role==='AGENTE'){const adminRow=(state.directory||[]).find(r=>canonicalRole(r.data,r.key)==='ADMIN');if(adminRow)money=accountMoney(adminRow.data);else {try{if(typeof ADMIN!=='undefined'&&ADMIN)money=accountMoney(ADMIN);}catch(e){}}}
     return {...data,id,idAnterior:txt(data.idAnterior||(oldId!==id?oldId:'')),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,id].filter(Boolean))],dbUserKey:key,rtdbUserKey:key,legacyId:txt(data.legacyId||data.accountId||data.staffId||oldId||id),
-      codigo:role==='ADMIN'?'ADMIN-ADMINISTRADOR':txt(data.code||data.codigo||data.staffId||(known&&known.codigo)||id),staffId:role==='ADMIN'?'ADMIN-ADMINISTRADOR':txt(data.staffId||data.code||data.codigo||(known&&known.codigo)||id),
+      codigo:role==='ADMIN'?(txt(data.code||data.codigo||'ADMIN-000')==='ADMIN-000'?id:txt(data.code||data.codigo)):txt(data.code||data.codigo||data.staffId||(known&&known.codigo)||id),staffId:role==='ADMIN'?(txt(data.staffId||data.code||data.codigo||'ADMIN-000')==='ADMIN-000'?id:txt(data.staffId||data.code||data.codigo)):txt(data.staffId||data.code||data.codigo||(known&&known.codigo)||id),
       name,nombre:name,displayName:name,email,usuario:email,phone,telefono:phone,celular:phone,
       role,balances:money.balances,commissions:money.commissions,comisiones:money.commissions};
   }
@@ -7109,7 +7109,7 @@ window.sendwayoShareReceipt=async function(){
     const code=txt(d.code||d.codigo||d.staffId||d.id||row.key);
     const phone=txt(d.phone||d.telefono||d.celular);
     const role=canonicalRole(d,row.key);
-    return role==='ADMIN' ? `ADMIN-ADMINISTRADOR — ${name}` : `${code} — ${name}${phone?' — '+phone:''}`;
+    return role==='ADMIN' ? `${code||d.id||'ADMIN-ADMINISTRADOR'} — ${name}` : `${code} — ${name}${phone?' — '+phone:''}`;
   }
   function refreshAccountSelects() {
     const role=canonicalRole(state.profile||{},state.profileKey||'');
@@ -7166,7 +7166,7 @@ window.sendwayoShareReceipt=async function(){
     state.directory=rows;
     const mapped=rows.map(r=>uiProfileFromRecord(r.key,r.data)).filter(r=>r.role);
     const adminRow=mapped.find(a=>a.role==='ADMIN');
-    if(adminRow&&typeof ADMIN!=='undefined') Object.assign(ADMIN,adminRow,{id:'ADMIN-ADMINISTRADOR',codigo:'ADMIN-ADMINISTRADOR',codigo2:'ADMIN-ADMINISTRADOR',role:'ADMIN'});
+    if(adminRow&&typeof ADMIN!=='undefined') Object.assign(ADMIN,adminRow,{id:adminRow.id||'ADMIN-ADMINISTRADOR',codigo:adminRow.codigo||adminRow.id||'ADMIN-ADMINISTRADOR',codigo2:adminRow.codigo||adminRow.id||'ADMIN-ADMINISTRADOR',role:'ADMIN'});
     if(adminRow){
       const adminMoney=accountMoney(adminRow);
       try{if(typeof ADMIN_BAL!=='undefined')Object.assign(ADMIN_BAL,adminMoney.balances);if(typeof ADMIN_COM!=='undefined')Object.assign(ADMIN_COM,adminMoney.commissions);}catch(e){}
@@ -7309,7 +7309,7 @@ window.sendwayoShareReceipt=async function(){
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN') return 'ADMIN-ADMINISTRADOR';
+    if(role==='ADMIN'){const current=txt(profile.id||profile.accountId||profile.code||profile.codigo);return !current||current.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':current;}
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
     const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
     let id=supplied || known?.id || key;
@@ -7335,7 +7335,7 @@ window.sendwayoShareReceipt=async function(){
     // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
-      const updates={id:'ADMIN-ADMINISTRADOR',accountId:'ADMIN-ADMINISTRADOR',code:'ADMIN-ADMINISTRADOR',codigo:'ADMIN-ADMINISTRADOR',staffId:'ADMIN-ADMINISTRADOR',idAnterior:'ADMINADMIN',idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),data.id,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),data.code,'ADMIN-000'].filter(Boolean))]};
+      const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
       if(currentUid!==firebaseUser.uid) updates.authUid=firebaseUser.uid;
       if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;
       if(Object.keys(updates).length){
