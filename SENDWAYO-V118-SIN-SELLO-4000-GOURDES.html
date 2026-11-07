@@ -3251,226 +3251,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(formato==='pdf'){
       const w=window.open('','_blank');
       if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
-      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'
-<script id="sendwayo-admin-account-actions-and-clean-notices">
-(function(){
- 'use strict';
- const $=id=>document.getElementById(id);
- const txt=v=>String(v==null?'':v).trim();
- const norm=v=>txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
- const all=()=>{
-  let a=null,ag=[],re=[];
-  try{a=typeof ADMIN!=='undefined'?ADMIN:window.ADMIN||null}catch(_){}
-  try{ag=typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:window.AGENTES||[]}catch(_){}
-  try{re=typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:window.REMITENTES||[]}catch(_){}
-  return [...(a?[a]:[]),...ag,...re].filter(Boolean);
- };
- const role=a=>txt(a&&(a.role||a.rol)).toUpperCase();
- const isAdmin=()=>{const u=window.currentUser||null;return !!u&&(role(u).includes('ADMIN')||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(txt(u.id).toUpperCase()));};
- const find=id=>all().find(a=>[a.id,a.idAnterior,a.dbUserKey,a.rtdbUserKey,a.codigo,a.codigoAnterior,a.email,a.usuario,...(Array.isArray(a.idAliases)?a.idAliases:[])].some(v=>norm(v)===norm(id)))||null;
- const money=v=>Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
- const fb=()=>window.sendwayoFirebase||null;
- const dbKey=a=>txt(a&&(a.dbUserKey||a.rtdbUserKey||a.firebaseKey))||(role(a)==='ADMIN'?'admin':'');
- async function updateProfile(a,patch){
-  const f=fb(),key=dbKey(a);if(!f||!f.db||!key)throw new Error('No se encontró la clave interna de Firebase para esta cuenta.');
-  if(typeof f.updateProfileByKey==='function')await f.updateProfileByKey(key,patch);
-  else await f.db.ref('sendwayo_express_v2/users/'+key).update(patch);
-  Object.assign(a,patch);
-  const login=(window.USUARIOS_LOGIN||[]).find(x=>norm(x.id)===norm(a.id)||norm(x.email)===norm(a.email));
-  if(login)Object.assign(login,{id:a.id,codigo:a.codigo,nombre:a.nombre,active:a.active,activo:a.active,estado:a.estado,status:a.status});
- }
- function renderSecretas(){try{if(typeof window.renderCustom==='function')window.renderCustom('secretas');else if(typeof window.showView==='function')window.showView('secretas');}catch(e){console.warn('[SENDWAYO] No se pudo actualizar la lista secreta:',e);}}
- window.sendwayoAdminViewMoney=function(id){
-  if(!isAdmin())return alert('Solo Administración puede consultar balances y comisiones.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  const financial=role(a)==='AGENTE'?(all().find(x=>role(x)==='ADMIN')||a):a;
-  const b=financial.balances||{},c=financial.commissions||financial.comisiones||{};
-  alert('BALANCES Y COMISIONES\n\nCuenta seleccionada: '+txt(a.nombre||a.name)+' — '+txt(a.id)+'\nCuenta financiera utilizada: '+txt(financial.nombre||financial.name)+' — '+txt(financial.id)+'\n\nBalance RD$: '+money(b.DOP)+'\nBalance HTG: '+money(b.HTG)+'\nComisión RD$: '+money(c.DOP)+'\nComisión HTG: '+money(c.HTG));
-};
-window.sendwayoAdminAdjustAccount=function(id){
-  if(!isAdmin())return alert('Solo Administración puede ajustar cuentas.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  if(typeof window.v162_abrirAjustar==='function')window.v162_abrirAjustar(a.nombre||a.name,a.id,a.role);
-};
-window.sendwayoAdminViewAccount=function(id){
-  if(!isAdmin())return alert('Solo Administración puede consultar esta información.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta solicitada.');
-  const financial=role(a)==='AGENTE'?(all().find(x=>role(x)==='ADMIN')||a):a;
-  const b=financial.balances||{},c=financial.commissions||financial.comisiones||{};
-  const status=a.active===false||a.activo===false?'Inactivo':'Activo';
-  alert('INFORMACIÓN DE CUENTA\n\nNombre: '+txt(a.nombre||a.name)+'\nID: '+txt(a.id)+'\nCódigo: '+txt(a.codigo)+'\nTipo: '+role(a)+'\nCorreo: '+txt(a.email||a.usuario)+'\nCelular: '+txt(a.celular||a.telefono)+'\nEstado: '+status+'\n\nBalance DOP: '+money(b.DOP)+'\nBalance HTG: '+money(b.HTG)+'\nComisión DOP: '+money(c.DOP)+'\nComisión HTG: '+money(c.HTG)+'\n\nLos agentes utilizan los fondos de Administración.');
- };
- window.sendwayoAdminEditAccount=function(id,mode){
-  if(!isAdmin())return alert('Solo Administración puede modificar usuarios.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  if(mode==='balance'){if(typeof window.v162_abrirAjustar==='function')window.v162_abrirAjustar(a.nombre||a.name,a.id,a.role);return;}
-  const view=role(a)==='AGENTE'?'agentes':'remitentes';
-  if(typeof window.sendwayoOpenAccountForm!=='function')return alert('El formulario de cuentas Firebase no está disponible.');
-  window.sendwayoOpenAccountForm(view,a.id);
-  if(role(a)==='ADMIN')setTimeout(()=>{const modal=$('sendwayo-admin-account-modal');const title=modal&&modal.querySelector('.p-4 b');if(title)title.textContent='Modificar datos de Administración';},0);
- };
- window.sendwayoAdminAddAccount=function(){
-  if(!isAdmin())return alert('Solo Administración puede agregar usuarios.');
-  const choice=prompt('¿Qué cuenta desea agregar?\n\nEscriba AGENTE o REMITENTE:','AGENTE');
-  if(choice===null)return;
-  const v=norm(choice),view=v.startsWith('a')?'agentes':v.startsWith('r')?'remitentes':'';
-  if(!view)return alert('Tipo de cuenta no válido. Escriba AGENTE o REMITENTE.');
-  if(typeof window.sendwayoOpenAccountForm!=='function')return alert('El formulario de cuentas Firebase no está disponible.');
-  window.sendwayoOpenAccountForm(view,'');
- };
- window.sendwayoAdminToggleAccount=async function(id){
-  if(!isAdmin())return alert('Solo Administración puede activar o inactivar usuarios.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  if(role(a)==='ADMIN')return alert('La cuenta administrativa principal no se puede inactivar desde su propia sesión.');
-  const inactive=a.active===false||a.activo===false||['inactive','inactivo','deleted','eliminado','disabled'].includes(norm(a.status||a.estado));
-  const nextActive=inactive;
-  if(!confirm((nextActive?'¿Activar ':'¿Inactivar ')+(a.nombre||a.name)+'?'))return;
-  try{
-   await updateProfile(a,{active:nextActive,status:nextActive?'active':'inactive',activo:nextActive,estado:nextActive?'Activo':'Inactivo',updatedAtMs:Date.now(),updatedByAuthUid:fb()?.auth?.currentUser?.uid||''});
-   if(role(a)==='AGENTE'&&a.authUid&&fb()?.db)await fb().db.ref('sendwayo_express_v2/agentAuth/'+a.authUid).update({active:nextActive,updatedAtMs:Date.now()});
-   renderSecretas();alert(nextActive?'Cuenta activada.':'Cuenta inactivada.');
-  }catch(e){console.error('[SENDWAYO admin status]',e);alert('No se pudo actualizar el estado en Firebase: '+(e.message||'error'));}
- };
- window.sendwayoAdminDeleteAccount=async function(id){
-  if(!isAdmin())return alert('Solo Administración puede eliminar usuarios.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  if(role(a)==='ADMIN')return alert('La cuenta administrativa principal no puede eliminarse.');
-  if(!confirm('¿Eliminar el acceso de '+(a.nombre||a.name)+'? Se conservarán balances, operaciones e historial para auditoría.'))return;
-  try{
-   await updateProfile(a,{active:false,activo:false,status:'deleted',estado:'Eliminado',deletedAtMs:Date.now(),deletedByAuthUid:fb()?.auth?.currentUser?.uid||''});
-   if(role(a)==='AGENTE'&&a.authUid&&fb()?.db)await fb().db.ref('sendwayo_express_v2/agentAuth/'+a.authUid).update({active:false,deleted:true,updatedAtMs:Date.now()});
-   renderSecretas();alert('Acceso eliminado. El historial financiero quedó conservado.');
-  }catch(e){console.error('[SENDWAYO admin delete]',e);alert('No se pudo eliminar el acceso en Firebase: '+(e.message||'error'));}
- };
- window.sendwayoAdminCreditAccount=function(id){
-  if(!isAdmin())return alert('Solo Administración puede acreditar cuentas.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  if(typeof window.sendwayoAgregarModulo==='function')window.sendwayoAgregarModulo('creditos');
-  setTimeout(()=>{const field=$('v162-cred-rem');if(field){field.value=a.id;field.dispatchEvent(new Event('change',{bubbles:true}));}const modal=$('modal-creditos-v162');if(modal)modal.classList.remove('hidden');},50);
- };
- window.sendwayoAdminDebitAccount=function(id){
-  if(!isAdmin())return alert('Solo Administración puede desacreditar cuentas.');
-  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
-  if(typeof window.v162_abrirAjustar!=='function')return alert('El formulario de ajustes no está disponible.');
-  window.v162_abrirAjustar(a.nombre||a.name,a.id,a.role);
-  setTimeout(()=>{const kind=$('v162-aju-tipo');if(kind){kind.value='DESACREDITAR_BALANCE';kind.dispatchEvent(new Event('change',{bubbles:true}));}const modal=$('modal-ajustar-v162');if(modal)modal.classList.remove('hidden');},50);
- };
-
-
- // Public remitter requests are provisioned as real Firebase Authentication users only after admin approval.
- let pendingWelcomeSave=false;
- window.__sendwayoPendingWelcomeRequestId='';
- window.__sendwayoPendingWelcomeView='';
- const welcomeKey='sendwayo_express_oficial_20261029_registros_pendientes_v5';
- function readWelcomeRows(){try{const rows=JSON.parse(localStorage.getItem(welcomeKey)||'[]');return Array.isArray(rows)?rows:[];}catch(_){return [];}}
- function saveWelcomeRows(rows){try{localStorage.setItem(welcomeKey,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO welcome requests]',e);}}
- const originalGenericAction=window.sendwayoActionGeneric;
- if(typeof originalGenericAction==='function')window.sendwayoActionGeneric=function(view,action,id){
-  if(view==='bienvenida'&&action==='aprobar'){
-   if(!isAdmin())return alert('Solo Administración puede aprobar solicitudes.');
-   const rows=readWelcomeRows(),request=rows.find(x=>String(x.id)===String(id));
-   if(!request)return alert('No se encontró la solicitud.');
-   if(['aprobado','rechazado'].includes(norm(request.estado)))return alert('Esta solicitud ya fue procesada.');
-   const email=txt(request.email).toLowerCase();
-   if(!email)return alert('La solicitud no contiene un correo válido.');
-   if(all().some(a=>norm(a.email||a.usuario)===norm(email)))return alert('Este correo ya pertenece a una cuenta registrada.');
-   if(typeof window.sendwayoOpenAccountForm!=='function')return alert('El formulario seguro de creación de cuentas no está disponible.');
-   window.__sendwayoPendingWelcomeRequestId=String(id);
-   const requestedRole=norm(request.role||request.tipo),accountView=requestedRole.includes('agente')?'agentes':'remitentes';
-   window.__sendwayoPendingWelcomeView=accountView;
-   window.sendwayoOpenAccountForm(accountView,'');
-   setTimeout(()=>{
-    const name=$('v7-admin-name'),username=$('v7-admin-username'),mail=$('v7-admin-email'),phone=$('v7-admin-phone'),password=$('v7-admin-password'),save=$('sendwayo-admin-account-save');
-    if(name){name.value=txt(request.nombre||request.name);name.dispatchEvent(new Event('input',{bubbles:true}));}
-    if(mail){mail.value=email;mail.dispatchEvent(new Event('input',{bubbles:true}));}
-    if(username){username.value=email;username.dispatchEvent(new Event('input',{bubbles:true}));}
-    if(phone){phone.value=txt(request.celular||request.telefono);phone.dispatchEvent(new Event('input',{bubbles:true}));}
-    if(password)password.value='12345678';
-    const modal=$('sendwayo-admin-account-modal'),heading=modal&&modal.querySelector('.p-4 b');
-    if(heading)heading.textContent='Aprobar solicitud — Crear '+(accountView==='agentes'?'agente':'remitente')+' en Firebase';
-    if(save)save.textContent='Crear cuenta y aprobar solicitud';
-   },80);
-   return;
-  }
-  return originalGenericAction.apply(this,arguments);
- };
- const originalSaveForWelcome=window.sendwayoSaveAccountForm;
- if(typeof originalSaveForWelcome==='function')window.sendwayoSaveAccountForm=async function(view,id){
-  const pendingId=String(window.__sendwayoPendingWelcomeRequestId||'');
-  const pendingView=String(window.__sendwayoPendingWelcomeView||'remitentes');
-  const isWelcome=pendingId&&view===pendingView&&!id;
-  pendingWelcomeSave=!!isWelcome;
-  const result=await originalSaveForWelcome.apply(this,arguments);
-  if(result&&isWelcome){
-   const rows=readWelcomeRows(),request=rows.find(x=>String(x.id)===pendingId);
-   if(request){request.estado='Aprobado';request.aprobadoPor=txt((window.currentUser||{}).id);request.fechaAprobacion=new Date().toLocaleString('es-DO');delete request.password;delete request.contrasena;saveWelcomeRows(rows);}
-   window.__sendwayoPendingWelcomeRequestId='';window.__sendwayoPendingWelcomeView='';
-   pendingWelcomeSave=false;
-   setTimeout(()=>{if(typeof window.showView==='function')window.showView('bienvenida');},60);
-   alert('Solicitud aprobada. El remitente fue creado en Firebase con ID y código nuevos. Su contraseña inicial es 12345678 y deberá cambiarla en el primer acceso.');
-  }else{
-   pendingWelcomeSave=false;
-   if(!result&&isWelcome)window.__sendwayoPendingWelcomeRequestId=pendingId;
-  }
-  return result;
- };
- const welcomeModalObserver=new MutationObserver(()=>{
-  if(window.__sendwayoPendingWelcomeRequestId&&!pendingWelcomeSave&&!$('sendwayo-admin-account-modal')){window.__sendwayoPendingWelcomeRequestId='';window.__sendwayoPendingWelcomeView='';}
- });
- if(document.body)welcomeModalObserver.observe(document.body,{childList:true,subtree:true});
- // Create forms default to the provisional password and derive codes using the agreed prefixes.
- const previousOpen=window.sendwayoOpenAccountForm;
- if(typeof previousOpen==='function')window.sendwayoOpenAccountForm=function(view,id){
-  const result=previousOpen.apply(this,arguments);
-  setTimeout(()=>{
-   const name=$('v7-admin-name'),code=$('v7-admin-code'),password=$('v7-admin-password');
-   const existing=!!id,agent=view==='agentes',prefix=agent?'AG-':'REM-';
-   if(!existing&&password&&!password.value)password.value='12345678';
-   if(!name||!code)return;
-   const make=()=>{const parts=txt(name.value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean);if(!parts.length)return prefix+'USRPFX';const first=(parts[0]||'USR').slice(0,3).padEnd(3,'X');const last=(parts.length>1?parts[parts.length-1]:parts[0]).slice(0,3).padEnd(3,'X');return prefix+first+last;};
-   if(!existing&&!code.dataset.sendwayoManualCode){code.value=make();code.dataset.sendwayoAutoCode=code.value;}
-   if(!code.dataset.sendwayoCodeBound){
-    code.dataset.sendwayoCodeBound='1';
-    code.addEventListener('input',()=>{if(code.value!==code.dataset.sendwayoAutoCode)code.dataset.sendwayoManualCode='1';});
-    name.addEventListener('input',()=>{if(!existing&&!code.dataset.sendwayoManualCode){code.value=make();code.dataset.sendwayoAutoCode=code.value;}});
-   }
-  },0);
-  return result;
- };
-
- // Remove only red numeric notification badges from the sidebar. The real bell count is untouched.
- function cleanFalseSidebarBadges(){
-  const sidebar=$('sendwayo-main-sidebar')||document.querySelector('.sendwayo-sidebar');
-  if(!sidebar)return;
-  sidebar.querySelectorAll('button,a').forEach(button=>{
-   button.querySelectorAll('span,small,b,strong').forEach(node=>{
-    if(node.id==='bell-count')return;
-    const value=txt(node.textContent);if(!/^\d{1,4}$/.test(value))return;
-    const style=window.getComputedStyle(node),classes=String(node.className||'');
-    const badge=/bg-red|text-red|rounded-full|absolute|notification|badge/i.test(classes)||/rgb\((?:\d+,\s*){2}\d+\)/.test(style.backgroundColor)&&style.backgroundColor!=='rgba(0, 0, 0, 0)';
-    if(badge)node.remove();
-   });
-  });
- }
- function bootBadges(){cleanFalseSidebarBadges();const side=$('sendwayo-main-sidebar');if(side&&!side.dataset.sendwayoBadgeObserver){side.dataset.sendwayoBadgeObserver='1';new MutationObserver(cleanFalseSidebarBadges).observe(side,{childList:true,subtree:true,characterData:true});}}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootBadges,{once:true});else bootBadges();
- window.addEventListener('load',bootBadges);
- document.addEventListener('sendwayo:firebase-ready',bootBadges);
- const bodyObserver=new MutationObserver(()=>{if($('sendwayo-main-sidebar'))bootBadges();});
- if(document.body)bodyObserver.observe(document.body,{childList:true,subtree:true});
-})();
-</script>
-<style id="sendwayo-admin-touch-controls">
-@media(max-width:1024px){
- #view-secretas button,#view-remitentes button,#view-agentes button,#view-beneficiarios button,.sendwayo-toolbar-one-line button{
-  min-height:44px!important;padding:10px 14px!important;font-size:13px!important;font-weight:800!important;touch-action:manipulation;
- }
-}
-#view-secretas td button{white-space:nowrap}
-#sendwayo-force-first-password button{touch-action:manipulation}
-</style>
-
-</body></html>';
+      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'</body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
       return;
@@ -3497,6 +3278,16 @@ window.sendwayoAdminViewAccount=function(id){
   }
 })();
 </script>
+<style id="sendwayo-admin-touch-controls">
+@media(max-width:1024px){
+ #view-secretas button,#view-remitentes button,#view-agentes button,#view-beneficiarios button,.sendwayo-toolbar-one-line button{
+  min-height:44px!important;padding:10px 14px!important;font-size:13px!important;font-weight:800!important;touch-action:manipulation;
+ }
+}
+#view-secretas td button{white-space:nowrap}
+#sendwayo-force-first-password button{touch-action:manipulation}
+</style>
+
 
 <style id="sendwayo-logout-private-shell">
 /* La sesión cerrada nunca debe dejar visible el panel privado ni sus datos de ejemplo. */
