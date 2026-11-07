@@ -3252,71 +3252,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const w=window.open('','_blank');
       if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
       const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'
-<script id="sendwayo-admin-approved-registration-firebase">
-(function(){
- 'use strict';
- const key='sendwayo_express_oficial_20261029_registros_pendientes_v5';
- const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
- const $=id=>document.getElementById(id);
- const readRows=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
- const writeRows=rows=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO registration approval]',e);}};
- const user=()=>window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();
- const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
- const allAccounts=()=>{let rows=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)rows.push(ADMIN);}catch(e){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))rows=rows.concat(AGENTES);}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))rows=rows.concat(REMITENTES);}catch(e){}return rows;};
- const priorAction=window.sendwayoActionGeneric;
- const priorSave=window.sendwayoSaveAccountForm;
- window.sendwayoSaveAccountForm=async function(view,id){
-  const pending=window.__sendwayoPendingAccountApproval||null;
-  const formEmail=norm($('v7-admin-email')&&$('v7-admin-email').value);
-  const shouldFinalize=!!pending&&pending.view===view&&norm(pending.email)===formEmail&&!id;
-  const result=typeof priorSave==='function'?await priorSave.apply(this,arguments):false;
-  if(result===true&&shouldFinalize){
-   const rows=readRows(),request=rows.find(x=>String(x.id)===String(pending.requestId));
-   if(request){request.estado='Aprobado';request.aprobadoPor=user()?.id||'ADMIN-ADMINISTRADOR';request.aprobadoAtMs=Date.now();request.firebaseAccountProvisioned=true;writeRows(rows);}
-   window.__sendwayoPendingAccountApproval=null;
-   window.alert('Solicitud aprobada. La cuenta fue creada en Firebase con su ID y código oficiales. En el primer acceso deberá cambiar la contraseña inicial 12345678.');
-   if(typeof window.showView==='function')window.showView('bienvenida');else if(typeof window.renderCustom==='function')window.renderCustom('bienvenida');
-  }
-  return result;
- };
- window.sendwayoActionGeneric=function(view,action,id){
-  if(view==='bienvenida'&&action==='aprobar'){
-   if(!admin()){window.alert('Solo el administrador puede aprobar solicitudes.');return;}
-   const rows=readRows(),request=rows.find(x=>String(x.id)===String(id));
-   if(!request){if(typeof priorAction==='function')return priorAction.apply(this,arguments);return;}
-   if(norm(request.tipoSolicitud)==='servicio'){if(typeof priorAction==='function')return priorAction.apply(this,arguments);return;}
-   if(norm(request.estado)==='aprobado'){window.alert('Esta solicitud ya fue aprobada.');return;}
-   const email=String(request.email||'').trim().toLowerCase();
-   if(!/^\S+@\S+\.\S+$/.test(email)){window.alert('La solicitud no contiene un correo válido.');return;}
-   if(allAccounts().some(a=>norm(a.email||a.usuario)===norm(email))||(window.USUARIOS_LOGIN||[]).some(a=>norm(a.email||a.usuario)===norm(email))){
-    window.alert('Este correo ya pertenece a una cuenta registrada.');return;
-   }
-   const requestedRole=norm(request.role||request.tipo||'REMITENTE').includes('agente')?'AGENTE':'REMITENTE';
-   const accountView=requestedRole==='AGENTE'?'agentes':'remitentes';
-   if(typeof window.sendwayoOpenAccountForm!=='function'){window.alert('El formulario seguro de cuentas Firebase no está disponible.');return;}
-   window.__sendwayoPendingAccountApproval={requestId:String(request.id),email,view:accountView};
-   window.sendwayoOpenAccountForm(accountView,'');
-   setTimeout(()=>{
-    const name=$('v7-admin-name'),username=$('v7-admin-username'),mail=$('v7-admin-email'),phone=$('v7-admin-phone'),password=$('v7-admin-password'),code=$('v7-admin-code');
-    if(!$('sendwayo-admin-account-modal')||!name||!username||!mail||!phone||!password||!code){
-     window.__sendwayoPendingAccountApproval=null;window.alert('No se pudo preparar el formulario de Firebase. La solicitud permanece pendiente.');return;
-    }
-    const fullName=String(request.nombre||request.name||'').trim();
-    name.value=fullName;name.dispatchEvent(new Event('input',{bubbles:true}));
-    username.value=email;username.dispatchEvent(new Event('input',{bubbles:true}));
-    mail.value=email;mail.dispatchEvent(new Event('input',{bubbles:true}));
-    phone.value=String(request.celular||request.telefono||'').trim();phone.dispatchEvent(new Event('input',{bubbles:true}));
-    password.value='12345678';
-    password.readOnly=true;
-    password.autocomplete='new-password';
-    if(!code.dataset.sendwayoManualCode){code.value=(accountView==='agentes'?'AG-':'REM-')+fullName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean).map((x,i)=>x.slice(0,3)).filter((x,i)=>i===0||i===fullName.trim().split(/\s+/).filter(Boolean).length-1).join('');code.dispatchEvent(new Event('input',{bubbles:true}));}
-   },80);
-   return;
-  }
-  if(typeof priorAction==='function')return priorAction.apply(this,arguments);
- };
-})();
-</script>
+
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
@@ -9182,5 +9118,71 @@ window.sendwayoShareReceipt=async function(){
  const benObserver=new MutationObserver(enhanceBeneficiaryViewButton);const benRoot=$('view-beneficiarios');if(benRoot)benObserver.observe(benRoot,{childList:true,subtree:true});
  const observer=new MutationObserver(()=>{if($('sendwayo-main-sidebar')){installInvestigationNav();clearFakeDepositBadge();}});
  if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script id="sendwayo-admin-approved-registration-firebase">
+(function(){
+ 'use strict';
+ const key='sendwayo_express_oficial_20261029_registros_pendientes_v5';
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const $=id=>document.getElementById(id);
+ const readRows=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
+ const writeRows=rows=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO registration approval]',e);}};
+ const user=()=>window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();
+ const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
+ const allAccounts=()=>{let rows=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)rows.push(ADMIN);}catch(e){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))rows=rows.concat(AGENTES);}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))rows=rows.concat(REMITENTES);}catch(e){}return rows;};
+ const priorAction=window.sendwayoActionGeneric;
+ const priorSave=window.sendwayoSaveAccountForm;
+ window.sendwayoSaveAccountForm=async function(view,id){
+  const pending=window.__sendwayoPendingAccountApproval||null;
+  const formEmail=norm($('v7-admin-email')&&$('v7-admin-email').value);
+  const shouldFinalize=!!pending&&pending.view===view&&norm(pending.email)===formEmail&&!id;
+  const result=typeof priorSave==='function'?await priorSave.apply(this,arguments):false;
+  if(result===true&&shouldFinalize){
+   const rows=readRows(),request=rows.find(x=>String(x.id)===String(pending.requestId));
+   if(request){request.estado='Aprobado';request.aprobadoPor=user()?.id||'ADMIN-ADMINISTRADOR';request.aprobadoAtMs=Date.now();request.firebaseAccountProvisioned=true;writeRows(rows);}
+   window.__sendwayoPendingAccountApproval=null;
+   window.alert('Solicitud aprobada. La cuenta fue creada en Firebase con su ID y código oficiales. En el primer acceso deberá cambiar la contraseña inicial 12345678.');
+   if(typeof window.showView==='function')window.showView('bienvenida');else if(typeof window.renderCustom==='function')window.renderCustom('bienvenida');
+  }
+  return result;
+ };
+ window.sendwayoActionGeneric=function(view,action,id){
+  if(view==='bienvenida'&&action==='aprobar'){
+   if(!admin()){window.alert('Solo el administrador puede aprobar solicitudes.');return;}
+   const rows=readRows(),request=rows.find(x=>String(x.id)===String(id));
+   if(!request){if(typeof priorAction==='function')return priorAction.apply(this,arguments);return;}
+   if(norm(request.tipoSolicitud)==='servicio'){if(typeof priorAction==='function')return priorAction.apply(this,arguments);return;}
+   if(norm(request.estado)==='aprobado'){window.alert('Esta solicitud ya fue aprobada.');return;}
+   const email=String(request.email||'').trim().toLowerCase();
+   if(!/^\S+@\S+\.\S+$/.test(email)){window.alert('La solicitud no contiene un correo válido.');return;}
+   if(allAccounts().some(a=>norm(a.email||a.usuario)===norm(email))||(window.USUARIOS_LOGIN||[]).some(a=>norm(a.email||a.usuario)===norm(email))){
+    window.alert('Este correo ya pertenece a una cuenta registrada.');return;
+   }
+   const requestedRole=norm(request.role||request.tipo||'REMITENTE').includes('agente')?'AGENTE':'REMITENTE';
+   const accountView=requestedRole==='AGENTE'?'agentes':'remitentes';
+   if(typeof window.sendwayoOpenAccountForm!=='function'){window.alert('El formulario seguro de cuentas Firebase no está disponible.');return;}
+   window.__sendwayoPendingAccountApproval={requestId:String(request.id),email,view:accountView};
+   window.sendwayoOpenAccountForm(accountView,'');
+   setTimeout(()=>{
+    const name=$('v7-admin-name'),username=$('v7-admin-username'),mail=$('v7-admin-email'),phone=$('v7-admin-phone'),password=$('v7-admin-password'),code=$('v7-admin-code');
+    if(!$('sendwayo-admin-account-modal')||!name||!username||!mail||!phone||!password||!code){
+     window.__sendwayoPendingAccountApproval=null;window.alert('No se pudo preparar el formulario de Firebase. La solicitud permanece pendiente.');return;
+    }
+    const fullName=String(request.nombre||request.name||'').trim();
+    name.value=fullName;name.dispatchEvent(new Event('input',{bubbles:true}));
+    username.value=email;username.dispatchEvent(new Event('input',{bubbles:true}));
+    mail.value=email;mail.dispatchEvent(new Event('input',{bubbles:true}));
+    phone.value=String(request.celular||request.telefono||'').trim();phone.dispatchEvent(new Event('input',{bubbles:true}));
+    password.value='12345678';
+    password.readOnly=true;
+    password.autocomplete='new-password';
+    if(!code.dataset.sendwayoManualCode){code.value=(accountView==='agentes'?'AG-':'REM-')+fullName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean).map((x,i)=>x.slice(0,3)).filter((x,i)=>i===0||i===fullName.trim().split(/\s+/).filter(Boolean).length-1).join('');code.dispatchEvent(new Event('input',{bubbles:true}));}
+   },80);
+   return;
+  }
+  if(typeof priorAction==='function')return priorAction.apply(this,arguments);
+ };
 })();
 </script>
