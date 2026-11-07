@@ -34,3 +34,11 @@ assert.doesNotMatch(html, /setInterval\(syncStorage,2500\)/, 'no debe quedar el 
 assert.doesNotMatch(html, /if\(scan\) scanTables\(document\)/, 'no debe quedar el escaneo completo de tablas');
 
 console.log('SENDWAYO expediente/performance: comprobaciones estáticas correctas.');
+
+assert.match(html, /sendwayo-v7-top-only-workspace-layout/, 'la cabecera unificada debe estar instalada como un solo diseño');
+assert.match(html, /sendwayo-top-menu-toggle/, 'el acceso al menú debe vivir en la cabecera superior');
+assert.match(html, /#sendwayo-main-sidebar\{[^}]*position:fixed/i, 'el menú no debe reservar una columna lateral permanente');
+assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateX\(0\)/i, 'el menú lateral debe abrirse como panel y cerrarse fuera del contenido');
+assert.match(html, /#sendwayo-main-sidebar[^}]*\.sidebar-brand/i, 'la marca antigua del menú lateral debe ocultarse');
+assert.match(html, /#sendwayo-v7-user-strip\.sendwayo-workspace-identity/, 'la identidad debe estar en la franja superior del espacio de trabajo');
+assert.match(html, /sendwayo:workspace-header-refresh/, 'la cabecera debe refrescar ID, código, hora y usuario tras iniciar sesión');
