@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
 const match = html.match(/var fallbackCountriesData=(\[[\s\S]*?\]);\s*var fallbackCountries/);
 assert.ok(match, 'el HTML debe incluir el catálogo completo integrado, no solo una lista de 43 países');
 const countries = JSON.parse(match[1]);
