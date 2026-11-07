@@ -30,7 +30,7 @@ const safeKey = (v) => {
   return key;
 };
 const normalizeCurrency = (v) => clean(v,3).toUpperCase();
-const normalizeCountry = (v) => clean(v,2).toUpperCase();
+const normalizeCountry = (v) => clean(v,10).toUpperCase();
 
 export function amountToMinor(amount, currency) {
   const value = Number(amount);
@@ -46,9 +46,10 @@ export function validatePaymentInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Solicitud de pago no válida.");
   const sourceAmount = money(input.sourceAmount);
   const totalCharged = money(input.totalCharged ?? input.sourceAmount);
-  const targetAmount = money(input.targetAmount);
   const sourceCurrency = normalizeCurrency(input.sourceCurrency);
   const targetCurrency = normalizeCurrency(input.targetCurrency);
+  if (input.targetAmount == null && sourceCurrency !== targetCurrency) throw new Error("La entrega en otra moneda debe indicarse explícitamente; no se aplicará una tasa automática.");
+  const targetAmount = input.targetAmount == null && sourceCurrency === targetCurrency ? sourceAmount : money(input.targetAmount);
   const countryFrom = normalizeCountry(input.countryFrom || input.senderInfo?.country);
   const countryTo = normalizeCountry(input.countryTo || input.recipientInfo?.country);
   if (!(sourceAmount > 0) || !(totalCharged >= sourceAmount) || !(targetAmount > 0)) throw new Error("Indique importes de origen, total cobrado y entrega mayores que cero.");
@@ -59,7 +60,6 @@ export function validatePaymentInput(input) {
   const recipientName = clean(input.recipientInfo?.fullName || input.recipientInfo?.name,120);
   const recipientPhone = clean(input.recipientInfo?.phoneOrAccount || input.recipientInfo?.phone,100);
   if (!senderName || !senderPhone || !recipientName || !recipientPhone) throw new Error("Complete los datos del remitente y del beneficiario.");
-  if (input.sourceCurrency !== input.targetCurrency && input.targetAmount == null) throw new Error("La entrega en otra moneda debe indicarse explícitamente; no se aplicará una tasa automática.");
   return {
     sourceAmount, totalCharged, targetAmount, sourceCurrency, targetCurrency, countryFrom, countryTo,
     senderInfo: { fullName: senderName, phone: senderPhone, country: countryFrom },
@@ -78,7 +78,9 @@ export function validatePayoutInput(payout) {
   const currency = normalizeCurrency(payout?.targetCurrency || payout?.currency);
   const receiver = clean(payout?.receiver || payout?.phoneOrAccount,40).replace(/[ +()-]/g,"");
   if (!["moncash","natcash"].includes(network)) throw new Error("Red de dispersión no compatible.");
-  if (currency !== "HTG" || !Number.isInteger(amount) || amount < 25) throw new Error("MonCash/NatCash exige un importe entero mínimo de 25 HTG.");
+  if (currency !== "HTG") throw new Error("MonCash/NatCash solo permite pagos de salida en HTG.");
+  if (!Number.isInteger(amount)) throw new Error("El importe de dispersión debe ser entero en HTG.");
+  if (amount < 25) throw new Error("El importe mínimo de dispersión es 25 HTG.");
   if (!/^(509)?\d{8}$/.test(receiver)) throw new Error("El teléfono haitiano debe tener ocho dígitos, opcionalmente con 509.");
   return { network, amount, currency, receiver: receiver.startsWith("509") ? receiver : "509" + receiver };
 }
