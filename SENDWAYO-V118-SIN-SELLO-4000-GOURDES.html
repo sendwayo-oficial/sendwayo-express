@@ -3245,8 +3245,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 // SENDWAYO: herramientas de administración de usuarios e identificadores normalizados.
 (function(){
- const normName=s=>String(s||'').trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase();
- const initials=s=>normName(s).split(/\\s+/).filter(Boolean);
+ const normName=s=>String(s||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+ const initials=s=>normName(s).split(/\s+/).filter(Boolean);
  const codeFor=(role,name)=>{const p=initials(name);const first=(p[0]||'USR').slice(0,3).padEnd(3,'X');const last=(p.length>1?p[p.length-1]:p[0]||'USR').slice(0,3).padEnd(3,'X');return (role==='AGENTE'?'AGE-':role==='REMITENTE'?'REM-':'')+first+last;};
  window.sendwayoAdminEditAccount=function(id,mode){
   const all=[window.ADMIN,...(window.AGENTES||[]),...(window.REMITENTES||[])].filter(Boolean);
@@ -3266,7 +3266,7 @@ document.addEventListener('DOMContentLoaded', function(){
  window.sendwayoAdminAddAccount=function(){
   const role=prompt('Tipo de usuario: AGENTE o REMITENTE','REMITENTE');if(role===null)return;const r=role.trim().toUpperCase();if(!['AGENTE','REMITENTE'].includes(r))return alert('Tipo no válido.');
   const name=prompt('Nombre y apellido:');if(name===null||!name.trim())return;const email=prompt('Correo electrónico:');if(email===null||!email.trim())return;
-  const list=r==='AGENTE'?(window.AGENTES||(window.AGENTES=[])):(window.REMITENTES||(window.REMITENTES=[]));const prefix=r==='AGENTE'?'AGE':'REM';const n=list.reduce((m,a)=>Math.max(m,Number(String(a.numero||'').replace(/\\D/g,''))||0),0)+1;const id=prefix+String(n).padStart(5,'0');const code=codeFor(r,name);
+  const list=r==='AGENTE'?(window.AGENTES||(window.AGENTES=[])):(window.REMITENTES||(window.REMITENTES=[]));const prefix=r==='AGENTE'?'AGE':'REM';const n=list.reduce((m,a)=>Math.max(m,Number(String(a.numero||'').replace(/\D/g,''))||0),0)+1;const id=prefix+String(n).padStart(5,'0');const code=codeFor(r,name);
   if([window.ADMIN,...(window.AGENTES||[]),...(window.REMITENTES||[])].some(a=>a&&(a.id===id||a.codigo===code)))return alert('El ID o código ya existe.');
   const a={id,codigo:code,codigo2:code,numero:String(n).padStart(2,'0'),nombre:name.trim(),name:name.trim(),email:email.trim(),usuario:email.trim(),password:'12345678',contrasena:'12345678',cambioPasswordObligatorio:true,activo:true,role:r,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};list.push(a);
   (window.USUARIOS_LOGIN||(window.USUARIOS_LOGIN=[])).push({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[],password:'12345678',nombre:a.nombre,role:r,cambioPasswordObligatorio:true});
@@ -4841,7 +4841,7 @@ window.sendwayoShareReceipt=async function(){
   translationRows.forEach(row => row.forEach(phrase => phraseLookup.set(normalizeI18n(phrase), row)));
   const langIndex = {es:0,en:1,fr:2,ht:3,pt:4};
   const phraseEntries = Array.from(phraseLookup.entries()).filter(([key]) => key.length >= 4).sort((a,b) => b[0].length-a[0].length);
-  const escapeI18nRegex = value => value.replace(/[.*+?^$()|[\]\\{}]/g, char => '\\' + char).replace(/\s+/g, '\\s+');
+  const escapeI18nRegex = value => value.replace(/[.*+?^$()|[\]\\{}]/g, char => '\\' + char).replace(/\s+/g, '\s+');
   function translatePhrase(value, lang) {
     const original = String(value == null ? '' : value);
     const row = phraseLookup.get(normalizeI18n(original));
