@@ -7,10 +7,10 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 
 assert.match(html, /Expediente por ID/, 'el menú y la pantalla deben llamarse Expediente por ID');
 assert.match(html, /function subjects\(\)/, 'la consulta debe resolver remitentes y agentes');
-const legacyFinder = html.match(/function findAccount\\(q\\)\\{[^}]+\\}/)?.[0] || '';
+const legacyFinder = html.match(/function findAccount\(q\)\{[^}]+\}/)?.[0] || '';
 assert.ok(legacyFinder, 'el buscador que alimenta el expediente debe estar presente');
-assert.match(legacyFinder, /role\\(a\\)!=='ADMIN'/, 'el buscador real nunca debe devolver la cuenta administrativa');
-assert.doesNotMatch(legacyFinder, /email|phone|telefono|celular|username|a\\.aliases/, 'el buscador real debe consultar solo ID y códigos, nunca datos de contacto');
+assert.match(legacyFinder, /role\(a\)!=='ADMIN'/, 'el buscador real nunca debe devolver la cuenta administrativa');
+assert.doesNotMatch(legacyFinder, /email|phone|telefono|celular|username|a\.aliases/, 'el buscador real debe consultar solo ID y códigos, nunca datos de contacto');
 assert.match(html, /typeof AGENTES!=='undefined'/, 'el directorio debe usar el arreglo global real de agentes');
 assert.match(html, /typeof REMITENTES!=='undefined'/, 'el directorio debe usar el arreglo global real de remitentes');
 assert.match(html, /function identity\(a\)\{return \[a\.id,a\.idAnterior,a\.legacyId,a\.accountId,a\.staffId/, 'la búsqueda debe usar identificadores visibles y alias, no correo o UID');
