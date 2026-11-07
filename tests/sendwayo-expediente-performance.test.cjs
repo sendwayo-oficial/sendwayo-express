@@ -39,13 +39,14 @@ assert.doesNotMatch(html, /if\(scan\) scanTables\(document\)/, 'no debe quedar e
 
 console.log('SENDWAYO expediente/performance: comprobaciones estáticas correctas.');
 
-assert.match(html, /sendwayo-v7-top-only-workspace-layout/, 'la cabecera unificada debe estar instalada como un solo diseño');
+assert.match(html, /sendwayo-v7-canonical-top-workspace-style/, 'la cabecera unificada debe estar instalada como un solo diseño');
 assert.match(html, /sendwayo-top-menu-toggle/, 'el acceso al menú debe vivir en la cabecera superior');
-assert.match(html, /#sendwayo-main-sidebar\{[^}]*position:fixed/i, 'el menú no debe reservar una columna lateral permanente');
-assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateX\(0\)/i, 'el menú lateral debe abrirse como panel y cerrarse fuera del contenido');
+const canonicalLayoutCss = html.slice(html.indexOf('<style id="sendwayo-v7-canonical-top-workspace-style">'));
+assert.match(canonicalLayoutCss, /#sendwayo-main-sidebar\{[^}]*position:fixed/i, 'el menú no debe reservar una columna lateral permanente');
+assert.match(canonicalLayoutCss, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateX\(0\)/i, 'el menú lateral debe abrirse como panel y cerrarse fuera del contenido');
 assert.match(html, /#sendwayo-main-sidebar[^}]*\.sidebar-brand/i, 'la marca antigua del menú lateral debe ocultarse');
-assert.match(html, /#sendwayo-v7-user-strip\.sendwayo-workspace-identity/, 'la identidad debe estar en la franja superior del espacio de trabajo');
-assert.match(html, /sendwayo:workspace-header-refresh/, 'la cabecera debe refrescar ID, código, hora y usuario tras iniciar sesión');
+assert.match(canonicalLayoutCss, /#sendwayo-v7-user-strip\{/, 'la identidad debe estar en la franja superior del espacio de trabajo');
+assert.match(html, /window\.sendwayoRefreshIdentityHeader/, 'la cabecera debe refrescar ID, código, hora y usuario tras iniciar sesión');
 
 assert.match(html, /if\(!t\)\{alert\('No se encontró la transacción para generar el comprobante\.'\);return;\}/, 'un comprobante no debe inventar una transacción si su ID no existe');
 assert.doesNotMatch(html, /if\(!t\) t=\{id:id, fecha:'20\/10\/2026'/, 'no debe existir un comprobante de ejemplo con datos ficticios');
