@@ -9265,7 +9265,9 @@ window.sendwayoShareReceipt=async function(){
 </script>
 
 
+
 <style id="sendwayo-v7-canonical-top-workspace-style">
+/* Encabezado superior único: marca, identidad activa y menú arriba. */
 #sendwayo-brand-bar{
  position:sticky!important;top:0!important;z-index:2147482000!important;
  display:flex!important;align-items:center!important;justify-content:space-between!important;
@@ -9280,6 +9282,8 @@ window.sendwayoShareReceipt=async function(){
 #sendwayo-brand-bar .sendwayo-legacy-header-values{display:none!important}
 #sendwayo-brand-bar #bell-top{width:38px!important;height:38px!important;min-height:38px!important;flex:0 0 38px!important}
 #sendwayo-brand-bar #sendwayo-top-logout{min-height:38px!important;padding:8px 15px!important}
+
+/* Identidad y hora siempre debajo de la marca y encima del módulo. */
 #sendwayo-v7-user-strip{
  position:sticky!important;top:58px!important;z-index:2147481900!important;
  display:none!important;align-items:center!important;justify-content:space-between!important;
@@ -9298,19 +9302,38 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:7px!important;font-size:11px!important;font-weight:800!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-time span{padding:6px 10px!important;border:1px solid #dbe3ec!important;border-radius:999px!important;background:#fff!important;white-space:nowrap!important}
 #sendwayo-v7-user-strip #sendwayo-v7-duration{background:#ffedd5!important;border-color:#fdba74!important;color:#9a3412!important}
-/* The menu is an overlay drawer, never a permanent left-hand column. */
+
+/* Ningún menú queda fijo en el costado: se despliega desde arriba a todo el ancho. */
 #sendwayo-main-sidebar{
- position:fixed!important;left:0!important;top:0!important;bottom:0!important;
- width:min(320px,88vw)!important;max-width:88vw!important;height:100dvh!important;
- min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
- z-index:2147482600!important;transform:translateX(-105%)!important;
- visibility:hidden!important;pointer-events:none!important;
- transition:transform .22s ease,visibility .22s ease!important;
- box-shadow:0 12px 36px rgba(0,0,0,.32)!important;padding-bottom:env(safe-area-inset-bottom)!important
+ position:fixed!important;left:0!important;right:0!important;
+ top:var(--sendwayo-top-menu-top,118px)!important;bottom:auto!important;
+ width:100vw!important;max-width:100vw!important;height:auto!important;min-height:0!important;
+ max-height:calc(100dvh - var(--sendwayo-top-menu-top,118px) - 10px)!important;
+ display:grid!important;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;
+ align-content:start!important;align-items:stretch!important;gap:7px!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ padding:14px clamp(12px,2.4vw,28px) calc(16px + env(safe-area-inset-bottom))!important;
+ box-sizing:border-box!important;background:#0f2440!important;color:#fff!important;
+ border:0!important;border-top:1px solid rgba(255,255,255,.12)!important;
+ border-radius:0 0 18px 18px!important;box-shadow:0 16px 38px rgba(0,0,0,.28)!important;
+ z-index:2147482600!important;transform:translateY(-12px)!important;
+ opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+ transition:transform .18s ease,opacity .18s ease,visibility .18s ease!important
 }
 #sendwayo-main-sidebar.sendwayo-menu-open{
- transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important
+ transform:translateY(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important
 }
+#sendwayo-main-sidebar>div:first-child{grid-column:1/-1!important;padding:4px 4px 8px!important}
+#sendwayo-main-sidebar button{
+ display:flex!important;align-items:center!important;gap:9px!important;
+ width:100%!important;min-width:0!important;min-height:44px!important;height:auto!important;
+ margin:0!important;padding:10px 12px!important;border:1px solid rgba(255,255,255,.10)!important;
+ border-radius:11px!important;background:rgba(255,255,255,.045)!important;color:#fff!important;
+ font-size:12px!important;font-weight:700!important;line-height:1.3!important;
+ text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important
+}
+#sendwayo-main-sidebar button:hover,#sendwayo-main-sidebar button:focus-visible{background:#21466f!important;outline:2px solid rgba(255,255,255,.25)!important}
+#sendwayo-main-sidebar button span,#sendwayo-main-sidebar button i,#sendwayo-main-sidebar button svg{flex:0 0 auto!important;color:inherit!important;opacity:1!important}
 #sendwayo-main-sidebar .sidebar-brand,#sendwayo-main-sidebar .sidebar-business-name,
 #sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,
 #sendwayo-main-sidebar #sendwayo-active-identity-strip,#sendwayo-main-sidebar #sendwayo-v7-user-strip,
@@ -9319,27 +9342,29 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
 }
 #sendwayo-menu-shade{
  display:none!important;position:fixed!important;inset:0!important;
- background:rgba(3,12,26,.56)!important;z-index:2147482500!important;
+ background:rgba(3,12,26,.42)!important;z-index:2147482500!important;
  backdrop-filter:blur(1px)!important
 }
 #sendwayo-menu-shade.open{display:block!important}
+
+/* Botón de navegación integrado en la barra superior, nunca flotando a la izquierda. */
 #sendwayo-mobile-menu.sendwayo-top-menu-toggle{
  display:none!important;position:static!important;inset:auto!important;left:auto!important;top:auto!important;
  visibility:visible!important;opacity:1!important;pointer-events:auto!important;
  flex:0 0 40px!important;align-items:center!important;justify-content:center!important;
  width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
- margin:0 2px 0 0!important;padding:0!important;border:1px solid rgba(255,255,255,.22)!important;
+ margin:0!important;padding:0!important;border:1px solid rgba(255,255,255,.22)!important;
  border-radius:11px!important;background:#173b68!important;color:#fff!important;
- font-size:23px!important;font-weight:900!important;line-height:1!important;
+ font-size:22px!important;font-weight:900!important;line-height:1!important;
  box-shadow:0 2px 8px #0003!important;cursor:pointer!important;z-index:2147482100!important
 }
 body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:inline-flex!important}
 body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
+
+/* El contenido de cada pantalla ocupa todo el ancho, sin una columna lateral. */
 #sendwayo-workspace-shell{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}
 #sendwayo-main-content{display:block!important;flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:clamp(10px,2vw,24px)!important;box-sizing:border-box!important}
-#sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){
- width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important
-}
+#sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
 #user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
 @media(max-width:700px){
  #sendwayo-brand-bar{min-height:54px!important;padding:7px 9px!important;gap:6px!important}
@@ -9348,12 +9373,13 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
  #sendwayo-brand-bar .sendwayo-brand-title{font-size:11px!important;white-space:normal!important;line-height:1.1!important}
  #sendwayo-brand-bar #bell-top{width:34px!important;height:34px!important;min-height:34px!important;flex-basis:34px!important}
  #sendwayo-brand-bar #sendwayo-top-logout{font-size:10px!important;padding:7px 10px!important;min-height:34px!important}
- #sendwayo-mobile-menu.sendwayo-top-menu-toggle{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;font-size:21px!important}
+ #sendwayo-mobile-menu.sendwayo-top-menu-toggle{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;font-size:20px!important}
  #sendwayo-v7-user-strip{top:54px!important;gap:7px!important;padding:8px 10px!important}
  #sendwayo-v7-user-strip .sendwayo-workspace-person{gap:4px 8px!important}
  #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important}
  #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important;justify-content:flex-start!important}
  #sendwayo-main-content{padding:8px!important}
+ #sendwayo-main-sidebar{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;padding-left:9px!important;padding-right:9px!important}
 }
 </style>
 <script id="sendwayo-v7-workspace-layout-controller">
@@ -9370,11 +9396,27 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   return r.includes('ADMIN')?'ADMINISTRADOR':r.includes('AGENTE')?'AGENTE':'REMITENTE';
  };
  function findSidebar(){return $('sendwayo-main-sidebar');}
- function closeDrawer(){
-  const side=findSidebar();
+ function closeTopMenu(){
+  const side=findSidebar(),btn=$('sendwayo-mobile-menu');
   side?.classList.remove('sendwayo-menu-open');
   $('sendwayo-menu-shade')?.classList.remove('open');
   $('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
+  if(btn)btn.textContent='☰';
+  document.body.classList.remove('sendwayo-top-menu-open');
+ }
+ function updateMenuPosition(){
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip');
+  if(!bar)return;
+  const barHeight=Math.ceil(bar.getBoundingClientRect().height||58);
+  const stripHeight=document.body.classList.contains('sendwayo-authenticated')&&strip
+   ?Math.ceil(strip.getBoundingClientRect().height||0):0;
+  document.documentElement.style.setProperty('--sendwayo-top-menu-top',(barHeight+stripHeight)+'px');
+ }
+ function refreshClock(){
+  const date=$('sendwayo-v7-date'),clock=$('sendwayo-v7-clock');
+  const now=new Date();
+  if(date)date.textContent=now.toLocaleDateString('es-DO');
+  if(clock)clock.textContent=now.toLocaleTimeString('es-DO');
  }
  function refreshIdentity(){
   const u=current(),strip=$('sendwayo-v7-user-strip'),brand=$('sendwayo-v7-business-name');
@@ -9383,26 +9425,28 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   const values={
    'sendwayo-v7-name':txt(u&&(u.nombre||u.name||u.email)||'Usuario'),
    'sendwayo-v7-role':u?roleLabel(u):'',
-   'sendwayo-v7-id':txt(u&&(u.id||u.uid)||'—'),
-   'sendwayo-v7-code':txt(u&&(u.codigo||u.codigo2)||'—'),
-   'sendwayo-v7-date':new Date().toLocaleDateString('es-DO'),
-   'sendwayo-v7-clock':new Date().toLocaleTimeString('es-DO')
+   'sendwayo-v7-id':txt(u&&(u.id||u.accountId)||'—'),
+   'sendwayo-v7-code':txt(u&&(u.codigo||u.code||u.codigo2)||'—')
   };
   Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el)el.textContent=value;});
+  refreshClock();updateMenuPosition();
   strip.setAttribute('aria-label','Cuenta activa: '+values['sendwayo-v7-role']+'; ID '+values['sendwayo-v7-id']+'; código '+values['sendwayo-v7-code']);
  }
+ window.sendwayoRefreshIdentityHeader=refreshIdentity;
  function ensureMenu(){
   const bar=$('sendwayo-brand-bar'),side=findSidebar(),btn=$('sendwayo-mobile-menu');
   if(!bar||!side||!btn)return;
+  const actions=bar.querySelector('.sendwayo-brand-actions');
+  if(actions&&btn.parentElement!==actions)actions.insertBefore(btn,actions.firstChild);
   let shade=$('sendwayo-menu-shade');
   if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
-  side.setAttribute('aria-label','Menú de navegación SENDWAYO EXPRESS');
+  side.setAttribute('aria-label','Menú principal de SENDWAYO EXPRESS');
   btn.classList.add('sendwayo-top-menu-toggle');
+  btn.setAttribute('aria-label','Abrir menú principal');
   btn.setAttribute('aria-controls','sendwayo-main-sidebar');
   btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');
-  // Neutralize handlers installed by the older mobile-only navigation controllers.
-  btn.onclick=null;
-  shade=$('sendwayo-menu-shade');if(shade)shade.onclick=null;
+  // Los listeners antiguos quedan neutralizados por el manejador de captura de este botón.
+  btn.onclick=null;shade.onclick=null;
   if(!btn.dataset.sendwayoCanonicalMenu){
    btn.dataset.sendwayoCanonicalMenu='1';
    btn.addEventListener('click',ev=>{
@@ -9411,14 +9455,18 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
     const open=!side.classList.contains('sendwayo-menu-open');
     side.classList.toggle('sendwayo-menu-open',open);
     shade?.classList.toggle('open',open);
+    document.body.classList.toggle('sendwayo-top-menu-open',open);
     btn.setAttribute('aria-expanded',open?'true':'false');
+    btn.textContent=open?'✕':'☰';
+    if(open)updateMenuPosition();
    },true);
-   shade?.addEventListener('click',ev=>{ev.preventDefault();ev.stopImmediatePropagation();closeDrawer();},true);
+   shade?.addEventListener('click',ev=>{ev.preventDefault();ev.stopImmediatePropagation();closeTopMenu();},true);
    side.addEventListener('click',ev=>{
-    if(ev.target&&ev.target.closest&&ev.target.closest('button[onclick*="showView"],a[onclick*="showView"]'))window.setTimeout(closeDrawer,60);
+    if(ev.target&&ev.target.closest&&ev.target.closest('button[onclick*="showView"],a[onclick*="showView"]'))window.setTimeout(closeTopMenu,80);
    },true);
+   document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeTopMenu();},true);
   }
-  // No second logo/name/ID block is allowed inside the side navigation.
+  // El menú conserva solo la navegación; los datos de la cuenta viven en la franja superior.
   side.querySelectorAll('#sendwayo-v7-user-strip,#sendwayo-active-identity-strip,[data-sendwayo-user-identity],.sidebar-business-name').forEach(el=>el.remove());
  }
  function layout(){
@@ -9426,9 +9474,9 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   if(!bar||!strip)return;
   if(strip.parentElement!==document.body||strip.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',strip);
   bar.classList.add('sticky');
-  if(shell)shell.style.setProperty('width','100%','important');
-  if(main){main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');}
-  ensureMenu();refreshIdentity();
+  if(shell){shell.style.setProperty('display','block','important');shell.style.setProperty('width','100%','important');}
+  if(main){main.style.setProperty('display','block','important');main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');}
+  ensureMenu();refreshIdentity();updateMenuPosition();
  }
  function refresh(){layout();}
  function wrapLogin(){
@@ -9440,7 +9488,7 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
  function wrapLogout(){
   const old=window.cerrarSesion;
   if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
-  const wrapped=function(){closeDrawer();const out=old.apply(this,arguments);window.setTimeout(refresh,0);return out;};
+  const wrapped=function(){closeTopMenu();const out=old.apply(this,arguments);window.setTimeout(refresh,0);return out;};
   wrapped.__sendwayoCanonicalLayout=true;window.cerrarSesion=wrapped;
  }
  function wrapShowView(){
@@ -9448,7 +9496,7 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
   const wrapped=function(route){
    const out=old.apply(this,arguments);
-   window.setTimeout(()=>{closeDrawer();layout();},0);
+   window.setTimeout(()=>{closeTopMenu();layout();},0);
    return out;
   };
   wrapped.__sendwayoCanonicalLayout=true;window.showView=wrapped;
@@ -9467,13 +9515,17 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
  document.addEventListener('DOMContentLoaded',setup,{once:true});
  window.addEventListener('load',setup);
  window.addEventListener('pageshow',setup);
- window.addEventListener('resize',()=>{ensureMenu();});
+ window.addEventListener('resize',updateMenuPosition);
  window.addEventListener('sendwayo:firebase-ready',setup);
  document.addEventListener('sendwayo:firebase-ready',setup);
  document.addEventListener('sendwayo:login-success',setup);
  window.addEventListener('sendwayo:transactions-updated',refreshIdentity);
  window.addEventListener('sendwayo:workspace-header-refresh',refreshIdentity);
- window.setInterval(()=>{if(document.body.classList.contains('sendwayo-authenticated'))refreshIdentity();},1000);
+ if(typeof ResizeObserver!=='undefined'){
+  const ro=new ResizeObserver(updateMenuPosition);
+  window.addEventListener('load',()=>{if($('sendwayo-brand-bar'))ro.observe($('sendwayo-brand-bar'));if($('sendwayo-v7-user-strip'))ro.observe($('sendwayo-v7-user-strip'));},{once:true});
+ }
+ window.setInterval(refreshClock,1000);
  setup();
 })();
 </script>
