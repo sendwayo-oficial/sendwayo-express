@@ -2735,15 +2735,25 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   }
   window.v162_togglePass=function(){ const p=document.getElementById('login-password'); if(p) p.type=p.type==='password'?'text':'password'; };
   window.v162_registrar=function(){
-    const nom=document.getElementById('v162-reg-nombre')?.value.trim(); const ape=document.getElementById('v162-reg-apellido')?.value.trim(); const cel=document.getElementById('v162-reg-celular')?.value.trim(); const email=document.getElementById('v162-reg-email')?.value.trim(); const pass=document.getElementById('v162-reg-pass')?.value.trim(); const pass2=document.getElementById('v162-reg-pass2')?.value.trim(); const tipo=document.getElementById('v162-reg-tipo')?.value||'REMITENTE';
-    if(!nom||!ape||!cel||!email||!pass){ alert('Complete nombre, apellido, celular, correo, contraseña'); return; }
-    if(pass!==pass2){ alert('Contraseña no coincide con confirmar contraseña'); return; }
-    const nuevo={id:'REM-'+Date.now().toString().slice(-5), codigo:'REM-'+Date.now().toString().slice(-5), nombre:nom+' '+ape, name:nom+' '+ape, telefono:cel, celular:cel, email:email, usuario:email, password:pass, password2:cel, role:tipo, fecha:new Date().toLocaleString('es-DO')};
-    if(typeof REMITENTES!=='undefined') REMITENTES.unshift(nuevo);
-    try{ let regs=JSON.parse(localStorage.getItem('sendwayo_express_oficial_20261029_registros')||'[]'); regs.unshift(nuevo); localStorage.setItem('sendwayo_express_oficial_20261029_registros', JSON.stringify(regs)); }catch(e){}
-    try{ if(typeof addNotificacion==='function') addNotificacion(`Nuevo registro: ${nom} ${ape} - ${cel} - ${email} - ${tipo} - Notificación al admin para seguimiento`, 'Registro'); }catch(e){}
-    alert(`Cuenta creada: ${nom} ${ape} - ${email} - Notificación enviada al administrador`);
-    v162_showLogin();
+    const nom=document.getElementById('v162-reg-nombre')?.value.trim()||'';
+    const ape=document.getElementById('v162-reg-apellido')?.value.trim()||'';
+    const cel=document.getElementById('v162-reg-celular')?.value.trim()||'';
+    const email=document.getElementById('v162-reg-email')?.value.trim().toLowerCase()||'';
+    const tipo=String(document.getElementById('v162-reg-tipo')?.value||'REMITENTE').toUpperCase();
+    if(!nom||!ape||!cel||!email){alert('Complete nombre, apellido, celular y correo electrónico.');return;}
+    if(!/^\S+@\S+\.\S+$/.test(email)){alert('El correo electrónico no es válido.');return;}
+    const role=tipo.includes('AGENTE')?'AGENTE':'REMITENTE';
+    const requestKey='sendwayo_express_oficial_20261029_registros_pendientes_v5';
+    let requests=[];try{const data=JSON.parse(localStorage.getItem(requestKey)||'[]');requests=Array.isArray(data)?data:[];}catch(_){}
+    if(requests.some(x=>String(x.email||'').toLowerCase()===email&&['pendiente','pending'].includes(String(x.estado||'').toLowerCase()))){alert('Ya existe una solicitud pendiente con este correo.');return;}
+    if((window.USUARIOS_LOGIN||[]).some(x=>String(x.email||x.usuario||'').toLowerCase()===email)){alert('Este correo ya pertenece a una cuenta registrada.');return;}
+    const fullName=nom+' '+ape;
+    const request={id:'SOL-'+Date.now(),nombre:fullName,name:fullName,email:email,celular:cel,telefono:cel,role:role,fecha:new Date().toLocaleString('es-DO'),estado:'Pendiente',requestedAtMs:Date.now()};
+    requests.unshift(request);
+    try{localStorage.setItem(requestKey,JSON.stringify(requests));}catch(e){alert('No se pudo guardar la solicitud. Intente nuevamente.');return;}
+    try{if(typeof addNotificacion==='function')addNotificacion('Nueva solicitud de '+role+': '+fullName+' — '+email,'Registro');}catch(e){}
+    alert('Su solicitud fue enviada a Administración. Cuando sea aprobada, se creará su cuenta Firebase con contraseña inicial 12345678 y deberá cambiarla en su primer acceso.');
+    if(typeof window.v162_goWelcome==='function')window.v162_goWelcome();else if(typeof window.v162_showLogin==='function')window.v162_showLogin();
   };
 
   window.intentarLogin=function(){
@@ -3350,6 +3360,7 @@ window.sendwayoAdminViewAccount=function(id){
  // Public remitter requests are provisioned as real Firebase Authentication users only after admin approval.
  let pendingWelcomeSave=false;
  window.__sendwayoPendingWelcomeRequestId='';
+ window.__sendwayoPendingWelcomeView='';
  const welcomeKey='sendwayo_express_oficial_20261029_registros_pendientes_v5';
  function readWelcomeRows(){try{const rows=JSON.parse(localStorage.getItem(welcomeKey)||'[]');return Array.isArray(rows)?rows:[];}catch(_){return [];}}
  function saveWelcomeRows(rows){try{localStorage.setItem(welcomeKey,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO welcome requests]',e);}}
@@ -3365,7 +3376,9 @@ window.sendwayoAdminViewAccount=function(id){
    if(all().some(a=>norm(a.email||a.usuario)===norm(email)))return alert('Este correo ya pertenece a una cuenta registrada.');
    if(typeof window.sendwayoOpenAccountForm!=='function')return alert('El formulario seguro de creación de cuentas no está disponible.');
    window.__sendwayoPendingWelcomeRequestId=String(id);
-   window.sendwayoOpenAccountForm('remitentes','');
+   const requestedRole=norm(request.role||request.tipo),accountView=requestedRole.includes('agente')?'agentes':'remitentes';
+   window.__sendwayoPendingWelcomeView=accountView;
+   window.sendwayoOpenAccountForm(accountView,'');
    setTimeout(()=>{
     const name=$('v7-admin-name'),username=$('v7-admin-username'),mail=$('v7-admin-email'),phone=$('v7-admin-phone'),password=$('v7-admin-password'),save=$('sendwayo-admin-account-save');
     if(name){name.value=txt(request.nombre||request.name);name.dispatchEvent(new Event('input',{bubbles:true}));}
@@ -3374,7 +3387,7 @@ window.sendwayoAdminViewAccount=function(id){
     if(phone){phone.value=txt(request.celular||request.telefono);phone.dispatchEvent(new Event('input',{bubbles:true}));}
     if(password)password.value='12345678';
     const modal=$('sendwayo-admin-account-modal'),heading=modal&&modal.querySelector('.p-4 b');
-    if(heading)heading.textContent='Aprobar solicitud — Crear remitente en Firebase';
+    if(heading)heading.textContent='Aprobar solicitud — Crear '+(accountView==='agentes'?'agente':'remitente')+' en Firebase';
     if(save)save.textContent='Crear cuenta y aprobar solicitud';
    },80);
    return;
@@ -3384,13 +3397,14 @@ window.sendwayoAdminViewAccount=function(id){
  const originalSaveForWelcome=window.sendwayoSaveAccountForm;
  if(typeof originalSaveForWelcome==='function')window.sendwayoSaveAccountForm=async function(view,id){
   const pendingId=String(window.__sendwayoPendingWelcomeRequestId||'');
-  const isWelcome=pendingId&&view==='remitentes'&&!id;
+  const pendingView=String(window.__sendwayoPendingWelcomeView||'remitentes');
+  const isWelcome=pendingId&&view===pendingView&&!id;
   pendingWelcomeSave=!!isWelcome;
   const result=await originalSaveForWelcome.apply(this,arguments);
   if(result&&isWelcome){
    const rows=readWelcomeRows(),request=rows.find(x=>String(x.id)===pendingId);
    if(request){request.estado='Aprobado';request.aprobadoPor=txt((window.currentUser||{}).id);request.fechaAprobacion=new Date().toLocaleString('es-DO');delete request.password;delete request.contrasena;saveWelcomeRows(rows);}
-   window.__sendwayoPendingWelcomeRequestId='';
+   window.__sendwayoPendingWelcomeRequestId='';window.__sendwayoPendingWelcomeView='';
    pendingWelcomeSave=false;
    setTimeout(()=>{if(typeof window.showView==='function')window.showView('bienvenida');},60);
    alert('Solicitud aprobada. El remitente fue creado en Firebase con ID y código nuevos. Su contraseña inicial es 12345678 y deberá cambiarla en el primer acceso.');
@@ -3401,7 +3415,7 @@ window.sendwayoAdminViewAccount=function(id){
   return result;
  };
  const welcomeModalObserver=new MutationObserver(()=>{
-  if(window.__sendwayoPendingWelcomeRequestId&&!pendingWelcomeSave&&!$('sendwayo-admin-account-modal'))window.__sendwayoPendingWelcomeRequestId='';
+  if(window.__sendwayoPendingWelcomeRequestId&&!pendingWelcomeSave&&!$('sendwayo-admin-account-modal')){window.__sendwayoPendingWelcomeRequestId='';window.__sendwayoPendingWelcomeView='';}
  });
  if(document.body)welcomeModalObserver.observe(document.body,{childList:true,subtree:true});
  // Create forms default to the provisional password and derive codes using the agreed prefixes.
