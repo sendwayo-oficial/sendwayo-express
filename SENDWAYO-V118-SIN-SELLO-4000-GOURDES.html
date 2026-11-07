@@ -8804,7 +8804,7 @@ window.sendwayoShareReceipt=async function(){
    var accounts=[];
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
-   var a=accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id||'');});})||null;
+   var a=id?accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id);});})||null:null;
    var prefix=view==='agentes'?'AGE':'REM',num=1;
    if(!a){while(accounts.some(function(x){return String(x.id||'')===prefix+String(num).padStart(5,'0');}))num++;}
    var visibleId=a?String(a.id):prefix+String(num).padStart(5,'0');
@@ -8828,7 +8828,7 @@ window.sendwayoShareReceipt=async function(){
    var accounts=[];
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
-   var a=accounts.find(function(x){return [x.id,x.idAnterior,x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'')===String(id||'');});})||null;
+   var a=id?accounts.find(function(x){return [x.id,x.idAnterior,x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'')===String(id);});})||null:null;
    var duplicate=accounts.find(function(x){return x!==a&&(String(x.id||'').toLowerCase()===ident.toLowerCase()||(Array.isArray(x.idAliases)&&x.idAliases.some(function(v){return String(v).toLowerCase()===ident.toLowerCase();})));});
    if(duplicate){alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
    if(!a){
