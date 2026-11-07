@@ -3270,7 +3270,19 @@ document.addEventListener('DOMContentLoaded', function(){
   if(login)Object.assign(login,{id:a.id,codigo:a.codigo,nombre:a.nombre,active:a.active,activo:a.active,estado:a.estado,status:a.status});
  }
  function renderSecretas(){try{if(typeof window.renderCustom==='function')window.renderCustom('secretas');else if(typeof window.showView==='function')window.showView('secretas');}catch(e){console.warn('[SENDWAYO] No se pudo actualizar la lista secreta:',e);}}
- window.sendwayoAdminViewAccount=function(id){
+ window.sendwayoAdminViewMoney=function(id){
+  if(!isAdmin())return alert('Solo Administración puede consultar balances y comisiones.');
+  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
+  const financial=role(a)==='AGENTE'?(all().find(x=>role(x)==='ADMIN')||a):a;
+  const b=financial.balances||{},c=financial.commissions||financial.comisiones||{};
+  alert('BALANCES Y COMISIONES\n\nCuenta seleccionada: '+txt(a.nombre||a.name)+' — '+txt(a.id)+'\nCuenta financiera utilizada: '+txt(financial.nombre||financial.name)+' — '+txt(financial.id)+'\n\nBalance RD$: '+money(b.DOP)+'\nBalance HTG: '+money(b.HTG)+'\nComisión RD$: '+money(c.DOP)+'\nComisión HTG: '+money(c.HTG));
+};
+window.sendwayoAdminAdjustAccount=function(id){
+  if(!isAdmin())return alert('Solo Administración puede ajustar cuentas.');
+  const a=find(id);if(!a)return alert('No se encontró la cuenta.');
+  if(typeof window.v162_abrirAjustar==='function')window.v162_abrirAjustar(a.nombre||a.name,a.id,a.role);
+};
+window.sendwayoAdminViewAccount=function(id){
   if(!isAdmin())return alert('Solo Administración puede consultar esta información.');
   const a=find(id);if(!a)return alert('No se encontró la cuenta solicitada.');
   const financial=role(a)==='AGENTE'?(all().find(x=>role(x)==='ADMIN')||a):a;
@@ -3334,6 +3346,64 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(()=>{const kind=$('v162-aju-tipo');if(kind){kind.value='DESACREDITAR_BALANCE';kind.dispatchEvent(new Event('change',{bubbles:true}));}const modal=$('modal-ajustar-v162');if(modal)modal.classList.remove('hidden');},50);
  };
 
+
+ // Public remitter requests are provisioned as real Firebase Authentication users only after admin approval.
+ let pendingWelcomeSave=false;
+ window.__sendwayoPendingWelcomeRequestId='';
+ const welcomeKey='sendwayo_express_oficial_20261029_registros_pendientes_v5';
+ function readWelcomeRows(){try{const rows=JSON.parse(localStorage.getItem(welcomeKey)||'[]');return Array.isArray(rows)?rows:[];}catch(_){return [];}}
+ function saveWelcomeRows(rows){try{localStorage.setItem(welcomeKey,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO welcome requests]',e);}}
+ const originalGenericAction=window.sendwayoActionGeneric;
+ if(typeof originalGenericAction==='function')window.sendwayoActionGeneric=function(view,action,id){
+  if(view==='bienvenida'&&action==='aprobar'){
+   if(!isAdmin())return alert('Solo Administración puede aprobar solicitudes.');
+   const rows=readWelcomeRows(),request=rows.find(x=>String(x.id)===String(id));
+   if(!request)return alert('No se encontró la solicitud.');
+   if(['aprobado','rechazado'].includes(norm(request.estado)))return alert('Esta solicitud ya fue procesada.');
+   const email=txt(request.email).toLowerCase();
+   if(!email)return alert('La solicitud no contiene un correo válido.');
+   if(all().some(a=>norm(a.email||a.usuario)===norm(email)))return alert('Este correo ya pertenece a una cuenta registrada.');
+   if(typeof window.sendwayoOpenAccountForm!=='function')return alert('El formulario seguro de creación de cuentas no está disponible.');
+   window.__sendwayoPendingWelcomeRequestId=String(id);
+   window.sendwayoOpenAccountForm('remitentes','');
+   setTimeout(()=>{
+    const name=$('v7-admin-name'),username=$('v7-admin-username'),mail=$('v7-admin-email'),phone=$('v7-admin-phone'),password=$('v7-admin-password'),save=$('sendwayo-admin-account-save');
+    if(name){name.value=txt(request.nombre||request.name);name.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(mail){mail.value=email;mail.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(username){username.value=email;username.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(phone){phone.value=txt(request.celular||request.telefono);phone.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(password)password.value='12345678';
+    const modal=$('sendwayo-admin-account-modal'),heading=modal&&modal.querySelector('.p-4 b');
+    if(heading)heading.textContent='Aprobar solicitud — Crear remitente en Firebase';
+    if(save)save.textContent='Crear cuenta y aprobar solicitud';
+   },80);
+   return;
+  }
+  return originalGenericAction.apply(this,arguments);
+ };
+ const originalSaveForWelcome=window.sendwayoSaveAccountForm;
+ if(typeof originalSaveForWelcome==='function')window.sendwayoSaveAccountForm=async function(view,id){
+  const pendingId=String(window.__sendwayoPendingWelcomeRequestId||'');
+  const isWelcome=pendingId&&view==='remitentes'&&!id;
+  pendingWelcomeSave=!!isWelcome;
+  const result=await originalSaveForWelcome.apply(this,arguments);
+  if(result&&isWelcome){
+   const rows=readWelcomeRows(),request=rows.find(x=>String(x.id)===pendingId);
+   if(request){request.estado='Aprobado';request.aprobadoPor=txt((window.currentUser||{}).id);request.fechaAprobacion=new Date().toLocaleString('es-DO');delete request.password;delete request.contrasena;saveWelcomeRows(rows);}
+   window.__sendwayoPendingWelcomeRequestId='';
+   pendingWelcomeSave=false;
+   setTimeout(()=>{if(typeof window.showView==='function')window.showView('bienvenida');},60);
+   alert('Solicitud aprobada. El remitente fue creado en Firebase con ID y código nuevos. Su contraseña inicial es 12345678 y deberá cambiarla en el primer acceso.');
+  }else{
+   pendingWelcomeSave=false;
+   if(!result&&isWelcome)window.__sendwayoPendingWelcomeRequestId=pendingId;
+  }
+  return result;
+ };
+ const welcomeModalObserver=new MutationObserver(()=>{
+  if(window.__sendwayoPendingWelcomeRequestId&&!pendingWelcomeSave&&!$('sendwayo-admin-account-modal'))window.__sendwayoPendingWelcomeRequestId='';
+ });
+ if(document.body)welcomeModalObserver.observe(document.body,{childList:true,subtree:true});
  // Create forms default to the provisional password and derive codes using the agreed prefixes.
  const previousOpen=window.sendwayoOpenAccountForm;
  if(typeof previousOpen==='function')window.sendwayoOpenAccountForm=function(view,id){
@@ -3945,7 +4015,7 @@ window.sendwayoShareReceipt=async function(){
  };
  window.sendwayoAgregarModulo=function(view){
   if(view==='depositos'){openDepositModal();return;}if(view==='cuentas'){if(!isAdmin()){openDepositModal();return;}const banco=prompt('Banco (Banco Popular / Banreservas / Banco BHD):','Banco Popular');if(!banco)return;const cuenta=prompt('Número de cuenta:','');if(!cuenta)return;const titular=prompt('Titular:','Herace Fleuranvil');if(!titular)return;const doc=prompt('Pasaporte:','R10003753')||'';window.SENDWAYO_BANKS.push({id:'BANK-'+Date.now(),banco,cuenta,titular,documento:doc});writeJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',window.SENDWAYO_BANKS);renderCustom(view);return;}
-  if(view==='bienvenida'){const nombre=prompt('Nombre y apellido del solicitante:');if(!nombre)return;const email=prompt('Correo electrónico:');if(!email)return;const celular=prompt('Celular:');if(!celular)return;const password=prompt('Contraseña inicial:','');if(!password)return;const rows=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);rows.push({id:'SOL-'+Date.now(),nombre,email,celular,password,role:'REMITENTE',fecha:new Date().toLocaleString('es-DO'),estado:'Pendiente'});writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);renderCustom(view);return;}
+  if(view==='bienvenida'){const nombre=prompt('Nombre y apellido del solicitante:');if(!nombre)return;const email=prompt('Correo electrónico:');if(!email)return;const celular=prompt('Celular:');if(!celular)return;const rows=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);rows.push({id:'SOL-'+Date.now(),nombre,email,celular,role:'REMITENTE',fecha:new Date().toLocaleString('es-DO'),estado:'Pendiente'});writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);renderCustom(view);return;}
   if(['envios','retiros'].includes(view)){if(view==='retiros'&&window.sendwayoAbrirVentanillaRetiro){window.sendwayoAbrirVentanillaRetiro();return;}if(view==='envios'){const m=$('modal-envio-v162')||$('modal-envio-compacto');if(m)m.classList.remove('hidden');return;}}
   const modalMap={recargas:'modal-recargas-v162',paquetikos:'modal-paquetikos-v162',facturas:'modal-facturas-v162',recepcion:'modal-paquetes-v162',creditos:'modal-creditos-v162',ajustes:'modal-ajustar-v162',comisiones:'modal-comisiones-v162'};if(view==='comisiones')openCommissionModal();else {const m=$(modalMap[view]);if(m)m.classList.remove('hidden');else if(['reportes','informes','conciliacion','referencia'].includes(view)){let title=({reportes:'Informe',informes:'Informe semanal',conciliacion:'Movimiento conciliado',referencia:'Pago de referencia'})[view];const descripcion=prompt(title+' — descripción / número de referencia:');if(descripcion===null)return;const montoText=prompt('Monto (0 si no aplica):','0');if(montoText===null)return;const rows=extraRows(view);rows.push({id:'SW-'+view.toUpperCase()+'-'+Date.now(),fecha:new Date().toLocaleString('es-DO'),tipo:title,descripcion,referencia:descripcion,monto:Number(montoText)||0,estado:'Pendiente',creadorId:user()?.id||''});saveExtra(view,rows);renderCustom(view);}}
  };
@@ -3963,7 +4033,7 @@ window.sendwayoShareReceipt=async function(){
     tbody.innerHTML=rows.map((r,i)=>`<tr class="border-t"><td class="p-3">${String(i+1).padStart(2,'0')}</td><td class="p-3">${esc(r.id)}</td><td class="p-3"><b>${esc(r.banco)}</b><br>Cuenta: ${esc(r.cuenta)}<br>Pasaporte: ${esc(r.documento)}</td><td class="p-3">${esc(r.titular)}</td><td class="p-3">${esc(r.titular)}</td><td class="p-3">Activa</td><td class="p-3">${isAdmin()?`<button onclick="sendwayoActionGeneric('cuentas','borrar','${esc(r.id)}')" class="border border-red-300 text-red-700 rounded-full px-3 py-1">Borrar</button>`:'Solo consulta'}</td></tr>`).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay cuentas bancarias.</td></tr>';return;}
   if(view==='bienvenida'){
    tbody.innerHTML=rows.map((r,i)=>`<tr class="border-t"><td class="p-3">${String(i+1).padStart(2,'0')}</td><td class="p-3">${esc(r.id)}<br>${esc(r.fecha||'')}</td><td class="p-3">${esc(r.nombre||r.name)}<br>${esc(r.email||'')}<br>${esc(r.celular||'')}</td><td class="p-3">${esc(r.role||'REMITENTE')}</td><td class="p-3">${esc(r.nombre||'')}</td><td class="p-3">${esc(r.estado||'Pendiente')}</td><td class="p-3">${isAdmin()&&r.estado!=='Aprobado'&&r.estado!=='Rechazado'?`<button onclick="sendwayoActionGeneric('bienvenida','aprobar','${esc(r.id)}')" class="bg-green-600 text-white rounded-full px-3 py-1">Aceptar</button> <button onclick="sendwayoActionGeneric('bienvenida','rechazar','${esc(r.id)}')" class="bg-red-600 text-white rounded-full px-3 py-1">Rechazar</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay solicitudes.</td></tr>';return;}
-  if(view==='secretas'){tbody.innerHTML=rows.map((r,i)=>{const inactive=r.active===false||r.activo===false||['inactivo','inactive','disabled','deleted','eliminado','bloqueado'].includes(norm(r.status||r.estado));const label=['deleted','eliminado'].includes(norm(r.status||r.estado))?'Eliminado':inactive?'Inactivo':'Activo';const id=esc(r.id);return '<tr class="border-t"><td class="p-3 font-bold">'+String(i+1).padStart(2,'0')+'</td><td class="p-3 font-bold">'+id+'</td><td class="p-3">'+esc(r.nombre||r.email)+'<br><span class="font-semibold text-slate-600">'+esc(r.codigo||'')+'</span></td><td class="p-3">'+esc(r.role)+'</td><td class="p-3">'+esc(r.usuario||r.email||'')+'</td><td class="p-3">'+label+'</td><td class="p-3"><div class="flex flex-wrap gap-1.5 min-w-[300px]"><button onclick="sendwayoAdminViewAccount(\''+id+'\')" class="border rounded-full px-2 py-1">Ver</button><button onclick="sendwayoAdminEditAccount(\''+id+'\')" class="border rounded-full px-2 py-1">Modificar</button><button onclick="sendwayoAdminToggleAccount(\''+id+'\')" class="border rounded-full px-2 py-1">'+(inactive?'Activar':'Inactivar')+'</button><button onclick="v162_abrirAjustar(\''+esc(r.nombre||r.email)+'\',\''+id+'\',\''+esc(r.role)+'\')" class="bg-[#0f2440] text-white rounded-full px-2 py-1">Ajustar</button><button onclick="sendwayoAdminCreditAccount(\''+id+'\')" class="bg-green-700 text-white rounded-full px-2 py-1">Acreditar</button><button onclick="sendwayoAdminDebitAccount(\''+id+'\')" class="bg-amber-700 text-white rounded-full px-2 py-1">Desacreditar</button><button onclick="sendwayoAdminViewAccount(\''+id+'\')" class="border rounded-full px-2 py-1">Balance / comisiones</button><button onclick="sendwayoAdminDeleteAccount(\''+id+'\')" class="border border-red-300 text-red-700 rounded-full px-2 py-1">Borrar</button></div></td></tr>';}).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay usuarios registrados.</td></tr>';return;}
+  if(view==='secretas'){tbody.innerHTML=rows.map((r,i)=>{const inactive=r.active===false||r.activo===false||['inactivo','inactive','disabled','deleted','eliminado','bloqueado'].includes(norm(r.status||r.estado));const label=['deleted','eliminado'].includes(norm(r.status||r.estado))?'Eliminado':inactive?'Inactivo':'Activo';const id=esc(r.id);return '<tr class="border-t"><td class="p-3 font-bold">'+String(i+1).padStart(2,'0')+'</td><td class="p-3 font-bold">'+id+'</td><td class="p-3">'+esc(r.nombre||r.email)+'<br><span class="font-semibold text-slate-600">'+esc(r.codigo||'')+'</span></td><td class="p-3">'+esc(r.role)+'</td><td class="p-3">'+esc(r.usuario||r.email||'')+'</td><td class="p-3">'+label+'</td><td class="p-3"><div class="flex flex-wrap gap-1.5 min-w-[300px]"><button onclick="sendwayoAdminViewAccount(\''+id+'\')" class="border rounded-full px-2 py-1">Ver</button><button onclick="sendwayoAdminEditAccount(\''+id+'\')" class="border rounded-full px-2 py-1">Modificar</button><button onclick="sendwayoAdminToggleAccount(\''+id+'\')" class="border rounded-full px-2 py-1">'+(inactive?'Activar':'Inactivar')+'</button><button onclick="sendwayoAdminAdjustAccount(\''+id+'\')" class="bg-[#0f2440] text-white rounded-full px-2 py-1">Ajustar</button><button onclick="sendwayoAdminCreditAccount(\''+id+'\')" class="bg-green-700 text-white rounded-full px-2 py-1">Acreditar</button><button onclick="sendwayoAdminDebitAccount(\''+id+'\')" class="bg-amber-700 text-white rounded-full px-2 py-1">Desacreditar</button><button onclick="sendwayoAdminViewMoney(\''+id+'\')" class="border rounded-full px-2 py-1">Balance / comisiones</button><button onclick="sendwayoAdminDeleteAccount(\''+id+'\')" class="border border-red-300 text-red-700 rounded-full px-2 py-1">Borrar</button></div></td></tr>';}).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay usuarios registrados.</td></tr>';return;}
   if(view==='perfil'){
    const a=currentAccount()||admin();tbody.innerHTML=a?`<tr class="border-t"><td class="p-3">01</td><td class="p-3">${esc(a.id)}</td><td class="p-3">${esc(acctName(a))}<br>${esc(a.email||a.usuario||'')}</td><td class="p-3">DOP ${formatMoney(balanceObject(a).DOP)} / HTG ${formatMoney(balanceObject(a).HTG)}</td><td class="p-3">${esc(a.codigo)}</td><td class="p-3">${esc(a.role)}</td><td class="p-3"><button onclick="sendwayoActionGeneric('perfil','password','${esc(a.id)}')" class="bg-[#0f2440] text-white rounded-full px-3 py-1">Cambiar contraseña</button></td></tr>`:'';return;}
   if(view==='mibanco'){
