@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
 
 assert.match(html, /id="sendwayo-brand-bar"/, 'la barra superior debe tener un contenedor único');
 assert.match(html, /id="sendwayo-main-content"/, 'el contenido de cada módulo debe tener un contenedor principal a ancho completo');
