@@ -6820,7 +6820,8 @@ window.sendwayoShareReceipt=async function(){
   window.addEventListener('load',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5'].includes(e.key)){setTimeout(()=>{syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()},50)}});
   setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},15000);
-  window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
+  window.addEventListener('sendwayo:transactions-updated',()=>{window.refreshBellCount();updateSidebarPendingCounts();});
+   window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
 })();
 </script>
 <!-- END SENDWAYO V7 DOP LEDGER FIX -->
@@ -7472,6 +7473,7 @@ window.sendwayoShareReceipt=async function(){
     if(typeof TRANSACCIONES!=='undefined' && Array.isArray(TRANSACCIONES)) TRANSACCIONES.splice(0,TRANSACCIONES.length,...merged);
     try { if(typeof renderPrincipal==='function') renderPrincipal(); } catch(e){}
     try { const view=document.querySelector('.view:not(.hidden)'); if(view && typeof renderModuloSeparado==='function') renderModuloSeparado(view.id.replace('view-','')); } catch(e){}
+    try{window.dispatchEvent(new CustomEvent('sendwayo:transactions-updated'));}catch(e){}
   }
   async function loadCloudTransactions(profileRow, role, uid) {
     state.remoteTransactions={};
