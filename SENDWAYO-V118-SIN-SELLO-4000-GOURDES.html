@@ -4862,21 +4862,22 @@ window.sendwayoShareReceipt=async function(){
     });
   }
   let translationObserver=null, translationObserverTimer=null;
+  const translationPendingRoots=new Set();
   function installTranslationObserver(){
     if(translationObserver||!document.body)return;
-    // Clock counters and other text updates must not trigger a translation scan
-    // of the entire 800 KB interface every second.
+    // Translate only newly inserted subtrees; keep roots arriving during debounce.
     translationObserver=new MutationObserver(records=>{
-      const roots=new Set();
       records.forEach(record=>(record.addedNodes||[]).forEach(node=>{
         const root=node.nodeType===1?node:node.parentElement;
         if(!root||root===document.body||/^(SCRIPT|STYLE|NOSCRIPT)$/.test(root.tagName||''))return;
-        if(!Array.from(roots).some(parent=>parent===root||parent.contains(root)))roots.add(root);
+        Array.from(translationPendingRoots).forEach(existing=>{if(root!==existing&&root.contains(existing))translationPendingRoots.delete(existing);});
+        if(!Array.from(translationPendingRoots).some(parent=>parent===root||parent.contains(root)))translationPendingRoots.add(root);
       }));
-      if(!roots.size||translationObserverTimer!==null)return;
+      if(!translationPendingRoots.size||translationObserverTimer!==null)return;
       translationObserverTimer=window.setTimeout(()=>{
         translationObserverTimer=null;
-        try{roots.forEach(node=>translateInterface(node,languageValue()));}
+        const pending=Array.from(translationPendingRoots);translationPendingRoots.clear();
+        try{pending.forEach(node=>{if(node.isConnected)translateInterface(node,languageValue());});}
         catch(error){console.warn('[SENDWAYO] No se pudo actualizar el idioma:',error);}
       },180);
     });
@@ -9226,7 +9227,7 @@ window.sendwayoShareReceipt=async function(){
   const date=x=>{const n=Number(x.timestamp||x.createdAtMs||x.fechaMs)||Date.parse(x.fecha||x.date||x.createdAt||'');return n?new Date(n).toLocaleString('es-DO'):'—';};
   const req=table('Solicitudes y revisiones relacionadas',requests,['N°','Fecha','Tipo','ID','Estado','Motivo / detalle'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(date(x))+'</td><td class="p-2">'+esc(x.tipoSolicitud||x.tipo||x.type||'Solicitud')+'</td><td class="p-2">'+esc(x.id||x.requestId||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Pendiente')+'</td><td class="p-2">'+esc(x.motivo||x.reason||x.notas||x.description||x.detalle||'—')+'</td>');
   const bank=table('Cuentas bancarias vinculadas',banks,['N°','Banco','Titular','Cuenta','Moneda','Estado'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(x.banco||x.bank||x.bankName||'—')+'</td><td class="p-2">'+esc(x.titular||x.holder||x.accountHolder||'—')+'</td><td class="p-2">'+esc(x.cuenta||x.account||x.accountNumber||'—')+'</td><td class="p-2">'+esc(x.currency||x.moneda||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Activo')+'</td>');
-  const anchor=Array.from(root.querySelectorAll('section')).find(x=>/beneficiarios asociados/i.test(x.textContent||''));if(anchor)anchor.insertAdjacentHTML('afterend',req+bank);else root.insertAdjacentHTML('beforeend',req+bank);
+  const candidates=Array.from(root.querySelectorAll('section')).filter(x=>Array.from(x.querySelectorAll('h3')).some(t=>/beneficiarios asociados/i.test(t.textContent||'')));const anchor=candidates.sort((a,b)=>a.querySelectorAll('section').length-b.querySelectorAll('section').length)[0];if(anchor)anchor.insertAdjacentHTML('afterend',req+bank);else root.insertAdjacentHTML('beforeend',req+bank);
  }
  function validate(event){
   const form=event.target;if(!form||form.id!=='sendwayo-investigation-form')return;
