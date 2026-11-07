@@ -3517,6 +3517,15 @@ window.sendwayoShareReceipt=async function(){
  function buildIdentityStrip(){
    const root=$('view-tablero')?.parentElement;if(!root)return;
    const brandBar=Array.from(document.body.children).find(el=>el.classList?.contains('sticky')&&el.querySelector('#user-top'));
+   if(brandBar){
+     brandBar.classList.add('sendwayo-brand-bar');
+     ['top-bal-rd','top-bal-htg','top-com-rd','top-com-htg'].forEach(id=>{
+       const value=$(id),badge=value&&value.parentElement;
+       if(badge){badge.classList.add('sendwayo-brand-balances-hidden');badge.style.setProperty('display','none','important');}
+     });
+     brandBar.style.setProperty('justify-content','space-between','important');
+     brandBar.style.setProperty('width','100%','important');
+   }
    let strip=$('sendwayo-v7-user-strip');
    if(!strip){strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';}
    if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
