@@ -52,3 +52,12 @@ assert.match(html, /if\(!t\)\{alert\('No se encontró la transacción para gener
 assert.doesNotMatch(html, /if\(!t\) t=\{id:id, fecha:'20\/10\/2026'/, 'no debe existir un comprobante de ejemplo con datos ficticios');
 assert.match(html, /sendwayoShareReceipt=async function\(\)/, 'el comprobante debe compartir imagen PNG');
 assert.match(html, /image\/png/, 'el comprobante debe generarse como imagen PNG');
+
+assert.match(html, /sendwayo-v7-workspace-layout-controller/, 'debe existir un controlador único del encabezado y el espacio de trabajo');
+assert.match(html, /sendwayo-v7-user-strip/, 'la identidad activa debe mostrarse en una franja superior');
+assert.match(html, /insertAdjacentElement\('afterend',strip\)/, 'la franja de identidad debe colocarse inmediatamente debajo de la marca superior');
+assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?left:0!important;right:0!important;/, 'el menú debe abrirse como panel superior de ancho completo, no como columna lateral');
+assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(/, 'los módulos deben aparecer en un menú superior adaptable');
+assert.match(html, /#sendwayo-main-content\{display:block!important;flex:none!important;width:100%!important/, 'el contenido de cada módulo debe ocupar el ancho completo');
+assert.match(html, /sendwayo-brand-actions\.insertBefore\(btn/, 'el botón del menú debe vivir en los controles superiores, junto a las notificaciones');
+assert.match(html, /window\.sendwayoRefreshIdentityHeader=refreshIdentity/, 'el controlador debe actualizar el encabezado utilizado por el resto de la plataforma');
