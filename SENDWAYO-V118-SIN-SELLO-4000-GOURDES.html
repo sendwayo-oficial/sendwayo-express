@@ -9214,7 +9214,7 @@ window.sendwayoShareReceipt=async function(){
  }
  function decorate(){
   const root=$('view-investigacion');if(!root||root.classList.contains('hidden'))return;
-  const input=$('sendwayo-investigation-id'),q=norm(input&&input.value),a=subjects().find(x=>identity(x).includes(q));
+  const input=$('sendwayo-investigation-id'),q=norm(input&&input.value),matches=subjects().filter(x=>identity(x).includes(q)),a=matches.length===1?matches[0]:null;
   root.querySelectorAll('[data-sendwayo-exp-section]').forEach(x=>x.remove());if(!a)return;
   root.querySelectorAll('pre').forEach(pre=>{
    try{
@@ -9232,10 +9232,11 @@ window.sendwayoShareReceipt=async function(){
  function validate(event){
   const form=event.target;if(!form||form.id!=='sendwayo-investigation-form')return;
   const q=norm($('sendwayo-investigation-id')?.value);if(!q)return;
-  if(!subjects().some(a=>identity(a).includes(q))){
+  const matches=subjects().filter(a=>identity(a).includes(q));
+  if(matches.length!==1){
    event.preventDefault();event.stopImmediatePropagation();
    let msg=$('sendwayo-expediente-validation');if(!msg){msg=document.createElement('div');msg.id='sendwayo-expediente-validation';msg.className='mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900';form.insertAdjacentElement('afterend',msg);}
-   msg.textContent='El expediente por ID admite remitentes y agentes. Verifique el ID y vuelva a intentarlo.';return;
+   msg.textContent=matches.length>1?'Este ID está repetido en más de una cuenta. No se abrió ningún expediente para evitar confundir personas. Revise los IDs con Administración.':'El expediente por ID admite remitentes y agentes. Verifique el ID y vuelva a intentarlo.';return;
   }
   window.setTimeout(decorate,0);window.setTimeout(decorate,180);
  }
