@@ -8396,7 +8396,9 @@ window.sendwayoShareReceipt=async function(){
  ['aprobar','rechazar','noCoincide','renderPrincipal','sendwayoUpdateViews','guardarTransacciones','saveTransactions'].forEach(wrap);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
  window.addEventListener('load',refresh);
- const target=$('view-tablero');if(target&&typeof MutationObserver!=='undefined'){let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;refresh()},60)}).observe(target,{childList:true,subtree:true});}
+ // FIX V7: no observar el mismo tablero que refresh modifica; evita un ciclo continuo de mutaciones.
+ window.addEventListener('sendwayo:firebase-ready',refresh);
+ window.addEventListener('load',function(){window.setTimeout(refresh,250);});
  window.setInterval(refresh,4000);
 })();
 </script>
