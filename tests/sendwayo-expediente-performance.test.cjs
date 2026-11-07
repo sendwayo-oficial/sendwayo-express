@@ -19,6 +19,7 @@ assert.match(html, /Solicitudes y revisiones relacionadas/, 'el expediente debe 
 assert.match(html, /window\.SENDWAYO_BANKS/, 'el expediente debe reunir cuentas bancarias sincronizadas');
 assert.match(html, /Cuentas bancarias vinculadas/, 'el expediente debe mostrar cuentas bancarias');
 assert.match(html, /function validate\(event\)/, 'el formulario debe validar remitente/agente');
+assert.match(html, /matches\.length!==1/, 'no debe abrir expedientes cuando un ID sea inexistente o ambiguo');
 assert.match(html, /password\|contrasena\|clave\|secret\|token/, 'los detalles deben omitir credenciales y secretos');
 assert.match(html, /sendwayo:transactions-updated/, 'los datos del expediente y los avisos deben refrescarse con los cambios en tiempo real');
 assert.match(html, /translateInterface\(node,languageValue\(\)\)/, 'la traducción debe procesar solo nodos añadidos');
