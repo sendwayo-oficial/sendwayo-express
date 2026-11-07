@@ -10,6 +10,9 @@ assert.match(html, /function subjects\(\)/, 'la consulta debe resolver remitente
 assert.match(html, /typeof AGENTES!=='undefined'/, 'el directorio debe usar el arreglo global real de agentes');
 assert.match(html, /typeof REMITENTES!=='undefined'/, 'el directorio debe usar el arreglo global real de remitentes');
 assert.match(html, /function identity\(a\)\{return \[a\.id,a\.idAnterior,a\.legacyId,a\.accountId,a\.staffId/, 'la búsqueda debe usar identificadores visibles y alias, no correo o UID');
+const identityHelper = html.match(/function identity\(a\)\{[^}]+\}/)?.[0] || '';
+assert.ok(identityHelper, 'debe existir el normalizador de IDs');
+assert.doesNotMatch(identityHelper, /email|phone|a\.aliases/, 'la búsqueda no debe aceptar correo, teléfono ni alias genéricos');
 assert.match(html, /placeholder="Introduzca ID del remitente o agente"/, 'el campo debe solicitar el ID');
 assert.match(html, /window\.SENDWAYO_REQUESTS/, 'el expediente debe reunir solicitudes sincronizadas');
 assert.match(html, /Solicitudes y revisiones relacionadas/, 'el expediente debe mostrar solicitudes');
