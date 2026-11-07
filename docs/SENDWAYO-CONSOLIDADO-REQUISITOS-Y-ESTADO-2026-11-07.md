@@ -6,7 +6,7 @@
 **Rama:** `work/sendwayo-international-payments-session`  
 **Versión de producto objetivo:** V7. Archivo consolidado de entrega: `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`. La página pública conserva su URL actual hasta una publicación autorizada.
 
-Este documento reúne las decisiones y requisitos tratados durante el trabajo del 7 de noviembre. No significa que todas las integraciones estén habilitadas: distingue lo que ya está reflejado en la rama, lo que necesita prueba real y lo que depende de contratos, afiliaciones o credenciales externas.
+Este documento reúne las decisiones y requisitos tratados durante el trabajo del 7 de noviembre. También se conserva el inventario histórico de la mañana en `docs/ESTADO-INTEGRAL-SENDWAYO-V7.md`, que enlaza los commits donde se guardaron las correcciones anteriores. No significa que todas las integraciones estén habilitadas: distingue lo que ya está reflejado en la rama, lo que necesita prueba real y lo que depende de contratos, afiliaciones o credenciales externas.
 
 ## 1. Regla visual obligatoria para todas las páginas
 
@@ -120,3 +120,25 @@ Este documento reúne las decisiones y requisitos tratados durante el trabajo de
 - JavaScript embebido: **43 bloques compilados; 0 errores de sintaxis**.
 - Estos resultados son pruebas estáticas sobre el archivo de entrega. No son una medición de velocidad ni una prueba visual/funcional en navegador real.
 - Archivo V7 y documentación permanecen en la rama de desarrollo. GitHub Pages, `main` y los datos de producción no se actualizaron.
+
+
+## 12. Enlaces de la entrega y trabajos anteriores
+
+- **Archivo V7 consolidado:** `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`.
+- **Inventario histórico de la mañana y referencias a commits:** `docs/ESTADO-INTEGRAL-SENDWAYO-V7.md`.
+- **Plan de pagos y dispersión internacional:** `docs/PAGOS-DISPERSION-INTERNACIONAL-PLAN.md`.
+- **Catálogo internacional y licencia:** `docs/CATALOGO-PAISES-INTERNACIONAL.md` y `docs/licenses/COUNTRYKIT-MIT-LICENSE.txt`.
+
+## 13. Verificación estática del archivo V7 consolidado
+
+La copia V7 fue recuperada de la rama y comparada byte por byte con el archivo fuente actualizado antes de esta verificación. Se ejecutaron las cuatro pruebas estáticas contra el archivo V7:
+
+| Prueba | Resultado |
+|---|---|
+| Cabecera superior / espacio completo | 18 comprobaciones aprobadas |
+| Expediente por ID / fluidez | 40 comprobaciones aprobadas |
+| Catálogo internacional | 12 comprobaciones aprobadas |
+| Cabecera de espacio de trabajo | 23 comprobaciones aprobadas |
+| JavaScript embebido | 43 bloques compilados; 0 errores de sintaxis |
+
+**Límite:** no se dispuso de una sesión de navegador conectada a Firebase para hacer la prueba visual/funcional real. No se declara velocidad medida ni autenticación comprobada en navegador. La publicación pública sigue pendiente de esa validación y de autorización.
