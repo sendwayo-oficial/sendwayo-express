@@ -18,6 +18,7 @@ assert.match(html, /window\.SENDWAYO_REQUESTS/, 'el expediente debe reunir solic
 assert.match(html, /Solicitudes y revisiones relacionadas/, 'el expediente debe mostrar solicitudes');
 assert.match(html, /window\.SENDWAYO_BANKS/, 'el expediente debe reunir cuentas bancarias sincronizadas');
 assert.match(html, /Cuentas bancarias vinculadas/, 'el expediente debe mostrar cuentas bancarias');
+assert.match(html, /Este agente opera con fondos de Administración/, 'el expediente debe aclarar el uso de fondos compartidos por agentes');
 assert.match(html, /function validate\(event\)/, 'el formulario debe validar remitente/agente');
 assert.match(html, /matches\.length!==1/, 'no debe abrir expedientes cuando un ID sea inexistente o ambiguo');
 assert.match(html, /password\|contrasena\|clave\|secret\|token/, 'los detalles deben omitir credenciales y secretos');
