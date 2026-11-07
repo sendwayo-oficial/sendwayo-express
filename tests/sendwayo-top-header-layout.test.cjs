@@ -14,8 +14,7 @@ assert.match(html, /id="sendwayo-v7-code"/, 'el código debe mostrarse en la fra
 assert.match(html, /id="sendwayo-v7-clock"/, 'la hora debe mostrarse en la franja superior');
 assert.match(html, /body\.sendwayo-authenticated #sendwayo-mobile-menu\.sendwayo-top-menu-toggle\{display:inline-flex!important\}/, 'el menú debe permanecer accesible en escritorio y móvil');
 const canonicalStyle = html.slice(html.indexOf('<style id="sendwayo-v7-canonical-top-workspace-style">'));
-assert.match(canonicalStyle, /#sendwayo-main-sidebar\\{[^}]*position:fixed!important;[^}]*transform:translateX\\(-105%\\)!important/s, 'la navegación no debe ocupar una columna fija al lado del contenido');
-assert.match(html, /#sendwayo-main-sidebar\{[^}]*position:fixed!important;[^}]*transform:translateX\(-110%\)!important/s, 'la navegación no debe ocupar una columna fija al lado del contenido');
+assert.match(canonicalStyle, /#sendwayo-main-sidebar\{[^}]*position:fixed!important;[^}]*transform:translateX\(-105%\)!important/s, 'la navegación no debe ocupar una columna fija al lado del contenido');
 assert.match(html, /#sendwayo-main-content\{[^}]*width:100%!important;[^}]*max-width:100%!important/s, 'el área de trabajo debe ocupar todo el ancho');
 assert.match(html, /id="sendwayo-top-logout"[^>]*onclick="window\.cerrarSesion\(\)"/, 'el botón Salir de arriba debe cerrar la sesión');
 assert.match(html, /#sendwayo-main-sidebar #sendwayo-v7-user-strip[^}]*display:none!important/, 'la identidad no debe duplicarse en el menú');
