@@ -8723,6 +8723,7 @@ window.sendwayoShareReceipt=async function(){
   if(s.indexOf('rd')===0&&s.indexOf('ht')>=0)return ['DO','HT'];
   if(s.indexOf('ht')===0&&s.indexOf('rd')>=0)return ['HT','DO'];
   if(s.indexOf('ht')===0&&s.lastIndexOf('ht')>0)return ['HT','HT'];
+  if(s.indexOf('rd')===0&&s.indexOf('usa')>=0)return ['DO','US'];
   if(s.indexOf('rd')===0&&s.lastIndexOf('rd')>0)return ['DO','DO'];
   if(s.indexOf('usa')===0&&s.indexOf('rd')>=0)return ['US','DO'];
   if(s.indexOf('usa')===0&&s.indexOf('ht')>=0)return ['US','HT'];
