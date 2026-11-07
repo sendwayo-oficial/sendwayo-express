@@ -42,3 +42,8 @@ assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:t
 assert.match(html, /#sendwayo-main-sidebar[^}]*\.sidebar-brand/i, 'la marca antigua del menú lateral debe ocultarse');
 assert.match(html, /#sendwayo-v7-user-strip\.sendwayo-workspace-identity/, 'la identidad debe estar en la franja superior del espacio de trabajo');
 assert.match(html, /sendwayo:workspace-header-refresh/, 'la cabecera debe refrescar ID, código, hora y usuario tras iniciar sesión');
+
+assert.match(html, /if\(!t\)\{alert\('No se encontró la transacción para generar el comprobante\.'\);return;\}/, 'un comprobante no debe inventar una transacción si su ID no existe');
+assert.doesNotMatch(html, /if\(!t\) t=\{id:id, fecha:'20\/10\/2026'/, 'no debe existir un comprobante de ejemplo con datos ficticios');
+assert.match(html, /sendwayoShareReceipt=async function\(\)/, 'el comprobante debe compartir imagen PNG');
+assert.match(html, /image\/png/, 'el comprobante debe generarse como imagen PNG');
