@@ -9212,6 +9212,13 @@ window.sendwayoShareReceipt=async function(){
   const root=$('view-investigacion');if(!root||root.classList.contains('hidden'))return;
   const input=$('sendwayo-investigation-id'),q=norm(input&&input.value),a=subjects().find(x=>identity(x).includes(q));
   root.querySelectorAll('[data-sendwayo-exp-section]').forEach(x=>x.remove());if(!a)return;
+  root.querySelectorAll('pre').forEach(pre=>{
+   try{
+    const blocked=/(password|contrasena|clave|secret|token|api.?key|authorization|cvv|pin)/i;
+    const clean=(v,d)=>{if(d>6)return '[profundidad omitida]';if(Array.isArray(v))return v.map(x=>clean(x,d+1));if(v&&typeof v==='object'){const o={};Object.keys(v).forEach(k=>{if(!blocked.test(k))o[k]=clean(v[k],d+1)});return o;}return v;};
+    pre.textContent=JSON.stringify(clean(JSON.parse(pre.textContent),0),null,2);
+   }catch(e){}
+  });
   const set=new Set(identity(a)),requests=(window.SENDWAYO_REQUESTS||[]).filter(x=>linked(x,set)),banks=(window.SENDWAYO_BANKS||[]).filter(x=>linked(x,set));
   const date=x=>{const n=Number(x.timestamp||x.createdAtMs||x.fechaMs)||Date.parse(x.fecha||x.date||x.createdAt||'');return n?new Date(n).toLocaleString('es-DO'):'—';};
   const req=table('Solicitudes y revisiones relacionadas',requests,['N°','Fecha','Tipo','ID','Estado','Motivo / detalle'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(date(x))+'</td><td class="p-2">'+esc(x.tipoSolicitud||x.tipo||x.type||'Solicitud')+'</td><td class="p-2">'+esc(x.id||x.requestId||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Pendiente')+'</td><td class="p-2">'+esc(x.motivo||x.reason||x.notas||x.description||x.detalle||'—')+'</td>');
