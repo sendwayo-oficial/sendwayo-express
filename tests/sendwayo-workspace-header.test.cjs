@@ -14,6 +14,6 @@ const moveFn = html.match(/function moveBusinessNameAboveUser\(\)\{[\s\S]*?funct
 assert.ok(moveFn, 'debe existir el control que evita el antiguo movimiento lateral');
 assert.match(moveFn, /return;/, 'la rutina antigua debe dejar de mover el usuario junto al negocio');
 assert.doesNotMatch(moveFn, /wrap\.appendChild\(userBadge\)/, 'el ID del usuario no debe moverse al grupo izquierdo de la marca');
-assert.match(html, /id="sendwayo-main-sidebar"/, 'la navegación de módulos debe seguir disponible');
+assert.match(html, /side\.id='sendwayo-main-sidebar'/, 'el menú lateral debe conservar su identificador funcional');
 
 console.log('SENDWAYO workspace header: comprobaciones estáticas correctas.');
