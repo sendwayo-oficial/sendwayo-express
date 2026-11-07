@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Convertir la pantalla de investigación existente en «Expediente por ID» y reducir trabajo repetitivo en la portada y la interfaz.
+**Goal:** Integrar el «Expediente por ID», la navegación y la identidad en una sola cabecera superior a todo el ancho, y reducir trabajo repetitivo en la portada y la interfaz.
 
-**Architecture:** Reutilizar el HTML V7 y sus datos Firebase ya sincronizados. Extender la consulta de solo lectura para incluir solicitudes y cuentas bancarias asociadas, y hacer que los observadores visuales trabajen incrementalmente o solo después de autenticar.
+**Architecture:** Reutilizar el HTML V7 y sus datos Firebase ya sincronizados. Extender la consulta de solo lectura para incluir solicitudes y cuentas bancarias asociadas. Ubicar la marca y la identidad de sesión en una barra superior única; convertir el menú en un panel superpuesto que no reserve ancho. Los observadores visuales trabajan incrementalmente o solo después de autenticar.
 
 **Tech Stack:** HTML, CSS, JavaScript, Firebase compat SDK, Node.js assert para verificaciones estáticas.
 
@@ -74,6 +74,45 @@
 ## Verification record
 
 - All static assertions in `tests/sendwayo-expediente-performance.test.cjs` were executed against the freshly fetched branch HTML and passed.
-- All 42 inline JavaScript blocks in the HTML were compiled with `new Function`; 0 syntax errors.
-- No browser/Playwright tool is connected in this session, so sign-in, ID lookup with real Firebase records, mobile rendering and measured load time remain unverified.
+- All inline JavaScript blocks in the HTML were compiled with `new Function`; 0 syntax errors.
+- No browser/Playwright tool is connected in this session, so sign-in, ID lookup with real Firebase records, desktop/mobile rendering and measured load time remain unverified.
 - Final review: self-review (no subagent tool available). Production publication intentionally deferred.
+
+
+### Task 5: Full-width top header and overlay navigation
+
+**Files:**
+- Modify: `SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html`
+- Test: `tests/sendwayo-expediente-performance.test.cjs`
+
+- [x] Write layout assertions first and confirm RED.
+- [x] Put SENDWAYO EXPRESS, active account name/role, visible ID, code, date/time and session duration in one full-width top region.
+- [x] Move the hamburger/menu trigger into the top brand row.
+- [x] Convert the left navigation into an off-canvas overlay; it does not reserve a persistent page column.
+- [x] Hide duplicate business/account identity from the navigation panel.
+- [x] Run all static assertions and parse inline scripts.
+
+### Task 6: Receipt integrity
+
+**Files:**
+- Modify: `SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html`
+- Test: `tests/sendwayo-expediente-performance.test.cjs`
+
+- [x] Add RED assertions prohibiting a fabricated receipt when the transaction ID is absent.
+- [x] Remove the fallback sample transaction and require a real matching transaction before displaying a receipt.
+- [x] Keep PNG sharing on the existing `sendwayoShareReceipt` flow.
+- [x] Re-run all checks.
+
+### Task 7: Consolidate the morning work and correct the inventory
+
+- [x] Review the morning commit history for ID/code management, user management, Firebase registration approvals, international routes/beneficiaries, investigation and PDF export fixes.
+- [x] Add `docs/ESTADO-INTEGRAL-SENDWAYO-V7.md` as the single inventory of carried-forward requirements, code evidence, external blockers and testing needed.
+- [x] Correct the old payments plan: the bundled country catalogue is 250 ISO alfa-2 entries, not 43; phone validation by country remains to be tested.
+- [x] Keep external payments blocked pending AZUL affiliation/credentials and a contracted MonCash/NatCash disbursement provider.
+
+## Additional verification record
+
+- Current regression test assertions include the top-only layout and receipt integrity; all were executed against freshly fetched branch content.
+- Current HTML includes 250 unique country/territory ISO alpha-2 records in local data.
+- A legacy receipt fallback had generated a fictitious approved transaction when an ID was missing; it was removed. An unknown transaction ID now returns an error instead of showing a fabricated receipt.
+- Remaining: real browser tests and full financial lifecycle tests. These are release gates, not presumed results.
