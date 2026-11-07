@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const htmlPath = path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html');
+const htmlPath = path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 
 assert.match(html, /Expediente por ID/, 'el menú y la pantalla deben llamarse Expediente por ID');
