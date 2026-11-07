@@ -193,8 +193,10 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     });
   }
   window.sendwayoFirebaseSdkReady=loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
-    .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');})
-    .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');});
+    .then(function(){return Promise.all([
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'),
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js')
+    ]);});
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
 })();
 </script>
@@ -584,7 +586,7 @@ function updateHora(){
   if(el) el.innerText=now.toLocaleTimeString('es-DO');
   // El balance visible lo actualiza el usuario activo; no sustituirlo por el balance del administrador.
 }
-setInterval(updateHora,1000);
+setInterval(updateHora,15000);
 
 function showView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
@@ -4865,13 +4867,18 @@ window.sendwayoShareReceipt=async function(){
     // Clock counters and other text updates must not trigger a translation scan
     // of the entire 800 KB interface every second.
     translationObserver=new MutationObserver(records=>{
-      const hasNewElements=records.some(record=>record.addedNodes&&record.addedNodes.length>0);
-      if(!hasNewElements||translationObserverTimer!==null)return;
+      const roots=new Set();
+      records.forEach(record=>(record.addedNodes||[]).forEach(node=>{
+        const root=node.nodeType===1?node:node.parentElement;
+        if(!root||root===document.body||/^(SCRIPT|STYLE|NOSCRIPT)$/.test(root.tagName||''))return;
+        if(!Array.from(roots).some(parent=>parent===root||parent.contains(root)))roots.add(root);
+      }));
+      if(!roots.size||translationObserverTimer!==null)return;
       translationObserverTimer=window.setTimeout(()=>{
         translationObserverTimer=null;
-        try{translateInterface(document.body,languageValue());}
+        try{roots.forEach(node=>translateInterface(node,languageValue()));}
         catch(error){console.warn('[SENDWAYO] No se pudo actualizar el idioma:',error);}
-      },250);
+      },180);
     });
     // New sections are translated; characterData/attribute edits are ignored.
     translationObserver.observe(document.body,{subtree:true,childList:true});
@@ -5370,7 +5377,7 @@ window.sendwayoShareReceipt=async function(){
   const isOpenModal = el => el && /^modal-/.test(el.id||'') && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none' && getComputedStyle(el).visibility!=='hidden';
   function syncModalOnly(){ const open=[...document.body.children].some(isOpenModal); document.body.classList.toggle('sendwayo-form-only',open); }
   const observer=new MutationObserver(syncModalOnly);
-  function init(){syncModalOnly();observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});}
+  function init(){syncModalOnly();observer.observe(document.body,{childList:true,attributes:true,attributeFilter:['class','style']});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   document.addEventListener('click',()=>setTimeout(syncModalOnly,30),true);
 })();
@@ -5902,7 +5909,7 @@ window.sendwayoShareReceipt=async function(){
   ['pointerdown','keydown','touchstart','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>activityCheck(true),{passive:true,capture:true}));
   window.addEventListener('focus',()=>activityCheck(false));window.addEventListener('pageshow',()=>activityCheck(false));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)activityCheck(false)});
-  setInterval(()=>{activityCheck(false);installHamburger();},10000);
+  setInterval(()=>activityCheck(false),10000);
 
   // Admin review panel is added only inside the existing admin-only Secret information page.
   const oldRender=window.renderModuloSeparado;
@@ -6212,6 +6219,7 @@ window.sendwayoShareReceipt=async function(){
   // while the welcome/login screen is being built.
   let uiObserverTimer=null;
   const uiObs=new MutationObserver(records=>{
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
     const relevant=records.some(rec=>[...rec.addedNodes,...rec.removedNodes].some(node=>{
       if(node.nodeType!==1) return false;
       const tag=String(node.tagName||'').toUpperCase();
@@ -6240,7 +6248,7 @@ window.sendwayoShareReceipt=async function(){
   function syncStorage(){deliverQueue();}
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5',QUEUE_KEY].includes(e.key))syncStorage()});
   // Make storage polling idempotent; it also covers browsers which do not dispatch storage for a local file.
-  setInterval(syncStorage,2500);
+  setInterval(syncStorage,15000);
 
   // Keep the signed-in session after refresh for up to 40 minutes of inactivity in this tab.
   const ACTIVITY_KEY='sendwayo_express_oficial_20261029_last_activity_v5',AUTH_KEY='sendwayo_express_oficial_20261029_auth_snapshot_v1',LIMIT=40*60*1000;
@@ -6583,7 +6591,7 @@ window.sendwayoShareReceipt=async function(){
     });
   }
   // Don't let a mutation observer repeatedly reprocess the same row; wait once after renders.
-  let toolbarQueued=false;function queueToolbar(){if(toolbarQueued)return;toolbarQueued=true;setTimeout(()=>{toolbarQueued=false;try{alignToolbars()}catch(_){}},80)}
+  let toolbarQueued=false;function queueToolbar(){if(!document.body.classList.contains('sendwayo-authenticated')||toolbarQueued)return;toolbarQueued=true;setTimeout(()=>{toolbarQueued=false;try{alignToolbars()}catch(_){}},100)}
   function init(){cleanLogin();setupManualAmounts();alignToolbars();updateFinanceDisplay();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.addEventListener('load',()=>{cleanLogin();setupManualAmounts();alignToolbars();updateFinanceDisplay();});
@@ -6812,7 +6820,7 @@ window.sendwayoShareReceipt=async function(){
   window.addEventListener('pageshow',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('load',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5'].includes(e.key)){setTimeout(()=>{syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()},50)}});
-  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},5000);
+  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},15000);
   window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
 })();
 </script>
@@ -8467,7 +8475,7 @@ window.sendwayoShareReceipt=async function(){
  // FIX V7: no observar el mismo tablero que refresh modifica; evita un ciclo continuo de mutaciones.
  window.addEventListener('sendwayo:firebase-ready',refresh);
  window.addEventListener('load',function(){window.setTimeout(refresh,250);});
- window.setInterval(refresh,4000);
+ window.setInterval(refresh,30000);
 })();
 </script>
 
@@ -8948,7 +8956,7 @@ window.sendwayoShareReceipt=async function(){
  }
  function showAccountInvestigation(q){
   const root=ensureInvestigationView(),a=findAccount(q);
-  if(!a){const msg=q?'<div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró una cuenta con ese ID o código. Compruebe el dato e inténtelo nuevamente.</div>':'<div class="rounded-xl border bg-slate-50 p-4 text-sm">Escriba el ID o código del administrador, agente o remitente para consultar su información.</div>';root.innerHTML='<section class="p-3 md:p-5 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black text-lg">Investigación individual de cuentas</h2><p class="text-xs text-slate-500 mt-1">Consulta reservada a Administración.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+msg+'</section>';const form=$('sendwayo-investigation-form');if(form)form.addEventListener('submit',function(ev){ev.preventDefault();showAccountInvestigation($('sendwayo-investigation-id').value);});if(!q)setTimeout(()=>$('sendwayo-investigation-id')?.focus(),0);return;}
+  if(!a){const msg=q?'<div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró una cuenta con ese ID o código. Compruebe el dato e inténtelo nuevamente.</div>':'<div class="rounded-xl border bg-slate-50 p-4 text-sm">Escriba el ID o código del administrador, agente o remitente para consultar su información.</div>';root.innerHTML='<section class="p-3 md:p-5 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black text-lg">Expediente por ID</h2><p class="text-xs text-slate-500 mt-1">Consulta reservada a Administración.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+msg+'</section>';const form=$('sendwayo-investigation-form');if(form)form.addEventListener('submit',function(ev){ev.preventDefault();showAccountInvestigation($('sendwayo-investigation-id').value);});if(!q)setTimeout(()=>$('sendwayo-investigation-id')?.focus(),0);return;}
   const tokens=tokenSet(a),tx=accountTransactions(a,tokens),ben=beneficiaryRows(a,tokens),m=accountMoney(a);
   const userId=txt(a.id),status=a.active===false||a.activo===false||norm(a.estado||a.status).includes('inactivo')?'Inactivo':'Activo';
   const transactionHtml=tx.map((t,i)=>{
@@ -8958,7 +8966,7 @@ window.sendwayoShareReceipt=async function(){
   }).join('')||'<tr><td colspan="8" class="p-5 text-center text-slate-500">No se encontraron movimientos vinculados a esta cuenta en los registros sincronizados.</td></tr>';
   const beneficiariesHtml=ben.map((b,i)=>'<tr class="border-t"><td class="p-2">'+String(i+1).padStart(2,'0')+'</td><td class="p-2">'+esc(b.id||b.firebaseKey||'')+'</td><td class="p-2">'+esc(b.nombre||b.name||'')+'</td><td class="p-2">'+esc(b.paisNombre||b.paisIso2||'')+' '+esc(b.codigoPais||'')+'</td><td class="p-2">'+esc(b.telefonoE164||b.telefonoCompleto||b.telefono||b.phone||'')+'</td><td class="p-2">'+esc(b.direccion||'')+'</td><td class="p-2">'+esc(b.estado||(b.active===false?'Inactivo':'Activo'))+'</td></tr>').join('')||'<tr><td colspan="7" class="p-5 text-center text-slate-500">No se encontraron beneficiarios asociados a esta cuenta en el directorio sincronizado.</td></tr>';
   root.innerHTML='<section class="p-3 md:p-5 space-y-4 bg-slate-50 rounded-xl">'+
-   '<header class="bg-white border rounded-xl p-4"><div class="font-black text-lg">Investigación individual de cuentas</div><p class="text-xs text-slate-500 mt-1">Consulta de datos y movimientos asociados a un único administrador, agente o remitente.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+
+   '<header class="bg-white border rounded-xl p-4"><div class="font-black text-lg">Expediente por ID</div><p class="text-xs text-slate-500 mt-1">Consulta de datos y movimientos asociados a un único administrador, agente o remitente.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-black text-base">'+esc(a.nombre||a.name||'Cuenta')+'</h3><p class="text-xs text-slate-500">'+esc(role(a))+' · '+esc(status)+'</p></div><div class="text-right text-xs"><b>ID: '+esc(userId)+'</b><br><b>Código: '+esc(a.codigo||a.code||'—')+'</b></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 text-xs"><div class="border rounded-lg p-3"><span class="text-slate-500">Correo</span><div class="font-bold break-all">'+esc(a.email||a.usuario||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Celular</span><div class="font-bold">'+esc(a.celular||a.telefono||a.phone||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Clave interna Firebase</span><div class="font-bold break-all">'+esc(accountKey(a)||'No disponible')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">UID de autenticación</span><div class="font-bold break-all">'+esc(a.authUid||'No disponible')+'</div></div></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3"><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance DOP</span><div class="font-black">RD$ '+fmt(m.dop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance HTG</span><div class="font-black">HTG '+fmt(m.htg)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión DOP</span><div class="font-black">RD$ '+fmt(m.cdop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión HTG</span><div class="font-black">HTG '+fmt(m.chtg)+'</div></div></div></section>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Movimientos vinculados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+tx.length+' registros</span></div><div class="overflow-x-auto mt-3 max-h-[520px]"><table class="w-full min-w-[1050px] text-xs"><thead class="bg-slate-100 sticky top-0"><tr><th class="p-2">N°</th><th class="p-2 text-left">Fecha</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-left">Ruta / detalle</th><th class="p-2 text-left">Beneficiario</th><th class="p-2 text-left">Monto</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Registro</th></tr></thead><tbody>'+transactionHtml+'</tbody></table></div></section>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Beneficiarios asociados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+ben.length+' registros</span></div><div class="overflow-x-auto mt-3"><table class="w-full min-w-[850px] text-xs"><thead class="bg-slate-100"><tr><th class="p-2">N°</th><th class="p-2 text-left">ID</th><th class="p-2 text-left">Nombre</th><th class="p-2 text-left">País</th><th class="p-2 text-left">Teléfono</th><th class="p-2 text-left">Dirección</th><th class="p-2 text-left">Estado</th></tr></thead><tbody>'+beneficiariesHtml+'</tbody></table></div></section>'+
@@ -8970,7 +8978,7 @@ window.sendwayoShareReceipt=async function(){
   if(!side)return;
   if(isAdmin()){
    let b=side.querySelector('[data-sendwayo-nav="investigacion"]');
-   if(!b){b=document.createElement('button');b.type='button';b.dataset.sendwayoNav='investigacion';const ref=Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('informaciones secretas'))||Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('remitentes'));b.className=ref?ref.className:'w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2';b.textContent='🔎 Investigación de cuentas';b.addEventListener('click',()=>window.showView('investigacion'));if(ref)ref.insertAdjacentElement('beforebegin',b);else side.appendChild(b);}
+   if(!b){b=document.createElement('button');b.type='button';b.dataset.sendwayoNav='investigacion';const ref=Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('informaciones secretas'))||Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('remitentes'));b.className=ref?ref.className:'w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2';b.textContent='🔎 Expediente por ID';b.addEventListener('click',()=>window.showView('investigacion'));if(ref)ref.insertAdjacentElement('beforebegin',b);else side.appendChild(b);}
    b.hidden=false;
   }else{const b=side.querySelector('[data-sendwayo-nav="investigacion"]');if(b)b.remove();}
  }
@@ -9115,8 +9123,7 @@ window.sendwayoShareReceipt=async function(){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
  document.addEventListener('sendwayo:firebase-ready',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();enhanceBeneficiaryViewButton();});
  const benObserver=new MutationObserver(enhanceBeneficiaryViewButton);const benRoot=$('view-beneficiarios');if(benRoot)benObserver.observe(benRoot,{childList:true,subtree:true});
- const observer=new MutationObserver(()=>{if($('sendwayo-main-sidebar')){installInvestigationNav();clearFakeDepositBadge();}});
- if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+ // Sidebar installation is event-driven (DOMContentLoaded, login and firebase-ready).
 })();
 </script>
 
@@ -9183,5 +9190,48 @@ window.sendwayoShareReceipt=async function(){
   }
   if(typeof priorAction==='function')return priorAction.apply(this,arguments);
  };
+})();
+</script>
+
+<script id="sendwayo-v7-expediente-por-id">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id),txt=v=>String(v==null?'':v);
+ const norm=v=>txt(v).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+ const esc=v=>txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function subjects(){return (Array.isArray(window.AGENTES)?window.AGENTES:[]).concat(Array.isArray(window.REMITENTES)?window.REMITENTES:[]);}
+ function identity(a){return [a.id,a.idAnterior,a.legacyId,a.codigo,a.codigo2,a.codigoAnterior,a.email,a.authEmail,a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid].concat(Array.isArray(a.idAliases)?a.idAliases:[],Array.isArray(a.aliases)?a.aliases:[]).filter(Boolean).map(norm);}
+ function linked(row,set){
+  const found=[];function walk(o,d){if(!o||typeof o!=='object'||d>3)return;Object.keys(o).forEach(k=>{const v=o[k];if(/(user.?id|owner.?id|account.?id|remitente.?id|sender.?id|agent.?id|created.?by|actor.?id|authuid|target.?userid|reviewed.?by|dbuserkey|firebaseownerkey)/i.test(k)){if(typeof v==='string'||typeof v==='number')found.push(norm(v));if(Array.isArray(v))v.forEach(x=>{if(typeof x==='string'||typeof x==='number')found.push(norm(x));});}if(v&&typeof v==='object')walk(v,d+1);});}
+  walk(row,0);return found.some(v=>set.has(v));
+ }
+ function table(title,rows,heads,render){
+  const body=rows.length?rows.map((x,i)=>'<tr class="border-t">'+render(x,i)+'</tr>').join(''):'<tr><td colspan="'+heads.length+'" class="p-4 text-center text-slate-500">No hay registros vinculados a este ID.</td></tr>';
+  return '<section data-sendwayo-exp-section class="bg-white border rounded-xl p-4 mt-4"><h3 class="font-black">'+title+' ('+rows.length+')</h3><div class="overflow-x-auto mt-3"><table class="w-full min-w-[700px] text-xs"><thead class="bg-slate-100"><tr>'+heads.map(x=>'<th class="p-2 text-left">'+x+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div></section>';
+ }
+ function decorate(){
+  const root=$('view-investigacion');if(!root||root.classList.contains('hidden'))return;
+  const input=$('sendwayo-investigation-id'),q=norm(input&&input.value),a=subjects().find(x=>identity(x).includes(q));
+  root.querySelectorAll('[data-sendwayo-exp-section]').forEach(x=>x.remove());if(!a)return;
+  const set=new Set(identity(a)),requests=(window.SENDWAYO_REQUESTS||[]).filter(x=>linked(x,set)),banks=(window.SENDWAYO_BANKS||[]).filter(x=>linked(x,set));
+  const date=x=>{const n=Number(x.timestamp||x.createdAtMs||x.fechaMs)||Date.parse(x.fecha||x.date||x.createdAt||'');return n?new Date(n).toLocaleString('es-DO'):'—';};
+  const req=table('Solicitudes y revisiones relacionadas',requests,['N°','Fecha','Tipo','ID','Estado','Motivo / detalle'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(date(x))+'</td><td class="p-2">'+esc(x.tipoSolicitud||x.tipo||x.type||'Solicitud')+'</td><td class="p-2">'+esc(x.id||x.requestId||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Pendiente')+'</td><td class="p-2">'+esc(x.motivo||x.reason||x.notas||x.description||x.detalle||'—')+'</td>');
+  const bank=table('Cuentas bancarias vinculadas',banks,['N°','Banco','Titular','Cuenta','Moneda','Estado'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(x.banco||x.bank||x.bankName||'—')+'</td><td class="p-2">'+esc(x.titular||x.holder||x.accountHolder||'—')+'</td><td class="p-2">'+esc(x.cuenta||x.account||x.accountNumber||'—')+'</td><td class="p-2">'+esc(x.currency||x.moneda||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Activo')+'</td>');
+  const anchor=Array.from(root.querySelectorAll('section')).find(x=>/beneficiarios asociados/i.test(x.textContent||''));if(anchor)anchor.insertAdjacentHTML('afterend',req+bank);else root.insertAdjacentHTML('beforeend',req+bank);
+ }
+ function validate(event){
+  const form=event.target;if(!form||form.id!=='sendwayo-investigation-form')return;
+  const q=norm($('sendwayo-investigation-id')?.value);if(!q)return;
+  if(!subjects().some(a=>identity(a).includes(q))){
+   event.preventDefault();event.stopImmediatePropagation();
+   let msg=$('sendwayo-expediente-validation');if(!msg){msg=document.createElement('div');msg.id='sendwayo-expediente-validation';msg.className='mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900';form.insertAdjacentElement('afterend',msg);}
+   msg.textContent='El expediente por ID admite remitentes y agentes. Verifique el ID y vuelva a intentarlo.';return;
+  }
+  window.setTimeout(decorate,0);window.setTimeout(decorate,180);
+ }
+ function rename(){const b=document.querySelector('[data-sendwayo-nav="investigacion"]');if(b)b.textContent='📁 Expediente por ID';const root=$('view-investigacion');if(root)root.querySelectorAll('h2,h3,div').forEach(el=>{if((el.textContent||'').trim()==='Investigación individual de cuentas')el.textContent='Expediente por ID';});}
+ document.addEventListener('submit',validate,true);
+ document.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('[data-sendwayo-nav="investigacion"]'))window.setTimeout(decorate,100);});
+ document.addEventListener('DOMContentLoaded',rename,{once:true});window.addEventListener('sendwayo:firebase-ready',rename);window.addEventListener('sendwayo:transactions-updated',decorate);window.addEventListener('load',rename);
 })();
 </script>
