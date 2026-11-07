@@ -13,6 +13,9 @@ assert.match(html, /id="sendwayo-v7-id"/, 'el ID debe mostrarse en la franja sup
 assert.match(html, /id="sendwayo-v7-code"/, 'el código debe mostrarse en la franja superior');
 assert.match(html, /id="sendwayo-v7-clock"/, 'la hora debe mostrarse en la franja superior');
 assert.match(html, /body\.sendwayo-authenticated #sendwayo-mobile-menu\.sendwayo-top-menu-toggle\{display:inline-flex!important\}/, 'el menú debe permanecer accesible en escritorio y móvil');
+const canonicalController = html.slice(html.indexOf('<script id="sendwayo-v7-workspace-layout-controller">'));
+assert.match(canonicalController, /let shade=\$\('sendwayo-menu-shade'\)/, 'el controlador debe declarar una sola referencia al fondo');
+assert.doesNotMatch(canonicalController, /const shade=\$\('sendwayo-menu-shade'\)/, 'el controlador no debe redeclarar el fondo del menú');
 const canonicalStyle = html.slice(html.indexOf('<style id="sendwayo-v7-canonical-top-workspace-style">'));
 assert.match(canonicalStyle, /#sendwayo-main-sidebar\{[^}]*position:fixed!important;[^}]*transform:translateX\(-105%\)!important/s, 'la navegación no debe ocupar una columna fija al lado del contenido');
 assert.match(html, /#sendwayo-main-content\{[^}]*width:100%!important;[^}]*max-width:100%!important/s, 'el área de trabajo debe ocupar todo el ancho');
