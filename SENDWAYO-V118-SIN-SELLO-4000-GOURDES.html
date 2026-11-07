@@ -313,33 +313,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 #login-screen input{display:block!important;width:100%!important;min-height:48px!important;box-sizing:border-box!important;background:#fff!important;color:#10243d!important;border:1px solid #cbd5e1!important;opacity:1!important;font-size:16px!important;filter:none!important}
 #login-screen button{min-height:44px!important;opacity:1!important;filter:none!important;pointer-events:auto!important}
 </style>
-<style id="sendwayo-v7-unified-workspace-header">
-  #sendwayo-v7-user-strip.sendwayo-workspace-identity{
-    position:sticky!important;top:48px!important;z-index:9998!important;
-    display:flex!important;align-items:center!important;justify-content:space-between!important;
-    flex-wrap:wrap!important;gap:12px 24px!important;width:100%!important;max-width:100%!important;
-    min-width:0!important;box-sizing:border-box!important;margin:0!important;padding:11px clamp(12px,2vw,28px)!important;
-    border:0!important;border-bottom:1px solid #d9e2ed!important;border-radius:0!important;
-    background:#f8fafc!important;color:#102b4e!important;box-shadow:0 3px 12px rgba(15,36,64,.08)!important;
-  }
-  #sendwayo-v7-user-strip .sendwayo-workspace-person{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;min-width:0;}
-  #sendwayo-v7-user-strip .sendwayo-workspace-kicker{font-size:9px;font-weight:900;letter-spacing:.12em;color:#64748b;}
-  #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:14px;font-weight:900;overflow-wrap:anywhere;}
-  #sendwayo-v7-user-strip .sendwayo-workspace-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;font-size:11px;color:#334155;}
-  #sendwayo-v7-user-strip .sendwayo-workspace-meta strong{color:#0f2440;font-weight:900;}
-  #sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px;font-size:11px;font-weight:800;}
-  #sendwayo-v7-user-strip .sendwayo-workspace-time span{padding:6px 10px;border:1px solid #dbe3ec;border-radius:999px;background:#fff;white-space:nowrap;}
-  #sendwayo-v7-user-strip #sendwayo-v7-duration{background:#ffedd5;border-color:#fdba74;color:#9a3412;}
-  #user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important;}
-  .sendwayo-business-user-stack{display:contents!important;}
-  @media(max-width:700px){
-    #sendwayo-v7-user-strip.sendwayo-workspace-identity{top:48px!important;padding:9px 12px!important;gap:8px!important;}
-    #sendwayo-v7-user-strip .sendwayo-workspace-person{gap:4px 9px;}
-    #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px;}
-    #sendwayo-v7-user-strip .sendwayo-workspace-meta{font-size:10px;}
-    #sendwayo-v7-user-strip .sendwayo-workspace-time{justify-content:flex-start;font-size:10px;}
-  }
-</style>
+
 
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
@@ -384,25 +358,41 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </div>
 
 
-<div class="bg-[#0b1a2f] text-white flex items-center justify-between px-3 py-2 sticky top-0 z-[9999] h-[48px]">
-  <div class="flex items-center gap-2">
-    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" class="w-7 h-7 rounded-full bg-white">
-    <span class="font-extrabold text-[12px] tracking-wider">SENDWAYO EXPRESS</span>
-    <span class="bg-orange-400 text-black text-[10px] px-3 py-1 rounded-full font-bold ml-3">BALANCE RD$ <span id="top-bal-rd">1,250.00</span> RD$</span>
-    <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">BALANCE HTG <span id="top-bal-htg">0,00</span> HTG</span>
-    <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">COMISIÓN RD$ <span id="top-com-rd">0,00</span> RD$</span>
-    <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">COMISIÓN HTG <span id="top-com-htg">0,00</span> HTG</span>
+<div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
+  <div class="sendwayo-brand-left">
+    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
+    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
+    <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
   </div>
-  <div class="flex items-center gap-2">
-    <span class="bg-white/10 px-3 py-1 rounded-full text-[10px]" id="hora-top">07:53:31</span>
-    <span class="bg-orange-400 text-black px-3 py-1 rounded-full font-bold text-[10px]" id="user-top">ADMIN ADMIN</span>
-    <button id="bell-top" class="relative bg-yellow-400 text-black w-8 h-8 rounded-full flex items-center justify-center">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
-    <button class="bg-white text-black px-3 py-1 rounded-full text-[10px] font-bold">Salir</button>
+  <div class="sendwayo-brand-actions">
+    <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
+    <button id="sendwayo-top-logout" type="button" onclick="window.cerrarSesion()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Salir</button>
+  </div>
+  <div class="sendwayo-legacy-header-values" hidden aria-hidden="true">
+    <span id="user-top"></span><span id="hora-top"></span>
+    <span id="top-bal-rd">0.00</span><span id="top-bal-htg">0.00</span>
+    <span id="top-com-rd">0.00</span><span id="top-com-htg">0.00</span>
   </div>
 </div>
+<section id="sendwayo-v7-user-strip" class="sendwayo-workspace-identity" data-sendwayo-header-ready="1" aria-label="Identidad y horario de la cuenta activa">
+  <div class="sendwayo-workspace-person">
+    <span class="sendwayo-workspace-kicker">CUENTA ACTIVA</span>
+    <strong id="sendwayo-v7-name" class="sendwayo-workspace-name">—</strong>
+    <div class="sendwayo-workspace-meta">
+      <span id="sendwayo-v7-role">—</span>
+      <span>ID: <strong id="sendwayo-v7-id">—</strong></span>
+      <span>Código: <strong id="sendwayo-v7-code">—</strong></span>
+    </div>
+  </div>
+  <div class="sendwayo-workspace-time">
+    <span id="sendwayo-v7-date">—</span>
+    <span id="sendwayo-v7-clock">—</span>
+    <span id="sendwayo-v7-duration">Tiempo: 00:00</span>
+  </div>
+</section>
 
-<div class="flex">
-  <div class="w-[220px] bg-[#0f2440] text-white min-h-screen p-0 text-[11px]">
+<div id="sendwayo-workspace-shell" class="sendwayo-workspace-shell flex">
+  <div id="sendwayo-main-sidebar" class="w-[220px] bg-[#0f2440] text-white min-h-screen p-0 text-[11px]">
     <div class="p-3 text-[9px] tracking-widest text-white/60 font-bold">MENU PRINCIPAL</div>
     <button onclick="showView('tablero')" class="w-full text-left px-3 py-2.5 bg-white/10 flex items-center gap-2 border-l-4 border-green-400"><span>📊</span> Tableau de bord principal</button>
     <button onclick="showView('tarifas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>📈</span> Tarifas locales Haití</button>
@@ -431,7 +421,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button type="button" onclick="window.cerrarSesion()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🚪</span> Cerrar sesión</button>
   </div>
 
-  <div class="flex-1 p-4">
+  <div id="sendwayo-main-content" class="flex-1 p-4">
     <div class="grid grid-cols-4 gap-3 mb-4">
       <div class="bg-[#1e3a5f] text-white rounded-xl p-4">
         <div class="text-[9px] tracking-widest opacity-70">BALANCE EN GOURDES (HTG)</div>
@@ -9274,67 +9264,32 @@ window.sendwayoShareReceipt=async function(){
 })();
 </script>
 
-<style id="sendwayo-v7-top-only-workspace-layout">
-/* Cabecera única arriba; el menú deja de ocupar una columna de la página. */
-#sendwayo-main-sidebar{
- position:fixed!important;left:0!important;top:0!important;bottom:0!important;
- width:min(320px,88vw)!important;max-width:88vw!important;height:100dvh!important;
- min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
- z-index:2147482600!important;transform:translateX(-110%)!important;
- transition:transform .22s ease!important;box-shadow:0 12px 36px rgba(0,0,0,.32)!important;
- padding-bottom:env(safe-area-inset-bottom)!important;
-}
-#sendwayo-main-sidebar.sendwayo-menu-open{transform:translateX(0)!important}
-#sendwayo-main-sidebar .sidebar-brand,
-#sendwayo-main-sidebar .sidebar-business-name,
-#sendwayo-main-sidebar #user-top,
-#sendwayo-main-sidebar #hora-top,
-#sendwayo-main-sidebar #sendwayo-active-identity-strip,
-#sendwayo-main-sidebar #sendwayo-v7-user-strip,
-#sendwayo-main-sidebar .sendwayo-business-user-stack,
-#sendwayo-main-sidebar [data-sendwayo-user-identity]{display:none!important;visibility:hidden!important}
-#sendwayo-main-sidebar>div:first-child{position:sticky!important;top:0!important;z-index:2!important}
-#sendwayo-main-sidebar + .flex-1{flex:1 1 auto!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important}
-#sendwayo-menu-shade{
- display:none!important;position:fixed!important;inset:0!important;background:rgba(3,12,26,.54)!important;
- z-index:2147482500!important;backdrop-filter:blur(1px)!important
-}
-#sendwayo-menu-shade.open{display:block!important}
-#sendwayo-mobile-menu.sendwayo-top-menu-toggle{
- position:static!important;inset:auto!important;left:auto!important;top:auto!important;
- display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
- flex:0 0 40px!important;align-items:center!important;justify-content:center!important;
- width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
- margin:0 5px 0 0!important;padding:0!important;border:1px solid rgba(255,255,255,.22)!important;
- border-radius:11px!important;background:#173b68!important;color:#fff!important;
- font-size:23px!important;font-weight:900!important;line-height:1!important;box-shadow:0 2px 8px #0003!important;
- cursor:pointer!important;z-index:2147482100!important
-}
-body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:inline-flex!important}
-body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
-.sendwayo-brand-bar{
+
+<style id="sendwayo-v7-canonical-top-workspace-style">
+#sendwayo-brand-bar{
  position:sticky!important;top:0!important;z-index:2147482000!important;
  display:flex!important;align-items:center!important;justify-content:space-between!important;
- flex-wrap:nowrap!important;gap:10px!important;width:100%!important;min-height:60px!important;
- height:auto!important;padding:8px 14px!important;box-sizing:border-box!important;
- background:#0b1a2f!important;color:#fff!important
+ flex-wrap:nowrap!important;gap:12px!important;width:100%!important;min-height:58px!important;
+ height:auto!important;padding:8px clamp(10px,2vw,22px)!important;box-sizing:border-box!important;
+ background:#0b1a2f!important;color:#fff!important;box-shadow:0 3px 12px rgba(5,18,36,.18)!important
 }
-.sendwayo-brand-bar>div:first-child{
- display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1 1 auto!important
+#sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;flex:1 1 auto!important}
+#sendwayo-brand-bar .sendwayo-brand-logo{display:block!important;width:38px!important;height:38px!important;object-fit:contain!important;flex:0 0 38px!important;background:#fff!important;border-radius:50%!important}
+#sendwayo-brand-bar .sendwayo-brand-title{display:block!important;color:#fff!important;font-size:14px!important;font-weight:900!important;letter-spacing:.05em!important;white-space:nowrap!important}
+#sendwayo-brand-bar .sendwayo-brand-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:9px!important;flex:0 0 auto!important}
+#sendwayo-brand-bar .sendwayo-legacy-header-values{display:none!important}
+#sendwayo-brand-bar #bell-top{width:38px!important;height:38px!important;min-height:38px!important;flex:0 0 38px!important}
+#sendwayo-brand-bar #sendwayo-top-logout{min-height:38px!important;padding:8px 15px!important}
+#sendwayo-v7-user-strip{
+ position:sticky!important;top:58px!important;z-index:2147481900!important;
+ display:none!important;align-items:center!important;justify-content:space-between!important;
+ flex-wrap:wrap!important;gap:10px 22px!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:10px clamp(12px,2vw,28px)!important;
+ box-sizing:border-box!important;border:0!important;border-bottom:1px solid #d9e2ed!important;
+ border-radius:0!important;background:#f8fafc!important;color:#102b4e!important;
+ box-shadow:0 3px 12px rgba(15,36,64,.08)!important
 }
-.sendwayo-brand-bar>div:first-child>img{width:38px!important;height:38px!important;object-fit:contain!important;flex:0 0 38px!important}
-.sendwayo-brand-bar>div:first-child>span{font-size:14px!important;font-weight:900!important;letter-spacing:.04em!important;white-space:nowrap!important}
-.sendwayo-brand-bar>div:last-child{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;min-width:0!important}
-.sendwayo-brand-bar #hora-top,.sendwayo-brand-bar #user-top{display:none!important;visibility:hidden!important}
-#sendwayo-v7-user-strip.sendwayo-workspace-identity{
- position:sticky!important;top:60px!important;z-index:2147481900!important;
- display:none;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important;
- gap:10px 22px!important;width:100%!important;max-width:100%!important;min-width:0!important;
- margin:0!important;padding:10px clamp(12px,2vw,28px)!important;box-sizing:border-box!important;
- border:0!important;border-bottom:1px solid #d9e2ed!important;border-radius:0!important;
- background:#f8fafc!important;color:#102b4e!important;box-shadow:0 3px 12px rgba(15,36,64,.08)!important
-}
-body.sendwayo-authenticated #sendwayo-v7-user-strip.sendwayo-workspace-identity{display:flex!important}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-person{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px 13px!important;min-width:0!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-kicker{font-size:9px!important;font-weight:900!important;letter-spacing:.12em!important;color:#64748b!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:14px!important;font-weight:900!important;overflow-wrap:anywhere!important;color:#102b4e!important}
@@ -9343,141 +9298,180 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip.sendwayo-workspace-identity{
 #sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:7px!important;font-size:11px!important;font-weight:800!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-time span{padding:6px 10px!important;border:1px solid #dbe3ec!important;border-radius:999px!important;background:#fff!important;white-space:nowrap!important}
 #sendwayo-v7-user-strip #sendwayo-v7-duration{background:#ffedd5!important;border-color:#fdba74!important;color:#9a3412!important}
+/* The menu is an overlay drawer, never a permanent left-hand column. */
+#sendwayo-main-sidebar{
+ position:fixed!important;left:0!important;top:0!important;bottom:0!important;
+ width:min(320px,88vw)!important;max-width:88vw!important;height:100dvh!important;
+ min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+ z-index:2147482600!important;transform:translateX(-105%)!important;
+ visibility:hidden!important;pointer-events:none!important;
+ transition:transform .22s ease,visibility .22s ease!important;
+ box-shadow:0 12px 36px rgba(0,0,0,.32)!important;padding-bottom:env(safe-area-inset-bottom)!important
+}
+#sendwayo-main-sidebar.sendwayo-menu-open{
+ transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important
+}
+#sendwayo-main-sidebar .sidebar-brand,#sendwayo-main-sidebar .sidebar-business-name,
+#sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,
+#sendwayo-main-sidebar #sendwayo-active-identity-strip,#sendwayo-main-sidebar #sendwayo-v7-user-strip,
+#sendwayo-main-sidebar .sendwayo-business-user-stack,#sendwayo-main-sidebar [data-sendwayo-user-identity]{
+ display:none!important;visibility:hidden!important
+}
+#sendwayo-menu-shade{
+ display:none!important;position:fixed!important;inset:0!important;
+ background:rgba(3,12,26,.56)!important;z-index:2147482500!important;
+ backdrop-filter:blur(1px)!important
+}
+#sendwayo-menu-shade.open{display:block!important}
+#sendwayo-mobile-menu.sendwayo-top-menu-toggle{
+ display:none!important;position:static!important;inset:auto!important;left:auto!important;top:auto!important;
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ flex:0 0 40px!important;align-items:center!important;justify-content:center!important;
+ width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
+ margin:0 2px 0 0!important;padding:0!important;border:1px solid rgba(255,255,255,.22)!important;
+ border-radius:11px!important;background:#173b68!important;color:#fff!important;
+ font-size:23px!important;font-weight:900!important;line-height:1!important;
+ box-shadow:0 2px 8px #0003!important;cursor:pointer!important;z-index:2147482100!important
+}
+body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:inline-flex!important}
+body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
+#sendwayo-workspace-shell{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}
+#sendwayo-main-content{display:block!important;flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:clamp(10px,2vw,24px)!important;box-sizing:border-box!important}
+#sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){
+ width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important
+}
 #user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
 @media(max-width:700px){
- .sendwayo-brand-bar{min-height:56px!important;padding:7px 9px!important;gap:6px!important}
- .sendwayo-brand-bar>div:first-child{gap:6px!important}
- .sendwayo-brand-bar>div:first-child>img{width:32px!important;height:32px!important;flex-basis:32px!important}
- .sendwayo-brand-bar>div:first-child>span{font-size:11px!important;white-space:normal!important;line-height:1.1!important}
- #sendwayo-mobile-menu.sendwayo-top-menu-toggle{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;font-size:21px!important;margin-right:2px!important}
- #sendwayo-v7-user-strip.sendwayo-workspace-identity{top:56px!important;gap:7px!important;padding:8px 10px!important}
+ #sendwayo-brand-bar{min-height:54px!important;padding:7px 9px!important;gap:6px!important}
+ #sendwayo-brand-bar .sendwayo-brand-left{gap:6px!important}
+ #sendwayo-brand-bar .sendwayo-brand-logo{width:32px!important;height:32px!important;flex-basis:32px!important}
+ #sendwayo-brand-bar .sendwayo-brand-title{font-size:11px!important;white-space:normal!important;line-height:1.1!important}
+ #sendwayo-brand-bar #bell-top{width:34px!important;height:34px!important;min-height:34px!important;flex-basis:34px!important}
+ #sendwayo-brand-bar #sendwayo-top-logout{font-size:10px!important;padding:7px 10px!important;min-height:34px!important}
+ #sendwayo-mobile-menu.sendwayo-top-menu-toggle{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;font-size:21px!important}
+ #sendwayo-v7-user-strip{top:54px!important;gap:7px!important;padding:8px 10px!important}
  #sendwayo-v7-user-strip .sendwayo-workspace-person{gap:4px 8px!important}
  #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important}
  #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important;justify-content:flex-start!important}
+ #sendwayo-main-content{padding:8px!important}
 }
 </style>
-<script id="sendwayo-v7-top-only-workspace-controller">
+<script id="sendwayo-v7-workspace-layout-controller">
 (function(){
  'use strict';
  const $=id=>document.getElementById(id);
  const txt=v=>String(v==null?'':v).trim();
- const current=()=>{try{if(window.currentUser&&(window.currentUser.id||window.currentUser.email))return window.currentUser;}catch(e){}try{return typeof currentUser!=='undefined'?currentUser:null}catch(e){return null}};
- function brandBar(){
-  return Array.from(document.body.children).find(el=>el.querySelector&&el.querySelector('#user-top')&&el.classList&&el.classList.contains('sticky'))||null;
+ const current=()=>{
+  try{if(window.currentUser&&(window.currentUser.id||window.currentUser.email||window.currentUser.codigo))return window.currentUser;}catch(e){}
+  try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}
+ };
+ const roleLabel=u=>{
+  const r=txt(u&&(u.role||u.rol)).toUpperCase();
+  return r.includes('ADMIN')?'ADMINISTRADOR':r.includes('AGENTE')?'AGENTE':'REMITENTE';
+ };
+ function findSidebar(){return $('sendwayo-main-sidebar');}
+ function closeDrawer(){
+  const side=findSidebar();
+  side?.classList.remove('sendwayo-menu-open');
+  $('sendwayo-menu-shade')?.classList.remove('open');
+  $('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
  }
- function sidebar(){
-  let side=$('sendwayo-main-sidebar');if(side&&side.querySelector('button[onclick*="showView"]'))return side;
-  const nav=Array.from(document.querySelectorAll('button[onclick*="showView"]'));
-  for(const b of nav){
-   let n=b.parentElement;
-   while(n&&n!==document.body){
-    const count=n.querySelectorAll('button[onclick*="showView"]').length;
-    if(count>=8&&count<=35){side=n;break}
-    n=n.parentElement;
-   }
-   if(side)break;
-  }
-  if(side)side.id='sendwayo-main-sidebar';
-  return side||null;
+ function refreshIdentity(){
+  const u=current(),strip=$('sendwayo-v7-user-strip'),brand=$('sendwayo-v7-business-name');
+  if(!strip)return;
+  if(brand)brand.textContent='SENDWAYO EXPRESS';
+  const values={
+   'sendwayo-v7-name':txt(u&&(u.nombre||u.name||u.email)||'Usuario'),
+   'sendwayo-v7-role':u?roleLabel(u):'',
+   'sendwayo-v7-id':txt(u&&(u.id||u.uid)||'—'),
+   'sendwayo-v7-code':txt(u&&(u.codigo||u.codigo2)||'—'),
+   'sendwayo-v7-date':new Date().toLocaleDateString('es-DO'),
+   'sendwayo-v7-clock':new Date().toLocaleTimeString('es-DO')
+  };
+  Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el)el.textContent=value;});
+  strip.setAttribute('aria-label','Cuenta activa: '+values['sendwayo-v7-role']+'; ID '+values['sendwayo-v7-id']+'; código '+values['sendwayo-v7-code']);
  }
- function identityStrip(){
-  window.sendwayoRefreshIdentityHeader?.();
-  const bar=brandBar(),u=current();
-  let strip=$('sendwayo-v7-user-strip');
-  if(!bar)return;
-  if(!strip){
-   strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';strip.dataset.sendwayoHeaderReady='1';
-   strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span>Código: <strong id="sendwayo-v7-code"></strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
-  }
-  if(strip.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',strip);
-  const name=txt(u&&(u.nombre||u.name||u.email)||'Usuario');
-  const id=txt(u&&(u.id||u.uid)||'—'),code=txt(u&&(u.codigo||u.codigo2)||'—');
-  const role=txt(u&&(u.role||u.rol)||'').toUpperCase();
-  const roleLabel=role.includes('ADMIN')?'ADMINISTRADOR':role.includes('AGENTE')?'AGENTE':'REMITENTE';
-  if($('sendwayo-v7-name'))$('sendwayo-v7-name').textContent=name;
-  if($('sendwayo-v7-role'))$('sendwayo-v7-role').textContent=roleLabel;
-  if($('sendwayo-v7-id'))$('sendwayo-v7-id').textContent=id;
-  if($('sendwayo-v7-code'))$('sendwayo-v7-code').textContent=code;
-  const now=new Date();
-  if($('sendwayo-v7-date'))$('sendwayo-v7-date').textContent=now.toLocaleDateString('es-DO');
-  if($('sendwayo-v7-clock'))$('sendwayo-v7-clock').textContent=now.toLocaleTimeString('es-DO');
-  strip.setAttribute('aria-label','Datos de negocio, administrador y sesión');
- }
- function ensureTopMenu(){
-  const bar=brandBar(),side=sidebar();if(!bar||!side)return;
-  let btn=$('sendwayo-mobile-menu');
-  if(!btn){btn=document.createElement('button');btn.id='sendwayo-mobile-menu';btn.type='button';btn.textContent='☰';}
-  btn.classList.add('sendwayo-top-menu-toggle');btn.type='button';btn.setAttribute('aria-label','Abrir menú de navegación');btn.setAttribute('aria-controls','sendwayo-main-sidebar');btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');btn.title='Menú';
-  const left=bar.children[0]||bar;
-  if(btn.parentElement!==left)left.insertBefore(btn,left.firstChild||null);
-  let shade=$('sendwayo-menu-shade');if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
-  if(!btn.dataset.sendwayoTopDrawerBound){
-   btn.dataset.sendwayoTopDrawerBound='1';
+ function ensureMenu(){
+  const bar=$('sendwayo-brand-bar'),side=findSidebar(),btn=$('sendwayo-mobile-menu');
+  if(!bar||!side||!btn)return;
+  side.setAttribute('aria-label','Menú de navegación SENDWAYO EXPRESS');
+  btn.classList.add('sendwayo-top-menu-toggle');
+  btn.setAttribute('aria-controls','sendwayo-main-sidebar');
+  btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');
+  // Neutralize handlers installed by the older mobile-only navigation controllers.
+  btn.onclick=null;
+  const shade=$('sendwayo-menu-shade');if(shade)shade.onclick=null;
+  if(!btn.dataset.sendwayoCanonicalMenu){
+   btn.dataset.sendwayoCanonicalMenu='1';
    btn.addEventListener('click',ev=>{
     ev.preventDefault();ev.stopImmediatePropagation();
     if(!document.body.classList.contains('sendwayo-authenticated'))return;
     const open=!side.classList.contains('sendwayo-menu-open');
-    side.classList.toggle('sendwayo-menu-open',open);shade.classList.toggle('open',open);
+    side.classList.toggle('sendwayo-menu-open',open);
+    shade?.classList.toggle('open',open);
     btn.setAttribute('aria-expanded',open?'true':'false');
    },true);
+   shade?.addEventListener('click',ev=>{ev.preventDefault();ev.stopImmediatePropagation();closeDrawer();},true);
+   side.addEventListener('click',ev=>{
+    if(ev.target&&ev.target.closest&&ev.target.closest('button[onclick*="showView"],a[onclick*="showView"]'))window.setTimeout(closeDrawer,60);
+   },true);
   }
-  if(!shade.dataset.sendwayoTopDrawerBound){
-   shade.dataset.sendwayoTopDrawerBound='1';
-   shade.addEventListener('click',ev=>{ev.preventDefault();ev.stopImmediatePropagation();closeDrawer();},true);
-  }
-  if(!side.dataset.sendwayoTopDrawerBound){
-   side.dataset.sendwayoTopDrawerBound='1';
-   side.addEventListener('click',ev=>{if(ev.target.closest('button[onclick*="showView"],a[onclick*="showView"]'))window.setTimeout(closeDrawer,60);},true);
-  }
-  function nothing(){}
+  // No second logo/name/ID block is allowed inside the side navigation.
+  side.querySelectorAll('#sendwayo-v7-user-strip,#sendwayo-active-identity-strip,[data-sendwayo-user-identity],.sidebar-business-name').forEach(el=>el.remove());
  }
- function closeDrawer(){
-  const side=sidebar();side?.classList.remove('sendwayo-menu-open');$('sendwayo-menu-shade')?.classList.remove('open');$('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
+ function layout(){
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip'),shell=$('sendwayo-workspace-shell'),main=$('sendwayo-main-content');
+  if(!bar||!strip)return;
+  if(strip.parentElement!==document.body||strip.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',strip);
+  bar.classList.add('sticky');
+  if(shell)shell.style.setProperty('width','100%','important');
+  if(main){main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');}
+  ensureMenu();refreshIdentity();
+ }
+ function refresh(){layout();}
+ function wrapLogin(){
+  const old=window.intentarLogin;
+  if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
+  const wrapped=function(){const out=old.apply(this,arguments);window.setTimeout(refresh,250);window.setTimeout(refresh,800);return out;};
+  wrapped.__sendwayoCanonicalLayout=true;window.intentarLogin=wrapped;
+ }
+ function wrapLogout(){
+  const old=window.cerrarSesion;
+  if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
+  const wrapped=function(){closeDrawer();const out=old.apply(this,arguments);window.setTimeout(refresh,0);return out;};
+  wrapped.__sendwayoCanonicalLayout=true;window.cerrarSesion=wrapped;
+ }
+ function wrapShowView(){
+  const old=window.showView;
+  if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
+  const wrapped=function(route){
+   const out=old.apply(this,arguments);
+   window.setTimeout(()=>{closeDrawer();layout();},0);
+   return out;
+  };
+  wrapped.__sendwayoCanonicalLayout=true;window.showView=wrapped;
+ }
+ function bindExit(){
+  const button=$('sendwayo-top-logout');if(!button)return;
+  button.onclick=null;
+  if(!button.dataset.sendwayoLogoutBound){
+   button.dataset.sendwayoLogoutBound='1';
+   button.addEventListener('click',ev=>{ev.preventDefault();window.cerrarSesion?.();});
+  }
  }
  function setup(){
-  const bar=brandBar();if(!bar)return;
-  bar.classList.add('sendwayo-brand-bar');
-  // Name of the business stays in the brand line; personal identity is rendered only below it.
-  const logo=bar.querySelector('img');
-  if(logo&&logo.nextElementSibling&&logo.nextElementSibling.tagName==='SPAN')logo.nextElementSibling.textContent='SENDWAYO EXPRESS';
-  identityStrip();ensureTopMenu();
-  const oldUser=$('user-top');if(oldUser){oldUser.textContent='';oldUser.setAttribute('aria-hidden','true');}
-  const oldClock=$('hora-top');if(oldClock){oldClock.textContent='';oldClock.setAttribute('aria-hidden','true');}
- }
- function refresh(){
-  setup();
-  window.dispatchEvent(new CustomEvent('sendwayo:workspace-header-refresh'));
+  layout();bindExit();wrapLogin();wrapLogout();wrapShowView();
  }
  document.addEventListener('DOMContentLoaded',setup,{once:true});
  window.addEventListener('load',setup);
- window.addEventListener('sendwayo:firebase-ready',refresh);
- document.addEventListener('sendwayo:firebase-ready',refresh);
- document.addEventListener('sendwayo:login-success',refresh);
- window.addEventListener('sendwayo:transactions-updated',()=>{if(current())identityStrip();});
- document.addEventListener('click',ev=>{
-  const b=ev.target&&ev.target.closest&&ev.target.closest('#login-screen button[onclick*="intentarLogin"]');
-  if(b){window.setTimeout(refresh,350);window.setTimeout(refresh,900);}
- },true);
- const oldLogin=window.intentarLogin;
- if(typeof oldLogin==='function'&&!oldLogin.__sendwayoTopHeaderWrapped){
-  const wrapped=function(){const out=oldLogin.apply(this,arguments);window.setTimeout(refresh,300);window.setTimeout(refresh,850);return out;};
-  wrapped.__sendwayoTopHeaderWrapped=true;window.intentarLogin=wrapped;
- }
- const oldLogout=window.cerrarSesion;
- if(typeof oldLogout==='function'&&!oldLogout.__sendwayoTopHeaderWrapped){
-  const wrapped=function(){closeDrawer();const out=oldLogout.apply(this,arguments);window.setTimeout(setup,0);return out;};
-  wrapped.__sendwayoTopHeaderWrapped=true;window.cerrarSesion=wrapped;
- }
- const oldShow=window.showView;
- if(typeof oldShow==='function'&&!oldShow.__sendwayoTopHeaderWrapped){
-  const wrapped=function(){const out=oldShow.apply(this,arguments);closeDrawer();window.setTimeout(identityStrip,0);return out;};
-  wrapped.__sendwayoTopHeaderWrapped=true;window.showView=wrapped;
- }
- window.addEventListener('resize',()=>{ensureTopMenu();});
- window.addEventListener('pageshow',refresh);
- window.addEventListener('sendwayo:workspace-header-refresh',identityStrip);
- // Refresh the displayed clock without recalculating dashboards or balances every second.
- window.setInterval(()=>{if(!document.body.classList.contains('sendwayo-authenticated'))return;const d=$('sendwayo-v7-date'),c=$('sendwayo-v7-clock');if(d)d.textContent=new Date().toLocaleDateString('es-DO');if(c)c.textContent=new Date().toLocaleTimeString('es-DO');},1000);
+ window.addEventListener('pageshow',setup);
+ window.addEventListener('resize',()=>{ensureMenu();});
+ window.addEventListener('sendwayo:firebase-ready',setup);
+ document.addEventListener('sendwayo:firebase-ready',setup);
+ document.addEventListener('sendwayo:login-success',setup);
+ window.addEventListener('sendwayo:transactions-updated',refreshIdentity);
+ window.addEventListener('sendwayo:workspace-header-refresh',refreshIdentity);
+ window.setInterval(()=>{if(document.body.classList.contains('sendwayo-authenticated'))refreshIdentity();},1000);
  setup();
 })();
 </script>
