@@ -8396,7 +8396,9 @@ window.sendwayoShareReceipt=async function(){
  ['aprobar','rechazar','noCoincide','renderPrincipal','sendwayoUpdateViews','guardarTransacciones','saveTransactions'].forEach(wrap);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
  window.addEventListener('load',refresh);
- const target=$('view-tablero');if(target&&typeof MutationObserver!=='undefined'){let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;refresh()},60)}).observe(target,{childList:true,subtree:true});}
+ // FIX V7: no observar el mismo tablero que refresh modifica; evita un ciclo continuo de mutaciones.
+ window.addEventListener('sendwayo:firebase-ready',refresh);
+ window.addEventListener('load',function(){window.setTimeout(refresh,250);});
  window.setInterval(refresh,4000);
 })();
 </script>
@@ -8497,10 +8499,13 @@ window.sendwayoShareReceipt=async function(){
  function init(){buildView();addMenuButton();}
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
  else init();
- if(typeof MutationObserver!=="undefined"&&document.body){
-  var observer=new MutationObserver(function(){if(!byId(VIEW_ID)||!byId("sendwayo-v7-card-menu-button"))init();});
-  observer.observe(document.body,{childList:true,subtree:true});
+ function retryMenu(attempts){
+  init();
+  if(attempts>0&&!byId("sendwayo-v7-card-menu-button"))window.setTimeout(function(){retryMenu(attempts-1);},500);
  }
- window.addEventListener("load",init);
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){retryMenu(8);},{once:true});
+ else retryMenu(8);
+ window.addEventListener("sendwayo:firebase-ready",function(){retryMenu(6);});
+ window.addEventListener("load",function(){retryMenu(4);});
 })();
 </script>
