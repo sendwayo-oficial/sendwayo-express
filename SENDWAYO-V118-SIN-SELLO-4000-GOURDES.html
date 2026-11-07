@@ -772,8 +772,8 @@ function ver(id){ alert('Ver '+id); }
 function ajustarBalance(id){ const m=prompt('Ajustar balance para '+id+' Monto:'); if(m && !isNaN(m)){ const ag=AGENTES.find(a=>a.id===id); if(ag){ ag.balances.DOP+=parseFloat(m); renderPrincipal(); } } }
 
 function verComprobante(id){
-  let t=TRANSACCIONES.find(x=>String(x.id)===String(id));
-  if(!t) t={id:id, fecha:'20/10/2026', hora:'4:54:34 p. m.', tipo:'Envío', ruta:'RD → HT Natcash', beneficiario:'SAUTHER JALBAR', beneficiarioTel:'35249812', montoRecibido:'1,062.60 HTG', creadorId:'ADMINADMIN', aprobadoPor:'ADMINADMIN', estado:'Aprobado', montoValue:2000, fee:160, neto:1840};
+  let t=(Array.isArray(TRANSACCIONES)?TRANSACCIONES:[]).find(x=>String(x.id)===String(id));
+  if(!t){alert('No se encontró la transacción para generar el comprobante.');return;}
   if(t.estado!=='Aprobado'){ alert('❌ Comprobante no debe aparecer sin antes ser aprobados - Estado: '+t.estado+' - Comprobante solo después aprobado - Error grave'); return; }
   
   // COMPROBANTE LIMPIO - SIN COMENTARIO - SIEMPRE CANTIDAD SIN COMENTARIO - INTERNO QUEDA ENTRE NOSOTROS
@@ -782,14 +782,14 @@ function verComprobante(id){
   // Si son 100 lo pones 100 pero este comentario no debe estar en comprobante - eso es interno
   let montoLimpio = t.montoRecibido;
   
-  document.getElementById('comp-fecha').innerText=t.fecha;
-  document.getElementById('comp-hora').innerText=t.fecha.split(' ')[1]||'4:54:34 p. m.';
+  document.getElementById('comp-fecha').innerText=t.fecha|| (t.timestamp?new Date(t.timestamp).toLocaleString('es-DO'):'—');
+  document.getElementById('comp-hora').innerText=(t.fecha||'').split(' ')[1]||'—';
   document.getElementById('comp-tipo').innerText='Transacción: '+t.tipo+' - '+(t.ruta||'');
-  document.getElementById('comp-beneficiario').innerText=t.beneficiario||'SAUTHER JALBAR';
-  document.getElementById('comp-beneficiario-tel').innerText=t.beneficiarioTel||'35249812';
+  document.getElementById('comp-beneficiario').innerText=t.beneficiario||'—';
+  document.getElementById('comp-beneficiario-tel').innerText=t.beneficiarioTel||'—';
   document.getElementById('comp-monto').innerText=montoLimpio;
-  document.getElementById('comp-creador').innerText=t.creadorId||'ADMINADMIN';
-  document.getElementById('comp-autorizado').innerText=t.aprobadoPor||'ADMINADMIN';
+  document.getElementById('comp-creador').innerText=t.creadorId||'—';
+  document.getElementById('comp-autorizado').innerText=t.aprobadoPor||'—';
   document.getElementById('modal-comprobante').classList.remove('hidden');
 }
 
