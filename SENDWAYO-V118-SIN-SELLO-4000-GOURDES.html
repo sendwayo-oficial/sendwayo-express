@@ -3780,10 +3780,10 @@ window.sendwayoShareReceipt=async function(){
  const allAccounts=()=>[...(admin()?[admin()]:[]),...agents(),...senders()];
  const balanceObject=a=>{if(!a)return null;if(!a.balances)a.balances={DOP:0,HTG:0};if(a.balances.DOP==null)a.balances.DOP=0;if(a.balances.HTG==null)a.balances.HTG=0;return a.balances};
  const commissionObject=a=>{if(!a)return null;if(!a.commissions)a.commissions=a.comisiones||{DOP:0,HTG:0};if(!a.comisiones)a.comisiones=a.commissions;if(a.commissions.DOP==null)a.commissions.DOP=0;if(a.commissions.HTG==null)a.commissions.HTG=0;a.comisiones.DOP=a.commissions.DOP;a.comisiones.HTG=a.commissions.HTG;return a.commissions};
- const accountById=id=>allAccounts().find(a=>String(a.id)===String(id)||String(a.idAnterior||'')===String(id)||String(a.codigo||'')===String(id)||String(a.codigoAnterior||'')===String(id))||null;
+ const accountById=id=>allAccounts().find(a=>String(a.id)===String(id)||String(a.idAnterior||'')===String(id)||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v)===String(id);}))||String(a.codigo||'')===String(id)||String(a.codigoAnterior||'')===String(id))||null;
  const accountByInput=raw=>{
    const q=norm(raw);if(!q)return null;
-   let a=allAccounts().find(x=>[x.id,x.idAnterior,x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(y=>norm(y)===q));
+   let a=allAccounts().find(x=>[x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(y=>norm(y)===q));
    if(a)return a;
    a=allAccounts().find(x=>[x.id,x.codigo,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(y=>norm(y)&& (q.includes(norm(y))||norm(y).includes(q))));
    return a||null;
@@ -4094,7 +4094,7 @@ window.sendwayoShareReceipt=async function(){
       a={id:idNew,codigo:code,codigo2:code,numero:String(num).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
     } else {a.nombre=a.name=name;a.email=a.usuario=email;a.celular=a.telefono=phone;a.estado=state;a.activo=state==='Activo';}
     a.estado=state;a.activo=state==='Activo';writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
-    const old=window.USUARIOS_LOGIN||[];window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,aliases:[x.idAnterior,x.codigoAnterior,x.codigo2,...(x.loginAliases||[])].filter(Boolean),celular:x.celular||x.telefono,telefono:x.telefono||x.celular,password:x.password||x.contrasena||'',password2:x.celular||x.telefono,allowedPasswords:x.allowedPasswords||[],nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
+    const old=window.USUARIOS_LOGIN||[];window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,aliases:[x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigoAnterior,x.codigo2,...(x.loginAliases||[])].filter(Boolean),celular:x.celular||x.telefono,telefono:x.telefono||x.celular,password:x.password||x.contrasena||'',password2:x.celular||x.telefono,allowedPasswords:x.allowedPasswords||[],nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
     const rec=window.USUARIOS_LOGIN.find(x=>x.id===a.id);if(rec&&old.some(x=>x.id===a.id)){rec.allowedPasswords=[...(rec.allowedPasswords||[])];}
     $('sendwayo-v7-modal')?.classList.add('hidden');renderCustom(view);alert('Cuenta guardada. ID y código quedaron protegidos.');
   };
@@ -4159,7 +4159,7 @@ window.sendwayoShareReceipt=async function(){
     }
     let actions='',heading='';
     if(view==='agentes'||view==='remitentes'){
-      heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (fijo)</th><th class="p-3 text-left">Código (fijo)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
+      heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (editable por Administración)</th><th class="p-3 text-left">Código (fijo)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
       if(!isAdmin()) { el.innerHTML='<div class="p-8 text-center font-bold">Este directorio está disponible para el administrador.</div>';return; }
     } else if(view==='cuentas') heading=`<th class="p-3">Banco / número</th><th class="p-3">Titular / documento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th>`;
     else heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Beneficiario / titular</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
@@ -4579,11 +4579,11 @@ window.sendwayoShareReceipt=async function(){
     try { re = typeof REMITENTES !== 'undefined' && Array.isArray(REMITENTES) ? REMITENTES : (Array.isArray(window.REMITENTES) ? window.REMITENTES : []); } catch (_) {}
     return [...(a ? [a] : []), ...ag, ...re].filter(Boolean);
   };
-  const accountById = id => accounts().find(a => [a.id, a.idAnterior, a.codigo, a.codigo2, a.codigoAnterior, a.email, a.usuario].some(v => norm(v) === norm(id))) || null;
+  const accountById = id => accounts().find(a => [a.id, a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]), a.codigo, a.codigo2, a.codigoAnterior, a.email, a.usuario].some(v => norm(v) === norm(id))) || null;
   const accountByInput = raw => {
     const q = norm(raw); if (!q) return null;
     const all = accounts();
-    let match = all.find(a => [a.id, a.idAnterior, a.codigo, a.codigo2, a.codigoAnterior, a.email, a.usuario, a.celular, a.telefono].some(v => norm(v) === q));
+    let match = all.find(a => [a.id, a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]), a.codigo, a.codigo2, a.codigoAnterior, a.email, a.usuario, a.celular, a.telefono].some(v => norm(v) === q));
     if (match) return match;
     match = all.find(a => norm(a.nombre || a.name) === q);
     if (match) return match;
@@ -5696,7 +5696,7 @@ window.sendwayoShareReceipt=async function(){
     const resets=loadArray(PASSWORD_RESET_KEY);
     resets.forEach(st=>{
       if(!st||!st.id||!st.password)return;
-      const account=allAccounts().find(a=>String(a.id)===String(st.id)||String(a.idAnterior||'')===String(st.id));
+      const account=allAccounts().find(a=>String(a.id)===String(st.id)||String(a.idAnterior||'')===String(st.id)||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v)===String(st.id);})));
       if(account){account.password=st.password;account.contrasena=st.password;account.password2='';account.allowedPasswords=[];}
       const rec=(window.USUARIOS_LOGIN||[]).find(a=>String(a.id)===String(st.id));
       if(rec){rec.password=st.password;rec.password2='';rec.allowedPasswords=[];}
@@ -5705,7 +5705,7 @@ window.sendwayoShareReceipt=async function(){
   function saveResetPassword(rec,newPassword){
     const id=txt(rec.id),mail=norm(rec.email||rec.usuario),phone=txt(rec.celular||rec.telefono).replace(/\D/g,'');
     rec.password=newPassword;rec.password2='';rec.allowedPasswords=[];
-    const account=allAccounts().find(a=>String(a.id)===id||String(a.idAnterior||'')===id);
+    const account=allAccounts().find(a=>String(a.id)===id||String(a.idAnterior||'')===id||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v)===id;})));
     if(account){account.password=newPassword;account.contrasena=newPassword;account.password2='';account.allowedPasswords=[];}
     const resets=loadArray(PASSWORD_RESET_KEY).filter(x=>String(x.id)!==id);
     resets.push({id,password:newPassword,changedAt:new Date().toISOString()});saveArray(PASSWORD_RESET_KEY,resets);
@@ -5981,8 +5981,8 @@ window.sendwayoShareReceipt=async function(){
   const isAgent=()=>roleOf(getUser()).includes('AGENTE');
   const isRemitter=()=>roleOf(getUser()).includes('REMITENTE');
   const acctName=a=>text(a&&(a.nombre||a.name||a.email||a.usuario||a.id));
-  const accountById=id=>allAccounts().find(a=>[a.id,a.idAnterior,a.codigo,a.codigoAnterior,a.codigo2,a.email,a.usuario,a.celular,a.telefono].some(v=>text(v)===text(id)))||null;
-  const accountByInput=raw=>{const q=normalize(raw);if(!q)return null;let a=allAccounts().find(x=>[x.id,x.idAnterior,x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(v=>normalize(v)===q));if(a)return a;return allAccounts().find(x=>[x.id,x.codigo,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(v=>normalize(v)&& (q.includes(normalize(v))||normalize(v).includes(q))))||null;};
+  const accountById=id=>allAccounts().find(a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigoAnterior,a.codigo2,a.email,a.usuario,a.celular,a.telefono].some(v=>text(v)===text(id)))||null;
+  const accountByInput=raw=>{const q=normalize(raw);if(!q)return null;let a=allAccounts().find(x=>[x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(v=>normalize(v)===q));if(a)return a;return allAccounts().find(x=>[x.id,x.codigo,x.email,x.usuario,x.celular,x.telefono,x.nombre,x.name].some(v=>normalize(v)&& (q.includes(normalize(v))||normalize(v).includes(q))))||null;};
   const currentAccount=()=>{const u=getUser();return u?(accountById(u.id)||accountByInput(u.email||u.usuario)||accountByInput(u.codigo)||null):null;};
   const adminAccount=getAdmin;
   function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}
@@ -6150,7 +6150,7 @@ window.sendwayoShareReceipt=async function(){
   const accounts=()=>{const out=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)out.push(ADMIN)}catch(_){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))out.push(...AGENTES)}catch(_){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))out.push(...REMITENTES)}catch(_){}return out;};
   const role=a=>text(a&&(a.role||a.rol)).toUpperCase();
   const uid=a=>text(a&&(a.id||a.uid||a.codigo));
-  const account=id=>accounts().find(a=>[a.id,a.idAnterior,a.codigo,a.codigoAnterior,a.codigo2,a.email,a.usuario,a.celular,a.telefono].some(v=>text(v)===text(id)))||null;
+  const account=id=>accounts().find(a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigoAnterior,a.codigo2,a.email,a.usuario,a.celular,a.telefono].some(v=>text(v)===text(id)))||null;
   const activeAccount=()=>{const u=current();return u?(account(u.id)||account(u.codigo)||account(u.email)||u):null};
   const isAdmin=()=>{const u=current();return !!u&&(role(u).includes('ADMIN')||['ADMINADMIN','ADMIN-000'].includes(uid(u).toUpperCase()))};
   const isAgent=()=>role(current()).includes('AGENTE');
@@ -6423,7 +6423,7 @@ window.sendwayoShareReceipt=async function(){
   const getCurrentUser=()=>{try{if(window.currentUser)return window.currentUser}catch(_){}try{if(typeof currentUser!=='undefined'&&currentUser)return currentUser}catch(_){}return null};
   const role=a=>str(a&&(a.role||a.rol)).toUpperCase();
   const isAdmin=()=>{const u=getCurrentUser();return !!u&&(role(u).includes('ADMIN')||['ADMINADMIN','ADMIN-000','ADMIN-ADM'].includes(str(u.id||u.codigo).toUpperCase()))};
-  const findAccount=raw=>{const q=norm(raw);if(!q)return null;const list=accounts();let a=list.find(x=>[x.id,x.idAnterior,x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono].some(v=>norm(v)===q));if(a)return a;return list.find(x=>[x.nombre,x.name,x.id,x.codigo,x.codigo2,x.email,x.usuario,x.celular,x.telefono].some(v=>norm(v)&&norm(v)===q))||null;};
+  const findAccount=raw=>{const q=norm(raw);if(!q)return null;const list=accounts();let a=list.find(x=>[x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigo,x.codigoAnterior,x.codigo2,x.email,x.usuario,x.celular,x.telefono].some(v=>norm(v)===q));if(a)return a;return list.find(x=>[x.nombre,x.name,x.id,x.codigo,x.codigo2,x.email,x.usuario,x.celular,x.telefono].some(v=>norm(v)&&norm(v)===q))||null;};
   const selfAccount=()=>{const u=getCurrentUser();return u&&(findAccount(u.id)||findAccount(u.email)||findAccount(u.usuario)||findAccount(u.codigo))||null};
   function persistAccounts(){const rows=accounts().map(a=>({id:a.id,balances:a.balances||{DOP:0,HTG:0},commissions:a.commissions||a.comisiones||{DOP:0,HTG:0},password:a.password||a.contrasena||''}));try{localStorage.setItem('sendwayo_express_oficial_20261029_account_values_v5',JSON.stringify(rows));localStorage.setItem('sendwayo_express_oficial_20261029_accounts_v5',JSON.stringify(rows))}catch(_){};try{const a=accounts().find(x=>role(x)==='ADMIN'||str(x.id)==='ADMINADMIN');if(a&&window.v162_bal){window.v162_bal.rd=n(a.balances?.DOP);window.v162_bal.htg=n(a.balances?.HTG);window.v162_bal.comRD=n(a.commissions?.DOP??a.comisiones?.DOP);window.v162_bal.comHTG=n(a.commissions?.HTG??a.comisiones?.HTG);localStorage.setItem('sendwayo_express_oficial_20261029_bal_v162',JSON.stringify(window.v162_bal));}}catch(_){} }
   function paintDashboardForActiveAccount(){
@@ -6621,7 +6621,7 @@ window.sendwayoShareReceipt=async function(){
   const allAccounts=()=>{const a=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)a.push(ADMIN)}catch(_){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))a.push(...AGENTES)}catch(_){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))a.push(...REMITENTES)}catch(_){}if(!a.length){if(window.ADMIN)a.push(window.ADMIN);if(Array.isArray(window.AGENTES))a.push(...window.AGENTES);if(Array.isArray(window.REMITENTES))a.push(...window.REMITENTES)}return [...new Set(a.filter(Boolean))]};
   const role=a=>txt(a&&(a.role||a.rol)).toUpperCase();
   const id=a=>txt(a&&(a.id||a.uid||a.codigo));
-  const findAccount=raw=>{const value=txt(raw),q=norm(value);if(!q)return null;const rows=allAccounts();const values=a=>[a.id,a.idAnterior,a.codigo,a.codigoAnterior,a.codigo2,a.email,a.usuario,a.telefono,a.celular,a.nombre,a.name].map(norm).filter(Boolean);let hit=rows.find(a=>values(a).includes(q));if(hit)return hit;const prefix=value.split('(')[0].trim(),qp=norm(prefix);if(qp){hit=rows.find(a=>values(a).includes(qp));if(hit)return hit;const digits=prefix.replace(/\D/g,'');if(digits.length>=7){hit=rows.find(a=>[a.telefono,a.celular,a.phone].some(v=>String(v||'').replace(/\D/g,'')===digits));if(hit)return hit;}}const matches=rows.filter(a=>values(a).some(v=>v.length>=4&&(q.includes(v)||v.includes(q))));return matches.length===1?matches[0]:null};
+  const findAccount=raw=>{const value=txt(raw),q=norm(value);if(!q)return null;const rows=allAccounts();const values=a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigoAnterior,a.codigo2,a.email,a.usuario,a.telefono,a.celular,a.nombre,a.name].map(norm).filter(Boolean);let hit=rows.find(a=>values(a).includes(q));if(hit)return hit;const prefix=value.split('(')[0].trim(),qp=norm(prefix);if(qp){hit=rows.find(a=>values(a).includes(qp));if(hit)return hit;const digits=prefix.replace(/\D/g,'');if(digits.length>=7){hit=rows.find(a=>[a.telefono,a.celular,a.phone].some(v=>String(v||'').replace(/\D/g,'')===digits));if(hit)return hit;}}const matches=rows.filter(a=>values(a).some(v=>v.length>=4&&(q.includes(v)||v.includes(q))));return matches.length===1?matches[0]:null};
   const user=()=>{try{if(window.currentUser)return window.currentUser}catch(_){}try{if(typeof currentUser!=='undefined'&&currentUser)return currentUser}catch(_){}return null};
   const active=()=>{const u=user();return u?(findAccount(u.id)||findAccount(u.codigo)||findAccount(u.email)||findAccount(u.usuario)||u):null};
   const isAdmin=()=>{const u=user();return !!u&&(role(u).includes('ADMIN')||['ADMINADMIN','ADMIN-000'].includes(id(u).toUpperCase()))};
@@ -6732,7 +6732,7 @@ window.sendwayoShareReceipt=async function(){
   const role=a=>txt(a&&(a.role||a.rol)).toUpperCase();
   const aid=a=>txt(a&&(a.id||a.uid||a.codigo));
   const accounts=accountRows;
-  function findAccount(raw){const q=norm(raw);if(!q)return null;const rows=accounts();let a=rows.find(x=>[x.id,x.idAnterior,x.uid,x.codigo,x.codigo2,x.codigoAnterior,x.email,x.usuario,x.celular,x.telefono].some(v=>norm(v)===q));if(a)return a;const digits=txt(raw).replace(/\D/g,'');if(digits.length>=7){a=rows.find(x=>[x.celular,x.telefono,x.phone].some(v=>txt(v).replace(/\D/g,'')===digits));if(a)return a;}return null}
+  function findAccount(raw){const q=norm(raw);if(!q)return null;const rows=accounts();let a=rows.find(x=>[x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.uid,x.codigo,x.codigo2,x.codigoAnterior,x.email,x.usuario,x.celular,x.telefono].some(v=>norm(v)===q));if(a)return a;const digits=txt(raw).replace(/\D/g,'');if(digits.length>=7){a=rows.find(x=>[x.celular,x.telefono,x.phone].some(v=>txt(v).replace(/\D/g,'')===digits));if(a)return a;}return null}
   const getUser=()=>{try{if(window.currentUser)return window.currentUser}catch(_){}try{if(typeof currentUser!=='undefined'&&currentUser)return currentUser}catch(_){}return null};
   function activeAccount(){const u=getUser();return u&&(findAccount(u.id)||findAccount(u.uid)||findAccount(u.codigo)||findAccount(u.email)||findAccount(u.usuario))||null}
   function balance(a){if(!a)return null;if(!a.balances||typeof a.balances!=='object')a.balances={DOP:0,HTG:0};if(a.balances.DOP==null)a.balances.DOP=0;if(a.balances.HTG==null)a.balances.HTG=0;return a.balances}
@@ -7017,7 +7017,7 @@ window.sendwayoShareReceipt=async function(){
       if(!a || typeof a!=='object') return;
       const email=txt(a.email || a.usuario).toLowerCase();
       if(!email.includes('@')) return;
-      const aliases=[a.id,a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
+      const aliases=[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
       rows.push({email, id:txt(a.id), codigo:txt(a.codigo || a.staffId), nombre:txt(a.nombre || a.name), role:role || a.role, aliases});
     };
     try { add(typeof ADMIN!=='undefined'?ADMIN:null,'ADMIN'); } catch(e){}
@@ -7196,7 +7196,7 @@ window.sendwayoShareReceipt=async function(){
     }
     replaceArrayContents(AGENTES,mapped.filter(a=>a.role==='AGENTE'));
     replaceArrayContents(REMITENTES,mapped.filter(a=>a.role==='REMITENTE'));
-    window.USUARIOS_LOGIN=mapped.map(a=>({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.dbUserKey,a.id,a.codigo,a.staffId,a.email].filter(Boolean),nombre:a.nombre,role:a.role,dbUserKey:a.dbUserKey}));
+    window.USUARIOS_LOGIN=mapped.map(a=>({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.dbUserKey,a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.staffId,a.email].filter(Boolean),nombre:a.nombre,role:a.role,dbUserKey:a.dbUserKey}));
     const currentUi=mapped.find(a=>a.dbUserKey===profileRow?.key);
     if(currentUi&&role==='REMITENTE'){
       replaceArrayContents(AGENTES,[]);
@@ -7227,7 +7227,7 @@ window.sendwayoShareReceipt=async function(){
       let benQuery=db.ref(ROOT+'/beneficiaries');
       if(role==='REMITENTE') benQuery=benQuery.orderByChild('userId').equalTo(profileRow.key);
       await attach('beneficiaries',benQuery,snapshot=>{
-        const rows=snapshotRows(snapshot).map(r=>({...r.data,id:txt(r.data.id||r.key),nombre:txt(r.data.nombre||r.data.name||r.data.beneficiaryName),telefono:txt(r.data.telefono||r.data.phone||r.data.beneficiaryPhone),userId:txt(r.data.userId||r.data.ownerUserId)})).filter(b=>b.nombre||b.telefono);
+        const rows=snapshotRows(snapshot).map(r=>({...r.data,id:txt(r.data.id||r.key),firebaseKey:r.key,nombre:txt(r.data.nombre||r.data.name||r.data.beneficiaryName),telefono:txt(r.data.telefono||r.data.phone||r.data.beneficiaryPhone),userId:txt(r.data.userId||r.data.ownerUserId)})).filter(b=>b.nombre||b.telefono);
         window.BENEFICIARIOS_DB=rows;window.BENEF_DB=rows.map(b=>({nombre:b.nombre,telefono:b.telefono,id:b.id}));
         try{if(typeof BENEFICIARIOS!=='undefined'&&Array.isArray(BENEFICIARIOS))replaceArrayContents(BENEFICIARIOS,rows.map(b=>({...b,telefonoCompleto:b.telefono,estado:b.active===false?'Inactivo':'Activo'})));}catch(e){}
         try{localStorage.setItem('sendwayo_express_oficial_20261029_ben_v162',JSON.stringify(rows));}catch(e){}
@@ -7333,8 +7333,8 @@ window.sendwayoShareReceipt=async function(){
   function appIdFor(profile, key, role) {
     if(role==='ADMIN') return 'ADMINADMIN';
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
-    const supplied=txt(profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.id || profile.idUsuario);
-    let id=known?.id || supplied || key;
+    const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
+    let id=supplied || known?.id || key;
     if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
     if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
     return id;
@@ -8195,15 +8195,16 @@ window.sendwayoShareReceipt=async function(){
     try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))out.push(...REMITENTES);}catch(e){};
     return out;
   };
-  const findAccount=id=>accountArrays().find(a=>[a.id,a.dbUserKey,a.codigo,a.email,a.username].some(v=>text(v)===text(id)))||null;
+  const findAccount=id=>accountArrays().find(a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.dbUserKey,a.codigo,a.email,a.username].some(v=>text(v)===text(id)))||null;
   function accountModal(title,body){let m=$('sendwayo-admin-account-modal');if(!m){m=document.createElement('div');m.id='sendwayo-admin-account-modal';m.className='fixed inset-0 z-[30000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(m);}m.innerHTML=`<div class="w-full max-w-xl max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>${esc(title)}</b><button type="button" onclick="document.getElementById('sendwayo-admin-account-modal').remove()">✕</button></div><div class="p-4 space-y-3">${body}<button type="button" id="sendwayo-admin-account-save" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Guardar</button></div></div>`;return m;}
   window.sendwayoOpenAccountForm=function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede crear o modificar cuentas.');
     const a=id?findAccount(id):null, ag=view==='agentes', roleLabel=ag?'AGENTE':'REMITENTE';
-    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',
+    let next=1;const idPrefix=ag?'AGE':'REM';while(accountArrays().some(x=>String(x.id||'')===idPrefix+String(next).padStart(5,'0')))next++;
+    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||idPrefix+String(next).padStart(5,'0'),
       password='';
     const f=(field,label,value='',type='text',ro=false)=>`<label class="block text-xs font-bold">${label}<input id="v7-admin-${field}" type="${type}" value="${esc(value)}" ${ro?'readonly':''} class="mt-1 w-full border rounded-xl px-3 py-2.5 font-normal ${ro?'bg-slate-100':''}"></label>`;
-    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','','password')}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
+    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','','password')}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
     const modal=accountModal((a?'Modificar ':'Crear nuevo ')+(ag?'agente':'remitente'),body);
     $('sendwayo-admin-account-save').onclick=()=>window.sendwayoSaveAccountForm(view,id);
   };
@@ -8219,12 +8220,13 @@ window.sendwayoShareReceipt=async function(){
 
   window.sendwayoSaveAccountForm=async function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede guardar cuentas.');
-    const name=$('v7-admin-name')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',code=$('v7-admin-code')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';
-    if(!name||!username||!code||!email||!phone)return deny('Complete nombre, usuario, código, correo y celular.');
+    const name=$('v7-admin-name')?.value.trim()||'',ident=$('v7-admin-id')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',code=$('v7-admin-code')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';
+    if(!name||!ident||!username||!code||!email||!phone)return deny('Complete ID, nombre, usuario, código, correo y celular.');
+    if(!/^[A-Za-z0-9_-]{3,32}$/.test(ident))return deny('El ID debe tener entre 3 y 32 caracteres: letras, números, guion o guion bajo.');
     if(!/^\S+@\S+\.\S+$/.test(email))return deny('El correo no es válido.');
     const fb=window.sendwayoFirebase;if(!fb?.db||!fb?.auth?.currentUser)return deny('No hay una sesión administrativa confirmada en Firebase.');
     let a=id?findAccount(id):null;const ag=view==='agentes',roleValue=ag?'agente':'remitente';
-    const duplicate=accountArrays().find(x=>x!==a&&(norm(x.username)===norm(username)||norm(x.codigo||x.code)===norm(code)));
+    const duplicate=accountArrays().find(x=>x!==a&&(norm(x.id)===norm(ident)||(Array.isArray(x.idAliases)&&x.idAliases.some(v=>norm(v)===norm(ident)))||norm(x.username)===norm(username)||norm(x.codigo||x.code)===norm(code)));
     if(duplicate)return deny('Ese usuario o código ya está asignado a otra cuenta.');
     const btn=$('sendwayo-admin-account-save');if(btn){btn.disabled=true;btn.textContent='Guardando en Firebase…';}
     try{
@@ -8238,13 +8240,14 @@ window.sendwayoShareReceipt=async function(){
         try{credential=await secondaryAuth.createUserWithEmailAndPassword(email,password);}finally{try{await secondaryAuth.signOut();}catch(e){}}
         const uid=credential.user.uid,dbKey=uid;
         let next=1,prefix=ag?'AGE':'REM';while(accountArrays().some(x=>norm(x.id)===norm(prefix+String(next).padStart(5,'0'))))next++;
-        const idNew=prefix+String(next).padStart(5,'0');
+        const idNew=ident;
         const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).set(profile);
         if(ag)await fb.db.ref('sendwayo_express_v2/agentAuth/'+uid).set({authUid:uid,active:true,userId:dbKey,role:'agente',createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid});
       }else{
         const dbKey=text(a.dbUserKey||a.rtdbUserKey);if(!dbKey)throw new Error('No se encontró el identificador Firebase de esta cuenta; no se modificó.');
-        const patch={name,nombre:name,displayName:name,username,login:username,code,codigo:code,staffId:code,phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:fb.auth.currentUser.uid};
+        const oldId=String(a.id||'');const idAliases=[...new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(v=>v&&v!==ident))];
+        const patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases,name,nombre:name,displayName:name,username,login:username,code,codigo:code,staffId:code,phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:fb.auth.currentUser.uid};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
         Object.assign(a,patch);
       }
@@ -8437,5 +8440,404 @@ window.sendwayoShareReceipt=async function(){
  window.addEventListener('sendwayo:firebase-ready',refresh);
  window.addEventListener('load',function(){window.setTimeout(refresh,250);});
  window.setInterval(refresh,4000);
+})();
+</script>
+
+
+<!-- SENDWAYO V7: DIRECTORIO GLOBAL DE PAÍSES, PREFIJOS, RUTAS Y CRUD DE BENEFICIARIOS -->
+<style id="sendwayo-v7-global-country-style">
+.sendwayo-v7-country-box{border:1px solid #dbe3ee;border-radius:13px;padding:12px;margin-top:10px;background:#f8fafc}
+.sendwayo-v7-country-box label{display:block;font-size:11px;font-weight:800;color:#334155}
+.sendwayo-v7-country-box select,.sendwayo-v7-country-box input{width:100%;min-width:0;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#fff;color:#10243d;font-size:13px}
+#modal-beneficiario-v162 #v162-ben-pais,#modal-beneficiario-v162 #sendwayo-v7-ben-prefix{min-width:0;max-width:58%;font-size:11px}
+#modal-beneficiario-v162 #v162-ben-tel{min-width:0;flex:1}
+#view-beneficiarios .sendwayo-v7-beneficiary-actions{display:flex;gap:5px;flex-wrap:wrap}
+#view-beneficiarios .sendwayo-v7-beneficiary-actions button{border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700}
+</style>
+<script id="sendwayo-v7-global-countries-beneficiaries-routes">
+(function(){
+ 'use strict';
+ var $=function(id){return document.getElementById(id);};
+ var norm=function(v){return String(v==null?'':v).trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();};
+ var esc=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');};
+ var fallback=[
+  ['DO','Dominican Republic','+1','🇩🇴'],['HT','Haiti','+509','🇭🇹'],['US','United States','+1','🇺🇸'],['CA','Canada','+1','🇨🇦'],
+  ['PR','Puerto Rico','+1-787','🇵🇷'],['JM','Jamaica','+1-876','🇯🇲'],['MX','Mexico','+52','🇲🇽'],['FR','France','+33','🇫🇷'],
+  ['ES','Spain','+34','🇪🇸'],['GB','United Kingdom','+44','🇬🇧'],['IT','Italy','+39','🇮🇹'],['DE','Germany','+49','🇩🇪'],
+  ['BR','Brazil','+55','🇧🇷'],['CO','Colombia','+57','🇨🇴'],['VE','Venezuela','+58','🇻🇪'],['PA','Panama','+507','🇵🇦'],
+  ['CR','Costa Rica','+506','🇨🇷'],['GT','Guatemala','+502','🇬🇹'],['HN','Honduras','+504','🇭🇳'],['SV','El Salvador','+503','🇸🇻'],
+  ['NI','Nicaragua','+505','🇳🇮'],['EC','Ecuador','+593','🇪🇨'],['PE','Peru','+51','🇵🇪'],['BO','Bolivia','+591','🇧🇴'],
+  ['AR','Argentina','+54','🇦🇷'],['CL','Chile','+56','🇨🇱'],['UY','Uruguay','+598','🇺🇾'],['TT','Trinidad and Tobago','+1-868','🇹🇹'],
+  ['BS','Bahamas','+1-242','🇧🇸'],['BB','Barbados','+1-246','🇧🇧'],['AG','Antigua and Barbuda','+1-268','🇦🇬'],
+  ['AU','Australia','+61','🇦🇺'],['CN','China','+86','🇨🇳'],['IN','India','+91','🇮🇳'],['JP','Japan','+81','🇯🇵'],
+  ['NG','Nigeria','+234','🇳🇬'],['GH','Ghana','+233','🇬🇭'],['SN','Senegal','+221','🇸🇳'],['ZA','South Africa','+27','🇿🇦'],
+  ['NL','Netherlands','+31','🇳🇱'],['PT','Portugal','+351','🇵🇹'],['BE','Belgium','+32','🇧🇪'],['CH','Switzerland','+41','🇨🇭']
+ ].map(function(x){return {alpha2:x[0],name:x[1],callingCode:x[2],flag:x[3]};});
+ var countries=fallback.slice(),displayNames=null;
+ try{if(Intl&&Intl.DisplayNames)displayNames=new Intl.DisplayNames(['es'],{type:'region'});}catch(e){}
+ function countryName(c){try{var n=displayNames&&displayNames.of(c.alpha2);if(n&&n!==c.alpha2)return n;}catch(e){}return c.name||c.alpha2;}
+ function normalizeCountry(c){
+  if(!c||!c.alpha2||!c.callingCode)return null;
+  return {alpha2:String(c.alpha2).toUpperCase(),name:String(c.name||c.alpha2),callingCode:String(c.callingCode),flag:String(c.flag||'🌐')};
+ }
+ function getCountry(code){return countries.find(function(c){return c.alpha2===String(code||'').toUpperCase();})||null;}
+ function prefixes(c){
+  if(!c)return [];
+  if(c.alpha2==='DO')return ['+1-809','+1-829','+1-849'];
+  return [c.callingCode];
+ }
+ function countryLabel(c){return (c.flag||'🌐')+' '+countryName(c)+' ('+c.alpha2+') · '+c.callingCode;}
+ function fillCountry(select,selected){
+  if(!select)return;
+  var old=selected||select.value;select.replaceChildren();
+  countries.slice().sort(function(a,b){return countryName(a).localeCompare(countryName(b),'es');}).forEach(function(c){
+   var o=document.createElement('option');o.value=c.alpha2;o.textContent=countryLabel(c);select.appendChild(o);
+  });
+  if(old&&getCountry(old))select.value=old;
+ }
+ function fillPrefix(select,iso,selected){
+  if(!select)return;var c=getCountry(iso)||getCountry('HT'),list=prefixes(c);select.replaceChildren();
+  list.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;select.appendChild(o);});
+  if(selected&&list.indexOf(selected)>=0)select.value=selected;
+ }
+ function refreshCountryWidgets(){
+  mountBeneficiaryCountryControls();mountRouteControls('envio');mountRouteControls('retiro');
+ }
+ window.SENDWAYO_V7_COUNTRIES=countries;
+ var cacheKey='sendwayo_v7_iso3166_itu_e164_countries_v1';
+ try{
+  var cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
+  if(cached&&Array.isArray(cached.rows)&&cached.rows.length>=200&&Date.now()-Number(cached.savedAt||0)<90*86400000){
+   var cacheRows=cached.rows.map(normalizeCountry).filter(Boolean);if(cacheRows.length>=200){countries=cacheRows;window.SENDWAYO_V7_COUNTRIES=countries;}
+  }
+ }catch(e){}
+ window.SENDWAYO_V7_COUNTRIES_READY=(function(){
+  if(typeof fetch!=='function')return Promise.resolve(countries);
+  return fetch('https://staticdata.dev/v1/countries.min.json',{cache:'force-cache'})
+   .then(function(r){if(!r.ok)throw new Error('No se pudo cargar la lista global de países.');return r.json();})
+   .then(function(rows){
+    if(!Array.isArray(rows)||rows.length<200)throw new Error('El catálogo de países está incompleto.');
+    var clean=rows.map(normalizeCountry).filter(Boolean);if(clean.length<200)throw new Error('No se pudo validar el catálogo internacional.');
+    countries=clean;window.SENDWAYO_V7_COUNTRIES=countries;
+    try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),rows:clean}));}catch(e){}
+    refreshCountryWidgets();return countries;
+   })
+   .catch(function(e){console.warn('[SENDWAYO V7] Se utiliza el catálogo local de respaldo:',e);refreshCountryWidgets();return countries;});
+ })();
+ function user(){return window.currentUser||null;}
+ function fb(){return window.sendwayoFirebase||null;}
+ function ownerKey(){var f=fb();return String(f&&f.profileKey||user()&&(user().dbUserKey||user().rtdbUserKey)||'');}
+ function admin(){var u=user();return !!u&&(String(u.role||u.rol||'').toUpperCase().indexOf('ADMIN')>=0||['ADMINADMIN','ADMIN-000'].indexOf(String(u.id||u.codigo||'').toUpperCase())>=0);}
+ function remittee(){var u=user();return !!u&&String(u.role||u.rol||'').toUpperCase().indexOf('REMITENTE')>=0;}
+ function ownerOf(b){var k=ownerKey();return !!k&&[b&&b.userId,b&&b.ownerUserId,b&&b.createdByUserId].some(function(v){return String(v||'')===k;});}
+ function listBeneficiaries(){if(Array.isArray(window.BENEFICIARIOS_DB))return window.BENEFICIARIOS_DB;try{if(typeof BENEFICIARIOS!=='undefined'&&Array.isArray(BENEFICIARIOS))return BENEFICIARIOS;}catch(e){}return [];}
+ function findBeneficiary(id){return listBeneficiaries().find(function(b){return String(b.id)===String(id)||String(b.firebaseKey||'')===String(id);})||null;}
+ function safeKey(v){return String(v||'').replace(/[.#$\/\[\]]/g,'_');}
+ function syncBeneficiaries(rows){
+  window.BENEFICIARIOS_DB=rows;window.BENEF_DB=rows.map(function(b){return {nombre:b.nombre||b.name,telefono:b.telefonoE164||b.telefonoCompleto||b.telefono,id:b.id};});
+  try{if(typeof BENEFICIARIOS!=='undefined'&&Array.isArray(BENEFICIARIOS)){BENEFICIARIOS.splice(0,BENEFICIARIOS.length);rows.forEach(function(b){BENEFICIARIOS.push(Object.assign({},b,{telefonoCompleto:b.telefonoCompleto||b.telefono,estado:b.estado||(b.active===false?'Inactivo':'Activo')}));});}}catch(e){}
+  try{localStorage.setItem('sendwayo_express_oficial_20261029_ben_v162',JSON.stringify(rows));}catch(e){}
+  try{renderBeneficiaries();}catch(e){}
+ }
+ function inferIso(b){
+  if(b&&b.paisIso2&&getCountry(b.paisIso2))return b.paisIso2;
+  var p=String(b&&b.codigoPais||'');
+  var c=countries.find(function(x){return prefixes(x).indexOf(p)>=0||x.callingCode===p;});if(c)return c.alpha2;
+  var digits=String(b&&(b.telefonoE164||b.telefonoCompleto||b.telefono)||'').replace(/\D/g,'');
+  if(digits.indexOf('509')===0)return'HT';if(digits.indexOf('1809')===0||digits.indexOf('1829')===0||digits.indexOf('1849')===0)return'DO';if(digits.indexOf('1')===0)return'US';return'HT';
+ }
+ function mountBeneficiaryCountryControls(){
+  var country=$('v162-ben-pais'),phone=$('v162-ben-tel');if(!country||!phone)return;
+  var parent=country.parentElement;if(!parent)return;
+  var prefix=$('sendwayo-v7-ben-prefix');
+  if(!prefix){prefix=document.createElement('select');prefix.id='sendwayo-v7-ben-prefix';prefix.className='border rounded-full px-2 py-3 text-[11px] bg-white';prefix.style.cssText='width:112px;min-width:82px;flex:0 0 112px';parent.insertBefore(prefix,phone);}
+  parent.style.cssText+=';display:flex;gap:6px;align-items:center;width:100%';
+  country.style.cssText+=';min-width:0;flex:0 1 45%;width:45%';
+  phone.style.cssText+=';min-width:0;flex:1 1 auto';
+  phone.placeholder='Número nacional sin prefijo';
+  var old=country.value,iso=getCountry(old)?old:(countries.find(function(c){return prefixes(c).indexOf(old)>=0||c.callingCode===old;})||getCountry('HT')).alpha2;
+  fillCountry(country,iso);fillPrefix(prefix,iso,prefix.value||(iso==='DO'?'+1-809':undefined));
+  if(country.dataset.sendwayoV7Listener!=='1'){
+   country.dataset.sendwayoV7Listener='1';country.addEventListener('change',function(){fillPrefix(prefix,country.value);});
+  }
+  var help=$('sendwayo-v7-ben-help');
+  if(!help){help=document.createElement('p');help.id='sendwayo-v7-ben-help';help.className='text-[10px] text-slate-500';parent.insertAdjacentElement('afterend',help);}
+  help.textContent='Seleccione país, prefijo y número nacional. El registro conservará el teléfono internacional completo.';
+ }
+ function parsePhone(){
+  var iso=$('v162-ben-pais')&&$('v162-ben-pais').value||'HT',c=getCountry(iso)||getCountry('HT');
+  var prefix=$('sendwayo-v7-ben-prefix')&&$('sendwayo-v7-ben-prefix').value||prefixes(c)[0];
+  var national=String($('v162-ben-tel')&&$('v162-ben-tel').value||'').trim(),digits=national.replace(/\D/g,''),pd=prefix.replace(/\D/g,'');
+  if(digits.length<5||pd.length+digits.length>15)throw new Error('El teléfono debe tener al menos 5 dígitos y no superar 15 dígitos internacionales.');
+  return {iso:iso,country:c,prefix:prefix,national:national,e164:'+'+pd+digits,display:prefix+' '+national};
+ }
+ window.v162_abrirBen=function(origin,id){
+  window._v162_origen=origin||'beneficiarios';window._v162_editBeneficiaryId=id||'';
+  var modal=$('modal-beneficiario-v162');if(!modal){alert('No se encontró el formulario de beneficiarios.');return false;}
+  var row=id?findBeneficiary(id):null;if(id&&!row){alert('No se encontró el beneficiario.');return false;}
+  $('v162-ben-nom').value=row&&(row.nombre||row.name)||'';$('v162-ben-tel').value=row&&(row.telefono||row.phone)||'';
+  $('v162-ben-dir').value=row&&row.direccion||'';$('v162-ben-est').value=row&&(row.estado||(row.active===false?'Inactivo':'Activo'))||'Activo';
+  modal.classList.remove('hidden');modal.style.setProperty('display','flex','important');modal.style.setProperty('z-index','2147483600','important');
+  window.SENDWAYO_V7_COUNTRIES_READY.then(function(){
+   mountBeneficiaryCountryControls();var routeTarget=window._v162_origen==='envio'?$('sendwayo-v7-envio-to'):window._v162_origen==='retiro'?$('sendwayo-v7-retiro-to'):null;var iso=row?inferIso(row):(routeTarget&&routeTarget.value)||'HT';$('v162-ben-pais').value=getCountry(iso)?iso:'HT';
+   fillPrefix($('sendwayo-v7-ben-prefix'),iso,row&&row.codigoPais||undefined);
+  });
+  var save=modal.querySelector('button[onclick*="v162_guardarBen"]');if(save)save.textContent=row?'Guardar cambios del beneficiario':'Guardar beneficiario';
+  var title=modal.querySelector('h3');if(title)title.textContent=row?'Modificar beneficiario':'Agregar nuevo beneficiario';
+  return true;
+ };
+ function renderBeneficiaries(){
+  var root=$('view-beneficiarios');if(!root)return;
+  if(user()&&String(user().role||'').toUpperCase().indexOf('AGENTE')>=0){root.innerHTML='<div class="p-8 text-center font-bold text-red-700">Este módulo no está disponible para agentes.</div>';return;}
+  var rows=listBeneficiaries().filter(function(b){return admin()||ownerOf(b);});
+  root.innerHTML='<section class="p-3 md:p-4 space-y-3"><header class="bg-white border rounded-xl p-3"><div class="font-black text-sm mb-3">Beneficiarios · países y teléfonos internacionales</div><div class="flex flex-wrap items-center gap-2"><button type="button" id="sendwayo-v7-add-beneficiary" class="bg-[#0f2440] text-white px-4 py-2.5 rounded-full text-xs font-bold">＋ Agregar beneficiario</button><input id="sendwayo-v7-beneficiary-search" type="search" placeholder="Buscar nombre, país o teléfono…" class="border rounded-full px-4 py-2.5 text-xs flex-1 min-w-[180px]" oninput="window.sendwayoFilterBeneficiaries(this.value)"><button type="button" class="bg-green-600 text-white px-3 py-2 rounded-full text-xs" onclick="sendwayoExportModule(\'beneficiarios\',\'excel\')">Excel</button><button type="button" class="bg-red-600 text-white px-3 py-2 rounded-full text-xs" onclick="sendwayoExportModule(\'beneficiarios\',\'pdf\')">PDF</button><button type="button" class="bg-blue-700 text-white px-3 py-2 rounded-full text-xs" onclick="sendwayoExportModule(\'beneficiarios\',\'csv\')">CSV</button></div></header><div class="bg-white border rounded-xl overflow-x-auto"><table id="tabla-sendwayo-beneficiarios" class="w-full min-w-[850px] text-xs"><thead class="bg-[#edf2f8]"><tr><th class="p-3">N°</th><th class="p-3 text-left">ID</th><th class="p-3 text-left">Nombre</th><th class="p-3 text-left">País / código</th><th class="p-3 text-left">Teléfono internacional</th><th class="p-3 text-left">Dirección</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th></tr></thead><tbody id="sendwayo-v7-beneficiary-rows"></tbody></table></div></section>';
+  var add=$('sendwayo-v7-add-beneficiary');if(add)add.onclick=function(){window.v162_abrirBen('beneficiarios');};
+  var body=$('sendwayo-v7-beneficiary-rows');
+  body.innerHTML=rows.map(function(b,i){
+   var id=String(b.id||''),c=getCountry(inferIso(b)),iso=c&&c.alpha2||'',prefix=String(b.codigoPais||c&&c.callingCode||''),phone=String(b.telefonoE164||b.telefonoCompleto||((prefix||'')+' '+(b.telefono||b.phone||''))),status=b.estado||(b.active===false?'Inactivo':'Activo');
+   return '<tr class="border-t"><td class="p-3">'+String(i+1).padStart(2,'0')+'</td><td class="p-3 font-bold">'+esc(id)+'</td><td class="p-3 font-bold">'+esc(b.nombre||b.name||'')+'</td><td class="p-3">'+esc(c?countryName(c):b.paisNombre||'')+'<br><b>'+esc(iso)+'</b> · '+esc(prefix)+'</td><td class="p-3">'+esc(phone)+'</td><td class="p-3">'+esc(b.direccion||'')+'</td><td class="p-3">'+esc(status)+'</td><td class="p-3"><div class="sendwayo-v7-beneficiary-actions"><button type="button" class="border" data-edit-beneficiary="'+esc(id)+'">Modificar</button><button type="button" class="border border-red-300 text-red-700" data-delete-beneficiary="'+esc(id)+'">Eliminar</button></div></td></tr>';
+  }).join('')||'<tr><td colspan="8" class="p-6 text-center text-slate-500">No hay beneficiarios registrados.</td></tr>';
+  body.querySelectorAll('[data-edit-beneficiary]').forEach(function(b){b.addEventListener('click',function(){window.v162_abrirBen('beneficiarios',b.dataset.editBeneficiary);});});
+  body.querySelectorAll('[data-delete-beneficiary]').forEach(function(b){b.addEventListener('click',function(){window.v162_borrarBen(b.dataset.deleteBeneficiary);});});
+ }
+ window.v162_renderBen=renderBeneficiaries;
+ window.sendwayoFilterBeneficiaries=function(q){var term=norm(q),body=$('sendwayo-v7-beneficiary-rows');if(!body)return;body.querySelectorAll('tr').forEach(function(tr){tr.hidden=!!term&&!norm(tr.textContent).includes(term);});};
+ window.v162_guardarBen=async function(){
+  var f=fb(),auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db,key=ownerKey();
+  if(!db||!auth||!key){alert('Inicie sesión para guardar el beneficiario en Firebase.');return false;}
+  if(user()&&String(user().role||'').toUpperCase().indexOf('AGENTE')>=0){alert('Los agentes no administran el directorio de beneficiarios.');return false;}
+  var name=String($('v162-ben-nom')&&$('v162-ben-nom').value||'').trim(),address=String($('v162-ben-dir')&&$('v162-ben-dir').value||'').trim(),status=$('v162-ben-est')&&$('v162-ben-est').value||'Activo';
+  if(!name){alert('Introduzca el nombre completo del beneficiario.');return false;}
+  var ph;try{ph=parsePhone();}catch(e){alert(e.message);return false;}
+  var editing=String(window._v162_editBeneficiaryId||''),old=editing?findBeneficiary(editing):null;
+  if(editing&&!old){alert('El beneficiario ya no está disponible.');return false;}
+  if(old&&!admin()&&!ownerOf(old)){alert('Solo administración o el remitente propietario puede modificar este beneficiario.');return false;}
+  var duplicate=listBeneficiaries().find(function(b){if(old&&String(b.id)===String(old.id))return false;var n=String(b.telefonoE164||b.telefonoCompleto||((b.codigoPais||'')+' '+(b.telefono||''))).replace(/\D/g,'');return n===ph.e164.replace(/\D/g,'');});
+  if(duplicate){alert('Ese número internacional ya está registrado.');return false;}
+  var id=old?String(old.id):'BEN-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),dbKey=old&&old.firebaseKey||id;
+  var row=Object.assign({},old||{},{
+   id:id,nombre:name,name:name,telefono:ph.national,phone:ph.national,codigoPais:ph.prefix,telefonoCompleto:ph.display,telefonoE164:ph.e164,
+   paisIso2:ph.iso,paisNombre:countryName(ph.country),direccion:address,estado:status,active:status==='Activo',
+   userId:old&&old.userId||key,ownerUserId:old&&old.ownerUserId||key,ownerAuthUid:old&&old.ownerAuthUid||auth.uid,
+   createdByAuthUid:old&&old.createdByAuthUid||auth.uid,createdByUserId:old&&old.createdByUserId||key,
+   createdAtMs:old&&old.createdAtMs||Date.now(),updatedAtMs:Date.now(),updatedByAuthUid:auth.uid,firebaseKey:dbKey
+  });
+  var btn=$('modal-beneficiario-v162')&&$('modal-beneficiario-v162').querySelector('button[onclick*="v162_guardarBen"]');
+  if(btn){btn.disabled=true;btn.textContent='Guardando en Firebase…';}
+  try{
+   var ref=db.ref('sendwayo_express_v2/beneficiaries/'+safeKey(dbKey));
+   if(old)await ref.update(row);else await ref.set(row);
+   var rows=listBeneficiaries().slice(),at=rows.findIndex(function(b){return String(b.id)===id;});
+   if(at>=0)rows[at]=row;else rows.unshift(row);
+   syncBeneficiaries(rows);window._v162_editBeneficiaryId='';
+   var target=window._v162_origen==='envio'?$ ('v162-envio-ben'):window._v162_origen==='retiro'?$ ('v162-retiro-ben'):null;
+   if(target){target.value=ph.display+' ('+name+')';target.dataset.phone=ph.e164;target.dataset.beneficiaryId=id;target.dispatchEvent(new Event('input',{bubbles:true}));}
+   var modal=$('modal-beneficiario-v162');if(modal){modal.classList.add('hidden');modal.style.removeProperty('display');}
+   alert(old?'Beneficiario actualizado en Firebase.':'Beneficiario guardado en Firebase.');
+   return true;
+  }catch(error){console.error('[SENDWAYO V7 beneficiary save]',error);alert('No se pudo guardar en Firebase: '+(error&&error.message||'permiso o conexión'));return false;}
+  finally{if(btn){btn.disabled=false;btn.textContent=old?'Guardar cambios del beneficiario':'Guardar beneficiario';}}
+ };
+ window.v162_borrarBen=async function(id){
+  var row=findBeneficiary(id);if(!row)return;
+  if(!admin()&&!ownerOf(row)){alert('Solo administración o el remitente propietario puede eliminar este beneficiario.');return;}
+  if(!confirm('¿Eliminar el beneficiario '+(row.nombre||row.name||id)+'?'))return;
+  var f=fb();if(!f||!f.db){alert('No hay conexión con Firebase. No se eliminó el registro.');return;}
+  try{await f.db.ref('sendwayo_express_v2/beneficiaries/'+safeKey(row.firebaseKey||row.id)).remove();syncBeneficiaries(listBeneficiaries().filter(function(x){return String(x.id)!==String(id);}));alert('Beneficiario eliminado de Firebase.');}
+  catch(e){alert('No se pudo eliminar en Firebase: '+(e&&e.message||'permiso o conexión'));}
+ };
+
+ function shortCode(c){return c.alpha2==='DO'?'RD':c.alpha2==='US'?'USA':c.alpha2;}
+ function oldRoutePair(v){
+  var s=norm(v);
+  if(s.indexOf('rd')===0&&s.indexOf('ht')>=0)return ['DO','HT'];
+  if(s.indexOf('ht')===0&&s.indexOf('rd')>=0)return ['HT','DO'];
+  if(s.indexOf('ht')===0&&s.lastIndexOf('ht')>0)return ['HT','HT'];
+  if(s.indexOf('rd')===0&&s.lastIndexOf('rd')>0)return ['DO','DO'];
+  if(s.indexOf('usa')===0&&s.indexOf('rd')>=0)return ['US','DO'];
+  if(s.indexOf('usa')===0&&s.indexOf('ht')>=0)return ['US','HT'];
+  if(s.indexOf('ht')===0&&s.indexOf('usa')>=0)return ['HT','US'];
+  return null;
+ }
+ function routeData(kind){
+  var from=getCountry($('sendwayo-v7-'+kind+'-from')&&$('sendwayo-v7-'+kind+'-from').value)||getCountry(kind==='envio'?'DO':'HT');
+  var to=getCountry($('sendwayo-v7-'+kind+'-to')&&$('sendwayo-v7-'+kind+'-to').value)||getCountry('HT');
+  var prov=String($('sendwayo-v7-'+kind+'-provider')&&$('sendwayo-v7-'+kind+'-provider').value||'Transferencia internacional').trim();
+  var note=String($('sendwayo-v7-'+kind+'-note')&&$('sendwayo-v7-'+kind+'-note').value||'').trim();
+  var currency=$('sendwayo-v7-'+kind+'-currency')&&$('sendwayo-v7-'+kind+'-currency').value||(from.alpha2==='HT'?'HTG':'DOP');
+  var route='';
+  if(from.alpha2==='DO'&&to.alpha2==='HT')route='RD → HT '+prov;
+  else if(from.alpha2==='HT'&&to.alpha2==='DO')route='HT → RD '+prov;
+  else if(from.alpha2==='HT'&&to.alpha2==='HT')route='HT → HT '+prov+' - Tarifa por rango';
+  else if(from.alpha2==='DO'&&to.alpha2==='DO')route='RD → RD '+prov;
+  else route=shortCode(from)+' → '+shortCode(to)+' (Internacional) '+prov;
+  var details='País de origen: '+countryName(from)+' ('+from.alpha2+'); país de destino: '+countryName(to)+' ('+to.alpha2+'); proveedor/modalidad: '+prov+(note?'; detalle: '+note:'');
+  return {from:from,to:to,provider:prov,note:note,currency:currency,route:route,details:details};
+ }
+ function updateRouteCalc(kind){
+  var d=routeData(kind),input=$('v162-'+kind+'-monto'),amount=Number(input&&input.value||0);if(!Number.isFinite(amount)||amount<0)amount=0;
+  var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur;
+  if(d.from.alpha2==='HT'&&d.to.alpha2==='HT'){
+   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';
+  }else{
+   fee=Math.round(amount*.08*100)/100;net=amount-fee;
+   if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
+   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur='HTG';received=net/2.3;receivedCur='DOP';}
+   else{cur=d.currency;received=net;receivedCur=cur;}
+  }
+  var fmt=function(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  var el=$('v162-'+kind+'-neto');if(el)el.textContent=fmt(net)+' '+cur;
+  el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
+  el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
+  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Tasa 2.30':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
+  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
+ }
+ function mountRouteControls(kind){
+  var route=$('v162-'+kind+'-ruta'),modal=$('modal-'+kind+'-v162');if(!route||!modal)return;
+  var id='sendwayo-v7-route-box-'+kind,box=$(id);
+  if(!box){
+   box=document.createElement('div');box.id=id;box.className='sendwayo-v7-country-box space-y-2';
+   box.innerHTML='<div class="font-black text-xs text-[#12366a]">Ruta internacional · país de origen y destino</div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><label>País de origen<select id="sendwayo-v7-'+kind+'-from"></select></label><label>País de destino<select id="sendwayo-v7-'+kind+'-to"></select></label></div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><label>Proveedor / modalidad<input id="sendwayo-v7-'+kind+'-provider" type="text" placeholder="Ej. NatCash, MonCash, ventanilla o transferencia"></label><label>Moneda del balance utilizado<select id="sendwayo-v7-'+kind+'-currency"><option value="DOP">DOP · Pesos dominicanos</option><option value="HTG">HTG · Gourdes haitianos</option></select></label></div>'+
+    '<label>Detalle adicional (opcional)<input id="sendwayo-v7-'+kind+'-note" type="text" placeholder="Ciudad, referencia o instrucción de entrega"></label>'+
+    '<p class="text-[10px] text-slate-500">Las rutas nuevas quedan registradas con ambos países e ISO. Las tasas conocidas de RD/HT se conservan; para otros corredores no se convierte moneda automáticamente y la entrega requiere proveedor autorizado.</p>';
+   route.insertAdjacentElement('afterend',box);
+  }
+  if(!route.querySelector('option[value="SENDWAYO_CUSTOM_ROUTE"]')){
+   var op=document.createElement('option');op.value='SENDWAYO_CUSTOM_ROUTE';op.textContent='Otros países / ruta internacional';route.appendChild(op);
+  }
+  var from=$('sendwayo-v7-'+kind+'-from'),to=$('sendwayo-v7-'+kind+'-to');
+  fillCountry(from,from.value|| (kind==='envio'?'DO':'HT'));fillCountry(to,to.value||'HT');
+  var pair=oldRoutePair(route.value);if(pair){from.value=pair[0];to.value=pair[1];}
+  var currency=$('sendwayo-v7-'+kind+'-currency');
+  if(!currency.dataset.sendwayoBound){
+   currency.dataset.sendwayoBound='1';
+   route.addEventListener('change',function(){
+    var p=oldRoutePair(route.value);if(p){from.value=p[0];to.value=p[1];}
+    var v=route.value||'',provider=$('sendwayo-v7-'+kind+'-provider');
+    if(provider&&!provider.value)provider.value=/natcash/i.test(v)?'NatCash':/moncash/i.test(v)?'MonCash':'Transferencia internacional';
+    updateRouteCalc(kind);
+   });
+   from.addEventListener('change',function(){currency.value=from.value==='HT'?'HTG':'DOP';updateRouteCalc(kind);});
+   to.addEventListener('change',function(){updateRouteCalc(kind);});
+   currency.addEventListener('change',function(){updateRouteCalc(kind);});
+   $('sendwayo-v7-'+kind+'-provider').addEventListener('input',function(){updateRouteCalc(kind);});
+   $('sendwayo-v7-'+kind+'-note').addEventListener('input',function(){updateRouteCalc(kind);});
+   if($('v162-'+kind+'-monto'))$('v162-'+kind+'-monto').addEventListener('input',function(){updateRouteCalc(kind);});
+  }
+  if(!currency.value)currency.value=from.value==='HT'?'HTG':'DOP';
+  updateRouteCalc(kind);
+ }
+ function saveRouteTransaction(kind){
+  var d=routeData(kind),senderValue=$('v162-'+kind+'-rem')&&$('v162-'+kind+'-rem').value||'';
+  var sender=typeof window.sendwayoChooseSender==='function'?window.sendwayoChooseSender(senderValue):null;
+  var amount=Number($('v162-'+kind+'-monto')&&$('v162-'+kind+'-monto').value||0);
+  var beneficiary=String($('v162-'+kind+'-ben')&&$('v162-'+kind+'-ben').value||'').trim();
+  var phone=$('v162-'+kind+'-ben')&&$('v162-'+kind+'-ben').dataset.phone||'';
+  if(!sender){alert('Seleccione un remitente válido.');return false;}
+  if(!beneficiary){alert('Seleccione o escriba el beneficiario.');return false;}
+  if(!Number.isFinite(amount)||amount<=0){alert('Introduzca un monto mayor que cero.');return false;}
+  if(typeof window.sendwayoBuildMoneyTx!=='function'){alert('El registro financiero de SENDWAYO no está disponible.');return false;}
+  try{
+   var t=window.sendwayoBuildMoneyTx(kind==='envio'?'Envío':'Retiro',{route:d.route,sender:sender,amount:amount,beneficiary:beneficiary,phone:phone,detail:d.details+'; remitente: '+(sender.nombre||sender.name||sender.id)+'; beneficiario: '+beneficiary,currency:d.currency});
+   if(!t)return false;
+   t.paisOrigen=countryName(d.from);t.paisOrigenISO2=d.from.alpha2;t.codigoPaisOrigen=d.from.callingCode;
+   t.paisDestino=countryName(d.to);t.paisDestinoISO2=d.to.alpha2;t.codigoPaisDestino=d.to.callingCode;
+   t.countryFrom={iso2:d.from.alpha2,name:countryName(d.from),callingCode:d.from.callingCode};
+   t.countryTo={iso2:d.to.alpha2,name:countryName(d.to),callingCode:d.to.callingCode};
+   t.proveedorDestino=d.provider;t.detalleRutaInternacional=d.note;t.rutaExacta=d.details;
+   if(typeof window.sendwayoPersistTx==='function')window.sendwayoPersistTx();
+   if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();
+   var m=$('modal-'+kind+'-v162');if(m)m.classList.add('hidden');
+   var compact=$('modal-'+kind+'-compacto');if(compact)compact.classList.add('hidden');
+   alert((kind==='envio'?'Envío':'Retiro')+' registrado: '+countryName(d.from)+' → '+countryName(d.to)+'. Quedó pendiente de aprobación.');
+   return true;
+  }catch(e){console.error('[SENDWAYO V7 ruta global]',e);alert(e&&e.message||'No se pudo registrar la transacción.');return false;}
+ }
+ window.v162_guardarEnvio=function(){return saveRouteTransaction('envio');};
+ window.v162_guardarRetiro=function(){return saveRouteTransaction('retiro');};
+ window.v162_renderBen=renderBeneficiaries;
+ function init(){mountBeneficiaryCountryControls();mountRouteControls('envio');mountRouteControls('retiro');}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ window.SENDWAYO_V7_COUNTRIES_READY.then(init);
+ window.addEventListener('load',function(){window.SENDWAYO_V7_COUNTRIES_READY.then(init);});
+ var priorAdd=window.sendwayoAgregarModulo;
+ if(typeof priorAdd==='function')window.sendwayoAgregarModulo=function(view){
+  var result=priorAdd.apply(this,arguments);
+  if(view==='envios'||view==='retiros')window.SENDWAYO_V7_COUNTRIES_READY.then(function(){mountRouteControls(view==='envios'?'envio':'retiro');});
+  if(view==='beneficiarios')window.SENDWAYO_V7_COUNTRIES_READY.then(renderBeneficiaries);
+  return result;
+ };
+ if(typeof window.sendwayoOpenAccountForm==='function'){
+  var oldOpen=window.sendwayoOpenAccountForm;
+  window.sendwayoOpenAccountForm=function(view,id){
+   if(!admin()){alert('Solo Administración puede crear o modificar remitentes y agentes.');return;}
+   var accounts=[];
+   try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
+   try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
+   var a=accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id||'');});})||null;
+   var prefix=view==='agentes'?'AGE':'REM',num=1;
+   if(!a){while(accounts.some(function(x){return String(x.id||'')===prefix+String(num).padStart(5,'0');}))num++;}
+   var visibleId=a?String(a.id):prefix+String(num).padStart(5,'0');
+   oldOpen(view,id||'');
+   var name=$('v7-admin-name'),username=$('v7-admin-username'),code=$('v7-admin-code'),email=$('v7-admin-email'),phone=$('v7-admin-phone');
+   var body=$('sendwayo-admin-account-modal');
+   if(!body)return;
+   var idInput=$('v7-admin-id');
+   if(!idInput){
+    var label=document.createElement('label');label.className='block text-xs font-bold';label.textContent='ID visible de la cuenta (editable por Administración)';
+    var input=document.createElement('input');input.id='v7-admin-id';input.className='mt-1 w-full border rounded-xl px-3 py-2.5 font-normal';input.value=visibleId;
+    label.appendChild(input);var holder=body.querySelector('.p-4.space-y-3');if(holder)holder.insertBefore(label,holder.firstChild);
+   }else idInput.value=visibleId;
+   return;
+  };
+  var originalSave=window.sendwayoSaveAccountForm;
+  window.sendwayoSaveAccountForm=async function(view,id){
+   if(!admin()){alert('Solo Administración puede modificar cuentas.');return false;}
+   var ident=String($('v7-admin-id')&&$('v7-admin-id').value||'').trim();
+   if(!/^[A-Za-z0-9_-]{3,32}$/.test(ident)){alert('El ID debe tener de 3 a 32 caracteres: letras, números, guion o guion bajo.');return false;}
+   var accounts=[];
+   try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
+   try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
+   var a=accounts.find(function(x){return [x.id,x.idAnterior,x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'')===String(id||'');});})||null;
+   var duplicate=accounts.find(function(x){return x!==a&&(String(x.id||'').toLowerCase()===ident.toLowerCase()||(Array.isArray(x.idAliases)&&x.idAliases.some(function(v){return String(v).toLowerCase()===ident.toLowerCase();})));});
+   if(duplicate){alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
+   if(!a){
+    // Para una cuenta nueva, el formulario de Firebase conserva su flujo de creación y utiliza el ID automático.
+    return originalSave.call(this,view,id||'');
+   }
+   var f=fb(),auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db;
+   if(!db||!auth){alert('No hay sesión administrativa confirmada en Firebase.');return false;}
+   var dbKey=String(a.dbUserKey||a.rtdbUserKey||a.firebaseKey||'');
+   if(!dbKey){alert('No se encontró la clave interna de Firebase. No se modificó el ID.');return false;}
+   var name=String($('v7-admin-name')&&$('v7-admin-name').value||'').trim();
+   var username=String($('v7-admin-username')&&$('v7-admin-username').value||'').trim();
+   var code=String($('v7-admin-code')&&$('v7-admin-code').value||'').trim();
+   var phone=String($('v7-admin-phone')&&$('v7-admin-phone').value||'').trim();
+   if(!name||!username||!code||!phone){alert('Complete nombre, usuario, código y celular.');return false;}
+   var duplicateLogin=accounts.find(function(x){return x!==a&&(norm(x.username||x.login)===norm(username)||norm(x.codigo||x.code)===norm(code));});
+   if(duplicateLogin){alert('Ese usuario o código ya está asignado a otra cuenta.');return false;}
+   var oldId=String(a.id||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
+   aliases=[...new Set(aliases)];
+   var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,name:name,nombre:name,displayName:name,username:username,login:username,code:code,codigo:code,staffId:code,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
+   try{
+    await db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
+    Object.assign(a,patch);
+    var live=window.currentUser;if(live&&(live.dbUserKey===dbKey||live.rtdbUserKey===dbKey)){Object.assign(live,patch);live.id=ident;}
+    $('sendwayo-admin-account-modal')&&$('sendwayo-admin-account-modal').remove();
+    alert('ID visible actualizado. La clave interna de Firebase, el UID y los ID anteriores se conservaron como alias.');
+    if(window.showView)window.showView(view);
+    return true;
+   }catch(error){console.error('[SENDWAYO V7 change account ID]',error);alert('No se pudo actualizar el ID en Firebase: '+(error&&error.message||'error de conexión'));return false;}
+  };
+ }
+ document.addEventListener('sendwayo:firebase-ready',function(){
+  setTimeout(function(){if(document.body.dataset.sendwayoActiveView==='beneficiarios')renderBeneficiaries();},0);
+ });
+ document.addEventListener('click',function(ev){
+  var trigger=ev.target&&ev.target.closest?ev.target.closest('button[onclick*="showView(\'beneficiarios\')"]'):null;
+  if(trigger)setTimeout(renderBeneficiaries,80);
+ },true);
 })();
 </script>
