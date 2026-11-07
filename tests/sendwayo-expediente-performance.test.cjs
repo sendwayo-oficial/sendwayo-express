@@ -25,6 +25,7 @@ assert.match(html, /sendwayo:transactions-updated/, 'los datos del expediente y 
 assert.match(html, /translateInterface\(node,languageValue\(\)\)/, 'la traducción debe procesar solo nodos añadidos');
 assert.match(html, /translationPendingRoots/, 'la traducción debe conservar nodos nuevos durante el debounce');
 assert.match(html, /roots\.forEach\(root=>scanTables\(root\)\)/, 'la paginación debe revisar solo vistas/tablas insertadas');
+assert.match(html, /table,tbody,\\.view/, 'la paginación debe volver a observar un tbody reemplazado');
 assert.match(html, /setInterval\(refresh,30000\)/, 'el resumen diario no debe recalcularse cada cuatro segundos');
 assert.match(html, /setInterval\(syncStorage,15000\)/, 'la cola local debe usar un respaldo menos frecuente');
 assert.doesNotMatch(html, /setInterval\(refresh,4000\)/, 'no debe quedar el temporizador de cuatro segundos');
