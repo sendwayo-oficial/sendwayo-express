@@ -9215,7 +9215,10 @@ window.sendwayoShareReceipt=async function(){
  function decorate(){
   const root=$('view-investigacion');if(!root||root.classList.contains('hidden'))return;
   const input=$('sendwayo-investigation-id'),q=norm(input&&input.value),matches=subjects().filter(x=>identity(x).includes(q)),a=matches.length===1?matches[0]:null;
-  root.querySelectorAll('[data-sendwayo-exp-section]').forEach(x=>x.remove());if(!a)return;
+  root.querySelectorAll('[data-sendwayo-exp-section]').forEach(x=>x.remove());
+  root.querySelectorAll('[data-sendwayo-exp-agent-note]').forEach(x=>x.remove());
+  if(!a)return;
+  if(norm(a.role||a.rol).includes('agente'))root.insertAdjacentHTML('afterbegin','<div data-sendwayo-exp-agent-note class="mx-3 mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">Este agente opera con fondos de Administración. No tiene un balance operativo ni una comisión propia independiente; este expediente reúne su actividad y los registros vinculados.</div>');
   root.querySelectorAll('pre').forEach(pre=>{
    try{
     const blocked=/(password|contrasena|clave|secret|token|api.?key|authorization|cvv|pin)/i;
