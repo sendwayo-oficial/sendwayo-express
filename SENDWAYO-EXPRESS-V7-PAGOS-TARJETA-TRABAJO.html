@@ -6904,7 +6904,7 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
-  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;} };
+  window.sendwayoFirebase = { app: authApp, auth, db, get userRoot(){return userRoot;}, get root(){return ROOT;}, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;} };
 
   const norm = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   const txt = v => String(v ?? '').trim();
@@ -6980,7 +6980,7 @@ window.sendwayoShareReceipt=async function(){
       if(!a || typeof a!=='object') return;
       const email=txt(a.email || a.usuario).toLowerCase();
       if(!email.includes('@')) return;
-      const aliases=[a.id,a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
+      const aliases=[a.id,...(Array.isArray(a.previousIds)?a.previousIds:[]),a.codigo,...(Array.isArray(a.previousCodes)?a.previousCodes:[]),a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
       rows.push({email, id:txt(a.id), codigo:txt(a.codigo || a.staffId), nombre:txt(a.nombre || a.name), role:role || a.role, aliases});
     };
     try { add(typeof ADMIN!=='undefined'?ADMIN:null,'ADMIN'); } catch(e){}
@@ -7297,7 +7297,7 @@ window.sendwayoShareReceipt=async function(){
     if(role==='ADMIN') return 'ADMINADMIN';
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
     const supplied=txt(profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.id || profile.idUsuario);
-    let id=known?.id || supplied || key;
+    let id=supplied || known?.id || key;
     if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
     if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
     return id;
@@ -7374,7 +7374,7 @@ window.sendwayoShareReceipt=async function(){
       moneda:currency, fee, feeText:txt(d.feeText || `Comisión: ${fee.toFixed(2)}`), estado:status,
       ruta:txt(d.ruta || d.route || d.service || d.beneficiary || d.beneficiario || categoryType),
       rutaExacta:txt(d.rutaExacta || d.routeExact || d.description || d.beneficiary || d.beneficiario || ''),
-      beneficiario:txt(d.beneficiario || d.beneficiary || ''), beneficiarioTel:txt(d.beneficiarioTel || d.beneficiaryPhone || ''),
+      beneficiario:txt(d.beneficiario || d.beneficiary || ''), beneficiarioTel:txt(d.beneficiarioTel || d.beneficiaryPhone || ''), paisOrigen:txt(d.paisOrigen||d.originCountry||''), paisDestino:txt(d.paisDestino||d.destinationCountry||''), isoPaisOrigen:txt(d.isoPaisOrigen||d.originCountryIso||''), isoPaisDestino:txt(d.isoPaisDestino||d.destinationCountryIso||''), codigoTelefonicoOrigen:txt(d.codigoTelefonicoOrigen||''), codigoTelefonicoDestino:txt(d.codigoTelefonicoDestino||''), monedaOrigen:txt(d.monedaOrigen||d.sourceCurrency||''), monedaDestino:txt(d.monedaDestino||d.destinationCurrency||''), proveedorDestino:txt(d.proveedorDestino||''), referenciaPublica:txt(d.referenciaPublica||d.publicReference||''), beneficiarioId:txt(d.beneficiarioId||''),
       creadorId:txt(d.createdByUserId || d.createdById || d.creadorId || d.actorLegacyId || ''), remitenteId:userId,
       dbUserKey:userId, montoRecibido:txt(d.montoRecibido || d.receivedAmount || d.net || ''),
       _cloudRaw:d
@@ -7446,7 +7446,7 @@ window.sendwayoShareReceipt=async function(){
   function makeAccountValueSnapshot(){return new Map(trackedMoneyAccounts().map(a=>{const m=accountMoney(a);return [txt(a.dbUserKey||a.rtdbUserKey||a.id),{balances:{...m.balances},commissions:{...m.commissions}}]}));}
   function restoreLocalAccounts(){for(const a of trackedMoneyAccounts()){const k=txt(a.dbUserKey||a.rtdbUserKey||a.id),v=state.lastAccountValues.get(k);if(v){a.balances={...v.balances};a.commissions={...v.commissions};a.comisiones=a.commissions;}}try{if(typeof saveAccountValues==='function')saveAccountValues()}catch(e){}try{if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();if(typeof renderPrincipal==='function')renderPrincipal();}catch(e){}}
   function getTransactions(){try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))return TRANSACCIONES}catch(e){}return Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];}
-  function transactionSignature(t){return JSON.stringify({status:txt(t.estado||t.status),amount:Number(t.montoValue??t.amount??0)||0,fee:Number(t.fee??t.commission??0)||0,currency:txt(t.moneda||t.currency||'DOP'),route:txt(t.rutaExacta||t.ruta||t.route),beneficiary:txt(t.beneficiario||t.beneficiary),beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone),net:Number(t.neto??t.net??0)||0,owner:txt(t.remitenteId||t.userId),destination:txt(t.destinoId||t.depositanteId),approvedBy:txt(t.aprobadoPor||t.approvedBy),reviewedBy:txt(t.reviewedByAuthUid||'')});}
+  function transactionSignature(t){return JSON.stringify({status:txt(t.estado||t.status),amount:Number(t.montoValue??t.amount??0)||0,fee:Number(t.fee??t.commission??0)||0,currency:txt(t.moneda||t.currency||'DOP'),route:txt(t.rutaExacta||t.ruta||t.route),beneficiary:txt(t.beneficiario||t.beneficiary),beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone),originCountry:txt(t.paisOrigen||t.originCountry),destinationCountry:txt(t.paisDestino||t.destinationCountry),originIso:txt(t.isoPaisOrigen||t.originCountryIso),destinationIso:txt(t.isoPaisDestino||t.destinationCountryIso),destinationCurrency:txt(t.monedaDestino||t.destinationCurrency),provider:txt(t.proveedorDestino),publicReference:txt(t.referenciaPublica||t.publicReference),net:Number(t.neto??t.net??0)||0,owner:txt(t.remitenteId||t.userId),destination:txt(t.destinoId||t.depositanteId),approvedBy:txt(t.aprobadoPor||t.approvedBy),reviewedBy:txt(t.reviewedByAuthUid||'')});}
   function makeTransactionSnapshot(){return new Map(getTransactions().map(t=>[txt(t.id),transactionSignature(t)]).filter(([id])=>id));}
   function safeDbKey(v){const k=txt(v||'').replace(/[.#$\[\]\/]/g,'_');if(!k||k==='.'||k==='..')throw new Error('El ID de la operación no sirve como clave de base de datos.');return k;}
   function categoryForTx(t){
@@ -7465,7 +7465,7 @@ window.sendwayoShareReceipt=async function(){
   function findDirectoryKey(raw){
     const q=norm(raw);if(!q)return'';
     const row=state.directory.find(r=>{
-      const d=r.data||{};const vals=[r.key,d.id,d.legacyId,d.accountId,d.staffId,d.code,d.codigo,d.authEmail,d.email,d.phone,d.telefono,d.celular,d.name,d.nombre];
+      const d=r.data||{};const vals=[r.key,d.id,d.legacyId,d.accountId,d.staffId,d.code,d.codigo,...(Array.isArray(d.previousIds)?d.previousIds:[]),...(Array.isArray(d.previousCodes)?d.previousCodes:[]),d.authEmail,d.email,d.phone,d.telefono,d.celular,d.name,d.nombre];
       return vals.some(v=>norm(v)===q);
     });return row?row.key:'';
   }
@@ -7503,7 +7503,7 @@ window.sendwayoShareReceipt=async function(){
       ownerName:txt(t.remitenteNombre||t.nombreRemitente||''),createdByAuthUid:uid,createdByUserId:state.profileKey,
       createdByRole:canonicalRole(state.profile,state.profileKey),createdAtMs:Number(t.timestamp)||Date.now(),updatedAtMs:Date.now(),
       route:txt(t.rutaExacta||t.ruta||t.route||t.tipo),beneficiary:txt(t.beneficiario||t.beneficiary||''),
-      beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone||''),receiptId:txt(t.comprobanteId||t.receiptId||''),
+      beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone||''),originCountry:txt(t.paisOrigen||t.originCountry||''),destinationCountry:txt(t.paisDestino||t.destinationCountry||''),originCountryIso:txt(t.isoPaisOrigen||t.originCountryIso||''),destinationCountryIso:txt(t.isoPaisDestino||t.destinationCountryIso||''),originDialCode:txt(t.codigoTelefonicoOrigen||''),destinationDialCode:txt(t.codigoTelefonicoDestino||''),sourceCurrency:txt(t.monedaOrigen||t.sourceCurrency||currency),destinationCurrency:txt(t.monedaDestino||t.destinationCurrency||''),provider:txt(t.proveedorDestino||''),publicReference:txt(t.referenciaPublica||t.publicReference||''),beneficiaryId:txt(t.beneficiarioId||''),receiptId:txt(t.comprobanteId||t.receiptId||''),
       receivedAmount:txt(t.montoRecibido||t.receivedAmount||t.neto||''),accountId:txt(t.cuentaBancaria||t.accountId||''),
       createdAt:txt(t.fecha||t.date||new Date().toISOString()),createdByUserName:txt(window.currentUser?.nombre||window.currentUser?.name||''),
       debitAccountId:canonicalRole(state.profile,state.profileKey)==='REMITENTE'?state.profileKey:'admin'
@@ -7589,7 +7589,7 @@ window.sendwayoShareReceipt=async function(){
         if(actorRole==='ADMIN'||ownerResubmission||agentOwnCorrection){
           patch.amount=transactionAmount(t);patch.commission=category==='deposits'?0:Math.max(0,Number(t.fee??t.commission??0)||0);patch.fee=patch.commission;
           patch.net=Number(t.neto??t.net??(patch.amount-patch.fee))||0;patch.currency=transactionCurrency(t);patch.currencyCode=patch.currency;
-          patch.route=txt(t.rutaExacta||t.ruta||t.route||'');patch.beneficiary=txt(t.beneficiario||t.beneficiary||'');patch.beneficiaryPhone=txt(t.beneficiarioTel||t.beneficiaryPhone||'');
+          patch.route=txt(t.rutaExacta||t.ruta||t.route||'');patch.beneficiary=txt(t.beneficiario||t.beneficiary||'');patch.beneficiaryPhone=txt(t.beneficiarioTel||t.beneficiaryPhone||'');patch.originCountry=txt(t.paisOrigen||t.originCountry||'');patch.destinationCountry=txt(t.paisDestino||t.destinationCountry||'');patch.originCountryIso=txt(t.isoPaisOrigen||t.originCountryIso||'');patch.destinationCountryIso=txt(t.isoPaisDestino||t.destinationCountryIso||'');patch.originDialCode=txt(t.codigoTelefonicoOrigen||'');patch.destinationDialCode=txt(t.codigoTelefonicoDestino||'');patch.sourceCurrency=txt(t.monedaOrigen||t.sourceCurrency||'');patch.destinationCurrency=txt(t.monedaDestino||t.destinationCurrency||'');patch.provider=txt(t.proveedorDestino||'');patch.publicReference=txt(t.referenciaPublica||t.publicReference||'');patch.beneficiaryId=txt(t.beneficiarioId||'');
         }
         // When a remittee resubmits a No coincide operation, adjust the existing hold by the delta.
         // The held amount remains in the same currency; DOP and HTG are never converted or crossed.
@@ -8509,3 +8509,505 @@ window.sendwayoShareReceipt=async function(){
  window.addEventListener("load",function(){retryMenu(4);});
 })();
 </script>
+
+
+<!-- SENDWAYO EXPRESS V7 — PAÍSES INTERNACIONALES, BENEFICIARIOS EDITABLES Y REFERENCIAS -->
+<script id="sendwayo-v7-global-country-beneficiary-tools">
+(function(){
+ 'use strict';
+ if(window.__SENDWAYO_V7_GLOBAL_COUNTRIES__)return;
+ window.__SENDWAYO_V7_GLOBAL_COUNTRIES__=true;
+ const COUNTRIES=[{"iso":"HT","name":"Haití","dials":["+509"],"currency":"HTG","currencies":["HTG","USD"],"flag":"🇭🇹"},{"iso":"DO","name":"República Dominicana","dials":["+1-809","+1-829","+1-849"],"currency":"DOP","currencies":["DOP"],"flag":"🇩🇴"},{"iso":"US","name":"Estados Unidos de América","dials":["+1"],"currency":"USD","currencies":["USD"],"flag":"🇺🇸"},{"iso":"CA","name":"Canadá","dials":["+1"],"currency":"CAD","currencies":["CAD"],"flag":"🇨🇦"},{"iso":"FR","name":"Francia","dials":["+33"],"currency":"EUR","currencies":["EUR"],"flag":"🇫🇷"},{"iso":"MX","name":"México","dials":["+52"],"currency":"MXN","currencies":["MXN"],"flag":"🇲🇽"},{"iso":"BR","name":"Brasil","dials":["+55"],"currency":"BRL","currencies":["BRL"],"flag":"🇧🇷"},{"iso":"GB","name":"Reino Unido de Gran Bretaña e Irlanda del Norte","dials":["+44"],"currency":"GBP","currencies":["GBP"],"flag":"🇬🇧"},{"iso":"ES","name":"España","dials":["+34"],"currency":"EUR","currencies":["EUR"],"flag":"🇪🇸"},{"iso":"JM","name":"Jamaica","dials":["+1-876"],"currency":"JMD","currencies":["JMD"],"flag":"🇯🇲"},{"iso":"AF","name":"Afganistán","dials":["+93"],"currency":"AFN","currencies":["AFN"],"flag":"🇦🇫"},{"iso":"AL","name":"Albania","dials":["+355"],"currency":"ALL","currencies":["ALL"],"flag":"🇦🇱"},{"iso":"DE","name":"Alemania","dials":["+49"],"currency":"EUR","currencies":["EUR"],"flag":"🇩🇪"},{"iso":"AD","name":"Andorra","dials":["+376"],"currency":"EUR","currencies":["EUR"],"flag":"🇦🇩"},{"iso":"AO","name":"Angola","dials":["+244"],"currency":"AOA","currencies":["AOA"],"flag":"🇦🇴"},{"iso":"AI","name":"Anguila","dials":["+1-264"],"currency":"XCD","currencies":["XCD"],"flag":"🇦🇮"},{"iso":"AQ","name":"Antártida","dials":["+672"],"currency":"","currencies":[],"flag":"🇦🇶"},{"iso":"AG","name":"Antigua y Barbuda","dials":["+1-268"],"currency":"XCD","currencies":["XCD"],"flag":"🇦🇬"},{"iso":"SA","name":"Arabia Saudita","dials":["+966"],"currency":"SAR","currencies":["SAR"],"flag":"🇸🇦"},{"iso":"DZ","name":"Argelia","dials":["+213"],"currency":"DZD","currencies":["DZD"],"flag":"🇩🇿"},{"iso":"AR","name":"Argentina","dials":["+54"],"currency":"ARS","currencies":["ARS"],"flag":"🇦🇷"},{"iso":"AM","name":"Armenia","dials":["+374"],"currency":"AMD","currencies":["AMD"],"flag":"🇦🇲"},{"iso":"AW","name":"Aruba","dials":["+297"],"currency":"AWG","currencies":["AWG"],"flag":"🇦🇼"},{"iso":"AU","name":"Australia","dials":["+61"],"currency":"AUD","currencies":["AUD"],"flag":"🇦🇺"},{"iso":"AT","name":"Austria","dials":["+43"],"currency":"EUR","currencies":["EUR"],"flag":"🇦🇹"},{"iso":"AZ","name":"Azerbaiyán","dials":["+994"],"currency":"AZN","currencies":["AZN"],"flag":"🇦🇿"},{"iso":"BS","name":"Bahamas","dials":["+1-242"],"currency":"BSD","currencies":["BSD"],"flag":"🇧🇸"},{"iso":"BH","name":"Bahrein","dials":["+973"],"currency":"BHD","currencies":["BHD"],"flag":"🇧🇭"},{"iso":"BD","name":"Bangladesh","dials":["+880"],"currency":"BDT","currencies":["BDT"],"flag":"🇧🇩"},{"iso":"BB","name":"Barbados","dials":["+1-246"],"currency":"BBD","currencies":["BBD"],"flag":"🇧🇧"},{"iso":"BY","name":"Belarús","dials":["+375"],"currency":"BYN","currencies":["BYN"],"flag":"🇧🇾"},{"iso":"BE","name":"Bélgica","dials":["+32"],"currency":"EUR","currencies":["EUR"],"flag":"🇧🇪"},{"iso":"BZ","name":"Belice","dials":["+501"],"currency":"BZD","currencies":["BZD"],"flag":"🇧🇿"},{"iso":"BJ","name":"Benin","dials":["+229"],"currency":"XOF","currencies":["XOF"],"flag":"🇧🇯"},{"iso":"BM","name":"Bermuda","dials":["+1-441"],"currency":"BMD","currencies":["BMD"],"flag":"🇧🇲"},{"iso":"BT","name":"Bhután","dials":["+975"],"currency":"INR","currencies":["INR","BTN"],"flag":"🇧🇹"},{"iso":"BO","name":"Bolivia (Estado Plurinacional de)","dials":["+591"],"currency":"BOB","currencies":["BOB"],"flag":"🇧🇴"},{"iso":"BQ","name":"Bonaire, San Eustaquio y Saba","dials":["+599"],"currency":"USD","currencies":["USD"],"flag":"🇧🇶"},{"iso":"BA","name":"Bosnia y Herzegovina","dials":["+387"],"currency":"BAM","currencies":["BAM"],"flag":"🇧🇦"},{"iso":"BW","name":"Botswana","dials":["+267"],"currency":"BWP","currencies":["BWP"],"flag":"🇧🇼"},{"iso":"BN","name":"Brunei Darussalam","dials":["+673"],"currency":"BND","currencies":["BND"],"flag":"🇧🇳"},{"iso":"BG","name":"Bulgaria","dials":["+359"],"currency":"EUR","currencies":["EUR"],"flag":"🇧🇬"},{"iso":"BF","name":"Burkina Faso","dials":["+226"],"currency":"XOF","currencies":["XOF"],"flag":"🇧🇫"},{"iso":"BI","name":"Burundi","dials":["+257"],"currency":"BIF","currencies":["BIF"],"flag":"🇧🇮"},{"iso":"CV","name":"Cabo Verde","dials":["+238"],"currency":"CVE","currencies":["CVE"],"flag":"🇨🇻"},{"iso":"KH","name":"Camboya","dials":["+855"],"currency":"KHR","currencies":["KHR"],"flag":"🇰🇭"},{"iso":"CM","name":"Camerún","dials":["+237"],"currency":"XAF","currencies":["XAF"],"flag":"🇨🇲"},{"iso":"TD","name":"Chad","dials":["+235"],"currency":"XAF","currencies":["XAF"],"flag":"🇹🇩"},{"iso":"CZ","name":"Chequia","dials":["+420"],"currency":"CZK","currencies":["CZK"],"flag":"🇨🇿"},{"iso":"CL","name":"Chile","dials":["+56"],"currency":"CLP","currencies":["CLP"],"flag":"🇨🇱"},{"iso":"CN","name":"China","dials":["+86"],"currency":"CNY","currencies":["CNY"],"flag":"🇨🇳"},{"iso":"HK","name":"China, región administrativa especial de Hong Kong","dials":["+852"],"currency":"HKD","currencies":["HKD"],"flag":"🇭🇰"},{"iso":"MO","name":"China, región administrativa especial de Macao","dials":["+853"],"currency":"MOP","currencies":["MOP"],"flag":"🇲🇴"},{"iso":"CY","name":"Chipre","dials":["+357"],"currency":"EUR","currencies":["EUR"],"flag":"🇨🇾"},{"iso":"CO","name":"Colombia","dials":["+57"],"currency":"COP","currencies":["COP"],"flag":"🇨🇴"},{"iso":"KM","name":"Comoras","dials":["+269"],"currency":"KMF","currencies":["KMF"],"flag":"🇰🇲"},{"iso":"CG","name":"Congo","dials":["+242"],"currency":"XAF","currencies":["XAF"],"flag":"🇨🇬"},{"iso":"CR","name":"Costa Rica","dials":["+506"],"currency":"CRC","currencies":["CRC"],"flag":"🇨🇷"},{"iso":"CI","name":"Côte d’Ivoire","dials":["+225"],"currency":"XOF","currencies":["XOF"],"flag":"🇨🇮"},{"iso":"HR","name":"Croacia","dials":["+385"],"currency":"EUR","currencies":["EUR"],"flag":"🇭🇷"},{"iso":"CU","name":"Cuba","dials":["+53"],"currency":"CUP","currencies":["CUP"],"flag":"🇨🇺"},{"iso":"CW","name":"Curazao","dials":["+599"],"currency":"XCG","currencies":["XCG"],"flag":"🇨🇼"},{"iso":"DK","name":"Dinamarca","dials":["+45"],"currency":"DKK","currencies":["DKK"],"flag":"🇩🇰"},{"iso":"DJ","name":"Djibouti","dials":["+253"],"currency":"DJF","currencies":["DJF"],"flag":"🇩🇯"},{"iso":"DM","name":"Dominica","dials":["+1-767"],"currency":"XCD","currencies":["XCD"],"flag":"🇩🇲"},{"iso":"EC","name":"Ecuador","dials":["+593"],"currency":"USD","currencies":["USD"],"flag":"🇪🇨"},{"iso":"EG","name":"Egipto","dials":["+20"],"currency":"EGP","currencies":["EGP"],"flag":"🇪🇬"},{"iso":"SV","name":"El Salvador","dials":["+503"],"currency":"SVC","currencies":["SVC","USD"],"flag":"🇸🇻"},{"iso":"AE","name":"Emiratos Árabes Unidos","dials":["+971"],"currency":"AED","currencies":["AED"],"flag":"🇦🇪"},{"iso":"ER","name":"Eritrea","dials":["+291"],"currency":"ERN","currencies":["ERN"],"flag":"🇪🇷"},{"iso":"SK","name":"Eslovaquia","dials":["+421"],"currency":"EUR","currencies":["EUR"],"flag":"🇸🇰"},{"iso":"SI","name":"Eslovenia","dials":["+386"],"currency":"EUR","currencies":["EUR"],"flag":"🇸🇮"},{"iso":"PS","name":"Estado de Palestina","dials":["+970"],"currency":"","currencies":[],"flag":"🇵🇸"},{"iso":"EE","name":"Estonia","dials":["+372"],"currency":"EUR","currencies":["EUR"],"flag":"🇪🇪"},{"iso":"SZ","name":"Eswatini","dials":["+268"],"currency":"SZL","currencies":["SZL"],"flag":"🇸🇿"},{"iso":"ET","name":"Etiopía","dials":["+251"],"currency":"ETB","currencies":["ETB"],"flag":"🇪🇹"},{"iso":"RU","name":"Federación de Rusia","dials":["+7"],"currency":"RUB","currencies":["RUB"],"flag":"🇷🇺"},{"iso":"FJ","name":"Fiji","dials":["+679"],"currency":"FJD","currencies":["FJD"],"flag":"🇫🇯"},{"iso":"PH","name":"Filipinas","dials":["+63"],"currency":"PHP","currencies":["PHP"],"flag":"🇵🇭"},{"iso":"FI","name":"Finlandia","dials":["+358"],"currency":"EUR","currencies":["EUR"],"flag":"🇫🇮"},{"iso":"GA","name":"Gabón","dials":["+241"],"currency":"XAF","currencies":["XAF"],"flag":"🇬🇦"},{"iso":"GM","name":"Gambia","dials":["+220"],"currency":"GMD","currencies":["GMD"],"flag":"🇬🇲"},{"iso":"GE","name":"Georgia","dials":["+995"],"currency":"GEL","currencies":["GEL"],"flag":"🇬🇪"},{"iso":"GS","name":"Georgia del Sur y las Islas Sandwich del Sur","dials":["+500"],"currency":"","currencies":[],"flag":"🇬🇸"},{"iso":"GH","name":"Ghana","dials":["+233"],"currency":"GHS","currencies":["GHS"],"flag":"🇬🇭"},{"iso":"GI","name":"Gibraltar","dials":["+350"],"currency":"GIP","currencies":["GIP"],"flag":"🇬🇮"},{"iso":"GD","name":"Granada","dials":["+1-473"],"currency":"XCD","currencies":["XCD"],"flag":"🇬🇩"},{"iso":"GR","name":"Grecia","dials":["+30"],"currency":"EUR","currencies":["EUR"],"flag":"🇬🇷"},{"iso":"GL","name":"Groenlandia","dials":["+299"],"currency":"DKK","currencies":["DKK"],"flag":"🇬🇱"},{"iso":"GP","name":"Guadalupe","dials":["+590"],"currency":"EUR","currencies":["EUR"],"flag":"🇬🇵"},{"iso":"GU","name":"Guam","dials":["+1-671"],"currency":"USD","currencies":["USD"],"flag":"🇬🇺"},{"iso":"GT","name":"Guatemala","dials":["+502"],"currency":"GTQ","currencies":["GTQ"],"flag":"🇬🇹"},{"iso":"GF","name":"Guayana Francesa","dials":["+594"],"currency":"EUR","currencies":["EUR"],"flag":"🇬🇫"},{"iso":"GG","name":"Guernsey","dials":["+44"],"currency":"GBP","currencies":["GBP"],"flag":"🇬🇬"},{"iso":"GN","name":"Guinea","dials":["+224"],"currency":"GNF","currencies":["GNF"],"flag":"🇬🇳"},{"iso":"GQ","name":"Guinea Ecuatorial","dials":["+240"],"currency":"XAF","currencies":["XAF"],"flag":"🇬🇶"},{"iso":"GW","name":"Guinea-Bissau","dials":["+245"],"currency":"XOF","currencies":["XOF"],"flag":"🇬🇼"},{"iso":"GY","name":"Guyana","dials":["+592"],"currency":"GYD","currencies":["GYD"],"flag":"🇬🇾"},{"iso":"HN","name":"Honduras","dials":["+504"],"currency":"HNL","currencies":["HNL"],"flag":"🇭🇳"},{"iso":"HU","name":"Hungría","dials":["+36"],"currency":"HUF","currencies":["HUF"],"flag":"🇭🇺"},{"iso":"IN","name":"India","dials":["+91"],"currency":"INR","currencies":["INR"],"flag":"🇮🇳"},{"iso":"ID","name":"Indonesia","dials":["+62"],"currency":"IDR","currencies":["IDR"],"flag":"🇮🇩"},{"iso":"IR","name":"Irán (República Islámica del)","dials":["+98"],"currency":"IRR","currencies":["IRR"],"flag":"🇮🇷"},{"iso":"IQ","name":"Iraq","dials":["+964"],"currency":"IQD","currencies":["IQD"],"flag":"🇮🇶"},{"iso":"IE","name":"Irlanda","dials":["+353"],"currency":"EUR","currencies":["EUR"],"flag":"🇮🇪"},{"iso":"BV","name":"Isla Bouvet","dials":["+47"],"currency":"NOK","currencies":["NOK"],"flag":"🇧🇻"},{"iso":"CX","name":"Isla Christmas","dials":["+61"],"currency":"AUD","currencies":["AUD"],"flag":"🇨🇽"},{"iso":"IM","name":"Isla de Man","dials":["+44"],"currency":"GBP","currencies":["GBP"],"flag":"🇮🇲"},{"iso":"NF","name":"Isla Norfolk","dials":["+672"],"currency":"AUD","currencies":["AUD"],"flag":"🇳🇫"},{"iso":"IS","name":"Islandia","dials":["+354"],"currency":"ISK","currencies":["ISK"],"flag":"🇮🇸"},{"iso":"AX","name":"Islas Åland","dials":["+358"],"currency":"EUR","currencies":["EUR"],"flag":"🇦🇽"},{"iso":"KY","name":"Islas Caimán","dials":["+1-345"],"currency":"KYD","currencies":["KYD"],"flag":"🇰🇾"},{"iso":"CC","name":"Islas Cocos (Keeling)","dials":["+61"],"currency":"AUD","currencies":["AUD"],"flag":"🇨🇨"},{"iso":"CK","name":"Islas Cook","dials":["+682"],"currency":"NZD","currencies":["NZD"],"flag":"🇨🇰"},{"iso":"FO","name":"Islas Feroe","dials":["+298"],"currency":"DKK","currencies":["DKK"],"flag":"🇫🇴"},{"iso":"HM","name":"Islas Heard y McDonald","dials":["+672"],"currency":"AUD","currencies":["AUD"],"flag":"🇭🇲"},{"iso":"FK","name":"Islas Malvinas (Falkland)","dials":["+500"],"currency":"FKP","currencies":["FKP"],"flag":"🇫🇰"},{"iso":"MP","name":"Islas Marianas Septentrionales","dials":["+1-670"],"currency":"USD","currencies":["USD"],"flag":"🇲🇵"},{"iso":"MH","name":"Islas Marshall","dials":["+692"],"currency":"USD","currencies":["USD"],"flag":"🇲🇭"},{"iso":"SB","name":"Islas Salomón","dials":["+677"],"currency":"SBD","currencies":["SBD"],"flag":"🇸🇧"},{"iso":"SJ","name":"Islas Svalbard y Jan Mayen","dials":["+47"],"currency":"NOK","currencies":["NOK"],"flag":"🇸🇯"},{"iso":"TC","name":"Islas Turcas y Caicos","dials":["+1-649"],"currency":"USD","currencies":["USD"],"flag":"🇹🇨"},{"iso":"VG","name":"Islas Vírgenes Británicas","dials":["+1-284"],"currency":"USD","currencies":["USD"],"flag":"🇻🇬"},{"iso":"VI","name":"Islas Vírgenes de los Estados Unidos","dials":["+1-340"],"currency":"USD","currencies":["USD"],"flag":"🇻🇮"},{"iso":"WF","name":"Islas Wallis y Futuna","dials":["+681"],"currency":"XPF","currencies":["XPF"],"flag":"🇼🇫"},{"iso":"IL","name":"Israel","dials":["+972"],"currency":"ILS","currencies":["ILS"],"flag":"🇮🇱"},{"iso":"IT","name":"Italia","dials":["+39"],"currency":"EUR","currencies":["EUR"],"flag":"🇮🇹"},{"iso":"JP","name":"Japón","dials":["+81"],"currency":"JPY","currencies":["JPY"],"flag":"🇯🇵"},{"iso":"JE","name":"Jersey","dials":["+44"],"currency":"GBP","currencies":["GBP"],"flag":"🇯🇪"},{"iso":"JO","name":"Jordania","dials":["+962"],"currency":"JOD","currencies":["JOD"],"flag":"🇯🇴"},{"iso":"KZ","name":"Kazajstán","dials":["+7"],"currency":"KZT","currencies":["KZT"],"flag":"🇰🇿"},{"iso":"KE","name":"Kenya","dials":["+254"],"currency":"KES","currencies":["KES"],"flag":"🇰🇪"},{"iso":"KG","name":"Kirguistán","dials":["+996"],"currency":"KGS","currencies":["KGS"],"flag":"🇰🇬"},{"iso":"KI","name":"Kiribati","dials":["+686"],"currency":"AUD","currencies":["AUD"],"flag":"🇰🇮"},{"iso":"KW","name":"Kuwait","dials":["+965"],"currency":"KWD","currencies":["KWD"],"flag":"🇰🇼"},{"iso":"LS","name":"Lesotho","dials":["+266"],"currency":"LSL","currencies":["LSL","ZAR"],"flag":"🇱🇸"},{"iso":"LV","name":"Letonia","dials":["+371"],"currency":"EUR","currencies":["EUR"],"flag":"🇱🇻"},{"iso":"LB","name":"Líbano","dials":["+961"],"currency":"LBP","currencies":["LBP"],"flag":"🇱🇧"},{"iso":"LR","name":"Liberia","dials":["+231"],"currency":"LRD","currencies":["LRD"],"flag":"🇱🇷"},{"iso":"LY","name":"Libia","dials":["+218"],"currency":"LYD","currencies":["LYD"],"flag":"🇱🇾"},{"iso":"LI","name":"Liechtenstein","dials":["+423"],"currency":"CHF","currencies":["CHF"],"flag":"🇱🇮"},{"iso":"LT","name":"Lituania","dials":["+370"],"currency":"EUR","currencies":["EUR"],"flag":"🇱🇹"},{"iso":"LU","name":"Luxemburgo","dials":["+352"],"currency":"EUR","currencies":["EUR"],"flag":"🇱🇺"},{"iso":"MK","name":"Macedonia del Norte","dials":["+389"],"currency":"MKD","currencies":["MKD"],"flag":"🇲🇰"},{"iso":"MG","name":"Madagascar","dials":["+261"],"currency":"MGA","currencies":["MGA"],"flag":"🇲🇬"},{"iso":"MY","name":"Malasia","dials":["+60"],"currency":"MYR","currencies":["MYR"],"flag":"🇲🇾"},{"iso":"MW","name":"Malawi","dials":["+265"],"currency":"MWK","currencies":["MWK"],"flag":"🇲🇼"},{"iso":"MV","name":"Maldivas","dials":["+960"],"currency":"MVR","currencies":["MVR"],"flag":"🇲🇻"},{"iso":"ML","name":"Malí","dials":["+223"],"currency":"XOF","currencies":["XOF"],"flag":"🇲🇱"},{"iso":"MT","name":"Malta","dials":["+356"],"currency":"EUR","currencies":["EUR"],"flag":"🇲🇹"},{"iso":"MA","name":"Marruecos","dials":["+212"],"currency":"MAD","currencies":["MAD"],"flag":"🇲🇦"},{"iso":"MQ","name":"Martinica","dials":["+596"],"currency":"EUR","currencies":["EUR"],"flag":"🇲🇶"},{"iso":"MU","name":"Mauricio","dials":["+230"],"currency":"MUR","currencies":["MUR"],"flag":"🇲🇺"},{"iso":"MR","name":"Mauritania","dials":["+222"],"currency":"MRU","currencies":["MRU"],"flag":"🇲🇷"},{"iso":"YT","name":"Mayotte","dials":["+262"],"currency":"EUR","currencies":["EUR"],"flag":"🇾🇹"},{"iso":"FM","name":"Micronesia (Estados Federados de)","dials":["+691"],"currency":"USD","currencies":["USD"],"flag":"🇫🇲"},{"iso":"MC","name":"Mónaco","dials":["+377"],"currency":"EUR","currencies":["EUR"],"flag":"🇲🇨"},{"iso":"MN","name":"Mongolia","dials":["+976"],"currency":"MNT","currencies":["MNT"],"flag":"🇲🇳"},{"iso":"ME","name":"Montenegro","dials":["+382"],"currency":"EUR","currencies":["EUR"],"flag":"🇲🇪"},{"iso":"MS","name":"Montserrat","dials":["+1-664"],"currency":"XCD","currencies":["XCD"],"flag":"🇲🇸"},{"iso":"MZ","name":"Mozambique","dials":["+258"],"currency":"MZN","currencies":["MZN"],"flag":"🇲🇿"},{"iso":"MM","name":"Myanmar","dials":["+95"],"currency":"MMK","currencies":["MMK"],"flag":"🇲🇲"},{"iso":"NA","name":"Namibia","dials":["+264"],"currency":"NAD","currencies":["NAD","ZAR"],"flag":"🇳🇦"},{"iso":"NR","name":"Nauru","dials":["+674"],"currency":"AUD","currencies":["AUD"],"flag":"🇳🇷"},{"iso":"NP","name":"Nepal","dials":["+977"],"currency":"NPR","currencies":["NPR"],"flag":"🇳🇵"},{"iso":"NI","name":"Nicaragua","dials":["+505"],"currency":"NIO","currencies":["NIO"],"flag":"🇳🇮"},{"iso":"NE","name":"Níger","dials":["+227"],"currency":"XOF","currencies":["XOF"],"flag":"🇳🇪"},{"iso":"NG","name":"Nigeria","dials":["+234"],"currency":"NGN","currencies":["NGN"],"flag":"🇳🇬"},{"iso":"NU","name":"Niue","dials":["+683"],"currency":"NZD","currencies":["NZD"],"flag":"🇳🇺"},{"iso":"NO","name":"Noruega","dials":["+47"],"currency":"NOK","currencies":["NOK"],"flag":"🇳🇴"},{"iso":"NC","name":"Nueva Caledonia","dials":["+687"],"currency":"XPF","currencies":["XPF"],"flag":"🇳🇨"},{"iso":"NZ","name":"Nueva Zelandia","dials":["+64"],"currency":"NZD","currencies":["NZD"],"flag":"🇳🇿"},{"iso":"OM","name":"Omán","dials":["+968"],"currency":"OMR","currencies":["OMR"],"flag":"🇴🇲"},{"iso":"NL","name":"Países Bajos (Reino de los)","dials":["+31"],"currency":"EUR","currencies":["EUR"],"flag":"🇳🇱"},{"iso":"PK","name":"Pakistán","dials":["+92"],"currency":"PKR","currencies":["PKR"],"flag":"🇵🇰"},{"iso":"PW","name":"Palau","dials":["+680"],"currency":"USD","currencies":["USD"],"flag":"🇵🇼"},{"iso":"PA","name":"Panamá","dials":["+507"],"currency":"PAB","currencies":["PAB","USD"],"flag":"🇵🇦"},{"iso":"PG","name":"Papua Nueva Guinea","dials":["+675"],"currency":"PGK","currencies":["PGK"],"flag":"🇵🇬"},{"iso":"PY","name":"Paraguay","dials":["+595"],"currency":"PYG","currencies":["PYG"],"flag":"🇵🇾"},{"iso":"PE","name":"Perú","dials":["+51"],"currency":"PEN","currencies":["PEN"],"flag":"🇵🇪"},{"iso":"PN","name":"Pitcairn","dials":["+870"],"currency":"NZD","currencies":["NZD"],"flag":"🇵🇳"},{"iso":"PF","name":"Polinesia Francesa","dials":["+689"],"currency":"XPF","currencies":["XPF"],"flag":"🇵🇫"},{"iso":"PL","name":"Polonia","dials":["+48"],"currency":"PLN","currencies":["PLN"],"flag":"🇵🇱"},{"iso":"PT","name":"Portugal","dials":["+351"],"currency":"EUR","currencies":["EUR"],"flag":"🇵🇹"},{"iso":"PR","name":"Puerto Rico","dials":["+1"],"currency":"USD","currencies":["USD"],"flag":"🇵🇷"},{"iso":"QA","name":"Qatar","dials":["+974"],"currency":"QAR","currencies":["QAR"],"flag":"🇶🇦"},{"iso":"SY","name":"República Árabe Siria","dials":["+963"],"currency":"SYP","currencies":["SYP"],"flag":"🇸🇾"},{"iso":"CF","name":"República Centroafricana","dials":["+236"],"currency":"XAF","currencies":["XAF"],"flag":"🇨🇫"},{"iso":"KR","name":"República de Corea","dials":["+82"],"currency":"KRW","currencies":["KRW"],"flag":"🇰🇷"},{"iso":"MD","name":"República de Moldova","dials":["+373"],"currency":"MDL","currencies":["MDL"],"flag":"🇲🇩"},{"iso":"CD","name":"República Democrática del Congo","dials":["+243"],"currency":"CDF","currencies":["CDF"],"flag":"🇨🇩"},{"iso":"LA","name":"República Democrática Popular Lao","dials":["+856"],"currency":"LAK","currencies":["LAK"],"flag":"🇱🇦"},{"iso":"KP","name":"República Popular Democrática de Corea","dials":["+850"],"currency":"KPW","currencies":["KPW"],"flag":"🇰🇵"},{"iso":"TZ","name":"República Unida de Tanzanía","dials":["+255"],"currency":"TZS","currencies":["TZS"],"flag":"🇹🇿"},{"iso":"RE","name":"Reunión","dials":["+262"],"currency":"EUR","currencies":["EUR"],"flag":"🇷🇪"},{"iso":"RO","name":"Rumania","dials":["+40"],"currency":"RON","currencies":["RON"],"flag":"🇷🇴"},{"iso":"RW","name":"Rwanda","dials":["+250"],"currency":"RWF","currencies":["RWF"],"flag":"🇷🇼"},{"iso":"EH","name":"Sáhara Occidental","dials":["+212"],"currency":"MAD","currencies":["MAD"],"flag":"🇪🇭"},{"iso":"KN","name":"Saint Kitts y Nevis","dials":["+1-869"],"currency":"XCD","currencies":["XCD"],"flag":"🇰🇳"},{"iso":"WS","name":"Samoa","dials":["+685"],"currency":"WST","currencies":["WST"],"flag":"🇼🇸"},{"iso":"AS","name":"Samoa Americana","dials":["+1-684"],"currency":"USD","currencies":["USD"],"flag":"🇦🇸"},{"iso":"BL","name":"San Barthélemy","dials":["+590"],"currency":"EUR","currencies":["EUR"],"flag":"🇧🇱"},{"iso":"SM","name":"San Marino","dials":["+378"],"currency":"EUR","currencies":["EUR"],"flag":"🇸🇲"},{"iso":"MF","name":"San Martín (parte francesa)","dials":["+590"],"currency":"EUR","currencies":["EUR"],"flag":"🇲🇫"},{"iso":"SX","name":"San Martín (parte Holandesa)","dials":["+1-721"],"currency":"XCG","currencies":["XCG"],"flag":"🇸🇽"},{"iso":"PM","name":"San Pedro y Miquelón","dials":["+508"],"currency":"EUR","currencies":["EUR"],"flag":"🇵🇲"},{"iso":"VC","name":"San Vicente y las Granadinas","dials":["+1-784"],"currency":"XCD","currencies":["XCD"],"flag":"🇻🇨"},{"iso":"SH","name":"Santa Elena","dials":["+290n"],"currency":"SHP","currencies":["SHP"],"flag":"🇸🇭"},{"iso":"LC","name":"Santa Lucía","dials":["+1-758"],"currency":"XCD","currencies":["XCD"],"flag":"🇱🇨"},{"iso":"VA","name":"Santa Sede","dials":["+39-06"],"currency":"EUR","currencies":["EUR"],"flag":"🇻🇦"},{"iso":"ST","name":"Santo Tomé y Príncipe","dials":["+239"],"currency":"STN","currencies":["STN"],"flag":"🇸🇹"},{"iso":"SN","name":"Senegal","dials":["+221"],"currency":"XOF","currencies":["XOF"],"flag":"🇸🇳"},{"iso":"RS","name":"Serbia","dials":["+381p"],"currency":"RSD","currencies":["RSD"],"flag":"🇷🇸"},{"iso":"SC","name":"Seychelles","dials":["+248"],"currency":"SCR","currencies":["SCR"],"flag":"🇸🇨"},{"iso":"SL","name":"Sierra Leona","dials":["+232"],"currency":"SLE","currencies":["SLE"],"flag":"🇸🇱"},{"iso":"SG","name":"Singapur","dials":["+65"],"currency":"SGD","currencies":["SGD"],"flag":"🇸🇬"},{"iso":"SO","name":"Somalia","dials":["+252"],"currency":"SOS","currencies":["SOS"],"flag":"🇸🇴"},{"iso":"LK","name":"Sri Lanka","dials":["+94"],"currency":"LKR","currencies":["LKR"],"flag":"🇱🇰"},{"iso":"ZA","name":"Sudáfrica","dials":["+27"],"currency":"ZAR","currencies":["ZAR"],"flag":"🇿🇦"},{"iso":"SD","name":"Sudán","dials":["+249"],"currency":"SDG","currencies":["SDG"],"flag":"🇸🇩"},{"iso":"SS","name":"Sudán del Sur","dials":["+211"],"currency":"SSP","currencies":["SSP"],"flag":"🇸🇸"},{"iso":"SE","name":"Suecia","dials":["+46"],"currency":"SEK","currencies":["SEK"],"flag":"🇸🇪"},{"iso":"CH","name":"Suiza","dials":["+41"],"currency":"CHF","currencies":["CHF"],"flag":"🇨🇭"},{"iso":"SR","name":"Suriname","dials":["+597"],"currency":"SRD","currencies":["SRD"],"flag":"🇸🇷"},{"iso":"TH","name":"Tailandia","dials":["+66"],"currency":"THB","currencies":["THB"],"flag":"🇹🇭"},{"iso":"TW","name":"Taiwán","dials":["+886"],"currency":"TWD","currencies":["TWD"],"flag":"🇹🇼"},{"iso":"TJ","name":"Tayikistán","dials":["+992"],"currency":"TJS","currencies":["TJS"],"flag":"🇹🇯"},{"iso":"IO","name":"Territorio Británico del Océano Índico","dials":["+246"],"currency":"USD","currencies":["USD"],"flag":"🇮🇴"},{"iso":"TF","name":"Territorio de las Tierras Australes Francesas","dials":["+262"],"currency":"EUR","currencies":["EUR"],"flag":"🇹🇫"},{"iso":"TL","name":"Timor-Leste","dials":["+670"],"currency":"USD","currencies":["USD"],"flag":"🇹🇱"},{"iso":"TG","name":"Togo","dials":["+228"],"currency":"XOF","currencies":["XOF"],"flag":"🇹🇬"},{"iso":"TK","name":"Tokelau","dials":["+690"],"currency":"NZD","currencies":["NZD"],"flag":"🇹🇰"},{"iso":"TO","name":"Tonga","dials":["+676"],"currency":"TOP","currencies":["TOP"],"flag":"🇹🇴"},{"iso":"TT","name":"Trinidad y Tabago","dials":["+1-868"],"currency":"TTD","currencies":["TTD"],"flag":"🇹🇹"},{"iso":"TN","name":"Túnez","dials":["+216"],"currency":"TND","currencies":["TND"],"flag":"🇹🇳"},{"iso":"TR","name":"Türkiye","dials":["+90"],"currency":"TRY","currencies":["TRY"],"flag":"🇹🇷"},{"iso":"TM","name":"Turkmenistán","dials":["+993"],"currency":"TMT","currencies":["TMT"],"flag":"🇹🇲"},{"iso":"TV","name":"Tuvalu","dials":["+688"],"currency":"AUD","currencies":["AUD"],"flag":"🇹🇻"},{"iso":"UA","name":"Ucrania","dials":["+380"],"currency":"UAH","currencies":["UAH"],"flag":"🇺🇦"},{"iso":"UG","name":"Uganda","dials":["+256"],"currency":"UGX","currencies":["UGX"],"flag":"🇺🇬"},{"iso":"UY","name":"Uruguay","dials":["+598"],"currency":"UYU","currencies":["UYU"],"flag":"🇺🇾"},{"iso":"UZ","name":"Uzbekistán","dials":["+998"],"currency":"UZS","currencies":["UZS"],"flag":"🇺🇿"},{"iso":"VU","name":"Vanuatu","dials":["+678"],"currency":"VUV","currencies":["VUV"],"flag":"🇻🇺"},{"iso":"VE","name":"Venezuela (República Bolivariana de)","dials":["+58"],"currency":"VES","currencies":["VES","VED"],"flag":"🇻🇪"},{"iso":"VN","name":"Viet Nam","dials":["+84"],"currency":"VND","currencies":["VND"],"flag":"🇻🇳"},{"iso":"YE","name":"Yemen","dials":["+967"],"currency":"YER","currencies":["YER"],"flag":"🇾🇪"},{"iso":"ZM","name":"Zambia","dials":["+260"],"currency":"ZMW","currencies":["ZMW"],"flag":"🇿🇲"},{"iso":"ZW","name":"Zimbabwe","dials":["+263"],"currency":"ZWG","currencies":["ZWG"],"flag":"🇿🇼"}];
+ const $=id=>document.getElementById(id);
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+ const api=()=>window.sendwayoFirebase||null;
+ const current=()=>window.currentUser||{};
+ const currentRole=()=>norm(current().role||current().rol||(api()&&api().profile&&(api().profile.role||api().profile.rol))).toUpperCase();
+ const isAdmin=()=>currentRole()==='ADMIN'||currentRole()==='ADMINISTRADOR';
+ const isRemitter=()=>currentRole()==='REMITENTE';
+ const profileKey=()=>String((api()&&api().profileKey)||current().dbUserKey||current().id||'');
+ const countryByIso=iso=>COUNTRIES.find(c=>c.iso===String(iso||'').toUpperCase())||null;
+ const countryOptions=()=>COUNTRIES.map(c=>'<option value="'+esc(c.iso)+'">'+esc(c.flag+' '+c.name+' ('+c.dials.join(' / ')+')')+'</option>').join('');
+ const beneficiaryDialOptions=()=>COUNTRIES.flatMap(c=>c.dials.map(d=>'<option value="'+esc(d)+'" data-iso="'+esc(c.iso)+'" data-country="'+esc(c.name)+'" data-currency="'+esc(c.currency)+'">'+esc(c.flag+' '+c.name+' ('+d+')')+'</option>')).join('');
+ const priorityCountry=iso=>countryByIso(iso)||countryByIso('DO');
+ const routeCode=c=>!c?'INT':c.iso==='DO'?'RD':c.iso==='HT'?'HT':c.iso==='US'?'USA':c.iso;
+ const defaultCurrency=c=>c&&c.currency?c.currency.split(',')[0]:'';
+ const randomPart=()=>Math.random().toString(36).slice(2,7).toUpperCase();
+ const dateStamp=()=>{const d=new Date();return String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');};
+ const cleanPhone=v=>String(v||'').replace(/\D/g,'');
+ const safeKey=v=>String(v||'').replace(/[.#$\[\]\/]/g,'_');
+ function ensureBeneficiaryCountryOptions(){
+  const select=$('v162-ben-pais');if(!select)return;
+  const previous=select.value||'+509';
+  select.innerHTML=beneficiaryDialOptions();
+  if([...select.options].some(o=>o.value===previous))select.value=previous;
+  else select.value='+509';
+  if(!$('v162-ben-code')){
+   const name=$('v162-ben-nom');
+   if(name)name.insertAdjacentHTML('afterend','<input id="v162-ben-code" readonly placeholder="Código de beneficiario (se genera al guardar)" class="w-full border rounded-full px-4 py-2.5 text-[11px] bg-slate-50 text-slate-600">');
+  }
+  const heading=$('modal-beneficiario-v162')&&$('modal-beneficiario-v162').querySelector('h3');
+  if(heading)heading.id='sendwayo-v7-beneficiary-heading';
+  const button=$('modal-beneficiario-v162')&&[...$('modal-beneficiario-v162').querySelectorAll('button')].find(b=>/guardar beneficiario/i.test(b.textContent||''));
+  if(button)button.textContent='Guardar / Modificar beneficiario';
+ }
+ function transactionOptions(){
+  const html=countryOptions();
+  ['envio','retiro'].forEach(kind=>{
+   const route=$('v162-'+kind+'-ruta');if(!route)return;
+   const id='sendwayo-v7-'+kind+'-countries';
+   if($(id))return;
+   const initial=kind==='envio'?['DO','HT']:['HT','HT'];
+   const sourceLabel=kind==='envio'?'País desde':'País de origen';
+   const block=document.createElement('div');
+   block.id=id;
+   block.className='rounded-xl border border-blue-100 bg-blue-50/60 p-3 space-y-3';
+   block.innerHTML=
+    '<div class="font-extrabold text-[12px] text-[#12366a]">Ruta internacional — todos los países</div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'+
+     '<div><label for="sendwayo-v7-'+kind+'-from" class="block text-[11px] font-bold mb-1">'+sourceLabel+'</label><select id="sendwayo-v7-'+kind+'-from" class="w-full border rounded-lg p-2.5 text-xs bg-white">'+html+'</select></div>'+
+     '<div><label for="sendwayo-v7-'+kind+'-to" class="block text-[11px] font-bold mb-1">País hacia / destino</label><select id="sendwayo-v7-'+kind+'-to" class="w-full border rounded-lg p-2.5 text-xs bg-white">'+html+'</select></div>'+
+    '</div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'+
+     '<div><label for="sendwayo-v7-'+kind+'-source-currency" class="block text-[11px] font-bold mb-1">Moneda que se descuenta del balance</label><select id="sendwayo-v7-'+kind+'-source-currency" class="w-full border rounded-lg p-2.5 text-xs bg-white"><option value="DOP">DOP — Pesos dominicanos</option><option value="HTG">HTG — Gourdes haitianos</option></select></div>'+
+     '<div><label for="sendwayo-v7-'+kind+'-provider" class="block text-[11px] font-bold mb-1">Proveedor / forma de entrega</label><select id="sendwayo-v7-'+kind+'-provider" class="w-full border rounded-lg p-2.5 text-xs bg-white"><option value="NatCash">NatCash</option><option value="MonCash">MonCash</option><option value="Transferencia bancaria">Transferencia bancaria</option><option value="Billetera digital">Billetera digital</option><option value="Efectivo">Efectivo / ventanilla</option><option value="Otro">Otro proveedor</option></select></div>'+
+    '</div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'+
+     '<div><label for="sendwayo-v7-'+kind+'-dest-currency" class="block text-[11px] font-bold mb-1">Código de moneda en destino</label><input id="sendwayo-v7-'+kind+'-dest-currency" maxlength="8" class="w-full border rounded-lg p-2.5 text-xs uppercase bg-white" placeholder="Ej. USD, EUR, HTG"></div>'+
+     '<div><label for="sendwayo-v7-'+kind+'-received" class="block text-[11px] font-bold mb-1">Monto a recibir (manual, si aplica)</label><input id="sendwayo-v7-'+kind+'-received" type="number" min="0" step="0.01" class="w-full border rounded-lg p-2.5 text-xs bg-white" placeholder="No se hace conversión automática"></div>'+
+    '</div>'+
+    '<p id="sendwayo-v7-'+kind+'-country-note" class="text-[10px] text-slate-600">Se admiten países y territorios internacionales. Para rutas distintas de RD↔Haití no se calcula cambio automático: introduce el monto que recibirá el beneficiario.</p>';
+   route.parentElement.insertAdjacentElement('afterend',block);
+   $('sendwayo-v7-'+kind+'-from').value=initial[0];
+   $('sendwayo-v7-'+kind+'-to').value=initial[1];
+   $('sendwayo-v7-'+kind+'-source-currency').value=initial[0]==='HT'?'HTG':'DOP';
+   $('sendwayo-v7-'+kind+'-dest-currency').value=defaultCurrency(countryByIso(initial[1]));
+   const handle=()=>{updateCurrencyDefaults(kind);syncRoute(kind);calculate(kind);};
+   $('sendwayo-v7-'+kind+'-from').addEventListener('change',handle);
+   $('sendwayo-v7-'+kind+'-to').addEventListener('change',handle);
+   $('sendwayo-v7-'+kind+'-source-currency').addEventListener('change',()=>calculate(kind));
+   $('sendwayo-v7-'+kind+'-dest-currency').addEventListener('input',()=>calculate(kind));
+   $('sendwayo-v7-'+kind+'-received').addEventListener('input',()=>calculate(kind));
+   $('sendwayo-v7-'+kind+'-provider').addEventListener('change',()=>{syncRoute(kind);calculate(kind);});
+   route.addEventListener('change',()=>syncCountriesFromRoute(kind));
+   updateCurrencyDefaults(kind);
+   syncRoute(kind);
+  });
+ }
+ function readContext(kind){
+  const from=countryByIso($('sendwayo-v7-'+kind+'-from')&&$('sendwayo-v7-'+kind+'-from').value)||countryByIso(kind==='envio'?'DO':'HT');
+  const to=countryByIso($('sendwayo-v7-'+kind+'-to')&&$('sendwayo-v7-'+kind+'-to').value)||countryByIso('HT');
+  const sourceCurrency=String($('sendwayo-v7-'+kind+'-source-currency')&&$('sendwayo-v7-'+kind+'-source-currency').value|| (from.iso==='HT'?'HTG':'DOP')).toUpperCase();
+  const destinationCurrency=String($('sendwayo-v7-'+kind+'-dest-currency')&&$('sendwayo-v7-'+kind+'-dest-currency').value||defaultCurrency(to)||sourceCurrency).trim().toUpperCase();
+  const provider=String($('sendwayo-v7-'+kind+'-provider')&&$('sendwayo-v7-'+kind+'-provider').value||'NatCash');
+  let route;
+  if(from.iso==='DO'&&to.iso==='HT')route='RD → HT '+provider+' (8%)';
+  else if(from.iso==='HT'&&to.iso==='DO')route='HT → RD '+provider+' (8%)';
+  else if(from.iso==='HT'&&to.iso==='HT')route='HT → HT '+provider+' - Tarifa por rango - Gourdes';
+  else if(from.iso==='DO'&&to.iso==='DO')route='RD → RD (8%)';
+  else if(from.iso==='DO'&&to.iso==='US')route='RD → USA (8%)';
+  else if(from.iso==='US'&&to.iso==='DO')route='USA → RD (8%)';
+  else route=routeCode(from)+' → '+routeCode(to)+' ('+from.name+' → '+to.name+')';
+  const received=Number($('sendwayo-v7-'+kind+'-received')&&$('sendwayo-v7-'+kind+'-received').value)||0;
+  return {from,to,sourceCurrency,destinationCurrency,provider,route,received};
+ }
+ function updateCurrencyDefaults(kind){
+  const ctxFrom=countryByIso($('sendwayo-v7-'+kind+'-from')&&$('sendwayo-v7-'+kind+'-from').value);
+  const ctxTo=countryByIso($('sendwayo-v7-'+kind+'-to')&&$('sendwayo-v7-'+kind+'-to').value);
+  const source=$('sendwayo-v7-'+kind+'-source-currency');
+  const dest=$('sendwayo-v7-'+kind+'-dest-currency');
+  if(source&&ctxFrom)source.value=ctxFrom.iso==='HT'?'HTG':'DOP';
+  if(dest&&ctxTo)dest.value=defaultCurrency(ctxTo)||source.value||'DOP';
+ }
+ function setRouteOption(kind,value){
+  const select=$('v162-'+kind+'-ruta');if(!select)return;
+  let option=[...select.options].find(o=>o.value===value);
+  if(!option){option=document.createElement('option');option.value=value;option.textContent=value;select.appendChild(option);}
+  select.value=value;
+ }
+ function syncRoute(kind){
+  const ctx=readContext(kind);
+  setRouteOption(kind,ctx.route);
+  const label=$('v162-'+kind+'-monto-label');
+  if(label)label.textContent='MONTO EN ('+ctx.sourceCurrency+') — '+(ctx.sourceCurrency==='HTG'?'GOURDES':'PESOS DOMINICANOS');
+ }
+ function syncCountriesFromRoute(kind){
+  const route=String($('v162-'+kind+'-ruta')&&$('v162-'+kind+'-ruta').value||'').toUpperCase();
+  let from='',to='';
+  if(route.includes('RD')&&route.includes('HT')){from=route.indexOf('RD')<route.indexOf('HT')?'DO':'HT';to=from==='DO'?'HT':'DO';}
+  else if(route.includes('HT')&&route.includes('USA')){from=route.indexOf('HT')<route.indexOf('USA')?'HT':'US';to=from==='HT'?'US':'HT';}
+  else if(route.includes('RD')&&route.includes('USA')){from=route.indexOf('RD')<route.indexOf('USA')?'DO':'US';to=from==='DO'?'US':'DO';}
+  else if(route.includes('RD')){from='DO';to='DO';}
+  else if(route.includes('HT')){from='HT';to='HT';}
+  if(from&&$('sendwayo-v7-'+kind+'-from'))$('sendwayo-v7-'+kind+'-from').value=from;
+  if(to&&$('sendwayo-v7-'+kind+'-to'))$('sendwayo-v7-'+kind+'-to').value=to;
+  const provider=$('sendwayo-v7-'+kind+'-provider');
+  if(provider&&route.includes('MONCASH'))provider.value='MonCash';
+  else if(provider&&route.includes('NATCASH'))provider.value='NatCash';
+  updateCurrencyDefaults(kind);calculate(kind);
+ }
+ function calculate(kind){
+  const ctx=readContext(kind);
+  const amount=Number($('v162-'+kind+'-monto')&&$('v162-'+kind+'-monto').value)||0;
+  const haitiLocal=ctx.from.iso==='HT'&&ctx.to.iso==='HT';
+  const rdToHt=ctx.from.iso==='DO'&&ctx.to.iso==='HT';
+  const htToRd=ctx.from.iso==='HT'&&ctx.to.iso==='DO';
+  const fee=haitiLocal?(Number(kind==='envio'?window.v162_getFeeEnvioHT&&window.v162_getFeeEnvioHT(amount):window.v162_getFeeRetiroHT&&window.v162_getFeeRetiroHT(amount))||0):Math.round(amount*.08*100)/100;
+  const net=Math.max(0,amount-fee);
+  let received=ctx.received;
+  let receivedCurrency=ctx.destinationCurrency;
+  if(received<=0){
+   if(haitiLocal){received=net;receivedCurrency='HTG';}
+   else if(rdToHt){received=net*2.10;receivedCurrency='HTG';}
+   else if(htToRd){received=net/2.30;receivedCurrency='DOP';}
+   else if(ctx.destinationCurrency===ctx.sourceCurrency){received=net;receivedCurrency=ctx.sourceCurrency;}
+  }
+  const receiveText=received>0?received.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+receivedCurrency:'Por confirmar ('+ctx.destinationCurrency+')';
+  const cur=ctx.sourceCurrency;
+  const fmt=n=>Number(n||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const netEl=$(kind==='envio'?'v162-envio-neto':'v162-retiro-neto');
+  const feeEl=$(kind==='envio'?'v162-envio-com':'v162-retiro-com');
+  const recEl=$(kind==='envio'?'v162-envio-rec':'v162-retiro-rec');
+  const rateEl=$(kind==='envio'?'v162-envio-tasa':'v162-retiro-tasa');
+  if(netEl)netEl.textContent=fmt(net)+' '+cur;
+  if(feeEl)feeEl.textContent=fmt(fee)+' '+cur;
+  if(recEl)recEl.textContent=receiveText;
+  if(rateEl)rateEl.textContent=haitiLocal?'Tarifa Haití–Haití':rdToHt?'Tasa 2.10':htToRd?'Tasa 2.30':'Sin conversión automática';
+  const amountEl=$('v162-'+kind+'-monto');
+  if(amountEl){amountEl.dataset.neto=net;amountEl.dataset.fee=fee;amountEl.dataset.rec=receiveText;amountEl.dataset.esHT=cur==='HTG'?'1':'0';}
+  const note=$('sendwayo-v7-'+kind+'-country-note');
+  if(note)note.textContent=(haitiLocal?'Tarifa local HTG por rango. ':rdToHt?'Se conserva la tasa RD→Haití de 2.10. ':htToRd?'Se conserva la tasa Haití→RD de 2.30. ':'Para esta ruta internacional no se convierte la moneda automáticamente. ')+
+    'Descuento: '+cur+'; destino: '+ctx.destinationCurrency+'; números internacionales: '+ctx.from.dials.join('/')+' → '+ctx.to.dials.join('/');
+ }
+ const oldEnvCalc=window.v162_calcEnvio;
+ window.v162_calcEnvio=function(){if($('sendwayo-v7-envio-from'))return calculate('envio');if(typeof oldEnvCalc==='function')return oldEnvCalc.apply(this,arguments);};
+ const oldRetCalc=window.v162_calcRetiro;
+ window.v162_calcRetiro=function(){if($('sendwayo-v7-retiro-from'))return calculate('retiro');if(typeof oldRetCalc==='function')return oldRetCalc.apply(this,arguments);};
+ function selectedBeneficiary(kind){
+  const input=$('v162-'+kind+'-ben');
+  return {name:input&&input.value||'',phone:input&&input.dataset&&input.dataset.phone||'',id:input&&input.dataset&&input.dataset.beneficiaryId||''};
+ }
+ function saveTransfer(kind){
+  const ctx=readContext(kind);
+  const senderInput=$('v162-'+kind+'-rem');
+  const sender=window.sendwayoChooseSender?window.sendwayoChooseSender(senderInput&&senderInput.value||''):null;
+  const amount=Number($('v162-'+kind+'-monto')&&$('v162-'+kind+'-monto').value)||0;
+  const beneficiary=selectedBeneficiary(kind);
+  if(!ctx.from||!ctx.to){window.alert('Seleccione país de origen y país de destino.');return false;}
+  if(!sender||!beneficiary.name||!(amount>0)){window.alert('Complete remitente, beneficiario y monto.');return false;}
+  if(typeof window.sendwayoBuildMoneyTx!=='function'){window.alert('El registro financiero no está disponible. Recargue la página.');return false;}
+  const description='País origen: '+ctx.from.name+' ('+ctx.from.iso+' '+ctx.from.dials.join('/').replace(/\+/g,'')+'); país destino: '+ctx.to.name+' ('+ctx.to.iso+' '+ctx.to.dials.join('/')+'); moneda origen: '+ctx.sourceCurrency+'; moneda destino: '+ctx.destinationCurrency+'; proveedor: '+ctx.provider+'; remitente: '+(sender.nombre||sender.name||sender.id)+'; beneficiario: '+beneficiary.name;
+  const tx=window.sendwayoBuildMoneyTx(kind==='envio'?'Envío':'Retiro',{
+   route:ctx.route,sender,amount,beneficiary:beneficiary.name,phone:beneficiary.phone,currency:ctx.sourceCurrency,detail:description
+  });
+  if(!tx)return false;
+  const manualAmount=ctx.received;
+  const knownCorridor=(ctx.from.iso==='DO'&&ctx.to.iso==='HT')||(ctx.from.iso==='HT'&&ctx.to.iso==='DO')||(ctx.from.iso==='HT'&&ctx.to.iso==='HT');
+  const net=Number(tx.neto)||0;
+  tx.ruta=ctx.route;
+  tx.rutaExacta=description;
+  tx.paisOrigen=ctx.from.name;tx.paisDestino=ctx.to.name;
+  tx.isoPaisOrigen=ctx.from.iso;tx.isoPaisDestino=ctx.to.iso;
+  tx.codigoTelefonicoOrigen=ctx.from.dials.join('/');
+  tx.codigoTelefonicoDestino=ctx.to.dials.join('/');
+  tx.monedaOrigen=ctx.sourceCurrency;tx.monedaDestino=ctx.destinationCurrency;
+  tx.proveedorDestino=ctx.provider;
+  tx.beneficiarioTel=beneficiary.phone||tx.beneficiarioTel||'';
+  tx.beneficiarioId=beneficiary.id||'';
+  if(manualAmount>0)tx.montoRecibido=manualAmount.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+ctx.destinationCurrency;
+  else if(!knownCorridor&&ctx.destinationCurrency!==ctx.sourceCurrency)tx.montoRecibido='Por confirmar ('+ctx.destinationCurrency+')';
+  else if(!knownCorridor)tx.montoRecibido=net.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+ctx.destinationCurrency;
+  const prefix=kind==='envio'?'SW-ENV':'SW-RET';
+  tx.referenciaPublica=prefix+'-'+ctx.from.iso+'-'+ctx.to.iso+'-'+dateStamp()+'-'+randomPart();
+  tx.codigoPublico=tx.referenciaPublica;
+  tx.countryOrigin=tx.paisOrigen;tx.countryDestination=tx.paisDestino;
+  tx.originCountryIso=ctx.from.iso;tx.destinationCountryIso=ctx.to.iso;
+  tx.sourceCurrency=ctx.sourceCurrency;tx.destinationCurrency=ctx.destinationCurrency;
+  window.sendwayoPersistTx&&window.sendwayoPersistTx();
+  window.sendwayoUpdateViews&&window.sendwayoUpdateViews();
+  const modal=$('modal-'+kind+'-v162');if(modal)modal.classList.add('hidden');
+  const compact=$('modal-'+kind+'-compacto');if(compact)compact.classList.add('hidden');
+  calculate(kind);
+  window.alert((kind==='envio'?'Envío':'Retiro')+' guardado como Pendiente. Referencia: '+tx.referenciaPublica+'. El cambio de moneda solo se aplica en las rutas con tasa definida; las demás quedan registradas sin conversión automática.');
+  return true;
+ }
+ window.v162_guardarEnvio=function(){return saveTransfer('envio');};
+ window.v162_guardarRetiro=function(){return saveTransfer('retiro');};
+
+ function refreshBeneficiaryArrays(rows){
+  window.BENEFICIARIOS_DB=rows;
+  try{if(typeof BENEFICIARIOS!=='undefined'&&Array.isArray(BENEFICIARIOS))BENEFICIARIOS.splice(0,BENEFICIARIOS.length,...rows.map(r=>({...r,telefonoCompleto:r.telefonoCompleto||r.codigoPais+' '+r.telefono,estado:r.estado|| (r.active===false?'Inactivo':'Activo')})));}catch(e){}
+  window.BENEF_DB=rows.map(b=>({nombre:b.nombre||b.name,telefono:b.telefono||b.phone,id:b.id}));
+ }
+ function beneficiaryRows(){
+  const db=Array.isArray(window.BENEFICIARIOS_DB)?window.BENEFICIARIOS_DB:[];
+  const local=Array.isArray(window.BENEFICIARIOS)?window.BENEFICIARIOS:[];
+  return db.length?db:local;
+ }
+ function makeLegacyPublicCode(row){
+  const iso=String(row.isoPais||row.countryIso||row.countryCode||'INT').toUpperCase();
+  const suffix=String(row.id||'').replace(/[^a-z0-9]/gi,'').slice(-6).toUpperCase()||randomPart();
+  return 'BEN-'+iso+'-'+suffix;
+ }
+ window.v162_renderBen=function(){
+  const view=$('view-beneficiarios');if(!view)return;
+  const rows=beneficiaryRows().slice().sort((a,b)=>(Number(b.createdAtMs||b.fechaCreacionMs||0)-Number(a.createdAtMs||a.fechaCreacionMs||0)));
+  const bal=window.v162_bal||{htg:0,rd:0,comRD:0,comHTG:0};
+  view.innerHTML=
+   '<div class="rounded-2xl border bg-white p-4"><div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">'+
+   '<div>Balance HTG: '+esc(bal.htg||0)+'</div><div>Balance DOP: '+esc(bal.rd||0)+'</div><div>Comisión DOP: '+esc(bal.comRD||0)+'</div><div>Comisión HTG: '+esc(bal.comHTG||0)+'</div></div></div>'+
+   '<div class="mt-3 flex flex-wrap items-center gap-2 rounded-xl border bg-white p-3"><h2 class="mr-auto font-bold text-sm">Beneficiarios</h2>'+
+   '<input id="sendwayo-v7-beneficiary-search" type="search" placeholder="Buscar por nombre, país o teléfono" class="min-w-[180px] border rounded-full px-3 py-2 text-xs" oninput="window.sendwayoV7FilterBeneficiaries(this.value)">'+
+   '<button type="button" onclick="v162_abrirBen(\\'beneficiarios\\')" class="rounded-full bg-[#0f2440] px-4 py-2 text-xs font-bold text-white">＋ Agregar beneficiario</button></div>'+
+   '<div class="mt-3 overflow-x-auto rounded-xl border bg-white"><table class="w-full min-w-[850px] text-xs"><thead class="bg-slate-100"><tr><th class="p-3 text-left">N°</th><th class="p-3 text-left">ID / CÓDIGO</th><th class="p-3 text-left">NOMBRE</th><th class="p-3 text-left">PAÍS</th><th class="p-3 text-left">TELÉFONO</th><th class="p-3 text-left">DIRECCIÓN</th><th class="p-3 text-left">ESTADO</th><th class="p-3 text-left">ACCIONES</th></tr></thead><tbody id="sendwayo-v7-beneficiary-table"></tbody></table></div>';
+  const tbody=$('sendwayo-v7-beneficiary-table');
+  const canManage=isAdmin()||isRemitter();
+  tbody.innerHTML=rows.map((r,i)=>{
+   const iso=r.isoPais||r.countryIso||r.countryCode||'';
+   const country=r.pais||r.countryName|| (countryByIso(iso)&&countryByIso(iso).name)||'';
+   const code=r.codigo||r.codigoPublico||r.publicCode||makeLegacyPublicCode(r);
+   const phone=r.telefonoCompleto||((r.codigoPais||r.phoneCode||'')+' '+(r.telefono||r.phone||''));
+   const owner=r.userId||r.ownerUserId||r.createdByUserId||'';
+   const can=isAdmin()||(isRemitter()&&String(owner)===profileKey());
+   const action=can?'<button type="button" data-ben-edit="'+esc(r.id)+'" class="rounded-full border px-3 py-1.5 text-blue-800">Modificar</button> <button type="button" data-ben-toggle="'+esc(r.id)+'" class="rounded-full border px-3 py-1.5 '+(r.active===false||norm(r.estado)==='inactivo'?'text-green-700':'text-red-700')+'">'+(r.active===false||norm(r.estado)==='inactivo'?'Activar':'Inactivar')+'</button>':'—';
+   return '<tr class="border-t hover:bg-blue-50"><td class="p-3">'+String(i+1).padStart(2,'0')+'</td><td class="p-3 font-bold">'+esc(code)+'</td><td class="p-3">'+esc(r.nombre||r.name||'')+'</td><td class="p-3">'+esc(country)+' ('+esc(iso)+')</td><td class="p-3">'+esc(phone)+'</td><td class="p-3">'+esc(r.direccion||r.address||'')+'</td><td class="p-3">'+esc(r.estado|| (r.active===false?'Inactivo':'Activo'))+'</td><td class="p-3"><div class="flex flex-wrap gap-1">'+action+'</div></td></tr>';
+  }).join('')||'<tr><td colspan="8" class="p-6 text-center text-slate-500">No hay beneficiarios registrados en esta cuenta.</td></tr>';
+  tbody.addEventListener('click',function(ev){
+   const edit=ev.target.closest('[data-ben-edit]');if(edit)window.sendwayoV7EditBeneficiary(edit.dataset.benEdit);
+   const toggle=ev.target.closest('[data-ben-toggle]');if(toggle)window.sendwayoV7ToggleBeneficiary(toggle.dataset.benToggle);
+  });
+ };
+ window.sendwayoV7FilterBeneficiaries=function(q){
+  const needle=norm(q);
+  const body=$('sendwayo-v7-beneficiary-table');if(!body)return;
+  body.querySelectorAll('tr').forEach(tr=>tr.style.display=norm(tr.innerText).includes(needle)?'':'none');
+ };
+ function closeBen(){
+  const modal=$('modal-beneficiario-v162');if(!modal)return;
+  modal.classList.add('hidden');
+  ['display','z-index','position','inset','pointer-events'].forEach(k=>modal.style.removeProperty(k));
+  window._sendwayoV7EditingBeneficiaryId='';
+ }
+ window.v162_cerrarBen=closeBen;
+ window.v162_abrirBen=function(origin){
+  ensureBeneficiaryCountryOptions();
+  window._v162_origen=origin||'beneficiarios';
+  window._sendwayoV7EditingBeneficiaryId='';
+  const modal=$('modal-beneficiario-v162');if(!modal)return false;
+  ['v162-ben-nom','v162-ben-tel','v162-ben-dir','v162-ben-code'].forEach(id=>{if($(id))$(id).value='';});
+  if($('v162-ben-pais'))$('v162-ben-pais').value='+509';
+  if($('v162-ben-est'))$('v162-ben-est').value='Activo';
+  const title=$('sendwayo-v7-beneficiary-heading');if(title)title.textContent='Agregar nuevo beneficiario';
+  modal.classList.remove('hidden');modal.style.setProperty('display','flex','important');modal.style.position='fixed';modal.style.inset='0';modal.style.zIndex='2147483600';modal.style.pointerEvents='auto';
+  setTimeout(()=>$('v162-ben-nom')&&$('v162-ben-nom').focus(),0);
+  return true;
+ };
+ window.abrirModalBeneficiario=window.v162_abrirBen;
+ window.sendwayoV7EditBeneficiary=function(id){
+  const row=beneficiaryRows().find(b=>String(b.id)===String(id));if(!row)return window.alert('No se encontró el beneficiario.');
+  const owner=String(row.userId||row.ownerUserId||row.createdByUserId||'');
+  if(!isAdmin()&&(!isRemitter()||owner!==profileKey()))return window.alert('Solo Administración o el dueño del beneficiario pueden modificarlo.');
+  ensureBeneficiaryCountryOptions();
+  window._sendwayoV7EditingBeneficiaryId=String(row.id);
+  window._v162_origen='beneficiarios';
+  $('v162-ben-nom').value=row.nombre||row.name||'';
+  $('v162-ben-tel').value=row.telefono||row.phone||'';
+  $('v162-ben-dir').value=row.direccion||row.address||'';
+  $('v162-ben-est').value=row.estado|| (row.active===false?'Inactivo':'Activo');
+  $('v162-ben-code').value=row.codigo||row.codigoPublico||row.publicCode||makeLegacyPublicCode(row);
+  const dial=row.codigoPais||row.phoneCode||'+509';
+  const select=$('v162-ben-pais');
+  if(select){if(![...select.options].some(o=>o.value===dial)){const opt=document.createElement('option');opt.value=dial;opt.textContent=dial;select.appendChild(opt);}select.value=dial;}
+  const title=$('sendwayo-v7-beneficiary-heading');if(title)title.textContent='Modificar beneficiario';
+  const modal=$('modal-beneficiario-v162');modal.classList.remove('hidden');modal.style.setProperty('display','flex','important');modal.style.position='fixed';modal.style.inset='0';modal.style.zIndex='2147483600';modal.style.pointerEvents='auto';
+ };
+ window.v162_guardarBen=async function(){
+  const name=String($('v162-ben-nom')&&$('v162-ben-nom').value||'').trim();
+  const phone=String($('v162-ben-tel')&&$('v162-ben-tel').value||'').trim();
+  const address=String($('v162-ben-dir')&&$('v162-ben-dir').value||'').trim();
+  const status=String($('v162-ben-est')&&$('v162-ben-est').value||'Activo');
+  const select=$('v162-ben-pais');
+  const option=select&&select.options[select.selectedIndex];
+  const dial=String(select&&select.value||'+509');
+  const iso=String(option&&option.dataset.iso||'HT');
+  const country=String(option&&option.dataset.country||(countryByIso(iso)&&countryByIso(iso).name)||'');
+  const digits=cleanPhone(phone),fullDigits=cleanPhone(dial)+digits;
+  if(!name||digits.length<4||digits.length>15)return window.alert('Complete el nombre y un número telefónico válido de 4 a 15 dígitos.');
+  const service=api();
+  if(!service||!service.db||!service.auth||!service.auth.currentUser||!service.profileKey)return window.alert('Inicie sesión con Firebase para guardar o modificar el beneficiario.');
+  const rows=beneficiaryRows();
+  const editId=String(window._sendwayoV7EditingBeneficiaryId||'');
+  const currentRow=editId?rows.find(r=>String(r.id)===editId):null;
+  if(editId&&!currentRow)return window.alert('El beneficiario que intenta modificar ya no está disponible. Actualice la lista.');
+  if(currentRow){
+   const owner=String(currentRow.userId||currentRow.ownerUserId||currentRow.createdByUserId||'');
+   if(!isAdmin()&&(!isRemitter()||owner!==service.profileKey))return window.alert('No tiene permiso para modificar este beneficiario.');
+  }
+  const duplicate=rows.find(r=>{
+   if(editId&&String(r.id)===editId)return false;
+   const rdial=String(r.codigoPais||r.phoneCode||'');
+   const rphone=String(r.telefono||r.phone||'');
+   const normalized=cleanPhone(rdial)+cleanPhone(rphone);
+   return normalized===fullDigits;
+  });
+  if(duplicate)return window.alert('Ese número internacional ya está registrado como beneficiario.');
+  const isoCode=String(iso||'INT').toUpperCase();
+  const code=currentRow?(currentRow.codigo||currentRow.codigoPublico||makeLegacyPublicCode(currentRow)):'BEN-'+isoCode+'-'+dateStamp()+'-'+randomPart();
+  const common={
+   nombre:name,name,telefono:phone,phone,codigoPais:dial,phoneCode:dial,telefonoCompleto:dial+' '+phone,fullPhoneE164:'+'+fullDigits,
+   direccion:address,address,countryName:country,pais:country,isoPais:isoCode,countryIso:isoCode,
+   codigo:code,codigoPublico:code,estado:status,active:status==='Activo',
+   updatedAtMs:Date.now(),updatedByAuthUid:service.auth.currentUser.uid,updatedByUserId:service.profileKey
+  };
+  const id=currentRow?String(currentRow.id):'BEN-'+isoCode+'-'+dateStamp()+'-'+randomPart();
+  const row=Object.assign({},currentRow||{},common,{id});
+  if(!currentRow){
+   row.userId=service.profileKey;row.ownerUserId=service.profileKey;row.ownerAuthUid=service.auth.currentUser.uid;
+   row.createdByAuthUid=service.auth.currentUser.uid;row.createdByUserId=service.profileKey;row.createdAtMs=Date.now();
+  }
+  try{
+   const ref=service.db.ref('sendwayo_express_v2/beneficiaries/'+safeKey(id));
+   if(currentRow)await ref.update(common);else await ref.set(row);
+   const next=currentRow?rows.map(r=>String(r.id)===id?row:r):[row,...rows];
+   refreshBeneficiaryArrays(next);
+   try{localStorage.setItem('sendwayo_express_oficial_20261029_ben_v162',JSON.stringify(next));}catch(e){}
+   window.v162_renderBen();
+   const target=window._v162_origen==='envio'?$ ('v162-envio-ben'):window._v162_origen==='retiro'?$ ('v162-retiro-ben'):null;
+   if(target){target.value=row.telefonoCompleto+' ('+name+')';target.dataset.phone=row.telefonoCompleto;target.dataset.beneficiaryId=id;target.dispatchEvent(new Event('input',{bubbles:true}));}
+   closeBen();
+   window.alert(currentRow?'Beneficiario modificado y sincronizado con Firebase.':'Beneficiario guardado en Firebase con código internacional '+code+'.');
+   return true;
+  }catch(error){
+   window.alert('Firebase no guardó el beneficiario: '+(error&&error.message||'revise permisos y conexión.'));
+   return false;
+  }
+ };
+ window.sendwayoV7ToggleBeneficiary=async function(id){
+  const row=beneficiaryRows().find(r=>String(r.id)===String(id));if(!row)return;
+  const owner=String(row.userId||row.ownerUserId||row.createdByUserId||'');
+  if(!isAdmin()&&(!isRemitter()||owner!==profileKey()))return window.alert('No tiene permiso para cambiar el estado de este beneficiario.');
+  const service=api();if(!service||!service.db||!service.auth.currentUser)return;
+  const active=row.active===false||norm(row.estado)==='inactivo';
+  const patch={active,estado:active?'Activo':'Inactivo',updatedAtMs:Date.now(),updatedByAuthUid:service.auth.currentUser.uid};
+  try{
+   await service.db.ref('sendwayo_express_v2/beneficiaries/'+safeKey(id)).update(patch);
+   const next=beneficiaryRows().map(r=>String(r.id)===String(id)?Object.assign({},r,patch):r);
+   refreshBeneficiaryArrays(next);window.v162_renderBen();
+  }catch(error){window.alert('No se pudo actualizar el estado: '+(error&&error.message||'error de Firebase'));}
+ };
+
+ function accountRows(){return [...(Array.isArray(window.AGENTES)?window.AGENTES:[]),...(Array.isArray(window.REMITENTES)?window.REMITENTES:[])];}
+ let editingAccount=null;
+ function buildAccountEditModal(){
+  if($('sendwayo-v7-account-edit-modal'))return;
+  const modal=document.createElement('div');
+  modal.id='sendwayo-v7-account-edit-modal';
+  modal.className='hidden fixed inset-0 bg-black/60 p-4 items-center justify-center';
+  modal.style.cssText='z-index:2147483602;position:fixed;inset:0;overflow-y:auto';
+  modal.innerHTML=
+   '<div class="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">'+
+    '<div class="mb-4 flex items-center justify-between"><h3 class="font-black text-lg">Modificar remitente / usuario</h3><button type="button" id="sendwayo-v7-account-cancel" class="rounded-full border px-3 py-1">✕</button></div>'+
+    '<div class="space-y-3">'+
+     '<div><label class="block text-xs font-bold mb-1" for="sendwayo-v7-account-name">Nombre completo</label><input id="sendwayo-v7-account-name" class="w-full rounded-lg border p-3 text-sm"></div>'+
+     '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-xs font-bold mb-1" for="sendwayo-v7-account-id">Nuevo ID</label><input id="sendwayo-v7-account-id" class="w-full rounded-lg border p-3 text-sm"></div><div><label class="block text-xs font-bold mb-1" for="sendwayo-v7-account-code">Nuevo código</label><input id="sendwayo-v7-account-code" class="w-full rounded-lg border p-3 text-sm"></div></div>'+
+     '<div><label class="block text-xs font-bold mb-1" for="sendwayo-v7-account-user">Nombre de usuario / alias</label><input id="sendwayo-v7-account-user" class="w-full rounded-lg border p-3 text-sm"></div>'+
+     '<div><label class="block text-xs font-bold mb-1" for="sendwayo-v7-account-phone">Teléfono</label><input id="sendwayo-v7-account-phone" class="w-full rounded-lg border p-3 text-sm"></div>'+
+     '<div><label class="block text-xs font-bold mb-1" for="sendwayo-v7-account-email">Correo de Firebase (no se modifica aquí)</label><input id="sendwayo-v7-account-email" readonly class="w-full rounded-lg border bg-slate-100 p-3 text-sm"></div>'+
+     '<p class="rounded-lg bg-amber-50 p-3 text-[11px] text-amber-900">El ID y el código nuevos se guardan en Firebase. La clave interna de la cuenta se conserva para no desconectar su historial, balances y transacciones. El correo de acceso de Firebase permanece intacto.</p>'+
+     '<button type="button" id="sendwayo-v7-account-save" class="w-full rounded-full bg-[#0f2440] px-4 py-3 font-bold text-white">Guardar cambios en Firebase</button>'+
+    '</div>'+
+   '</div>';
+  document.body.appendChild(modal);
+  $('sendwayo-v7-account-cancel').onclick=()=>{modal.classList.add('hidden');editingAccount=null;};
+  $('sendwayo-v7-account-save').onclick=window.sendwayoV7SaveAccountEdit;
+ }
+ const priorAdminEdit=window.sendwayoAdminEditAccount;
+ window.sendwayoAdminEditAccount=function(id,mode){
+  if(mode==='balance'&&typeof priorAdminEdit==='function')return priorAdminEdit(id,mode);
+  if(!isAdmin())return window.alert('Solo Administración puede modificar los datos y los ID de los usuarios.');
+  const a=[...(window.AGENTES||[]),...(window.REMITENTES||[])].find(x=>String(x.id)===String(id)||String(x.dbUserKey||'')===String(id)||String(x.idAnterior||'')===String(id));
+  if(!a)return window.alert('No se encontró la cuenta que desea modificar.');
+  editingAccount=a;buildAccountEditModal();
+  $('sendwayo-v7-account-name').value=a.nombre||a.name||'';
+  $('sendwayo-v7-account-id').value=a.id||'';
+  $('sendwayo-v7-account-code').value=a.codigo||a.code||'';
+  $('sendwayo-v7-account-user').value=a.username||a.userName||a.user||a.usuario||a.email||'';
+  $('sendwayo-v7-account-phone').value=a.phone||a.telefono||a.celular||'';
+  $('sendwayo-v7-account-email').value=a.email||a.authEmail||'';
+  $('sendwayo-v7-account-edit-modal').classList.remove('hidden');
+  $('sendwayo-v7-account-edit-modal').classList.add('flex');
+ };
+ window.sendwayoV7SaveAccountEdit=async function(){
+  if(!isAdmin()||!editingAccount)return window.alert('Solo Administración puede guardar cambios de usuarios.');
+  const service=api();if(!service||!service.db||!service.auth.currentUser)return window.alert('No se detectó una sesión de Firebase activa.');
+  const name=String($('sendwayo-v7-account-name').value||'').trim();
+  let nextId=String($('sendwayo-v7-account-id').value||'').trim();
+  const nextCode=String($('sendwayo-v7-account-code').value||'').trim();
+  const username=String($('sendwayo-v7-account-user').value||'').trim();
+  const phone=String($('sendwayo-v7-account-phone').value||'').trim();
+  if(!name||!nextId||!nextCode||!username)return window.alert('Nombre, ID, código y usuario son obligatorios.');
+  const role=String(editingAccount.role||'REMITENTE').toUpperCase();
+  if(role==='REMITENTE'&&!/^REM/i.test(nextId))nextId='REM-'+nextId;
+  if(role==='AGENTE'&&!/^AG/i.test(nextId))nextId='AG-'+nextId;
+  const all=[...(window.AGENTES||[]),...(window.REMITENTES||[])];
+  const duplicate=all.find(a=>a!==editingAccount&&(String(a.id||'').toUpperCase()===nextId.toUpperCase()||String(a.codigo||a.code||'').toUpperCase()===nextCode.toUpperCase()));
+  if(duplicate)return window.alert('El ID o el código ya pertenece a otra cuenta.');
+  const dbKey=String(editingAccount.dbUserKey||editingAccount.rtdbUserKey||'');
+  if(!dbKey)return window.alert('No se encontró la clave interna de Firebase. No se cambió ningún dato.');
+  const oldId=String(editingAccount.id||'');
+  const oldCode=String(editingAccount.codigo||editingAccount.code||'');
+  const previousIds=[...new Set([...(editingAccount.previousIds||[]),oldId].filter(Boolean))];
+  const previousCodes=[...new Set([...(editingAccount.previousCodes||[]),oldCode].filter(Boolean))];
+  const patch={
+   id:nextId,legacyId:nextId,accountId:nextId,staffId:nextId,
+   code:nextCode,codigo:nextCode,codigo2:nextCode,
+   name,nombre:name,displayName:name,username,userName:username,
+   phone,telefono:phone,celular:phone,
+   previousIds,previousCodes,
+   updatedAtMs:Date.now(),updatedByAuthUid:service.auth.currentUser.uid
+  };
+  try{
+   const root=service.userRoot||service.db.ref('sendwayo_express_v2/users');
+   await root.child(safeKey(dbKey)).update(patch);
+   Object.assign(editingAccount,patch);
+   editingAccount.idAnterior=oldId;
+   const login=(window.USUARIOS_LOGIN||[]).find(x=>String(x.dbUserKey||'')===dbKey||String(x.id)===oldId);
+   if(login){login.id=nextId;login.codigo=nextCode;login.nombre=name;login.username=username;login.aliases=[...(login.aliases||[]),oldId,oldCode,username,nextId,nextCode];}
+   if(String(current().dbUserKey||'')===dbKey){Object.assign(current(),{id:nextId,codigo:nextCode,nombre:name,name,username,phone,telefono:phone});}
+   $('sendwayo-v7-account-edit-modal').classList.add('hidden');
+   $('sendwayo-v7-account-edit-modal').classList.remove('flex');
+   editingAccount=null;
+   window.renderCustom&&window.renderCustom('secretas');
+   renderRemitters();
+   window.alert('Datos, ID y código actualizados en Firebase. El historial y las operaciones anteriores conservan su vínculo.');
+  }catch(error){window.alert('Firebase no guardó los cambios del usuario: '+(error&&error.message||'revise reglas y conexión.'));}
+ };
+ function renderRemitters(){
+  const view=$('view-remitentes');if(!view)return;
+  const all=Array.isArray(window.REMITENTES)?window.REMITENTES:[];
+  const visible=isAdmin()?all:all.filter(a=>String(a.dbUserKey||'')===profileKey()||String(a.id||'')===String(current().id||''));
+  if(!isAdmin()&&!isRemitter()){view.innerHTML='<div class="m-4 rounded-xl border p-4 text-sm text-slate-600">Este directorio es exclusivo de Administración.</div>';return;}
+  view.innerHTML=
+   '<section class="space-y-3 p-3 md:p-4"><header class="flex flex-wrap items-center gap-2 rounded-xl border bg-white p-3"><h2 class="mr-auto font-black text-sm">Remitentes — administración de usuarios</h2><input id="sendwayo-v7-remitter-search" type="search" placeholder="Buscar por ID, nombre o teléfono" class="rounded-full border px-3 py-2 text-xs"></header>'+
+   '<div class="overflow-x-auto rounded-xl border bg-white"><table class="w-full min-w-[850px] text-xs"><thead class="bg-slate-100"><tr><th class="p-3 text-left">N°</th><th class="p-3 text-left">ID</th><th class="p-3 text-left">CÓDIGO</th><th class="p-3 text-left">NOMBRE</th><th class="p-3 text-left">TELÉFONO</th><th class="p-3 text-left">CORREO</th><th class="p-3 text-left">ESTADO</th><th class="p-3 text-left">ACCIONES</th></tr></thead><tbody id="sendwayo-v7-remitters-table"></tbody></table></div></section>';
+  const tbody=$('sendwayo-v7-remitters-table');
+  tbody.innerHTML=visible.map((a,i)=>{
+   const id=String(a.id||'');const status=a.activo===false||a.active===false?'Inactivo':'Activo';
+   const actions=isAdmin()?'<button type="button" data-remitter-edit="'+esc(id)+'" class="rounded-full border px-3 py-1.5 text-blue-800">Modificar</button>':'Solo consulta';
+   return '<tr class="border-t"><td class="p-3">'+String(i+1).padStart(2,'0')+'</td><td class="p-3 font-bold">'+esc(id)+'</td><td class="p-3">'+esc(a.codigo||a.code||'')+'</td><td class="p-3">'+esc(a.nombre||a.name||'')+'</td><td class="p-3">'+esc(a.phone||a.telefono||a.celular||'')+'</td><td class="p-3">'+esc(a.email||'')+'</td><td class="p-3">'+status+'</td><td class="p-3">'+actions+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" class="p-6 text-center">No hay remitentes disponibles.</td></tr>';
+  tbody.addEventListener('click',function(ev){const b=ev.target.closest('[data-remitter-edit]');if(b)window.sendwayoAdminEditAccount(b.dataset.remitterEdit);});
+  $('sendwayo-v7-remitter-search').addEventListener('input',function(){const n=norm(this.value);tbody.querySelectorAll('tr').forEach(tr=>tr.style.display=norm(tr.innerText).includes(n)?'':'none');});
+ }
+ const previousShow=window.showView;
+ if(typeof previousShow==='function')window.showView=function(view){const result=previousShow.apply(this,arguments);if(view==='remitentes')window.setTimeout(renderRemitters,40);return result;};
+ window.addEventListener('sendwayo:firebase-ready',function(){if(document.body.dataset.sendwayoActiveView==='remitentes')renderRemitters();});
+ window.addEventListener('load',function(){if(document.body.dataset.sendwayoActiveView==='remitentes')renderRemitters();});
+ window.sendwayoV7GlobalCountryCatalog={count:COUNTRIES.length,countries:COUNTRIES};
+ function init(){ensureBeneficiaryCountryOptions();transactionOptions();if($('view-beneficiarios')&&$('view-beneficiarios').classList.contains('hidden')===false)window.v162_renderBen();if(document.body.dataset.sendwayoActiveView==='remitentes')renderRemitters();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ window.addEventListener('sendwayo:firebase-ready',function(){refreshBeneficiaryArrays(beneficiaryRows());if(document.body.dataset.sendwayoActiveView==='beneficiarios')window.v162_renderBen();});
+})();
+</script>
+
