@@ -14,4 +14,7 @@ assert.ok(countries.every(c => typeof c.callingCode === 'string'), 'los territor
 assert.match(html, /if\(!c\|\|!c\.alpha2\|\|!c\.name\)return null/, 'el normalizador debe conservar territorios sin prefijo telefónico');
 assert.match(html, /Sin prefijo telefónico asignado/, 'los territorios sin prefijo deben informarlo en el selector');
 assert.match(html, /no tiene prefijo telefónico asignado/, 'no se debe formar ni guardar un E.164 falso');
+assert.match(html, /window\.SENDWAYO_V7_COUNTRIES_READY=Promise\.resolve\(countries\)/, 'el catálogo local debe estar disponible sin descargarlo');
+assert.doesNotMatch(html, /fetch\('https:\/\/staticdata\.dev/, 'la pantalla no debe depender de una descarga externa del catálogo');
+assert.match(html, /new Intl\.DisplayNames\(\['es'\]/, 'los nombres deben localizarse en español cuando el navegador lo permita');
 console.log('SENDWAYO countries: catálogo global integrado y validaciones correctas.');
