@@ -22,6 +22,7 @@ assert.match(html, /function validate\(event\)/, 'el formulario debe validar rem
 assert.match(html, /password\|contrasena\|clave\|secret\|token/, 'los detalles deben omitir credenciales y secretos');
 assert.match(html, /sendwayo:transactions-updated/, 'los datos del expediente y los avisos deben refrescarse con los cambios en tiempo real');
 assert.match(html, /translateInterface\(node,languageValue\(\)\)/, 'la traducción debe procesar solo nodos añadidos');
+assert.match(html, /translationPendingRoots/, 'la traducción debe conservar nodos nuevos durante el debounce');
 assert.match(html, /roots\.forEach\(root=>scanTables\(root\)\)/, 'la paginación debe revisar solo vistas/tablas insertadas');
 assert.match(html, /setInterval\(refresh,30000\)/, 'el resumen diario no debe recalcularse cada cuatro segundos');
 assert.match(html, /setInterval\(syncStorage,15000\)/, 'la cola local debe usar un respaldo menos frecuente');
