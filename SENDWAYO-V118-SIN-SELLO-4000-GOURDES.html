@@ -3241,44 +3241,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(formato==='pdf'){
       const w=window.open('','_blank');
       if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
-      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'
-<script>
-// SENDWAYO: herramientas de administración de usuarios e identificadores normalizados.
-(function(){
- const adminAccount=()=>typeof ADMIN!=='undefined'?ADMIN:null;
- const agentList=()=>typeof AGENTES!=='undefined'?AGENTES:[];
- const senderList=()=>typeof REMITENTES!=='undefined'?REMITENTES:[];
- const normName=s=>String(s||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
- const initials=s=>normName(s).split(/\s+/).filter(Boolean);
- const codeFor=(role,name)=>{const p=initials(name);const first=(p[0]||'USR').slice(0,3).padEnd(3,'X');const last=(p.length>1?p[p.length-1]:p[0]||'USR').slice(0,3).padEnd(3,'X');return (role==='AGENTE'?'AGE-':role==='REMITENTE'?'REM-':'')+first+last;};
- window.sendwayoAdminEditAccount=function(id,mode){
-  const all=[adminAccount(),...agentList(),...senderList()].filter(Boolean);
-  const a=all.find(x=>String(x.id)===String(id)||String(x.idAnterior||'')===String(id));if(!a)return alert('No se encontró la cuenta.');
-  if(mode==='balance'){if(typeof window.v162_abrirAjustar==='function')window.v162_abrirAjustar(a.nombre||a.name,a.id,a.role);return;}
-  const name=prompt('Nombre completo:',a.nombre||a.name||'');if(name===null)return;
-  const nextId=prompt('ID de usuario:',a.id);if(nextId===null)return;
-  const nextCode=prompt('Código de usuario:',a.codigo||'');if(nextCode===null)return;
-  if(!name.trim()||!nextId.trim()||!nextCode.trim())return alert('Nombre, ID y código son obligatorios.');
-  if(all.some(x=>x!==a&&(String(x.id).toUpperCase()===nextId.trim().toUpperCase()||String(x.codigo||'').toUpperCase()===nextCode.trim().toUpperCase())))return alert('Ese ID o código ya pertenece a otra cuenta.');
-  a.nombre=a.name=name.trim();a.idAnterior=a.id;a.codigoAnterior=a.codigo;a.id=nextId.trim();a.codigo=a.codigo2=nextCode.trim();
-  const login=(window.USUARIOS_LOGIN||[]).find(x=>String(x.idAnterior||x.id)===String(id)||String(x.id)===String(id));if(login){login.id=a.id;login.codigo=a.codigo;login.nombre=a.nombre;login.usuario=login.email||a.email;}
-  try{localStorage.setItem('sendwayo_express_oficial_20261029_accounts_v5',JSON.stringify(all.map(x=>({id:x.id,idAnterior:x.idAnterior,codigo:x.codigo,codigoAnterior:x.codigoAnterior,balances:x.balances,commissions:x.commissions,password:x.password}))));}catch(e){}
-  if(typeof window.renderCustom==='function')window.renderCustom('secretas');else if(typeof window.showView==='function')window.showView('secretas');
- };
- window.sendwayoAdminToggleAccount=function(id){const all=[adminAccount(),...agentList(),...senderList()].filter(Boolean);const a=all.find(x=>String(x.id)===String(id)||String(x.idAnterior||'')===String(id));if(!a)return;a.activo=a.activo===false; if(typeof window.showView==='function')window.showView('secretas');};
- window.sendwayoAdminAddAccount=function(){
-  const role=prompt('Tipo de usuario: AGENTE o REMITENTE','REMITENTE');if(role===null)return;const r=role.trim().toUpperCase();if(!['AGENTE','REMITENTE'].includes(r))return alert('Tipo no válido.');
-  const name=prompt('Nombre y apellido:');if(name===null||!name.trim())return;const email=prompt('Correo electrónico:');if(email===null||!email.trim())return;
-  const list=r==='AGENTE'?agentList():senderList();const prefix=r==='AGENTE'?'AGE':'REM';const n=list.reduce((m,a)=>Math.max(m,Number(String(a.numero||'').replace(/\D/g,''))||0),0)+1;const id=prefix+String(n).padStart(5,'0');const code=codeFor(r,name);
-  if([adminAccount(),...agentList(),...senderList()].some(a=>a&&(a.id===id||a.codigo===code)))return alert('El ID o código ya existe.');
-  const a={id,codigo:code,codigo2:code,numero:String(n).padStart(2,'0'),nombre:name.trim(),name:name.trim(),email:email.trim(),usuario:email.trim(),password:'12345678',contrasena:'12345678',cambioPasswordObligatorio:true,activo:true,role:r,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};list.push(a);
-  (window.USUARIOS_LOGIN||(window.USUARIOS_LOGIN=[])).push({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[],password:'12345678',nombre:a.nombre,role:r,cambioPasswordObligatorio:true});
-  try{localStorage.setItem('sendwayo_express_oficial_20261029_accounts_v5',JSON.stringify([adminAccount(),...agentList(),...senderList()].filter(Boolean).map(x=>({id:x.id,codigo:x.codigo,balances:x.balances,commissions:x.commissions,password:x.password}))));}catch(e){}
-  alert('Usuario agregado. ID: '+id+' | Código: '+code+' | Contraseña inicial: 12345678');if(typeof window.showView==='function')window.showView('secretas');
- };
-})();
-</script>
-</body></html>';
+      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'</body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
       return;
