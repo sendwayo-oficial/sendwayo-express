@@ -82,12 +82,16 @@ El HTML incluye un catálogo local de 250 registros y 250 códigos ISO alfa-2 ú
 - La integración documentada separa orden, autorización del proveedor, webhook autenticado, libro mayor idempotente, liquidación y conciliación.
 - Los secretos deben permanecer en el entorno seguro del servidor/Worker, nunca en el HTML, GitHub, Firebase público o mensajes.
 
-## 6. Pruebas y límites de esta revisión
+## 6. Archivo V7 consolidado y pruebas
 
-La verificación ejecutada en esta sesión es estática:
-- Las aserciones de `tests/sendwayo-expediente-performance.test.cjs` se ejecutan contra el HTML recuperado de la rama.
-- Los bloques JavaScript embebidos se compilan para detectar errores de sintaxis.
-- Se comprueba el número de registros ISO y que el árbol CSS/JS del diseño superior esté presente.
+Archivo de entrega de esta rama: `SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html`. La copia se verificó contra el archivo fuente de la rama antes de esta revisión.
+
+La verificación ejecutada en esta sesión es estática y se ejecutó directamente contra el archivo V7:
+- `tests/sendwayo-top-header-layout.test.cjs`: 18 comprobaciones aprobadas.
+- `tests/sendwayo-expediente-performance.test.cjs`: 40 comprobaciones aprobadas.
+- `tests/sendwayo-countries.test.cjs`: 12 comprobaciones aprobadas.
+- `tests/sendwayo-workspace-header.test.cjs`: 23 comprobaciones aprobadas.
+- Los 43 bloques JavaScript embebidos se compilaron; 0 errores de sintaxis.
 
 Todavía hace falta probar en navegador, con cuentas y datos de prueba controlados:
 - escritorio y móvil; Recargas, envíos, retiros y demás vistas a ancho completo;
