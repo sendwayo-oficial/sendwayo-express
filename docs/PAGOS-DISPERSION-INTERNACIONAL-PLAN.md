@@ -40,7 +40,8 @@ Flujo objetivo:
 
 ### 3. Países y teléfonos
 - Mantener catálogo ISO 3166-1 y prefijos E.164 para todos los países/territorios admitidos.
-- El catálogo remoto actual tiene respaldo local de solo 43 entradas; esto no garantiza cobertura si falla la descarga. Antes de liberar, incorporar un catálogo completo versionado en el propio proyecto y validar códigos telefónicos múltiples (por ejemplo, República Dominicana 809/829/849).
+- El HTML de esta rama ya contiene un catálogo local sin descarga de 250 códigos ISO alfa-2 únicos, con respaldo utilizable sin conexión. Verificación estática: 250 filas y 250 códigos únicos.
+- La República Dominicana tiene selección explícita de prefijos 809/829/849; Haití +509 y Estados Unidos +1 están incluidos. Aún falta validar con pruebas reales de entrada y normalización telefónica por cada territorio; la lista de países no equivale por sí sola a una validación completa de libphonenumber/E.164.
 - Guardar país ISO y teléfono normalizado E.164 por separado; no inferir país solo por el prefijo cuando el usuario lo haya seleccionado expresamente.
 
 ### 4. Seguridad, sesión e IP
@@ -81,3 +82,9 @@ No compartir aquí API keys, secretos, contraseñas, tokens, números de tarjeta
 
 ## Estado de entrega
 Este documento registra decisiones y contratos de integración para guiar el desarrollo aislado. **No afirma que AZUL, MonCash o NatCash estén conectados ni que exista capacidad de procesar pagos reales.** La rama de desarrollo permanece separada de main y del sitio publicado.
+
+## Revisión del catálogo (7 de noviembre de 2026)
+
+- Confirmado en el HTML de desarrollo: 250 países/territorios, 250 ISO alfa-2 distintos.
+- El catálogo se carga directamente desde `fallbackCountriesData`; no depende de una llamada de red para estar disponible.
+- `prefixes()` entrega 809, 829 y 849 al seleccionar República Dominicana. Las reglas por país, prefijos compartidos y validación de números deben pasar pruebas de integración antes de aceptar teléfonos como aptos para transacción.
