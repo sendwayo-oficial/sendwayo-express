@@ -3457,6 +3457,7 @@ window.sendwayoShareReceipt=async function(){
    const login=$('login-screen');if(login){login.classList.remove('hidden');login.style.display='flex';}
    if($('login-usuario'))$('login-usuario').value='';if($('login-password'))$('login-password').value='';
    if($('login-error')){$('login-error').textContent='Sesión cerrada por 40 minutos de inactividad. Inicie sesión nuevamente.';$('login-error').classList.remove('hidden');}
+   try{const firebaseSession=window.sendwayoFirebase;if(firebaseSession&&typeof firebaseSession.lockForInactivity==='function'){firebaseSession.lockForInactivity();}}catch(e){console.warn('[SENDWAYO] Cierre por inactividad:',e);}
    try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null}
    try{sessionStorage.removeItem(KEY)}catch(e){}
    document.body.dataset.sendwayoActiveView='';locking=false;
@@ -6924,7 +6925,7 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
-  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, updateProfileByKey:(key,patch)=>userRoot.child(safeDbKey(key)).update(patch) };
+  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, updateProfileByKey:(key,patch)=>userRoot.child(safeDbKey(key)).update(patch), lockForInactivity: async function(){ state.sessionEstablished=false; state.loginBusy=false; state.readReady=false; state.profile=null; state.profileKey=null; state.remoteTransactions={}; state.lastTxSnapshot=new Map(); state.lastAccountSnapshot=new Map(); state.lastAccountValues=new Map(); stopListeners(); if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;} try{await auth.signOut();}catch(error){console.warn('[SENDWAYO] No se pudo cerrar Firebase al vencer la inactividad:',error);} } };
 
   const norm = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   const txt = v => String(v ?? '').trim();
