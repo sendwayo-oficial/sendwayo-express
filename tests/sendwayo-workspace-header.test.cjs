@@ -26,6 +26,15 @@ assert.ok(layoutCss.includes('#sendwayo-main-sidebar.sendwayo-menu-open{display:
 assert.match(layoutCss, /#sendwayo-main-content\{[\s\S]*?width:100%!important[\s\S]*?max-width:100%!important/s, 'el módulo activo debe ocupar todo el ancho');
 assert.match(html, /id="sendwayo-mobile-menu"/, 'el botón del menú debe estar en la franja superior');
 assert.match(html, /id="sendwayo-top-logout"/, 'Salir debe estar en la franja superior');
+const finalLayout = html.slice(html.indexOf('<style id="sendwayo-v7-no-side-identity-final">'));
+assert.match(finalLayout, /#sendwayo-v7-user-strip\\{[^}]*flex-direction:column!important/s,
+  'la identidad y el horario deben apilarse verticalmente en una franja superior');
+assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-person\\{[^}]*width:100%!important[^}]*flex-direction:column!important/s,
+  'el nombre y los datos de la cuenta deben ocupar filas superiores completas');
+assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-time\\{[^}]*width:100%!important[^}]*justify-content:flex-start!important/s,
+  'fecha, hora y duración deben ir debajo de la identidad y no a su lado');
+assert.match(finalLayout, /#sendwayo-main-content\\{[^}]*width:100%!important[^}]*max-width:100%!important/s,
+  'el módulo seleccionado debe seguir ocupando el ancho completo debajo del encabezado');
 assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-controller/, 'no debe quedar un segundo controlador de identidad');
 assert.doesNotMatch(html, /sendwayo-v7-unified-workspace-header/, 'no debe quedar una segunda hoja de cabecera');
 assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-layout/, 'no debe quedar otra hoja de distribución contradictoria');
