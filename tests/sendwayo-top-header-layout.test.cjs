@@ -28,7 +28,8 @@ assert.match(html, /#sendwayo-main-content\s*\{[^}]*width:\s*100%\s*!important/s
 assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/,
   'los campos antiguos no deben duplicar la identidad ni la hora');
 
-\n// Performance regression coverage: no whole-document work on ordinary clicks.
+
+// Performance regression coverage: no whole-document work on ordinary clicks.
 assert.doesNotMatch(html, /document\\.addEventListener\\('click',function\\(\\)\\{window\\.setTimeout\\(styleSidebar,50\\);\\}\\);/,
   'el formato del menú no debe recalcularse en cada clic');
 assert.doesNotMatch(html, /document\\.addEventListener\\('click',\\(\\)=>setTimeout\\(hookVisibleExports,20\\)\\);/,
