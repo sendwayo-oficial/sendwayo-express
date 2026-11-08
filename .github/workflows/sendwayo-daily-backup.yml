@@ -15,11 +15,10 @@ jobs:
         shell: bash
         run: |
           if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::FIREBASE_SERVICE_ACCOUNT no está configurado; respaldo omitido sin marcar el workflow como fallido."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "::error::FIREBASE_SERVICE_ACCOUNT no está configurado; respaldo no ejecutado."
+            exit 1
           fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v4
         if: steps.guard.outputs.ready == 'true'
         with:
