@@ -139,7 +139,7 @@ La copia V7 fue recuperada de la rama y comparada byte por byte con el archivo f
 | Cabecera superior / espacio completo | 18 comprobaciones aprobadas |
 | Expediente por ID / fluidez | 40 comprobaciones aprobadas |
 | Catálogo internacional | 12 comprobaciones aprobadas |
-| Cabecera de espacio de trabajo | 23 comprobaciones aprobadas |
+| Cabecera de espacio de trabajo | 27 comprobaciones aprobadas |
 | JavaScript embebido | 43 bloques compilados; 0 errores de sintaxis |
 
 **Límite:** no se dispuso de una sesión de navegador conectada a Firebase para hacer la prueba visual/funcional real. No se declara velocidad medida ni autenticación comprobada en navegador. La publicación pública sigue pendiente de esa validación y de autorización.

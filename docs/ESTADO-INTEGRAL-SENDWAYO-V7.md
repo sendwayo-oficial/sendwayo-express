@@ -90,7 +90,7 @@ La verificación ejecutada en esta sesión es estática y se ejecutó directamen
 - `tests/sendwayo-top-header-layout.test.cjs`: 18 comprobaciones aprobadas.
 - `tests/sendwayo-expediente-performance.test.cjs`: 40 comprobaciones aprobadas.
 - `tests/sendwayo-countries.test.cjs`: 12 comprobaciones aprobadas.
-- `tests/sendwayo-workspace-header.test.cjs`: 23 comprobaciones aprobadas.
+- `tests/sendwayo-workspace-header.test.cjs`: 27 comprobaciones aprobadas.
 - Los 43 bloques JavaScript embebidos se compilaron; 0 errores de sintaxis.
 
 Todavía hace falta probar en navegador, con cuentas y datos de prueba controlados:
