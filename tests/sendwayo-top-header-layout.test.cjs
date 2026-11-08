@@ -28,4 +28,16 @@ assert.match(html, /#sendwayo-main-content\s*\{[^}]*width:\s*100%\s*!important/s
 assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/,
   'los campos antiguos no deben duplicar la identidad ni la hora');
 
-console.log('SENDWAYO top header / no side column: comprobaciones correctas.');
+\n// Performance regression coverage: no whole-document work on ordinary clicks.
+assert.doesNotMatch(html, /document\\.addEventListener\\('click',function\\(\\)\\{window\\.setTimeout\\(styleSidebar,50\\);\\}\\);/,
+  'el formato del menú no debe recalcularse en cada clic');
+assert.doesNotMatch(html, /document\\.addEventListener\\('click',\\(\\)=>setTimeout\\(hookVisibleExports,20\\)\\);/,
+  'las exportaciones no deben reinspeccionar todos los botones en cada clic');
+assert.doesNotMatch(html, /document\\.addEventListener\\('click',\\(\\)\\s*=>\\s*setTimeout\\(\\(\\)\\s*=>\\s*\\{\\s*refreshBellCount\\(\\);\\s*if\\(current\\(\\)\\)\\s*\\{\\s*updateIdentity\\(\\);\\s*applyIdentityDefaults\\(false\\);/s,
+  'la identidad y los formularios no deben recalcularse al pulsar cualquier parte de la página');
+assert.match(html, /sendwayo:local-data-changed/,
+  'los cambios locales deben poder activar la sincronización sin esperar al temporizador');
+assert.match(html, /CLOUD_SYNC_INTERVAL_MS\\s*=\\s*15000/,
+  'la comprobación completa de respaldo no debe ejecutarse cada cinco segundos');
+
+console.log('SENDWAYO top header / performance: comprobaciones correctas.');
