@@ -81,8 +81,8 @@ jobs:
           assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
           assert "function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
           expected = {
-            'AGENTES': ['AG-HERACE', 'AG-JULIE', 'AG-BETINA', 'AGE00004', 'AG-MIKE'],
-            'REMITENTES': ['REM-DANIA', 'REM-EDITA', 'REM-NENES', 'REM-FLEURANVIL', 'REM-WILNORD', 'ID65734453', 'ID65734454', 'ID65734455', 'ID65734456', 'ID65734457', 'REM-011', 'REM-012', 'REM-013', 'REM-014', 'REM-015'],
+            'AGENTES': ['AGE00001', 'AGE00002', 'AGE00003', 'AGE00004', 'AGE00005'],
+            'REMITENTES': ['REM00001', 'REM00002', 'REM00003', 'REM00004', 'REM00005', 'REM00006', 'REM00007', 'REM00008', 'REM00009', 'REM00010', 'REM00011', 'REM00012', 'REM00013', 'REM00014', 'REM00015'],
           }
           for name, ids in expected.items():
             m = re.search(rf'let\s+{name}\s*=\s*(\[[\s\S]*?\]);', html)
@@ -92,7 +92,14 @@ jobs:
           for name in refs:
             assert (Path('site/assets') / name).is_file(), name
           assert html.rstrip().endswith('</html>')
-          print('PASS: versión de balance compartido, 5 agentes, 15 remitentes y 9 imágenes.')
+          assert html.index('id="sendwayo-brand-bar"') < html.index('id="sendwayo-v7-user-strip"') < html.index('id="sendwayo-workspace-shell"')
+          assert 'sendwayo-v7-no-side-identity-final' in html and 'sendwayo-v7-top-identity-and-width-final' in html
+          assert 'const perPage=10;' in html
+          assert "const num=String(i-start+1).padStart(2,'0')" in html
+          assert "String(i+1).padStart(2,'0')" in html
+          assert 'aria-label="Página posterior"' in html and 'sendwayoSetModulePage' in html
+          assert 'sw-pay-save-settlement' in html and 'settings/paymentSettlement' in html
+          print('PASS: V7, 5 agentes, 15 remitentes, cabecera superior, paginación de 10 y tesorería.')
           PY
 
       - uses: actions/configure-pages@v5

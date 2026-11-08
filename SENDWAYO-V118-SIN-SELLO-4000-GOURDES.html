@@ -193,8 +193,10 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     });
   }
   window.sendwayoFirebaseSdkReady=loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
-    .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');})
-    .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');});
+    .then(function(){return Promise.all([
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'),
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js')
+    ]);});
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
 })();
 </script>
@@ -311,6 +313,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 #login-screen input{display:block!important;width:100%!important;min-height:48px!important;box-sizing:border-box!important;background:#fff!important;color:#10243d!important;border:1px solid #cbd5e1!important;opacity:1!important;font-size:16px!important;filter:none!important}
 #login-screen button{min-height:44px!important;opacity:1!important;filter:none!important;pointer-events:auto!important}
 </style>
+
+
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -354,25 +358,41 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </div>
 
 
-<div class="bg-[#0b1a2f] text-white flex items-center justify-between px-3 py-2 sticky top-0 z-[9999] h-[48px]">
-  <div class="flex items-center gap-2">
-    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" class="w-7 h-7 rounded-full bg-white">
-    <span class="font-extrabold text-[12px] tracking-wider">SENDWAYO EXPRESS</span>
-    <span class="bg-orange-400 text-black text-[10px] px-3 py-1 rounded-full font-bold ml-3">BALANCE RD$ <span id="top-bal-rd">1,250.00</span> RD$</span>
-    <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">BALANCE HTG <span id="top-bal-htg">0,00</span> HTG</span>
-    <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">COMISIÓN RD$ <span id="top-com-rd">0,00</span> RD$</span>
-    <span class="bg-white/10 text-white text-[10px] px-3 py-1 rounded-full">COMISIÓN HTG <span id="top-com-htg">0,00</span> HTG</span>
+<div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
+  <div class="sendwayo-brand-left">
+    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
+    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
+    <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
   </div>
-  <div class="flex items-center gap-2">
-    <span class="bg-white/10 px-3 py-1 rounded-full text-[10px]" id="hora-top">07:53:31</span>
-    <span class="bg-orange-400 text-black px-3 py-1 rounded-full font-bold text-[10px]" id="user-top">ADMIN ADMIN</span>
-    <button id="bell-top" class="relative bg-yellow-400 text-black w-8 h-8 rounded-full flex items-center justify-center">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
-    <button class="bg-white text-black px-3 py-1 rounded-full text-[10px] font-bold">Salir</button>
+  <div class="sendwayo-brand-actions">
+    <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
+    <button id="sendwayo-top-logout" type="button" onclick="window.cerrarSesion()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Salir</button>
+  </div>
+  <div class="sendwayo-legacy-header-values" hidden aria-hidden="true">
+    <span id="user-top"></span><span id="hora-top"></span>
+    <span id="top-bal-rd">0.00</span><span id="top-bal-htg">0.00</span>
+    <span id="top-com-rd">0.00</span><span id="top-com-htg">0.00</span>
   </div>
 </div>
+<section id="sendwayo-v7-user-strip" class="sendwayo-workspace-identity" data-sendwayo-header-ready="1" aria-label="Identidad y horario de la cuenta activa">
+  <div class="sendwayo-workspace-person">
+    <span class="sendwayo-workspace-kicker">CUENTA ACTIVA</span>
+    <strong id="sendwayo-v7-name" class="sendwayo-workspace-name">—</strong>
+    <div class="sendwayo-workspace-meta">
+      <span id="sendwayo-v7-role">—</span>
+      <span>ID: <strong id="sendwayo-v7-id">—</strong></span>
+      <span>Código: <strong id="sendwayo-v7-code">—</strong></span>
+    </div>
+  </div>
+  <div class="sendwayo-workspace-time">
+    <span id="sendwayo-v7-date">—</span>
+    <span id="sendwayo-v7-clock">—</span>
+    <span id="sendwayo-v7-duration">Tiempo: 00:00</span>
+  </div>
+</section>
 
-<div class="flex">
-  <div class="w-[220px] bg-[#0f2440] text-white min-h-screen p-0 text-[11px]">
+<div id="sendwayo-workspace-shell" class="sendwayo-workspace-shell flex">
+  <div id="sendwayo-main-sidebar" class="w-[220px] bg-[#0f2440] text-white min-h-screen p-0 text-[11px]">
     <div class="p-3 text-[9px] tracking-widest text-white/60 font-bold">MENU PRINCIPAL</div>
     <button onclick="showView('tablero')" class="w-full text-left px-3 py-2.5 bg-white/10 flex items-center gap-2 border-l-4 border-green-400"><span>📊</span> Tableau de bord principal</button>
     <button onclick="showView('tarifas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>📈</span> Tarifas locales Haití</button>
@@ -401,7 +421,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button type="button" onclick="window.cerrarSesion()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🚪</span> Cerrar sesión</button>
   </div>
 
-  <div class="flex-1 p-4">
+  <div id="sendwayo-main-content" class="flex-1 p-4">
     <div class="grid grid-cols-4 gap-3 mb-4">
       <div class="bg-[#1e3a5f] text-white rounded-xl p-4">
         <div class="text-[9px] tracking-widest opacity-70">BALANCE EN GOURDES (HTG)</div>
@@ -584,7 +604,7 @@ function updateHora(){
   if(el) el.innerText=now.toLocaleTimeString('es-DO');
   // El balance visible lo actualiza el usuario activo; no sustituirlo por el balance del administrador.
 }
-setInterval(updateHora,1000);
+setInterval(updateHora,15000);
 
 function showView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
@@ -742,8 +762,8 @@ function ver(id){ alert('Ver '+id); }
 function ajustarBalance(id){ const m=prompt('Ajustar balance para '+id+' Monto:'); if(m && !isNaN(m)){ const ag=AGENTES.find(a=>a.id===id); if(ag){ ag.balances.DOP+=parseFloat(m); renderPrincipal(); } } }
 
 function verComprobante(id){
-  let t=TRANSACCIONES.find(x=>String(x.id)===String(id));
-  if(!t) t={id:id, fecha:'20/10/2026', hora:'4:54:34 p. m.', tipo:'Envío', ruta:'RD → HT Natcash', beneficiario:'SAUTHER JALBAR', beneficiarioTel:'35249812', montoRecibido:'1,062.60 HTG', creadorId:'ADMINADMIN', aprobadoPor:'ADMINADMIN', estado:'Aprobado', montoValue:2000, fee:160, neto:1840};
+  let t=(Array.isArray(TRANSACCIONES)?TRANSACCIONES:[]).find(x=>String(x.id)===String(id));
+  if(!t){alert('No se encontró la transacción para generar el comprobante.');return;}
   if(t.estado!=='Aprobado'){ alert('❌ Comprobante no debe aparecer sin antes ser aprobados - Estado: '+t.estado+' - Comprobante solo después aprobado - Error grave'); return; }
   
   // COMPROBANTE LIMPIO - SIN COMENTARIO - SIEMPRE CANTIDAD SIN COMENTARIO - INTERNO QUEDA ENTRE NOSOTROS
@@ -752,14 +772,14 @@ function verComprobante(id){
   // Si son 100 lo pones 100 pero este comentario no debe estar en comprobante - eso es interno
   let montoLimpio = t.montoRecibido;
   
-  document.getElementById('comp-fecha').innerText=t.fecha;
-  document.getElementById('comp-hora').innerText=t.fecha.split(' ')[1]||'4:54:34 p. m.';
+  document.getElementById('comp-fecha').innerText=t.fecha|| (t.timestamp?new Date(t.timestamp).toLocaleString('es-DO'):'—');
+  document.getElementById('comp-hora').innerText=(t.fecha||'').split(' ')[1]||'—';
   document.getElementById('comp-tipo').innerText='Transacción: '+t.tipo+' - '+(t.ruta||'');
-  document.getElementById('comp-beneficiario').innerText=t.beneficiario||'SAUTHER JALBAR';
-  document.getElementById('comp-beneficiario-tel').innerText=t.beneficiarioTel||'35249812';
+  document.getElementById('comp-beneficiario').innerText=t.beneficiario||'—';
+  document.getElementById('comp-beneficiario-tel').innerText=t.beneficiarioTel||'—';
   document.getElementById('comp-monto').innerText=montoLimpio;
-  document.getElementById('comp-creador').innerText=t.creadorId||'ADMINADMIN';
-  document.getElementById('comp-autorizado').innerText=t.aprobadoPor||'ADMINADMIN';
+  document.getElementById('comp-creador').innerText=t.creadorId||'—';
+  document.getElementById('comp-autorizado').innerText=t.aprobadoPor||'—';
   document.getElementById('modal-comprobante').classList.remove('hidden');
 }
 
@@ -2780,7 +2800,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
 
   window.v162_renderBen=function(){
     const view=document.getElementById('view-beneficiarios'); if(!view) return;
-    view.innerHTML=`<div class="bg-white rounded-2xl border p-4"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa HT→RD: 2.30</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes ${window.v162_bal.htg} HTG - HT→HT va a gourdes</div><div>Balance Pesos RD$ ${window.v162_bal.rd} - RD→HT va a pesos</div><div>Comision RD$ ${window.v162_bal.comRD} / HTG ${window.v162_bal.comHTG}</div></div></div><div class="bg-white rounded-2xl border p-4 flex justify-between mt-3 items-center"><h2 class="font-bold text-[14px]">Beneficiarios - Agregar nuevo beneficiario - Restaurado con dirección y activo/inactivo</h2><div class="flex gap-2 items-center"><input placeholder="Buscar... search by phone" class="border rounded-full px-4 py-2 text-[11px] w-[200px]" onkeyup="v162_filtrarBen(this.value)"><button type="button" onclick="v162_abrirBen('beneficiarios')" class="bg-[#0f2440] text-white text-[11px] px-5 py-2 rounded-full font-bold cursor-pointer" aria-label="Agregar nuevo beneficiario">+ Agregar nuevo beneficiario</button><button class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div><div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full text-[11px]"><thead class="bg-gray-50"><tr><th class="p-3 rounded-l-full">N°</th><th class="p-2">NOMBRE</th><th class="p-2">TELÉFONO</th><th class="p-2">DIRECCIÓN</th><th class="p-2">ESTADO</th><th class="p-3 rounded-r-full">ACCIONES</th></tr></thead><tbody id="v162-tabla-ben"></tbody></table></div>`;
+    view.innerHTML=`<div class="bg-white rounded-2xl border p-4"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Sin conversión automática HT→RD</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes ${window.v162_bal.htg} HTG - HT→HT va a gourdes</div><div>Balance Pesos RD$ ${window.v162_bal.rd} - RD→HT va a pesos</div><div>Comision RD$ ${window.v162_bal.comRD} / HTG ${window.v162_bal.comHTG}</div></div></div><div class="bg-white rounded-2xl border p-4 flex justify-between mt-3 items-center"><h2 class="font-bold text-[14px]">Beneficiarios - Agregar nuevo beneficiario - Restaurado con dirección y activo/inactivo</h2><div class="flex gap-2 items-center"><input placeholder="Buscar... search by phone" class="border rounded-full px-4 py-2 text-[11px] w-[200px]" onkeyup="v162_filtrarBen(this.value)"><button type="button" onclick="v162_abrirBen('beneficiarios')" class="bg-[#0f2440] text-white text-[11px] px-5 py-2 rounded-full font-bold cursor-pointer" aria-label="Agregar nuevo beneficiario">+ Agregar nuevo beneficiario</button><button class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div><div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full text-[11px]"><thead class="bg-gray-50"><tr><th class="p-3 rounded-l-full">N°</th><th class="p-2">NOMBRE</th><th class="p-2">TELÉFONO</th><th class="p-2">DIRECCIÓN</th><th class="p-2">ESTADO</th><th class="p-3 rounded-r-full">ACCIONES</th></tr></thead><tbody id="v162-tabla-ben"></tbody></table></div>`;
     const tbody=document.getElementById('v162-tabla-ben'); tbody.innerHTML=''; BENEFICIARIOS.forEach((b,idx)=>{ const tr=document.createElement('tr'); tr.className='border-b'; tr.innerHTML=`<td class="p-3 font-bold">${String(idx+1).padStart(2,'0')}</td><td class="p-2 font-bold">${b.nombre}</td><td class="p-2">${b.telefonoCompleto}</td><td class="p-2">${b.direccion}</td><td class="p-2"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px]">${b.estado}</span></td><td class="p-2"><button onclick="v162_borrarBen('${b.id}')" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[9px]">Borrar</button></td>`; tbody.appendChild(tr); });
   };
   window.v162_abrirBen=function(o){ window._v162_origen=o; document.getElementById('modal-beneficiario-v162').classList.remove('hidden'); };
@@ -2856,7 +2876,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   window.renderPrincipal=function(){
     const cont=document.getElementById('view-tablero'); if(!cont) return;
     cont.innerHTML=`
-      <div class="bg-white rounded-2xl border p-4 mb-4 shadow"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa HT→RD: 2.30</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes ${window.v162_bal.htg} HTG</div><div>Balance Pesos RD$ ${window.v162_bal.rd}</div><div>Comision RD$ ${window.v162_bal.comRD} / HTG ${window.v162_bal.comHTG}</div></div></div>
+      <div class="bg-white rounded-2xl border p-4 mb-4 shadow"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Sin conversión automática HT→RD</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes ${window.v162_bal.htg} HTG</div><div>Balance Pesos RD$ ${window.v162_bal.rd}</div><div>Comision RD$ ${window.v162_bal.comRD} / HTG ${window.v162_bal.comHTG}</div></div></div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <button onclick="abrirModalSeparado('envios')" class="bg-white border rounded-2xl p-4 text-left shadow hover:shadow-lg"><div class="text-[20px]">💸</div><div class="font-bold text-[12px]">Agregar nuevo envío</div><div class="text-[10px] text-gray-500">RD→HT, HT→HT, RD→USA, USA→RD, otros lugares</div></button>
         <button onclick="abrirModalSeparado('retiros')" class="bg-white border-2 border-red-200 rounded-2xl p-4 text-left shadow hover:shadow-lg"><div class="text-[20px]">💰</div><div class="font-bold text-[12px]">Agregar nuevo retiro - Retiro Haití a Haití Natcash MonCash</div><div class="text-[10px] text-gray-500">Ventanilla Naca a Naca, Montcash a Montcash - Gourdes por rango</div></button>
@@ -2921,7 +2941,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     else if(view==='comisiones') func="document.getElementById('modal-comisiones-v162').classList.remove('hidden')";
     else if(view==='creditos') func="document.getElementById('modal-creditos-v162').classList.remove('hidden')";
 
-    cont.innerHTML=`<div class="bg-white rounded-2xl border p-4 mb-3 shadow"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa HT→RD: 2.30</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes ${window.v162_bal.htg} HTG - HT→HT gourdes</div><div>Balance Pesos RD$ ${window.v162_bal.rd} - demás pesos</div><div>Comision HTG ${window.v162_bal.comHTG} / RD$ ${window.v162_bal.comRD}</div></div></div>
+    cont.innerHTML=`<div class="bg-white rounded-2xl border p-4 mb-3 shadow"><div class="flex gap-2 mb-2"><span class="bg-[#0f2d5a] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Tasa RD→HT: 2.10</span><span class="bg-[#0f3d2e] text-yellow-300 text-[11px] px-4 py-1.5 rounded-full">Sin conversión automática HT→RD</span></div><div class="grid grid-cols-3 gap-2 text-[11px] border-t pt-2"><div>Balance Gourdes ${window.v162_bal.htg} HTG - HT→HT gourdes</div><div>Balance Pesos RD$ ${window.v162_bal.rd} - demás pesos</div><div>Comision HTG ${window.v162_bal.comHTG} / RD$ ${window.v162_bal.comRD}</div></div></div>
     <div class="bg-white rounded-2xl border p-4 flex flex-wrap justify-between items-center gap-3 shadow"><h2 class="font-bold text-[13px]">${titulo} - SOLO ${titulo} - Agregar nuevo + Excel PDF CSV redondo esquina como estaba</h2><div class="flex items-center gap-2"><input placeholder="Buscar... search by phone" class="border rounded-full px-4 py-2 text-[11px] w-[200px]" onkeyup="v162_filtrarTabla('${view}', this.value)"><button onclick="${func}" class="bg-[#0f2440] text-white text-[11px] font-bold px-5 py-2.5 rounded-full shadow">+ Agregar nuevo ${view==='envios'?'envío':view==='retiros'?'retiro - Ventanilla Natcash MonCash':view}</button><button class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div>
     <div class="bg-white rounded-2xl border mt-3 overflow-x-auto shadow"><table class="w-full text-[10px]"><thead class="bg-gray-50"><tr><th class="p-3 rounded-l-full">N°</th><th class="p-2">ID / FECHA Y HORA</th><th class="p-2">RUTA EXACTA - Ventanilla retiro Haití a Haití</th><th class="p-2">MONTO / FEE</th><th class="p-2">BENEFICIARIO</th><th class="p-2">ESTADO</th><th class="p-3 rounded-r-full">ACCIONES</th></tr></thead><tbody id="tabla-${view}-body"></tbody></table></div>`;
 
@@ -3384,7 +3404,7 @@ window.sendwayoShareReceipt=async function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',styleSidebar);else styleSidebar();
   window.addEventListener('resize',styleSidebar);
-  document.addEventListener('click',function(){window.setTimeout(styleSidebar,50);});
+  // Navigation styling is CSS-driven; avoid rescanning every menu button after every click.
 })();
 </script>
 
@@ -3457,6 +3477,7 @@ window.sendwayoShareReceipt=async function(){
    const login=$('login-screen');if(login){login.classList.remove('hidden');login.style.display='flex';}
    if($('login-usuario'))$('login-usuario').value='';if($('login-password'))$('login-password').value='';
    if($('login-error')){$('login-error').textContent='Sesión cerrada por 40 minutos de inactividad. Inicie sesión nuevamente.';$('login-error').classList.remove('hidden');}
+   try{const firebaseSession=window.sendwayoFirebase;if(firebaseSession&&typeof firebaseSession.lockForInactivity==='function'){firebaseSession.lockForInactivity();}}catch(e){console.warn('[SENDWAYO] Cierre por inactividad:',e);}
    try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null}
    try{sessionStorage.removeItem(KEY)}catch(e){}
    document.body.dataset.sendwayoActiveView='';locking=false;
@@ -3485,11 +3506,32 @@ window.sendwayoShareReceipt=async function(){
  const roleName=u=>{const r=String(u?.role||u?.rol||'').toUpperCase();return r.includes('ADMIN')?'ADMINISTRADOR':r.includes('AGENTE')?'AGENTE':'REMITENTE';};
  function buildIdentityStrip(){
    const root=$('view-tablero')?.parentElement;if(!root)return;
+   const brandBar=Array.from(document.body.children).find(el=>el.classList?.contains('sticky')&&el.querySelector('#user-top'));
+   if(brandBar){
+     brandBar.classList.add('sendwayo-brand-bar');
+     ['top-bal-rd','top-bal-htg','top-com-rd','top-com-htg'].forEach(id=>{
+       const value=$(id),badge=value&&value.parentElement;
+       if(badge){badge.classList.add('sendwayo-brand-balances-hidden');badge.style.setProperty('display','none','important');}
+     });
+     brandBar.style.setProperty('justify-content','space-between','important');
+     brandBar.style.setProperty('width','100%','important');
+   }
    let strip=$('sendwayo-v7-user-strip');
-   if(!strip){strip=document.createElement('div');strip.id='sendwayo-v7-user-strip';strip.className='bg-[#0f2440] text-white rounded-2xl p-3 mb-4 flex flex-wrap items-center justify-between gap-3 shadow';root.insertBefore(strip,root.firstChild);}
-   const u=getUser()||{};const nm=u.nombre||u.name||u.email||'Usuario';const id=u.id||u.uid||'—';const code=u.codigo||u.codigo2||'—';
-   strip.innerHTML='<div class="min-w-0"><div class="font-extrabold text-base">'+esc(nm)+'</div><div class="text-xs opacity-90">'+esc(roleName(u))+' · ID: '+esc(id)+' · Código: '+esc(code)+'</div></div><div class="flex flex-wrap items-center gap-2 text-sm"><span class="rounded-full bg-white/15 px-3 py-2" id="sendwayo-v7-date">—</span><span class="rounded-full bg-white/15 px-3 py-2" id="sendwayo-v7-clock">—</span><span class="rounded-full bg-orange-400 text-black font-bold px-3 py-2" id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+   if(!strip){strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';}
+   if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
+   else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
+   const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
+   if(strip.dataset.sendwayoHeaderReady!=='1'){
+     strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span>Código: <strong id="sendwayo-v7-code"></strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+     strip.dataset.sendwayoHeaderReady='1';
+   }
+   if($('sendwayo-v7-name'))$('sendwayo-v7-name').textContent=nm;
+   if($('sendwayo-v7-role'))$('sendwayo-v7-role').textContent=roleName(u);
+   if($('sendwayo-v7-id'))$('sendwayo-v7-id').textContent=id;
+   if($('sendwayo-v7-code'))$('sendwayo-v7-code').textContent=code;
+   strip.setAttribute('aria-label','Datos de la sesión y cuenta activa');
  }
+ window.sendwayoRefreshIdentityHeader=buildIdentityStrip;
  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
  function buildDashboard(){
    const v=$('view-tablero');if(!v)return;
@@ -3526,9 +3568,9 @@ window.sendwayoShareReceipt=async function(){
  document.addEventListener('click',e=>{const b=e.target.closest('button[onclick*="showView("]');if(!b)return;const m=(b.getAttribute('onclick')||'').match(/showView\(['"]([^'"]+)['"]\)/);if(m)setTimeout(()=>selectedView(m[1]),20);},true);
  // Welcome is the first public screen; only reveal the workspace after successful authentication.
  function applyAuthState(){
-   const u=getUser();const logged=!!(u&&(u.id||u.uid||u.codigo||u.email));
-   if(logged){document.body.classList.add('sendwayo-authenticated');$('welcome-landing')?.classList.add('hidden');$('login-screen')?.classList.add('hidden');buildIdentityStrip();}
-   else{document.body.classList.remove('sendwayo-authenticated');const welcome=$('welcome-landing');if(welcome)welcome.classList.remove('hidden');document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));}
+   const u=getUser(),logged=!!(u&&(u.id||u.uid||u.codigo||u.email));
+   if(logged){if(!sessionStartedAt)sessionStartedAt=Date.now();document.body.classList.add('sendwayo-authenticated');$('welcome-landing')?.classList.add('hidden');$('login-screen')?.classList.add('hidden');buildIdentityStrip();}
+   else{sessionStartedAt=0;document.body.classList.remove('sendwayo-authenticated');const welcome=$('welcome-landing');if(welcome)welcome.classList.remove('hidden');document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));}
  }
  const oldLogin=window.intentarLogin;
  if(typeof oldLogin==='function')window.intentarLogin=function(){const ret=oldLogin.apply(this,arguments);setTimeout(()=>{applyAuthState();if(getUser())selectedView('tablero');},80);return ret;};
@@ -3536,17 +3578,17 @@ window.sendwayoShareReceipt=async function(){
  const oldShowLogin=window.v162_showLogin;
  if(typeof oldShowLogin==='function')window.v162_showLogin=function(){document.body.classList.remove('sendwayo-authenticated');const ret=oldShowLogin.apply(this,arguments);$('login-screen')?.classList.remove('hidden');return ret;};
  // Session duration is display-only; the existing 40-minute inactivity lock remains in force.
- const start=Date.now();function tick(){
-   const now=new Date();const d=$('sendwayo-v7-date'),c=$('sendwayo-v7-clock'),t=$('sendwayo-v7-duration');
+ let sessionStartedAt=0;function tick(){
+   const now=new Date(),d=$('sendwayo-v7-date'),c=$('sendwayo-v7-clock'),t=$('sendwayo-v7-duration');
    if(d)d.textContent=now.toLocaleDateString('es-DO');if(c)c.textContent=now.toLocaleTimeString('es-DO');
-   if(t){const sec=Math.floor((Date.now()-start)/1000);t.textContent='Tiempo: '+String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
-   if(document.body.classList.contains('sendwayo-authenticated')) refreshDashboardAmounts();
+   if(t){const sec=sessionStartedAt&&document.body.classList.contains('sendwayo-authenticated')?Math.max(0,Math.floor((Date.now()-sessionStartedAt)/1000)):0;t.textContent='Tiempo: '+String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
+   if(document.body.classList.contains('sendwayo-authenticated'))refreshDashboardAmounts();
  }
  function init(){
    // Avoid any private screen flash while the public landing is visible.
    const u=getUser();if(!u){document.body.classList.remove('sendwayo-authenticated');document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));$('welcome-landing')?.classList.remove('hidden');}
    else{applyAuthState();selectedView('tablero');}
-   buildDashboard();buildIdentityStrip();tick();setInterval(tick,1000);
+   buildDashboard();buildIdentityStrip();tick();setInterval(tick,15000);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();</script>
@@ -3861,7 +3903,7 @@ window.sendwayoShareReceipt=async function(){
  function reserved(accountId,cur){const target=accountById(accountId);const shared=!!target&&['ADMIN','AGENTE'].includes(roleOf(target));return txs().filter(t=>t.estado==='Pendiente'&&t.reservaAplicada===true&&currencyFor(t)===cur).filter(t=>{const source=accountById(String(t.remitenteId||t.creadorId));if(shared)return !!source&&['ADMIN','AGENTE'].includes(roleOf(source));return String(t.remitenteId||t.creadorId)===String(accountId);}).reduce((s,t)=>s+(Number(t.montoValue)||0),0);}
  function available(a,cur){const owner=roleOf(a)==='AGENTE'?admin():a;return (Number(balanceObject(owner)?.[cur])||0)-reserved(owner?.id||a?.id,cur);}
  function chooseSender(raw){if(isAdmin()){const a=accountByInput(raw);return a||null;}return currentAccount();}
- function buildMoneyTx(kind,fields){const amount=Number(fields.amount);const route=text(fields.route);const rn=norm(route);const rdToHaiti=/^(?:rd\b|republica\s+dominicana\b).*\b(?:ht|haiti|hati)\b/.test(rn);const haitiToDR=/^(?:ht\b|haiti\b|hati\b).*\b(?:rd|republica\s+dominicana)\b/.test(rn);const isHTHT=/(?:\bht\b|\bhaiti\b|\bhati\b)\s*(?:→|->|a|[-–—]|to)\s*(?:\bht\b|\bhaiti\b|\bhati\b)|natcash\s*(?:a|→|->|[-–—]|to)\s*natcash|moncash\s*(?:a|→|->|[-–—]|to)\s*moncash|naca\s*a\s*naca|montcash\s*a\s*montcash/i.test(rn);const fromHaiti=/^(?:ht\b|haiti\b|hati\b)/.test(rn);const fromDR=/^(?:rd\b|republica\s+dominicana\b)/.test(rn);const cur=isHTHT?'HTG':rdToHaiti?'DOP':(fromHaiti?'HTG':fromDR?'DOP':(fields.currency||'DOP'));const sender=fields.sender;const beneficiary=text(fields.beneficiary);if(!sender){alert('Seleccione una cuenta de remitente registrada.');return null;}if(!beneficiary){alert('Complete el beneficiario o número de destino.');return null;}if(!Number.isFinite(amount)||amount<=0){alert('El monto debe ser mayor que cero.');return null;}if(available(sender,cur)<amount){alert('Fondos insuficientes en '+acctName(sender)+'. Balance disponible: '+formatMoney(Math.max(0,available(sender,cur)))+' '+cur+'.');return null;}let fee=0;if(isHTHT){fee=Number(kind==='Retiro'?window.v162_getFeeRetiroHT?.(amount):window.v162_getFeeEnvioHT?.(amount))||0;}else if(['Recargas','Recarga','Paquetikos','Paquetico','Facturas','Servicios'].includes(kind)){fee=Math.round(amount*0.05*100)/100;}else{fee=Math.round(amount*0.08*100)/100;}const net=amount-fee;let rec=formatMoney(net)+' '+cur;if(rdToHaiti)rec=formatMoney(net*2.1)+' HTG';else if(haitiToDR)rec=formatMoney(net/2.3)+' DOP';const t={id:'SW-'+kind.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3)+'-'+Date.now(),fecha:new Date().toLocaleString('es-DO'),timestamp:Date.now(),tipo:kind,ruta:route||kind,rutaExacta:fields.detail||'',monto:formatMoney(amount)+' '+cur,montoValue:amount,fee,neto:net,feeText:'Comisión '+formatMoney(fee)+' '+cur,moneda:cur,esHT:cur==='HTG',beneficiario:beneficiary,beneficiarioTel:fields.phone||'',estado:'Pendiente',creadorId:user()?.id||sender.id,remitenteId:sender.id,destinoId:fields.destinoId||'',montoRecibido:rec,reservaAplicada:true};txs().unshift(t);persistTx();updateViews();return t;}
+ function buildMoneyTx(kind,fields){const amount=Number(fields.amount);const route=text(fields.route);const rn=norm(route);const rdToHaiti=/^(?:rd\b|republica\s+dominicana\b).*\b(?:ht|haiti|hati)\b/.test(rn);const isHTHT=/(?:\bht\b|\bhaiti\b|\bhati\b)\s*(?:→|->|a|[-–—]|to)\s*(?:\bht\b|\bhaiti\b|\bhati\b)|natcash\s*(?:a|→|->|[-–—]|to)\s*natcash|moncash\s*(?:a|→|->|[-–—]|to)\s*moncash|naca\s*a\s*naca|montcash\s*a\s*montcash/i.test(rn);const fromHaiti=/^(?:ht\b|haiti\b|hati\b)/.test(rn);const fromDR=/^(?:rd\b|republica\s+dominicana\b)/.test(rn);const cur=isHTHT?'HTG':rdToHaiti?'DOP':(fromHaiti?'HTG':fromDR?'DOP':(fields.currency||'DOP'));const sender=fields.sender;const beneficiary=text(fields.beneficiary);if(!sender){alert('Seleccione una cuenta de remitente registrada.');return null;}if(!beneficiary){alert('Complete el beneficiario o número de destino.');return null;}if(!Number.isFinite(amount)||amount<=0){alert('El monto debe ser mayor que cero.');return null;}if(available(sender,cur)<amount){alert('Fondos insuficientes en '+acctName(sender)+'. Balance disponible: '+formatMoney(Math.max(0,available(sender,cur)))+' '+cur+'.');return null;}let fee=0;if(isHTHT){fee=Number(kind==='Retiro'?window.v162_getFeeRetiroHT?.(amount):window.v162_getFeeEnvioHT?.(amount))||0;}else if(['Recargas','Recarga','Paquetikos','Paquetico','Facturas','Servicios'].includes(kind)){fee=Math.round(amount*0.05*100)/100;}else{fee=Math.round(amount*0.08*100)/100;}const net=amount-fee;let rec=formatMoney(net)+' '+cur;if(rdToHaiti)rec=formatMoney(net*2.1)+' HTG';;const t={id:'SW-'+kind.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3)+'-'+Date.now(),fecha:new Date().toLocaleString('es-DO'),timestamp:Date.now(),tipo:kind,ruta:route||kind,rutaExacta:fields.detail||'',monto:formatMoney(amount)+' '+cur,montoValue:amount,fee,neto:net,feeText:'Comisión '+formatMoney(fee)+' '+cur,moneda:cur,esHT:cur==='HTG',beneficiario:beneficiary,beneficiarioTel:fields.phone||'',estado:'Pendiente',creadorId:user()?.id||sender.id,remitenteId:sender.id,destinoId:fields.destinoId||'',montoRecibido:rec,reservaAplicada:true};txs().unshift(t);persistTx();updateViews();return t;}
  // Export helpers from this same closure for later isolated UI patches.
  window.sendwayoBuildMoneyTx = buildMoneyTx;
  window.sendwayoPersistTx = persistTx;
@@ -4012,7 +4054,7 @@ window.sendwayoShareReceipt=async function(){
  renameModuleLabels();
  // Ensure all visible control actions are rewired after the original view renderer paints.
  const priorShow=window.showView;window.showView=function(view){if(typeof priorShow==='function')priorShow(view);if(['depositos','cuentas','bienvenida','creditos','ajustes','referencia','conciliacion','reportes','informes','mibanco','perfil','secretas'].includes(view))renderCustom(view);setTimeout(hookVisibleExports,0);};
- document.addEventListener('click',()=>setTimeout(hookVisibleExports,20));
+ // Export controls are prepared by the existing module-navigation hook, not global clicks.
   // Account IDs and profiles are hydrated from Firebase after authentication.
 
   // Asegurar páginas para los módulos pedidos y enlazar sus botones laterales.
@@ -4072,9 +4114,13 @@ window.sendwayoShareReceipt=async function(){
     if(!name||!email||!phone){alert('Complete nombre, correo y celular.');return;}if(!/^\S+@\S+\.\S+$/.test(email)){alert('Introduzca un correo válido.');return;}
     let a=id?accountById(id):null;const role=view==='agentes'?'AGENTE':'REMITENTE';
     if(!a){const arr=role==='AGENTE'?agents():senders();if(allAccounts().some(x=>norm(x.email||x.usuario)===norm(email))){alert('Ese correo ya está registrado.');return;}
-      let num=1;const prefix=role==='AGENTE'?'AGE':'REM';while(accountById(prefix+String(num).padStart(5,'0')))num++;
-      const parts=name.split(/\s+/);const idNew=prefix+String(num).padStart(5,'0');const code=(role==='AGENTE'?'AG-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
-      a={id:idNew,codigo:code,codigo2:code,numero:String(num).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
+      let num=1;const prefix=role==='AGENTE'?'AGE400I':'REM';
+      const nextId=()=>role==='AGENTE'?prefix+String(num):prefix+String(num).padStart(5,'0');
+      const reserved=value=>allAccounts().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>String(v||'').toUpperCase()===String(value).toUpperCase()));
+      while(reserved(nextId()))num++;
+      if(role==='AGENTE'&&num>9)throw new Error('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');
+      const parts=name.split(/\s+/);const idNew=nextId();const code=(role==='AGENTE'?'AG-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
+      a={id:idNew,codigo:code,codigo2:code,numero:String((role==='AGENTE'?agents():senders()).length+1).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
     } else {a.nombre=a.name=name;a.email=a.usuario=email;a.celular=a.telefono=phone;a.estado=state;a.activo=state==='Activo';}
     a.estado=state;a.activo=state==='Activo';writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
     const old=window.USUARIOS_LOGIN||[];window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,aliases:[x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigoAnterior,x.codigo2,...(x.loginAliases||[])].filter(Boolean),celular:x.celular||x.telefono,telefono:x.telefono||x.celular,password:x.password||x.contrasena||'',password2:x.celular||x.telefono,allowedPasswords:x.allowedPasswords||[],nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
@@ -4683,12 +4729,10 @@ window.sendwayoShareReceipt=async function(){
 
   // Identidad completa y visible en la parte superior de cada pantalla autenticada.
   function installIdentityStrip() {
-    const top = Array.from(document.body.children).find(el => el.classList?.contains('sticky') && el.querySelector('#user-top'));
-    if (!$('sendwayo-active-identity-strip')) {
-      const strip = document.createElement('div'); strip.id = 'sendwayo-active-identity-strip';
-      strip.innerHTML = '<span>Usuario activo:</span><strong id="sendwayo-active-name"></strong><span>· ID:</span><strong id="sendwayo-active-id"></strong><span>· Código:</span><strong id="sendwayo-active-code"></strong>';
-      if (top) top.insertAdjacentElement('afterend', strip); else document.body.insertBefore(strip, document.body.firstChild);
-    }
+    $('sendwayo-active-identity-strip')?.remove();
+    const oldUser=$('user-top');if(oldUser){oldUser.textContent='';oldUser.setAttribute('aria-hidden','true');}
+    const oldClock=$('hora-top');if(oldClock)oldClock.setAttribute('aria-hidden','true');
+    window.sendwayoRefreshIdentityHeader?.();
   }
   function updateIdentity() {
     const u = current(); if (!u) return;
@@ -4698,9 +4742,11 @@ window.sendwayoShareReceipt=async function(){
     const code = txt(a.codigo || a.codigo2 || u.codigo || '');
     const topUser = $('user-top');
     if (topUser) { topUser.textContent = `${name} · ID: ${id} · Cód.: ${code}`; topUser.title = `${name} | ID: ${id} | Código: ${code}`; topUser.style.maxWidth = '340px'; topUser.style.whiteSpace = 'normal'; topUser.style.fontSize = '9px'; }
-    if ($('sendwayo-active-name')) $('sendwayo-active-name').textContent = name;
-    if ($('sendwayo-active-id')) $('sendwayo-active-id').textContent = id;
-    if ($('sendwayo-active-code')) $('sendwayo-active-code').textContent = code;
+    if ($('sendwayo-v7-name')) $('sendwayo-v7-name').textContent = name;
+    if ($('sendwayo-v7-role')) $('sendwayo-v7-role').textContent = roleName(a||u);
+    if ($('sendwayo-v7-id')) $('sendwayo-v7-id').textContent = id;
+    if ($('sendwayo-v7-code')) $('sendwayo-v7-code').textContent = code;
+    window.sendwayoRefreshIdentityHeader?.();
     installModalIdentity();
   }
 
@@ -4859,18 +4905,24 @@ window.sendwayoShareReceipt=async function(){
     });
   }
   let translationObserver=null, translationObserverTimer=null;
+  const translationPendingRoots=new Set();
   function installTranslationObserver(){
     if(translationObserver||!document.body)return;
-    // Clock counters and other text updates must not trigger a translation scan
-    // of the entire 800 KB interface every second.
+    // Translate only newly inserted subtrees; keep roots arriving during debounce.
     translationObserver=new MutationObserver(records=>{
-      const hasNewElements=records.some(record=>record.addedNodes&&record.addedNodes.length>0);
-      if(!hasNewElements||translationObserverTimer!==null)return;
+      records.forEach(record=>(record.addedNodes||[]).forEach(node=>{
+        const root=node.nodeType===1?node:node.parentElement;
+        if(!root||root===document.body||/^(SCRIPT|STYLE|NOSCRIPT)$/.test(root.tagName||''))return;
+        Array.from(translationPendingRoots).forEach(existing=>{if(root!==existing&&root.contains(existing))translationPendingRoots.delete(existing);});
+        if(!Array.from(translationPendingRoots).some(parent=>parent===root||parent.contains(root)))translationPendingRoots.add(root);
+      }));
+      if(!translationPendingRoots.size||translationObserverTimer!==null)return;
       translationObserverTimer=window.setTimeout(()=>{
         translationObserverTimer=null;
-        try{translateInterface(document.body,languageValue());}
+        const pending=Array.from(translationPendingRoots);translationPendingRoots.clear();
+        try{pending.forEach(node=>{if(node.isConnected)translateInterface(node,languageValue());});}
         catch(error){console.warn('[SENDWAYO] No se pudo actualizar el idioma:',error);}
-      },250);
+      },180);
     });
     // New sections are translated; characterData/attribute edits are ignored.
     translationObserver.observe(document.body,{subtree:true,childList:true});
@@ -5149,9 +5201,9 @@ window.sendwayoShareReceipt=async function(){
   const modulePageState = window.__sendwayoModulePageState || (window.__sendwayoModulePageState = Object.create(null));
   function renderModulePager(view, total, page, pageCount) {
     const pager = $('sendwayo-module-pagination-' + view); if (!pager) return;
-    const start = total ? (page - 1) * 10 + 1 : 0;
-    const end = Math.min(total, page * 10);
-    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Mostrando ${start}–${end} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Siguiente</button></div></div>`;
+    const start = total ? 1 : 0;
+    const end = total ? Math.min(10,total-(page-1)*10) : 0;
+    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Posterior</button></div></div>`;
   }
   window.sendwayoSetModulePage = function(view, page) {
     const state = modulePageState[view] || (modulePageState[view] = {page:1, query:''});
@@ -5229,7 +5281,7 @@ window.sendwayoShareReceipt=async function(){
       const amount = txt(t.monto || (Number(t.montoValue)||0)+' '+cur);
       const fee = txt(t.feeText || ((Number(t.fee)||0) ? `Comisión ${t.fee} ${cur}` : '—'));
       const detail = txt(t.rutaExacta || t.detalle || '');
-      return `<tr data-transaction-id="${safe(t.id)}"><td style="font-weight:900">${String(pageStart+i+1).padStart(2,'0')}</td><td><strong>${safe(t.id)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(t.fecha || '')}</div></td><td><strong>${safe(t.ruta || names[view])}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(detail)}</div></td><td><div>${safe(accountNameForId(t.remitenteId || t.creadorId))}</div><div style="font-size:10px;color:#64748b;margin-top:4px">Registrado por: ${safe(accountNameForId(t.creadorId))}</div></td><td><strong>${safe(amount)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(fee)}</div></td><td>${safe(t.beneficiario || t.beneficiarioTel || '—')}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:999px;background:${color}">${safe(state)}</span></td><td><div class="sendwayo-action-row">${rowActions(view,t)}</div></td></tr>`;
+      return `<tr data-transaction-id="${safe(t.id)}"><td style="font-weight:900">${String(i+1).padStart(2,'0')}</td><td><strong>${safe(t.id)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(t.fecha || '')}</div></td><td><strong>${safe(t.ruta || names[view])}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(detail)}</div></td><td><div>${safe(accountNameForId(t.remitenteId || t.creadorId))}</div><div style="font-size:10px;color:#64748b;margin-top:4px">Registrado por: ${safe(accountNameForId(t.creadorId))}</div></td><td><strong>${safe(amount)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(fee)}</div></td><td>${safe(t.beneficiario || t.beneficiarioTel || '—')}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:999px;background:${color}">${safe(state)}</span></td><td><div class="sendwayo-action-row">${rowActions(view,t)}</div></td></tr>`;
     }).join('');
   }
   window.sendwayoOpenModuleForm = openModuleForm;
@@ -5348,7 +5400,17 @@ window.sendwayoShareReceipt=async function(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
   window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage) showWelcome(); else { updateIdentity(); applyIdentityDefaults(false); } });
-  document.addEventListener('click', () => setTimeout(() => { refreshBellCount(); if (current()) { updateIdentity(); applyIdentityDefaults(false); } }, 60));
+  document.addEventListener('click', event => {
+    const trigger = event.target && event.target.closest
+      ? event.target.closest('button[onclick*="modal-"],button[onclick*="v162_abrir"],button[onclick*="sendwayoOpen"],[data-sendwayo-open-modal]')
+      : null;
+    if (!trigger) return;
+    window.setTimeout(() => {
+      if (!current()) return;
+      installModalIdentity();
+      applyIdentityDefaults(false);
+    }, 60);
+  }, true);
 })();
 </script>
 
@@ -5369,7 +5431,7 @@ window.sendwayoShareReceipt=async function(){
   const isOpenModal = el => el && /^modal-/.test(el.id||'') && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none' && getComputedStyle(el).visibility!=='hidden';
   function syncModalOnly(){ const open=[...document.body.children].some(isOpenModal); document.body.classList.toggle('sendwayo-form-only',open); }
   const observer=new MutationObserver(syncModalOnly);
-  function init(){syncModalOnly();observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});}
+  function init(){syncModalOnly();observer.observe(document.body,{childList:true,attributes:true,attributeFilter:['class','style']});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   document.addEventListener('click',()=>setTimeout(syncModalOnly,30),true);
 })();
@@ -5510,12 +5572,12 @@ window.sendwayoShareReceipt=async function(){
     filtered.forEach((tr,i)=>{
       const onPage=i>=start && i<end;
       tr.style.display=onPage?'':'none';
-      if(numbered && tr.cells?.[0]) { const num=String(i+1).padStart(2,'0'); if(String(tr.cells[0].textContent||'').trim()!==num) tr.cells[0].textContent=num; }
+      if(numbered && tr.cells?.[0]) { const num=String(i-start+1).padStart(2,'0'); if(String(tr.cells[0].textContent||'').trim()!==num) tr.cells[0].textContent=num; }
     });
     emptyRows.forEach(tr=>tr.style.display=filtered.length?'none':'');
     const pager=ensurePager(table);
-    const first=filtered.length?start+1:0, last=end;
-    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Mostrando ${first}–${last} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Siguiente</button></div></div>`;
+    const localFirst=filtered.length?1:0, localLast=filtered.length?end-start:0;
+    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página posterior" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Posterior</button></div></div>`;
     if(pager.dataset.html!==html){ pager.innerHTML=html; pager.dataset.html=html; }
     if(pager.dataset.sendwayoPagerHandlers!=='1'){
       pager.dataset.sendwayoPagerHandlers='1';
@@ -5532,7 +5594,9 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   function scanTables(root=document){
-    const tables=root.querySelectorAll?root.querySelectorAll('table'):[];
+    const tables=[];
+    if(root&&root.matches&&root.matches('table'))tables.push(root);
+    if(root&&root.querySelectorAll)tables.push(...root.querySelectorAll('table'));
     tables.forEach(table=>{
       if(specialTables.has(table.id)) return;
       const viewName=viewKey(table); if(viewName && !transactionViews.has(viewName)) return;
@@ -5550,16 +5614,13 @@ window.sendwayoShareReceipt=async function(){
     setTimeout(()=>{const view=ev.target.closest('.view,[id^="view-"]');if(view) view.querySelectorAll('table').forEach(t=>applyPagination(t,true));},0);
   },true);
   const bodyObserver=new MutationObserver(records=>{
-    let scan=false;
-    for(const rec of records){
-      for(const node of [...rec.addedNodes,...rec.removedNodes]){
-        if(node.nodeType!==1) continue;
-        if(node.closest?.('.sendwayo-generic-pager')) continue;
-        if(node.matches?.('table,tr,tbody,.view,[id^="view-"]') || node.querySelector?.('table,.view,[id^="view-"]')) { scan=true; break; }
-      }
-      if(scan) break;
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const roots=new Set();
+    for(const rec of records)for(const node of rec.addedNodes){
+      if(node.nodeType!==1||node.closest?.('.sendwayo-generic-pager'))continue;
+      if(node.matches?.('table,tbody,.view,[id^="view-"]')||node.querySelector?.('table,.view,[id^="view-"]'))roots.add(node.matches?.('tbody')?(node.closest('table')||node):node);
     }
-    if(scan) scanTables(document);
+    roots.forEach(root=>scanTables(root));
   });
 
   /* D. Evita repetir un teléfono en las cuentas/solicitudes/beneficiarios de ESTE almacenamiento local. */
@@ -5901,7 +5962,7 @@ window.sendwayoShareReceipt=async function(){
   ['pointerdown','keydown','touchstart','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>activityCheck(true),{passive:true,capture:true}));
   window.addEventListener('focus',()=>activityCheck(false));window.addEventListener('pageshow',()=>activityCheck(false));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)activityCheck(false)});
-  setInterval(()=>{activityCheck(false);installHamburger();},10000);
+  setInterval(()=>activityCheck(false),10000);
 
   // Admin review panel is added only inside the existing admin-only Secret information page.
   const oldRender=window.renderModuloSeparado;
@@ -6102,13 +6163,47 @@ window.sendwayoShareReceipt=async function(){
       }
     }return oldActionGeneric.apply(this,arguments);};actionWrapper.__sendwayoFinancialWrap=true;window.sendwayoActionGeneric=actionWrapper;}
   // One responsive toolbar class for all modules with Add + Search + Excel/PDF/CSV.
-  function alignToolbars(){document.querySelectorAll('input[type="search"]').forEach(input=>{let n=input.parentElement,chosen=null,depth=0;while(n&&n!==document.body&&depth<5){const buttons=[...n.querySelectorAll('button')].map(b=>normalize(b.textContent));const hasAdd=buttons.some(x=>/agregar nuevo|agregar deposito|agregar cuenta|agregar nuevo envio|agregar nueva recarga/.test(x));const hasExcel=buttons.some(x=>x==='excel'),hasPdf=buttons.some(x=>x==='pdf'),hasCsv=buttons.some(x=>x==='csv');if(hasAdd&&hasExcel&&hasPdf&&hasCsv){chosen=n;break;}n=n.parentElement;depth++;}if(chosen){chosen.classList.add('sendwayo-toolbar-one-line');const add=[...chosen.querySelectorAll('button')].find(b=>/agregar/.test(normalize(b.textContent)));if(add){add.title=add.title||add.textContent.trim();add.setAttribute('aria-label',add.title);}}});}
+  function alignToolbars(root){
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const scope=root&&root.querySelectorAll?root:document.querySelector('.view:not(.hidden)');
+    if(!scope)return;
+    scope.querySelectorAll('input[type="search"]').forEach(input=>{
+      let n=input.parentElement,chosen=null,depth=0;
+      while(n&&n!==scope.parentElement&&depth<5){
+        const buttons=[...n.querySelectorAll('button')].map(b=>normalize(b.textContent));
+        const hasAdd=buttons.some(x=>/agregar nuevo|agregar deposito|agregar cuenta|agregar nuevo envio|agregar nueva recarga/.test(x));
+        const hasExcel=buttons.some(x=>x==='excel'),hasPdf=buttons.some(x=>x==='pdf'),hasCsv=buttons.some(x=>x==='csv');
+        if(hasAdd&&hasExcel&&hasPdf&&hasCsv){chosen=n;break;}
+        n=n.parentElement;depth++;
+      }
+      if(chosen){chosen.classList.add('sendwayo-toolbar-one-line');const add=[...chosen.querySelectorAll('button')].find(b=>/agregar/.test(normalize(b.textContent)));if(add){add.title=add.title||add.textContent.trim();add.setAttribute('aria-label',add.title);}}
+    });
+  }
+  let toolbarObserverTimer=null;
+  function queueToolbar(){
+    if(!document.body.classList.contains('sendwayo-authenticated')||toolbarObserverTimer!==null)return;
+    toolbarObserverTimer=window.setTimeout(()=>{
+      toolbarObserverTimer=null;
+      const active=document.querySelector('.view:not(.hidden)');
+      if(active)alignToolbars(active);
+    },120);
+  }
   function wrapModuleLauncher(){[['sendwayoAgregarModulo'],['sendwayoOpenModuleForm'],['abrirModalSeparado']].forEach(([key])=>{const old=window[key];if(typeof old==='function'&&!old.__sendwayoFinanceLaunchWrap){const wrapped=function(view){const r=old.apply(this,arguments);setTimeout(()=>{ensureFacturasSource();alignToolbars();},40);return r;};wrapped.__sendwayoFinanceLaunchWrap=true;window[key]=wrapped;}});}
   function init(){getAgents().forEach(a=>{if(!a.commissions)a.commissions=a.comisiones||{DOP:0,HTG:0};if(a.commissions.DOP==null)a.commissions.DOP=0;if(a.commissions.HTG==null)a.commissions.HTG=0;a.comisiones=a.commissions;});ensureFacturasSource();alignToolbars();installSaveWrappers();wrapModuleLauncher();wrapBonusView();syncLegacy();saveAccounts();}
   function installSaveWrappers(){['v162_guardarEnvio','v162_guardarRetiro','guardarEnvioCompacto','guardarRetiroCompacto','v162_guardarRec','v162_guardarPkt','v162_guardarPaq'].forEach(wrapSave);ensureFacturasSource();alignToolbars();wrapModuleLauncher();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.addEventListener('load',()=>{getAgents().forEach(a=>{if(!a.commissions)a.commissions=a.comisiones||{DOP:0,HTG:0};if(a.commissions.DOP==null)a.commissions.DOP=0;if(a.commissions.HTG==null)a.commissions.HTG=0;a.comisiones=a.commissions;});installSaveWrappers();syncLegacy();saveAccounts();alignToolbars();wrapModuleLauncher();wrapBonusView();setTimeout(installBonusTableActions,50);});
-  const observer=new MutationObserver(()=>alignToolbars());observer.observe(document.documentElement,{childList:true,subtree:true});
+  const observer=new MutationObserver(records=>{
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const relevant=records.some(rec=>[...rec.addedNodes,...rec.removedNodes].some(node=>{
+      if(node.nodeType!==1)return false;
+      return node.matches?.('input[type="search"],table,.view,[id^="view-"]')||node.querySelector?.('input[type="search"],table,.view,[id^="view-"]');
+    }));
+    if(relevant)queueToolbar();
+  });
+  if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('click',ev=>{if(ev.target.closest('button[onclick*="showView("],button[onclick*="sendwayoAgregarModulo"],button[onclick*="abrirModalSeparado"]'))queueToolbar();},true);
+  window.addEventListener('sendwayo:firebase-ready',queueToolbar);
 })();
 
 </script>
@@ -6191,14 +6286,14 @@ window.sendwayoShareReceipt=async function(){
   function deliverQueue(){const u=current();if(!u)return;const id=uid(u);const roleKey=role(u).includes('ADMIN')?'ADMIN':role(u).includes('AGENTE')?'AGENTE':role(u).includes('REMITENTE')?'REMITENTE':'';if(!roleKey)return;const q=readArray(QUEUE_KEY);const delivered=readArray(DELIVERED_PREFIX+id);let changed=false;for(const item of q){if(!item||delivered.some(x=>x===item.id))continue;if(item.excludeUserId&&item.excludeUserId===id)continue;const idMatch=Array.isArray(item.targetIds)&&item.targetIds.some(x=>String(x)===id);const roleMatch=Array.isArray(item.targetRoles)&&item.targetRoles.includes(roleKey);if(!idMatch&&!roleMatch)continue;const arr=notiArray();const already=arr&&arr.some(noti=>String(noti.id)===String(item.id));if(!already&&typeof window.addNotificacion==='function'){window.addNotificacion(item.msg,item.tipo||'Envío');const fresh=notiArray();if(fresh&&fresh[0]){fresh[0].id=item.id;fresh[0].txId=item.txId||'';fresh[0].targetView=routeForType(item.tipo||'');}}delivered.push(item.id);changed=true;}if(changed){try{localStorage.setItem(DELIVERED_PREFIX+id,JSON.stringify(delivered.slice(-1500)))}catch(_){}persistCurrentNotifications();renderSavedNotifications();}}
   window.sendwayoDeliverQueue=deliverQueue;window.sendwayoRenderSavedNotifications=renderSavedNotifications;window.sendwayoQueuePending=queuePending;window.sendwayoQueueStatus=queueStatus;
   function detectNew(before){const created=txArray().filter(t=>t&&!before.has(String(t.id)));created.forEach(queuePending);}
-  function wrapSaveForQueue(name){const old=window[name];if(typeof old!=='function'||old.__sendwayoQueueWrap)return;const wrapped=function(){const before=new Set(txArray().map(t=>String(t.id)));const result=old.apply(this,arguments);setTimeout(()=>{detectNew(before);persistCurrentNotifications();updateVisibleMoney()},80);return result};wrapped.__sendwayoQueueWrap=true;window[name]=wrapped;}
-  ['v162_guardarEnvio','v162_guardarRetiro','v162_guardarDep','guardarDepositoExacto','v162_guardarRec','v162_guardarPkt','v162_guardarFac','v162_guardarPaq','guardarRecargaExacto','guardarPaquetikoExacto','guardarFacturaExacto','guardarComisionExacto'].forEach(wrapSaveForQueue);
+  function wrapSaveForQueue(name){const old=window[name];if(typeof old!=='function'||old.__sendwayoQueueWrap)return;const wrapped=function(){const before=new Set(txArray().map(t=>String(t.id)));const result=old.apply(this,arguments);const after=()=>setTimeout(()=>{detectNew(before);persistCurrentNotifications();updateVisibleMoney();try{window.dispatchEvent(new CustomEvent('sendwayo:local-data-changed',{detail:{source:name}}));}catch(_){}},80);if(result&&typeof result.then==='function')result.then(after,after);else after();return result};wrapped.__sendwayoQueueWrap=true;window[name]=wrapped;}
+  ['v162_guardarEnvio','v162_guardarRetiro','v162_guardarDep','guardarDepositoExacto','v162_guardarRec','v162_guardarPkt','v162_guardarFac','v162_guardarPaq','guardarRecargaExacto','guardarPaquetikoExacto','guardarFacturaExacto','guardarComisionExacto','v162_guardarAju','v162_guardarCred','v162_guardarCom'].forEach(wrapSaveForQueue);
 
   // Notify the original account when an agent/admin changes its pending transaction status.
-  function wrapStatus(name,successLabel){const old=window[name];if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(id){const t=findTx(id);const before=t?norm(t.estado):'';const actor=uid(current());const result=old.apply(this,arguments);setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications();}},80);return result};wrapped.__sendwayoStatusQueueWrap=true;window[name]=wrapped;}
+  function wrapStatus(name,successLabel){const old=window[name];if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(id){const t=findTx(id);const before=t?norm(t.estado):'';const result=old.apply(this,arguments);setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications();try{window.dispatchEvent(new CustomEvent('sendwayo:local-data-changed',{detail:{source:name,id:String(id)}}));}catch(_){} }},80);return result};wrapped.__sendwayoStatusQueueWrap=true;window[name]=wrapped;}
   ['aprobar','rechazar','noCoincide'].forEach(name=>wrapStatus(name,name));
   // Older administrative screens dispatch approvals through sendwayoActionGeneric instead of window.aprobar.
-  (function wrapGenericStatus(){const old=window.sendwayoActionGeneric;if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(view,action,id){const key=norm(action).replace(/[\s_-]/g,'');const t=findTx(id);const before=t?norm(t.estado):'';const result=old.apply(this,arguments);if(['aprobar','rechazar','nocoincide'].includes(key)){setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications()}},90)}return result};wrapped.__sendwayoStatusQueueWrap=true;window.sendwayoActionGeneric=wrapped})();
+  (function wrapGenericStatus(){const old=window.sendwayoActionGeneric;if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(view,action,id){const key=norm(action).replace(/[\s_-]/g,'');const t=findTx(id);const before=t?norm(t.estado):'';const result=old.apply(this,arguments);if(['aprobar','rechazar','nocoincide'].includes(key)){setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications();try{window.dispatchEvent(new CustomEvent('sendwayo:local-data-changed',{detail:{source:'generic-status',id:String(id)}}));}catch(_){} }},90)}return result};wrapped.__sendwayoStatusQueueWrap=true;window.sendwayoActionGeneric=wrapped})();
 
   // Do not display approval controls to a remittee, or to an agent for their own transaction/deposits.
   function hideUnauthorizedApprovalButtons(){const u=current();if(!u)return;const aid=uid(u);document.querySelectorAll('button').forEach(btn=>{const label=norm(btn.textContent);const onclick=btn.getAttribute('onclick')||'';const approval=/^(aprobar|rechazar|no coincide)$/.test(label)||/(?:aprobar|rechazar|nocoincide)/i.test(onclick);if(!approval)return;let hide=isRemitter();if(isAgent()){const row=btn.closest('tr');const rowText=text(row&&row.textContent);const tx=txArray().find(t=>row&&rowText.includes(String(t.id)));const own=tx&&[tx.creadorId,tx.creadoPorId,tx.usuarioId].some(x=>String(x)===aid);hide=hide||!tx||own||isDeposit(tx);}if(hide){btn.hidden=true;btn.disabled=true;btn.style.setProperty('display','none','important');}});}
@@ -6211,6 +6306,7 @@ window.sendwayoShareReceipt=async function(){
   // while the welcome/login screen is being built.
   let uiObserverTimer=null;
   const uiObs=new MutationObserver(records=>{
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
     const relevant=records.some(rec=>[...rec.addedNodes,...rec.removedNodes].some(node=>{
       if(node.nodeType!==1) return false;
       const tag=String(node.tagName||'').toUpperCase();
@@ -6239,12 +6335,12 @@ window.sendwayoShareReceipt=async function(){
   function syncStorage(){deliverQueue();}
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5',QUEUE_KEY].includes(e.key))syncStorage()});
   // Make storage polling idempotent; it also covers browsers which do not dispatch storage for a local file.
-  setInterval(syncStorage,2500);
+  setInterval(syncStorage,15000);
 
   // Keep the signed-in session after refresh for up to 40 minutes of inactivity in this tab.
   const ACTIVITY_KEY='sendwayo_express_oficial_20261029_last_activity_v5',AUTH_KEY='sendwayo_express_oficial_20261029_auth_snapshot_v1',LIMIT=40*60*1000;
   function saveAuthSnapshot(){const u=current();if(!u)return;try{sessionStorage.setItem(AUTH_KEY,JSON.stringify({user:{id:u.id,uid:u.uid,codigo:u.codigo,nombre:u.nombre,name:u.name,role:u.role,rol:u.rol,email:u.email,usuario:u.usuario,celular:u.celular,telefono:u.telefono},savedAt:Date.now()}));sessionStorage.setItem(ACTIVITY_KEY,String(Date.now()))}catch(_){} }
-  function restoreAuth(){try{sessionStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(ACTIVITY_KEY)}catch(_){}}
+  function restoreAuth(){try{sessionStorage.removeItem(AUTH_KEY)}catch(_){}}
   const oldLogin=window.intentarLogin;if(typeof oldLogin==='function'&&!oldLogin.__sendwayoAuthSnapshot){const wrappedLogin=function(){let r;try{r=oldLogin.apply(this,arguments)}catch(error){console.error('SENDWAYO: error al validar el acceso',error);const err=$('login-error');if(err){err.textContent='No se pudo completar el acceso. Revise usuario y contraseña e inténtelo otra vez.';err.classList.remove('hidden')}const login=$('login-screen');if(login){login.classList.remove('hidden');login.style.display='flex'}return false}setTimeout(()=>{if(current()){saveAuthSnapshot();renderSavedNotifications();deliverQueue();setupExactSelectors();updateVisibleMoney();hideUnauthorizedApprovalButtons()}},250);return r};wrappedLogin.__sendwayoAuthSnapshot=true;window.intentarLogin=wrappedLogin;}
   const oldLogout=window.cerrarSesion;if(typeof oldLogout==='function'&&!oldLogout.__sendwayoAuthSnapshot){const wrappedLogout=function(){const before=current();const r=oldLogout.apply(this,arguments);try{sessionStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(ACTIVITY_KEY)}catch(_){}return r};wrappedLogout.__sendwayoAuthSnapshot=true;window.cerrarSesion=wrappedLogout;}
   ['pointerdown','keydown','touchstart','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>{if(current())saveAuthActivityOnly()}, {capture:true,passive:true}));
@@ -6288,7 +6384,7 @@ window.sendwayoShareReceipt=async function(){
     } else if(kind==='RDHT'){
       origin='DOP'; receivedCurrency='HTG'; fee=Math.round(amount*0.08*100)/100; net=amount-fee; received=net*2.10; rate='Tasa RD→HT 2.10';
     } else if(kind==='HTRD'){
-      origin='HTG'; receivedCurrency='DOP'; fee=Math.round(amount*0.08*100)/100; net=amount-fee; received=net/2.30; rate='Tasa HT→RD 2.30';
+      origin='HTG'; receivedCurrency='DOP'; fee=Math.round(amount*0.08*100)/100; net=amount-fee; received=net; rate='Sin conversión automática';
     } else {
       origin='DOP'; receivedCurrency='DOP'; fee=Math.round(amount*0.08*100)/100; net=amount-fee; received=net; rate='Comisión 8%';
     }
@@ -6513,9 +6609,11 @@ window.sendwayoShareReceipt=async function(){
     const blob=new Blob([csv],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=(viewKey(root)||'sendwayo')+(format==='excel'?'.xls':'.csv');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function exportIt(root,format){const view=viewKey(root);if(typeof window.sendwayoExportModule==='function'){window.sendwayoExportModule(view,format);return}if(typeof window.exportTable==='function'){window.exportTable(view,format);return}if(typeof window.v162_exportarModulo==='function'&&['envios','retiros','depositos'].includes(view)){window.v162_exportarModulo(view,format);return}if(typeof window.sendwayoTariffExport==='function'&&view.includes('tarif')){window.sendwayoTariffExport(format);return}genericTableExport(root,format);}
-  function alignToolbars(){
-    document.querySelectorAll('.view').forEach(root=>{
-      const table=root.querySelector('table');
+  function alignToolbars(scope){
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const root=scope&&scope.matches&&scope.matches('.view')?scope:document.querySelector('.view:not(.hidden)');
+    if(!root||root.classList.contains('hidden'))return;
+    const table=root.querySelector('table');
       if(!table)return;
       const view=viewKey(root);
       let row=root.querySelector('.sendwayo-toolbar-one-line[data-sendwayo-toolbar-v2="1"]');
@@ -6579,15 +6677,34 @@ window.sendwayoShareReceipt=async function(){
       const alreadyOrdered=row.children.length===ordered.length&&ordered.every((el,i)=>row.children[i]===el);
       if(!alreadyOrdered)row.replaceChildren(...ordered);
       row.querySelectorAll('button,a,input').forEach(el=>{el.style.minWidth='0';el.style.maxWidth='100%';el.style.boxSizing='border-box';});
-    });
   }
   // Don't let a mutation observer repeatedly reprocess the same row; wait once after renders.
-  let toolbarQueued=false;function queueToolbar(){if(toolbarQueued)return;toolbarQueued=true;setTimeout(()=>{toolbarQueued=false;try{alignToolbars()}catch(_){}},80)}
+  let toolbarQueued=false,toolbarPendingRoot=null;
+  function queueToolbar(root){
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    toolbarPendingRoot=root||document.querySelector('.view:not(.hidden)');
+    if(toolbarQueued)return;
+    toolbarQueued=true;
+    setTimeout(()=>{
+      toolbarQueued=false;const target=toolbarPendingRoot;toolbarPendingRoot=null;
+      try{alignToolbars(target)}catch(_){}
+    },120);
+  }
   function init(){cleanLogin();setupManualAmounts();alignToolbars();updateFinanceDisplay();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.addEventListener('load',()=>{cleanLogin();setupManualAmounts();alignToolbars();updateFinanceDisplay();});
   document.addEventListener('click',ev=>{if(ev.target.closest('button[onclick*="showView("],button[onclick*="sendwayoAgregarModulo"],button[onclick*="abrirModalSeparado"]'))setTimeout(()=>{setupManualAmounts();alignToolbars()},80)},true);
-  const observer=new MutationObserver(queueToolbar);try{observer.observe(document.documentElement,{subtree:true,childList:true})}catch(_){}
+  const observer=new MutationObserver(records=>{
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const active=document.querySelector('.view:not(.hidden)');if(!active)return;
+    const relevant=records.some(rec=>[...rec.addedNodes,...rec.removedNodes].some(node=>{
+      if(node.nodeType!==1||node.closest?.('.sendwayo-toolbar-one-line'))return false;
+      if(node!==active&&!active.contains(node))return false;
+      return node.matches?.('table,tbody,input[type="search"],.overflow-x-auto')||node.querySelector?.('table,tbody,input[type="search"]');
+    }));
+    if(relevant)queueToolbar(active);
+  });
+  if(document.body)observer.observe(document.body,{subtree:true,childList:true});
   window.sendwayoFinalRefreshControls=()=>{setupManualAmounts();alignToolbars();cleanLogin()};
 })();
 </script>
@@ -6805,14 +6922,15 @@ window.sendwayoShareReceipt=async function(){
   function updateSidebarPendingCounts(){const side=$('sendwayo-main-sidebar');if(!side)return;const u=getUser(),uId=aid(activeAccount()||u),uRole=role(u);const txs=allTx();side.querySelectorAll('button[onclick*="showView("]').forEach(btn=>{const m=(btn.getAttribute('onclick')||'').match(/showView\(['"]([^'"]+)['"]\)/);if(!m)return;const view=m[1];if(!['envios','retiros','depositos','recargas','paquetikos','facturas'].includes(view))return;let count=txs.filter(t=>moduleForType(t.tipo)===view&&['pendiente','no coincide'].includes(norm(t.estado))).filter(t=>{if(view==='depositos')return uRole.includes('ADMIN');if(uRole.includes('AGENTE'))return ![t.creadorId,t.creadoPorId,t.usuarioId].some(v=>String(v)===String(uId));return uRole.includes('ADMIN')}).length;let badge=btn.querySelector('[data-sendwayo-pending-count]');if(!badge){badge=document.createElement('span');badge.dataset.sendwayoPendingCount='1';badge.style.cssText='display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:10px;font-weight:900;vertical-align:middle';btn.appendChild(badge)}badge.textContent=count?String(count):'';badge.style.display=count?'inline-flex':'none';});}
 
   // Restore the active account's balance view after refresh while less than 40 minutes of inactivity have elapsed.
-  function restoreSessionWithoutResettingActivity(){try{sessionStorage.removeItem('sendwayo_express_oficial_20261029_auth_snapshot_v1');sessionStorage.removeItem('sendwayo_express_oficial_20261029_last_activity_v5')}catch(_){}}
+  function restoreSessionWithoutResettingActivity(){try{sessionStorage.removeItem('sendwayo_express_oficial_20261029_auth_snapshot_v1')}catch(_){}}
   function initialize(){restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts();try{window.sendwayoFinalRefreshControls?.()}catch(_){} }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
   window.addEventListener('pageshow',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('load',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5'].includes(e.key)){setTimeout(()=>{syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()},50)}});
-  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},5000);
-  window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
+  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},30000);
+  window.addEventListener('sendwayo:transactions-updated',()=>{window.refreshBellCount();updateSidebarPendingCounts();});
+   window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
 })();
 </script>
 <!-- END SENDWAYO V7 DOP LEDGER FIX -->
@@ -6924,7 +7042,7 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
-  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, updateProfileByKey:(key,patch)=>userRoot.child(safeDbKey(key)).update(patch) };
+  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, updateProfileByKey:(key,patch)=>userRoot.child(safeDbKey(key)).update(patch), lockForInactivity: async function(){ state.sessionEstablished=false; state.loginBusy=false; state.readReady=false; state.profile=null; state.profileKey=null; state.remoteTransactions={}; state.lastTxSnapshot=new Map(); state.lastAccountSnapshot=new Map(); state.lastAccountValues=new Map(); stopListeners(); if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;} try{await auth.signOut();}catch(error){console.warn('[SENDWAYO] No se pudo cerrar Firebase al vencer la inactividad:',error);} } };
 
   const norm = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   const txt = v => String(v ?? '').trim();
@@ -7247,6 +7365,7 @@ window.sendwayoShareReceipt=async function(){
       window.SENDWAYO_BANKS=rows;
       try{localStorage.setItem('sendwayo_express_oficial_20261029_bank_accounts_v5',JSON.stringify(rows));}catch(e){}
       refreshAccountSelects();
+      window.dispatchEvent(new CustomEvent('sendwayo:banks-ready',{detail:{count:rows.length}}));
     },'cuentas bancarias');
     // Agents do not browse the beneficiaries collection. Review details are embedded in each pending transaction.
     if(role!=='AGENTE'){
@@ -7464,6 +7583,7 @@ window.sendwayoShareReceipt=async function(){
     if(typeof TRANSACCIONES!=='undefined' && Array.isArray(TRANSACCIONES)) TRANSACCIONES.splice(0,TRANSACCIONES.length,...merged);
     try { if(typeof renderPrincipal==='function') renderPrincipal(); } catch(e){}
     try { const view=document.querySelector('.view:not(.hidden)'); if(view && typeof renderModuloSeparado==='function') renderModuloSeparado(view.id.replace('view-','')); } catch(e){}
+    try{window.dispatchEvent(new CustomEvent('sendwayo:transactions-updated'));}catch(e){}
   }
   async function loadCloudTransactions(profileRow, role, uid) {
     state.remoteTransactions={};
@@ -7774,9 +7894,21 @@ window.sendwayoShareReceipt=async function(){
       try{restoreLocalAccounts();await loadCloudTransactions({key:state.profileKey,data:state.profile},canonicalRole(state.profile,state.profileKey),auth.currentUser.uid);state.lastTxSnapshot=makeTransactionSnapshot();}catch(e){}
     }finally{state.syncBusy=false;}
   }
+  let cloudSyncRequestTimer=null;
+  const CLOUD_SYNC_INTERVAL_MS=15000;
+  function queueCloudSync(){
+    if(!state.readReady||!auth.currentUser||!state.profile)return;
+    if(cloudSyncRequestTimer)window.clearTimeout(cloudSyncRequestTimer);
+    cloudSyncRequestTimer=window.setTimeout(()=>{
+      cloudSyncRequestTimer=null;
+      reconcileCloudChanges().catch(error=>showSyncIssue(error?.message||'Error de sincronización.'));
+    },120);
+  }
+  window.addEventListener('sendwayo:local-data-changed',queueCloudSync);
+  if(window.sendwayoFirebase)window.sendwayoFirebase.requestSync=queueCloudSync;
   function startCloudSync(){
     if(state.syncTimer)clearInterval(state.syncTimer);
-    state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},5000);
+    state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},CLOUD_SYNC_INTERVAL_MS);
   }
   function scrubLegacyCredentials(){
     const strip=o=>{if(!o||typeof o!=='object')return;for(const k of ['password','password2','contrasena','allowedPasswords','clave','passwordHash'])if(k in o)delete o[k];};
@@ -8037,43 +8169,79 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut()).then(()=>{
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
-      if(state.loginBusy || state.sessionEstablished) return;
-      state.sessionEstablished=false;
-      state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
+      if(state.loginBusy||state.sessionEstablished)return;
+      state.sessionEstablished=false;state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
       stopListeners();if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;}
       try{window.currentUser=null;currentUser=null}catch(e){}
       showLogin();return;
     }
-    if(state.loginBusy||state.readReady||state.sessionEstablished) return;
+    if(state.loginBusy||state.readReady||state.sessionEstablished)return;
     state.loginBusy=true;
     try{
-      // La sesión se valida con Firebase Authentication y el perfil/rol de Realtime Database.
-      // El Worker no debe bloquear la apertura del portal si su endpoint externo no responde.
-      const found=await readProfile(user);
-      if(!found) throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise el directorio.');
+      // Validar identidad, rol y activación del agente antes de abrir el área privada.
+      const found=await loginStep(readProfile(user),'La lectura del perfil en Firebase',12000);
+      if(!found)throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise su cuenta.');
       const role=canonicalRole(found.data,found.key);
-      if(!role||!isActive(found.data)) throw new Error('El perfil no tiene un rol válido o está inactivo.');
-      const linked=await bindIdentity(found,user,role);
-      if(role==='ADMIN') await ensureInitialDirectoryProfiles(user);
-      await activateAgentMapping(user,linked,role);
-      await loadDirectory(linked,role);watchDirectory(linked,role);
-      await loadAuxiliaryData(linked,role);
+      if(!role||!isActive(found.data))throw new Error('El perfil no tiene un rol válido o está inactivo.');
+      const linked=await loginStep(bindIdentity(found,user,role),'La vinculación del perfil',8000);
+      if(role==='AGENTE')await loginStep(activateAgentMapping(user,linked,role),'La validación de activación del agente',8000);
+
       const appId=appIdFor(linked.data,linked.key,role);
       const account=hydrateFrontendAccount(linked.key,linked.data,appId,role);
       const appUser={...account,id:appId,dbUserKey:linked.key,uid:user.uid,email:user.email,usuario:user.email,role,nombre:account.nombre,name:account.name,codigo:account.codigo};
       window.currentUser=appUser;try{currentUser=appUser}catch(e){}
-      state.profile=linked.data;state.profileKey=linked.key;
-      await loadCloudTransactions(linked,role,user.uid);
-      state.lastTxSnapshot=makeTransactionSnapshot();state.lastAccountSnapshot=makeAccountSnapshot();state.lastAccountValues=makeAccountValueSnapshot();
-      state.lastSyncError='';startCloudSync();setVisibleAfterLogin(appUser);
-      try{if(typeof renderPrincipal==='function')renderPrincipal();if(typeof updateVisibleMoney==='function')updateVisibleMoney()}catch(e){}
+      state.profile=linked.data;state.profileKey=linked.key;state.directory=[linked];
+      state.sessionEstablished=true;state.readReady=false;state.remoteTransactions={};
+
+      // La sesión restaurada se muestra apenas la identidad queda validada.
+      setVisibleAfterLogin(appUser);
+      try{if(typeof renderPrincipal==='function')renderPrincipal();}catch(e){}
+      try{if(typeof updateVisibleMoney==='function')updateVisibleMoney();}catch(e){}
+      window.dispatchEvent(new CustomEvent('sendwayo:firebase-ready',{detail:{role,profileKey:linked.key,sessionRestored:true}}));
+
+      // Directorio, avisos, beneficiarios y movimientos se sincronizan en segundo plano.
+      (async function loadRestoredDashboardData(){
+        try{
+          if(role==='ADMIN'){
+            try{await loginStep(ensureInitialDirectoryProfiles(user),'La preparación del directorio',10000);}
+            catch(error){console.warn('[SENDWAYO] Preparación del directorio pendiente:',error);}
+          }
+          try{
+            await loginStep(loadDirectory(linked,role),'La carga del directorio',10000);
+            watchDirectory(linked,role);
+          }catch(error){console.warn('[SENDWAYO] Directorio no disponible todavía:',error);}
+          if(role==='ADMIN'&&typeof window.sendwayoSyncAgentAuthMappings==='function'){
+            try{await loginStep(window.sendwayoSyncAgentAuthMappings(),'La sincronización de agentes',8000);}
+            catch(error){console.warn('[SENDWAYO] Sincronización de agentes pendiente:',error);}
+          }
+          const results=await Promise.allSettled([
+            loginStep(loadAuxiliaryData(linked,role),'La carga de cuentas, beneficiarios y avisos',12000),
+            loginStep(loadCloudTransactions(linked,role,user.uid),'La carga de operaciones',15000)
+          ]);
+          const failed=results.filter(result=>result.status==='rejected');
+          if(state.readReady){
+            state.lastTxSnapshot=makeTransactionSnapshot();state.lastAccountSnapshot=makeAccountSnapshot();state.lastAccountValues=makeAccountValueSnapshot();
+            state.lastSyncError='';startCloudSync();
+            try{if(typeof renderPrincipal==='function')renderPrincipal();}catch(e){}
+            try{if(typeof updateVisibleMoney==='function')updateVisibleMoney();}catch(e){}
+            try{window.dispatchEvent(new CustomEvent('sendwayo:transactions-updated'));}catch(e){}
+          }
+          if(failed.length||!state.readReady){
+            showLoginSyncWarning('La sesión se restauró. Algunas listas todavía se están sincronizando con Firebase; espere a que aparezcan antes de registrar operaciones.');
+          }else document.getElementById('sendwayo-login-sync-warning')?.remove();
+        }catch(backgroundError){
+          console.error('[SENDWAYO] Error de carga posterior a la restauración:',backgroundError);
+          showLoginSyncWarning('La sesión se restauró, pero la sincronización necesita revisión: '+(backgroundError?.message||'error de conexión.'));
+        }
+      })();
     }catch(error){
-      console.error('[SENDWAYO Firebase session]',error);stopListeners();state.readReady=false;
+      console.error('[SENDWAYO Firebase session]',error);stopListeners();state.readReady=false;state.sessionEstablished=false;
       const message=error?.message||'No se pudo restaurar la sesión desde Firebase.';
-      try{await auth.signOut()}catch(e){}showLogin();loginError(message);
+      try{await auth.signOut()}catch(e){}
+      showLogin();loginError(message);
     }finally{state.loginBusy=false;}
   });
   }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLogin();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
@@ -8227,8 +8395,12 @@ window.sendwayoShareReceipt=async function(){
   window.sendwayoOpenAccountForm=function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede crear o modificar cuentas.');
     const a=id?findAccount(id):null, ag=view==='agentes', roleLabel=ag?'AGENTE':'REMITENTE';
-    let next=1;const idPrefix=ag?'AGE':'REM';while(accountArrays().some(x=>String(x.id||'')===idPrefix+String(next).padStart(5,'0')))next++;
-    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||idPrefix+String(next).padStart(5,'0'),
+    let next=1;const idPrefix=ag?'AGE400I':'REM';
+    const nextId=()=>ag?idPrefix+String(next):idPrefix+String(next).padStart(5,'0');
+    const idReserved=value=>accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(value)));
+    while(idReserved(nextId()))next++;
+    if(ag&&next>9)throw new Error('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');
+    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||nextId(),
       password='';
     const f=(field,label,value='',type='text',ro=false)=>`<label class="block text-xs font-bold">${label}<input id="v7-admin-${field}" type="${type}" value="${esc(value)}" ${ro?'readonly':''} class="mt-1 w-full border rounded-xl px-3 py-2.5 font-normal ${ro?'bg-slate-100':''}"></label>`;
     const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','','password')}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
@@ -8266,7 +8438,10 @@ window.sendwayoShareReceipt=async function(){
         let credential;
         try{credential=await secondaryAuth.createUserWithEmailAndPassword(email,password);}finally{try{await secondaryAuth.signOut();}catch(e){}}
         const uid=credential.user.uid,dbKey=uid;
-        let next=1,prefix=ag?'AGE':'REM';while(accountArrays().some(x=>norm(x.id)===norm(prefix+String(next).padStart(5,'0'))))next++;
+        if(ag&&!/^AGE400I[1-9]$/.test(ident))throw new Error('El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9; el primer ID es AGE400I1.');
+        if(!ag&&!/^REM\d{5}$/.test(ident))throw new Error('El ID de un remitente nuevo debe tener el formato REM seguido de cinco dígitos.');
+        const idDuplicate=accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(ident)));
+        if(idDuplicate)throw new Error('Ese ID ya existe o fue utilizado anteriormente.');
         const idNew=ident;
         const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',mustChangePassword:true,passwordChangeRequired:true,forcePasswordChange:true,balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).set(profile);
@@ -8422,8 +8597,7 @@ window.sendwayoShareReceipt=async function(){
   window.addEventListener('load', reapplyLanguage);
 })();
 </script>
-</body>
-</html>
+
 
 <!-- SENDWAYO V7: indicadores financieros diarios y pulido del menú móvil -->
 <style id="sendwayo-v7-mobile-menu-polish">
@@ -8466,7 +8640,7 @@ window.sendwayoShareReceipt=async function(){
  // FIX V7: no observar el mismo tablero que refresh modifica; evita un ciclo continuo de mutaciones.
  window.addEventListener('sendwayo:firebase-ready',refresh);
  window.addEventListener('load',function(){window.setTimeout(refresh,250);});
- window.setInterval(refresh,4000);
+ window.setInterval(()=>{const active=document.querySelector('.view:not(.hidden)');if(active&&active.id==='view-tablero')refresh();},60000);
 })();
 </script>
 
@@ -8487,33 +8661,23 @@ window.sendwayoShareReceipt=async function(){
  var $=function(id){return document.getElementById(id);};
  var norm=function(v){return String(v==null?'':v).trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();};
  var esc=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');};
- var fallback=[
-  ['DO','Dominican Republic','+1','🇩🇴'],['HT','Haiti','+509','🇭🇹'],['US','United States','+1','🇺🇸'],['CA','Canada','+1','🇨🇦'],
-  ['PR','Puerto Rico','+1-787','🇵🇷'],['JM','Jamaica','+1-876','🇯🇲'],['MX','Mexico','+52','🇲🇽'],['FR','France','+33','🇫🇷'],
-  ['ES','Spain','+34','🇪🇸'],['GB','United Kingdom','+44','🇬🇧'],['IT','Italy','+39','🇮🇹'],['DE','Germany','+49','🇩🇪'],
-  ['BR','Brazil','+55','🇧🇷'],['CO','Colombia','+57','🇨🇴'],['VE','Venezuela','+58','🇻🇪'],['PA','Panama','+507','🇵🇦'],
-  ['CR','Costa Rica','+506','🇨🇷'],['GT','Guatemala','+502','🇬🇹'],['HN','Honduras','+504','🇭🇳'],['SV','El Salvador','+503','🇸🇻'],
-  ['NI','Nicaragua','+505','🇳🇮'],['EC','Ecuador','+593','🇪🇨'],['PE','Peru','+51','🇵🇪'],['BO','Bolivia','+591','🇧🇴'],
-  ['AR','Argentina','+54','🇦🇷'],['CL','Chile','+56','🇨🇱'],['UY','Uruguay','+598','🇺🇾'],['TT','Trinidad and Tobago','+1-868','🇹🇹'],
-  ['BS','Bahamas','+1-242','🇧🇸'],['BB','Barbados','+1-246','🇧🇧'],['AG','Antigua and Barbuda','+1-268','🇦🇬'],
-  ['AU','Australia','+61','🇦🇺'],['CN','China','+86','🇨🇳'],['IN','India','+91','🇮🇳'],['JP','Japan','+81','🇯🇵'],
-  ['NG','Nigeria','+234','🇳🇬'],['GH','Ghana','+233','🇬🇭'],['SN','Senegal','+221','🇸🇳'],['ZA','South Africa','+27','🇿🇦'],
-  ['NL','Netherlands','+31','🇳🇱'],['PT','Portugal','+351','🇵🇹'],['BE','Belgium','+32','🇧🇪'],['CH','Switzerland','+41','🇨🇭']
- ].map(function(x){return {alpha2:x[0],name:x[1],callingCode:x[2],flag:x[3]};});
- var countries=fallback.slice(),displayNames=null;
- try{if(Intl&&Intl.DisplayNames)displayNames=new Intl.DisplayNames(['es'],{type:'region'});}catch(e){}
+ // CountryKit 2026 (MIT): complete ISO 3166-1 country/territory list, bundled for offline use.
+ var fallbackCountriesData=[{"alpha2":"AF","name":"Afghanistan","callingCode":"+93","flag":"🇦🇫"},{"alpha2":"AX","name":"Åland Islands","callingCode":"+35818","flag":"🇦🇽"},{"alpha2":"AL","name":"Albania","callingCode":"+355","flag":"🇦🇱"},{"alpha2":"DZ","name":"Algeria","callingCode":"+213","flag":"🇩🇿"},{"alpha2":"AS","name":"American Samoa","callingCode":"+1684","flag":"🇦🇸"},{"alpha2":"AD","name":"Andorra","callingCode":"+376","flag":"🇦🇩"},{"alpha2":"AO","name":"Angola","callingCode":"+244","flag":"🇦🇴"},{"alpha2":"AI","name":"Anguilla","callingCode":"+1264","flag":"🇦🇮"},{"alpha2":"AQ","name":"Antarctica","callingCode":"","flag":"🇦🇶"},{"alpha2":"AG","name":"Antigua and Barbuda","callingCode":"+1268","flag":"🇦🇬"},{"alpha2":"AR","name":"Argentina","callingCode":"+54","flag":"🇦🇷"},{"alpha2":"AM","name":"Armenia","callingCode":"+374","flag":"🇦🇲"},{"alpha2":"AW","name":"Aruba","callingCode":"+297","flag":"🇦🇼"},{"alpha2":"AU","name":"Australia","callingCode":"+61","flag":"🇦🇺"},{"alpha2":"AT","name":"Austria","callingCode":"+43","flag":"🇦🇹"},{"alpha2":"AZ","name":"Azerbaijan","callingCode":"+994","flag":"🇦🇿"},{"alpha2":"BS","name":"Bahamas","callingCode":"+1242","flag":"🇧🇸"},{"alpha2":"BH","name":"Bahrain","callingCode":"+973","flag":"🇧🇭"},{"alpha2":"BD","name":"Bangladesh","callingCode":"+880","flag":"🇧🇩"},{"alpha2":"BB","name":"Barbados","callingCode":"+1246","flag":"🇧🇧"},{"alpha2":"BY","name":"Belarus","callingCode":"+375","flag":"🇧🇾"},{"alpha2":"BE","name":"Belgium","callingCode":"+32","flag":"🇧🇪"},{"alpha2":"BZ","name":"Belize","callingCode":"+501","flag":"🇧🇿"},{"alpha2":"BJ","name":"Benin","callingCode":"+229","flag":"🇧🇯"},{"alpha2":"BM","name":"Bermuda","callingCode":"+1441","flag":"🇧🇲"},{"alpha2":"BT","name":"Bhutan","callingCode":"+975","flag":"🇧🇹"},{"alpha2":"BO","name":"Bolivia","callingCode":"+591","flag":"🇧🇴"},{"alpha2":"BA","name":"Bosnia and Herzegovina","callingCode":"+387","flag":"🇧🇦"},{"alpha2":"BW","name":"Botswana","callingCode":"+267","flag":"🇧🇼"},{"alpha2":"BV","name":"Bouvet Island","callingCode":"+47","flag":"🇧🇻"},{"alpha2":"BR","name":"Brazil","callingCode":"+55","flag":"🇧🇷"},{"alpha2":"IO","name":"British Indian Ocean Territory","callingCode":"+246","flag":"🇮🇴"},{"alpha2":"VG","name":"British Virgin Islands","callingCode":"+1284","flag":"🇻🇬"},{"alpha2":"BN","name":"Brunei","callingCode":"+673","flag":"🇧🇳"},{"alpha2":"BG","name":"Bulgaria","callingCode":"+359","flag":"🇧🇬"},{"alpha2":"BF","name":"Burkina Faso","callingCode":"+226","flag":"🇧🇫"},{"alpha2":"BI","name":"Burundi","callingCode":"+257","flag":"🇧🇮"},{"alpha2":"KH","name":"Cambodia","callingCode":"+855","flag":"🇰🇭"},{"alpha2":"CM","name":"Cameroon","callingCode":"+237","flag":"🇨🇲"},{"alpha2":"CA","name":"Canada","callingCode":"+1","flag":"🇨🇦"},{"alpha2":"CV","name":"Cape Verde","callingCode":"+238","flag":"🇨🇻"},{"alpha2":"BQ","name":"Caribbean Netherlands","callingCode":"+599","flag":"🌐"},{"alpha2":"KY","name":"Cayman Islands","callingCode":"+1345","flag":"🇰🇾"},{"alpha2":"CF","name":"Central African Republic","callingCode":"+236","flag":"🇨🇫"},{"alpha2":"TD","name":"Chad","callingCode":"+235","flag":"🇹🇩"},{"alpha2":"CL","name":"Chile","callingCode":"+56","flag":"🇨🇱"},{"alpha2":"CN","name":"China","callingCode":"+86","flag":"🇨🇳"},{"alpha2":"CX","name":"Christmas Island","callingCode":"+61","flag":"🇨🇽"},{"alpha2":"CC","name":"Cocos (Keeling) Islands","callingCode":"+61","flag":"🇨🇨"},{"alpha2":"CO","name":"Colombia","callingCode":"+57","flag":"🇨🇴"},{"alpha2":"KM","name":"Comoros","callingCode":"+269","flag":"🇰🇲"},{"alpha2":"CG","name":"Congo","callingCode":"+242","flag":"🇨🇬"},{"alpha2":"CK","name":"Cook Islands","callingCode":"+682","flag":"🇨🇰"},{"alpha2":"CR","name":"Costa Rica","callingCode":"+506","flag":"🇨🇷"},{"alpha2":"HR","name":"Croatia","callingCode":"+385","flag":"🇭🇷"},{"alpha2":"CU","name":"Cuba","callingCode":"+53","flag":"🇨🇺"},{"alpha2":"CW","name":"Curaçao","callingCode":"+599","flag":"🇨🇼"},{"alpha2":"CY","name":"Cyprus","callingCode":"+357","flag":"🇨🇾"},{"alpha2":"CZ","name":"Czech Republic","callingCode":"+420","flag":"🇨🇿"},{"alpha2":"DK","name":"Denmark","callingCode":"+45","flag":"🇩🇰"},{"alpha2":"DJ","name":"Djibouti","callingCode":"+253","flag":"🇩🇯"},{"alpha2":"DM","name":"Dominica","callingCode":"+1767","flag":"🇩🇲"},{"alpha2":"DO","name":"Dominican Republic","callingCode":"+1-809","flag":"🇩🇴"},{"alpha2":"CD","name":"DR Congo","callingCode":"+243","flag":"🇨🇩"},{"alpha2":"EC","name":"Ecuador","callingCode":"+593","flag":"🇪🇨"},{"alpha2":"EG","name":"Egypt","callingCode":"+20","flag":"🇪🇬"},{"alpha2":"SV","name":"El Salvador","callingCode":"+503","flag":"🇸🇻"},{"alpha2":"GQ","name":"Equatorial Guinea","callingCode":"+240","flag":"🇬🇶"},{"alpha2":"ER","name":"Eritrea","callingCode":"+291","flag":"🇪🇷"},{"alpha2":"EE","name":"Estonia","callingCode":"+372","flag":"🇪🇪"},{"alpha2":"SZ","name":"Eswatini","callingCode":"+268","flag":"🇸🇿"},{"alpha2":"ET","name":"Ethiopia","callingCode":"+251","flag":"🇪🇹"},{"alpha2":"FK","name":"Falkland Islands","callingCode":"+500","flag":"🇫🇰"},{"alpha2":"FO","name":"Faroe Islands","callingCode":"+298","flag":"🇫🇴"},{"alpha2":"FJ","name":"Fiji","callingCode":"+679","flag":"🇫🇯"},{"alpha2":"FI","name":"Finland","callingCode":"+358","flag":"🇫🇮"},{"alpha2":"FR","name":"France","callingCode":"+33","flag":"🇫🇷"},{"alpha2":"GF","name":"French Guiana","callingCode":"+594","flag":"🇬🇫"},{"alpha2":"PF","name":"French Polynesia","callingCode":"+689","flag":"🇵🇫"},{"alpha2":"TF","name":"French Southern and Antarctic Lands","callingCode":"+262","flag":"🇹🇫"},{"alpha2":"GA","name":"Gabon","callingCode":"+241","flag":"🇬🇦"},{"alpha2":"GM","name":"Gambia","callingCode":"+220","flag":"🇬🇲"},{"alpha2":"GE","name":"Georgia","callingCode":"+995","flag":"🇬🇪"},{"alpha2":"DE","name":"Germany","callingCode":"+49","flag":"🇩🇪"},{"alpha2":"GH","name":"Ghana","callingCode":"+233","flag":"🇬🇭"},{"alpha2":"GI","name":"Gibraltar","callingCode":"+350","flag":"🇬🇮"},{"alpha2":"GR","name":"Greece","callingCode":"+30","flag":"🇬🇷"},{"alpha2":"GL","name":"Greenland","callingCode":"+299","flag":"🇬🇱"},{"alpha2":"GD","name":"Grenada","callingCode":"+1473","flag":"🇬🇩"},{"alpha2":"GP","name":"Guadeloupe","callingCode":"+590","flag":"🇬🇵"},{"alpha2":"GU","name":"Guam","callingCode":"+1671","flag":"🇬🇺"},{"alpha2":"GT","name":"Guatemala","callingCode":"+502","flag":"🇬🇹"},{"alpha2":"GG","name":"Guernsey","callingCode":"+44","flag":"🇬🇬"},{"alpha2":"GN","name":"Guinea","callingCode":"+224","flag":"🇬🇳"},{"alpha2":"GW","name":"Guinea-Bissau","callingCode":"+245","flag":"🇬🇼"},{"alpha2":"GY","name":"Guyana","callingCode":"+592","flag":"🇬🇾"},{"alpha2":"HT","name":"Haiti","callingCode":"+509","flag":"🇭🇹"},{"alpha2":"HM","name":"Heard Island and McDonald Islands","callingCode":"","flag":"🇭🇲"},{"alpha2":"HN","name":"Honduras","callingCode":"+504","flag":"🇭🇳"},{"alpha2":"HK","name":"Hong Kong","callingCode":"+852","flag":"🇭🇰"},{"alpha2":"HU","name":"Hungary","callingCode":"+36","flag":"🇭🇺"},{"alpha2":"IS","name":"Iceland","callingCode":"+354","flag":"🇮🇸"},{"alpha2":"IN","name":"India","callingCode":"+91","flag":"🇮🇳"},{"alpha2":"ID","name":"Indonesia","callingCode":"+62","flag":"🇮🇩"},{"alpha2":"IR","name":"Iran","callingCode":"+98","flag":"🇮🇷"},{"alpha2":"IQ","name":"Iraq","callingCode":"+964","flag":"🇮🇶"},{"alpha2":"IE","name":"Ireland","callingCode":"+353","flag":"🇮🇪"},{"alpha2":"IM","name":"Isle of Man","callingCode":"+44","flag":"🇮🇲"},{"alpha2":"IL","name":"Israel","callingCode":"+972","flag":"🇮🇱"},{"alpha2":"IT","name":"Italy","callingCode":"+39","flag":"🇮🇹"},{"alpha2":"CI","name":"Ivory Coast","callingCode":"+225","flag":"🇨🇮"},{"alpha2":"JM","name":"Jamaica","callingCode":"+1-876","flag":"🇯🇲"},{"alpha2":"JP","name":"Japan","callingCode":"+81","flag":"🇯🇵"},{"alpha2":"JE","name":"Jersey","callingCode":"+44","flag":"🇯🇪"},{"alpha2":"JO","name":"Jordan","callingCode":"+962","flag":"🇯🇴"},{"alpha2":"KZ","name":"Kazakhstan","callingCode":"+76","flag":"🇰🇿"},{"alpha2":"KE","name":"Kenya","callingCode":"+254","flag":"🇰🇪"},{"alpha2":"KI","name":"Kiribati","callingCode":"+686","flag":"🇰🇮"},{"alpha2":"XK","name":"Kosovo","callingCode":"+383","flag":"🇽🇰"},{"alpha2":"KW","name":"Kuwait","callingCode":"+965","flag":"🇰🇼"},{"alpha2":"KG","name":"Kyrgyzstan","callingCode":"+996","flag":"🇰🇬"},{"alpha2":"LA","name":"Laos","callingCode":"+856","flag":"🇱🇦"},{"alpha2":"LV","name":"Latvia","callingCode":"+371","flag":"🇱🇻"},{"alpha2":"LB","name":"Lebanon","callingCode":"+961","flag":"🇱🇧"},{"alpha2":"LS","name":"Lesotho","callingCode":"+266","flag":"🇱🇸"},{"alpha2":"LR","name":"Liberia","callingCode":"+231","flag":"🇱🇷"},{"alpha2":"LY","name":"Libya","callingCode":"+218","flag":"🇱🇾"},{"alpha2":"LI","name":"Liechtenstein","callingCode":"+423","flag":"🇱🇮"},{"alpha2":"LT","name":"Lithuania","callingCode":"+370","flag":"🇱🇹"},{"alpha2":"LU","name":"Luxembourg","callingCode":"+352","flag":"🇱🇺"},{"alpha2":"MO","name":"Macau","callingCode":"+853","flag":"🇲🇴"},{"alpha2":"MG","name":"Madagascar","callingCode":"+261","flag":"🇲🇬"},{"alpha2":"MW","name":"Malawi","callingCode":"+265","flag":"🇲🇼"},{"alpha2":"MY","name":"Malaysia","callingCode":"+60","flag":"🇲🇾"},{"alpha2":"MV","name":"Maldives","callingCode":"+960","flag":"🇲🇻"},{"alpha2":"ML","name":"Mali","callingCode":"+223","flag":"🇲🇱"},{"alpha2":"MT","name":"Malta","callingCode":"+356","flag":"🇲🇹"},{"alpha2":"MH","name":"Marshall Islands","callingCode":"+692","flag":"🇲🇭"},{"alpha2":"MQ","name":"Martinique","callingCode":"+596","flag":"🇲🇶"},{"alpha2":"MR","name":"Mauritania","callingCode":"+222","flag":"🇲🇷"},{"alpha2":"MU","name":"Mauritius","callingCode":"+230","flag":"🇲🇺"},{"alpha2":"YT","name":"Mayotte","callingCode":"+262","flag":"🇾🇹"},{"alpha2":"MX","name":"Mexico","callingCode":"+52","flag":"🇲🇽"},{"alpha2":"FM","name":"Micronesia","callingCode":"+691","flag":"🇫🇲"},{"alpha2":"MD","name":"Moldova","callingCode":"+373","flag":"🇲🇩"},{"alpha2":"MC","name":"Monaco","callingCode":"+377","flag":"🇲🇨"},{"alpha2":"MN","name":"Mongolia","callingCode":"+976","flag":"🇲🇳"},{"alpha2":"ME","name":"Montenegro","callingCode":"+382","flag":"🇲🇪"},{"alpha2":"MS","name":"Montserrat","callingCode":"+1664","flag":"🇲🇸"},{"alpha2":"MA","name":"Morocco","callingCode":"+212","flag":"🇲🇦"},{"alpha2":"MZ","name":"Mozambique","callingCode":"+258","flag":"🇲🇿"},{"alpha2":"MM","name":"Myanmar","callingCode":"+95","flag":"🇲🇲"},{"alpha2":"NA","name":"Namibia","callingCode":"+264","flag":"🇳🇦"},{"alpha2":"NR","name":"Nauru","callingCode":"+674","flag":"🇳🇷"},{"alpha2":"NP","name":"Nepal","callingCode":"+977","flag":"🇳🇵"},{"alpha2":"NL","name":"Netherlands","callingCode":"+31","flag":"🇳🇱"},{"alpha2":"NC","name":"New Caledonia","callingCode":"+687","flag":"🇳🇨"},{"alpha2":"NZ","name":"New Zealand","callingCode":"+64","flag":"🇳🇿"},{"alpha2":"NI","name":"Nicaragua","callingCode":"+505","flag":"🇳🇮"},{"alpha2":"NE","name":"Niger","callingCode":"+227","flag":"🇳🇪"},{"alpha2":"NG","name":"Nigeria","callingCode":"+234","flag":"🇳🇬"},{"alpha2":"NU","name":"Niue","callingCode":"+683","flag":"🇳🇺"},{"alpha2":"NF","name":"Norfolk Island","callingCode":"+672","flag":"🇳🇫"},{"alpha2":"KP","name":"North Korea","callingCode":"+850","flag":"🇰🇵"},{"alpha2":"MK","name":"North Macedonia","callingCode":"+389","flag":"🇲🇰"},{"alpha2":"MP","name":"Northern Mariana Islands","callingCode":"+1670","flag":"🇲🇵"},{"alpha2":"NO","name":"Norway","callingCode":"+47","flag":"🇳🇴"},{"alpha2":"OM","name":"Oman","callingCode":"+968","flag":"🇴🇲"},{"alpha2":"PK","name":"Pakistan","callingCode":"+92","flag":"🇵🇰"},{"alpha2":"PW","name":"Palau","callingCode":"+680","flag":"🇵🇼"},{"alpha2":"PS","name":"Palestine","callingCode":"+970","flag":"🇵🇸"},{"alpha2":"PA","name":"Panama","callingCode":"+507","flag":"🇵🇦"},{"alpha2":"PG","name":"Papua New Guinea","callingCode":"+675","flag":"🇵🇬"},{"alpha2":"PY","name":"Paraguay","callingCode":"+595","flag":"🇵🇾"},{"alpha2":"PE","name":"Peru","callingCode":"+51","flag":"🇵🇪"},{"alpha2":"PH","name":"Philippines","callingCode":"+63","flag":"🇵🇭"},{"alpha2":"PN","name":"Pitcairn Islands","callingCode":"+64","flag":"🇵🇳"},{"alpha2":"PL","name":"Poland","callingCode":"+48","flag":"🇵🇱"},{"alpha2":"PT","name":"Portugal","callingCode":"+351","flag":"🇵🇹"},{"alpha2":"PR","name":"Puerto Rico","callingCode":"+1787","flag":"🇵🇷"},{"alpha2":"QA","name":"Qatar","callingCode":"+974","flag":"🇶🇦"},{"alpha2":"RE","name":"Réunion","callingCode":"+262","flag":"🇷🇪"},{"alpha2":"RO","name":"Romania","callingCode":"+40","flag":"🇷🇴"},{"alpha2":"RU","name":"Russia","callingCode":"+7","flag":"🇷🇺"},{"alpha2":"RW","name":"Rwanda","callingCode":"+250","flag":"🇷🇼"},{"alpha2":"BL","name":"Saint Barthélemy","callingCode":"+590","flag":"🇧🇱"},{"alpha2":"SH","name":"Saint Helena, Ascension and Tristan da Cunha","callingCode":"+290","flag":"🇸🇭"},{"alpha2":"KN","name":"Saint Kitts and Nevis","callingCode":"+1869","flag":"🇰🇳"},{"alpha2":"LC","name":"Saint Lucia","callingCode":"+1758","flag":"🇱🇨"},{"alpha2":"MF","name":"Saint Martin","callingCode":"+590","flag":"🇲🇫"},{"alpha2":"PM","name":"Saint Pierre and Miquelon","callingCode":"+508","flag":"🇵🇲"},{"alpha2":"VC","name":"Saint Vincent and the Grenadines","callingCode":"+1784","flag":"🇻🇨"},{"alpha2":"WS","name":"Samoa","callingCode":"+685","flag":"🇼🇸"},{"alpha2":"SM","name":"San Marino","callingCode":"+378","flag":"🇸🇲"},{"alpha2":"ST","name":"São Tomé and Príncipe","callingCode":"+239","flag":"🇸🇹"},{"alpha2":"SA","name":"Saudi Arabia","callingCode":"+966","flag":"🇸🇦"},{"alpha2":"SN","name":"Senegal","callingCode":"+221","flag":"🇸🇳"},{"alpha2":"RS","name":"Serbia","callingCode":"+381","flag":"🇷🇸"},{"alpha2":"SC","name":"Seychelles","callingCode":"+248","flag":"🇸🇨"},{"alpha2":"SL","name":"Sierra Leone","callingCode":"+232","flag":"🇸🇱"},{"alpha2":"SG","name":"Singapore","callingCode":"+65","flag":"🇸🇬"},{"alpha2":"SX","name":"Sint Maarten","callingCode":"+1721","flag":"🇸🇽"},{"alpha2":"SK","name":"Slovakia","callingCode":"+421","flag":"🇸🇰"},{"alpha2":"SI","name":"Slovenia","callingCode":"+386","flag":"🇸🇮"},{"alpha2":"SB","name":"Solomon Islands","callingCode":"+677","flag":"🇸🇧"},{"alpha2":"SO","name":"Somalia","callingCode":"+252","flag":"🇸🇴"},{"alpha2":"ZA","name":"South Africa","callingCode":"+27","flag":"🇿🇦"},{"alpha2":"GS","name":"South Georgia","callingCode":"+500","flag":"🇬🇸"},{"alpha2":"KR","name":"South Korea","callingCode":"+82","flag":"🇰🇷"},{"alpha2":"SS","name":"South Sudan","callingCode":"+211","flag":"🇸🇸"},{"alpha2":"ES","name":"Spain","callingCode":"+34","flag":"🇪🇸"},{"alpha2":"LK","name":"Sri Lanka","callingCode":"+94","flag":"🇱🇰"},{"alpha2":"SD","name":"Sudan","callingCode":"+249","flag":"🇸🇩"},{"alpha2":"SR","name":"Suriname","callingCode":"+597","flag":"🇸🇷"},{"alpha2":"SJ","name":"Svalbard and Jan Mayen","callingCode":"+4779","flag":"🇸🇯"},{"alpha2":"SE","name":"Sweden","callingCode":"+46","flag":"🇸🇪"},{"alpha2":"CH","name":"Switzerland","callingCode":"+41","flag":"🇨🇭"},{"alpha2":"SY","name":"Syria","callingCode":"+963","flag":"🇸🇾"},{"alpha2":"TW","name":"Taiwan","callingCode":"+886","flag":"🇹🇼"},{"alpha2":"TJ","name":"Tajikistan","callingCode":"+992","flag":"🇹🇯"},{"alpha2":"TZ","name":"Tanzania","callingCode":"+255","flag":"🇹🇿"},{"alpha2":"TH","name":"Thailand","callingCode":"+66","flag":"🇹🇭"},{"alpha2":"TL","name":"Timor-Leste","callingCode":"+670","flag":"🇹🇱"},{"alpha2":"TG","name":"Togo","callingCode":"+228","flag":"🇹🇬"},{"alpha2":"TK","name":"Tokelau","callingCode":"+690","flag":"🇹🇰"},{"alpha2":"TO","name":"Tonga","callingCode":"+676","flag":"🇹🇴"},{"alpha2":"TT","name":"Trinidad and Tobago","callingCode":"+1868","flag":"🇹🇹"},{"alpha2":"TN","name":"Tunisia","callingCode":"+216","flag":"🇹🇳"},{"alpha2":"TR","name":"Turkey","callingCode":"+90","flag":"🇹🇷"},{"alpha2":"TM","name":"Turkmenistan","callingCode":"+993","flag":"🇹🇲"},{"alpha2":"TC","name":"Turks and Caicos Islands","callingCode":"+1649","flag":"🇹🇨"},{"alpha2":"TV","name":"Tuvalu","callingCode":"+688","flag":"🇹🇻"},{"alpha2":"UG","name":"Uganda","callingCode":"+256","flag":"🇺🇬"},{"alpha2":"UA","name":"Ukraine","callingCode":"+380","flag":"🇺🇦"},{"alpha2":"AE","name":"United Arab Emirates","callingCode":"+971","flag":"🇦🇪"},{"alpha2":"GB","name":"United Kingdom","callingCode":"+44","flag":"🇬🇧"},{"alpha2":"US","name":"United States","callingCode":"+1","flag":"🇺🇸"},{"alpha2":"UM","name":"United States Minor Outlying Islands","callingCode":"+268","flag":"🇺🇲"},{"alpha2":"VI","name":"United States Virgin Islands","callingCode":"+1340","flag":"🇻🇮"},{"alpha2":"UY","name":"Uruguay","callingCode":"+598","flag":"🇺🇾"},{"alpha2":"UZ","name":"Uzbekistan","callingCode":"+998","flag":"🇺🇿"},{"alpha2":"VU","name":"Vanuatu","callingCode":"+678","flag":"🇻🇺"},{"alpha2":"VA","name":"Vatican City","callingCode":"+3906698","flag":"🇻🇦"},{"alpha2":"VE","name":"Venezuela","callingCode":"+58","flag":"🇻🇪"},{"alpha2":"VN","name":"Vietnam","callingCode":"+84","flag":"🇻🇳"},{"alpha2":"WF","name":"Wallis and Futuna","callingCode":"+681","flag":"🇼🇫"},{"alpha2":"EH","name":"Western Sahara","callingCode":"+2125288","flag":"🇪🇭"},{"alpha2":"YE","name":"Yemen","callingCode":"+967","flag":"🇾🇪"},{"alpha2":"ZM","name":"Zambia","callingCode":"+260","flag":"🇿🇲"},{"alpha2":"ZW","name":"Zimbabwe","callingCode":"+263","flag":"🇿🇼"}];
+ var fallbackCountries=fallbackCountriesData;
+ var countries=fallbackCountries.slice(),displayNames=null;
+ try{if(typeof Intl!=='undefined'&&Intl.DisplayNames)displayNames=new Intl.DisplayNames(['es'],{type:'region'});}catch(e){}
  function countryName(c){try{var n=displayNames&&displayNames.of(c.alpha2);if(n&&n!==c.alpha2)return n;}catch(e){}return c.name||c.alpha2;}
  function normalizeCountry(c){
-  if(!c||!c.alpha2||!c.callingCode)return null;
-  return {alpha2:String(c.alpha2).toUpperCase(),name:String(c.name||c.alpha2),callingCode:String(c.callingCode),flag:String(c.flag||'🌐')};
+  if(!c||!c.alpha2||!c.name)return null;
+  return {alpha2:String(c.alpha2).toUpperCase(),name:String(c.name||c.alpha2),callingCode:String(c.callingCode||''),flag:String(c.flag||'🌐')};
  }
  function getCountry(code){return countries.find(function(c){return c.alpha2===String(code||'').toUpperCase();})||null;}
  function prefixes(c){
-  if(!c)return [];
+  if(!c||!c.callingCode)return [];
   if(c.alpha2==='DO')return ['+1-809','+1-829','+1-849'];
   return [c.callingCode];
  }
- function countryLabel(c){return (c.flag||'🌐')+' '+countryName(c)+' ('+c.alpha2+') · '+c.callingCode;}
+ function countryLabel(c){return (c.flag||'🌐')+' '+countryName(c)+' ('+c.alpha2+') · '+(c.callingCode||'Sin prefijo telefónico asignado');}
  function fillCountry(select,selected){
   if(!select)return;
   var old=selected||select.value;select.replaceChildren();
@@ -8524,6 +8688,7 @@ window.sendwayoShareReceipt=async function(){
  }
  function fillPrefix(select,iso,selected){
   if(!select)return;var c=getCountry(iso)||getCountry('HT'),list=prefixes(c);select.replaceChildren();
+  if(!list.length){var none=document.createElement('option');none.value='';none.textContent='Sin prefijo telefónico asignado';none.disabled=true;none.selected=true;select.appendChild(none);return;}
   list.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;select.appendChild(o);});
   if(selected&&list.indexOf(selected)>=0)select.value=selected;
  }
@@ -8531,26 +8696,8 @@ window.sendwayoShareReceipt=async function(){
   mountBeneficiaryCountryControls();mountRouteControls('envio');mountRouteControls('retiro');
  }
  window.SENDWAYO_V7_COUNTRIES=countries;
- var cacheKey='sendwayo_v7_iso3166_itu_e164_countries_v1';
- try{
-  var cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
-  if(cached&&Array.isArray(cached.rows)&&cached.rows.length>=200&&Date.now()-Number(cached.savedAt||0)<90*86400000){
-   var cacheRows=cached.rows.map(normalizeCountry).filter(Boolean);if(cacheRows.length>=200){countries=cacheRows;window.SENDWAYO_V7_COUNTRIES=countries;}
-  }
- }catch(e){}
- window.SENDWAYO_V7_COUNTRIES_READY=(function(){
-  if(typeof fetch!=='function')return Promise.resolve(countries);
-  return fetch('https://staticdata.dev/v1/countries.min.json',{cache:'force-cache'})
-   .then(function(r){if(!r.ok)throw new Error('No se pudo cargar la lista global de países.');return r.json();})
-   .then(function(rows){
-    if(!Array.isArray(rows)||rows.length<200)throw new Error('El catálogo de países está incompleto.');
-    var clean=rows.map(normalizeCountry).filter(Boolean);if(clean.length<200)throw new Error('No se pudo validar el catálogo internacional.');
-    countries=clean;window.SENDWAYO_V7_COUNTRIES=countries;
-    try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),rows:clean}));}catch(e){}
-    refreshCountryWidgets();return countries;
-   })
-   .catch(function(e){console.warn('[SENDWAYO V7] Se utiliza el catálogo local de respaldo:',e);refreshCountryWidgets();return countries;});
- })();
+ // El catálogo íntegro ya está integrado: no se bloquea la pantalla con una descarga ni se usa una caché antigua incompleta.
+ window.SENDWAYO_V7_COUNTRIES_READY=Promise.resolve(countries);
  function user(){return window.currentUser||null;}
  function fb(){return window.sendwayoFirebase||null;}
  function ownerKey(){var f=fb();return String(f&&f.profileKey||user()&&(user().dbUserKey||user().rtdbUserKey)||'');}
@@ -8569,7 +8716,7 @@ window.sendwayoShareReceipt=async function(){
  function inferIso(b){
   if(b&&b.paisIso2&&getCountry(b.paisIso2))return b.paisIso2;
   var p=String(b&&b.codigoPais||'');
-  var c=countries.find(function(x){return prefixes(x).indexOf(p)>=0||x.callingCode===p;});if(c)return c.alpha2;
+  var c=p?countries.find(function(x){return prefixes(x).indexOf(p)>=0||x.callingCode===p;}):null;if(c)return c.alpha2;
   var digits=String(b&&(b.telefonoE164||b.telefonoCompleto||b.telefono)||'').replace(/\D/g,'');
   if(digits.indexOf('509')===0)return'HT';if(digits.indexOf('1809')===0||digits.indexOf('1829')===0||digits.indexOf('1849')===0)return'DO';if(digits.indexOf('1')===0)return'US';return'HT';
  }
@@ -8594,6 +8741,7 @@ window.sendwayoShareReceipt=async function(){
  function parsePhone(){
   var iso=$('v162-ben-pais')&&$('v162-ben-pais').value||'HT',c=getCountry(iso)||getCountry('HT');
   var prefix=$('sendwayo-v7-ben-prefix')&&$('sendwayo-v7-ben-prefix').value||prefixes(c)[0];
+  if(!prefix)throw new Error(countryName(c)+' no tiene prefijo telefónico asignado; no se puede registrar un teléfono E.164 para este territorio.');
   var national=String($('v162-ben-tel')&&$('v162-ben-tel').value||'').trim(),digits=national.replace(/\D/g,''),pd=prefix.replace(/\D/g,'');
   if(digits.length<5||pd.length+digits.length>15)throw new Error('El teléfono debe tener al menos 5 dígitos y no superar 15 dígitos internacionales.');
   return {iso:iso,country:c,prefix:prefix,national:national,e164:'+'+pd+digits,display:prefix+' '+national};
@@ -8710,14 +8858,14 @@ window.sendwayoShareReceipt=async function(){
   }else{
    fee=Math.round(amount*.08*100)/100;net=amount-fee;
    if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
-   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur='HTG';received=net/2.3;receivedCur='DOP';}
+   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur=d.currency;received=net;receivedCur=cur;}
    else{cur=d.currency;received=net;receivedCur=cur;}
   }
   var fmt=function(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});};
   var el=$('v162-'+kind+'-neto');if(el)el.textContent=fmt(net)+' '+cur;
   el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
   el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
-  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Tasa 2.30':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
+  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Sin conversión automática':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
   if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
  }
  function mountRouteControls(kind){
@@ -8805,9 +8953,11 @@ window.sendwayoShareReceipt=async function(){
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
    var a=id?accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id);});})||null:null;
-   var prefix=view==='agentes'?'AGE':'REM',num=1;
-   if(!a){while(accounts.some(function(x){return String(x.id||'')===prefix+String(num).padStart(5,'0');}))num++;}
-   var visibleId=a?String(a.id):prefix+String(num).padStart(5,'0');
+   var prefix=view==='agentes'?'AGE400I':'REM',num=1;
+   var nextId=function(){return view==='agentes'?prefix+String(num):prefix+String(num).padStart(5,'0');};
+   if(!a){while(accounts.some(function(x){return [x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'').toLowerCase()===nextId().toLowerCase();});}))num++;}
+   if(view==='agentes'&&!a&&num>9){alert('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');return;}
+   var visibleId=a?String(a.id):nextId();
    oldOpen(view,id||'');
    var name=$('v7-admin-name'),username=$('v7-admin-username'),code=$('v7-admin-code'),email=$('v7-admin-email'),phone=$('v7-admin-phone');
    var body=$('sendwayo-admin-account-modal');
@@ -8896,7 +9046,11 @@ window.sendwayoShareReceipt=async function(){
  }
  function findAccount(q){
   const wanted=norm(q);if(!wanted)return null;
-  return accounts().find(a=>identityValues(a).some(v=>norm(v)===wanted))||null;
+  // Expediente por ID: solo IDs actuales, anteriores o aliases del ID de remitentes/agentes.
+  return accounts().find(a=>role(a)!=='ADMIN'&&[
+   a.id,a.idAnterior,a.legacyId,a.accountId,a.staffId,
+   ...(Array.isArray(a.idAliases)?a.idAliases:[])
+  ].some(v=>norm(v)===wanted))||null;
  }
  function accountKey(a){return txt(a&&(a.dbUserKey||a.rtdbUserKey||a.firebaseKey))||(role(a)==='ADMIN'?'admin':'');}
  function transactionRows(){
@@ -8947,7 +9101,7 @@ window.sendwayoShareReceipt=async function(){
  }
  function showAccountInvestigation(q){
   const root=ensureInvestigationView(),a=findAccount(q);
-  if(!a){const msg=q?'<div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró una cuenta con ese ID o código. Compruebe el dato e inténtelo nuevamente.</div>':'<div class="rounded-xl border bg-slate-50 p-4 text-sm">Escriba el ID o código del administrador, agente o remitente para consultar su información.</div>';root.innerHTML='<section class="p-3 md:p-5 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black text-lg">Investigación individual de cuentas</h2><p class="text-xs text-slate-500 mt-1">Consulta reservada a Administración.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+msg+'</section>';const form=$('sendwayo-investigation-form');if(form)form.addEventListener('submit',function(ev){ev.preventDefault();showAccountInvestigation($('sendwayo-investigation-id').value);});if(!q)setTimeout(()=>$('sendwayo-investigation-id')?.focus(),0);return;}
+  if(!a){const msg=q?'<div class="rounded-xl border bg-amber-50 p-4 text-sm">No se encontró un remitente o agente con ese ID. Compruebe el dato e inténtelo nuevamente.</div>':'<div class="rounded-xl border bg-slate-50 p-4 text-sm">Escriba el ID del remitente o agente para consultar su expediente.</div>';root.innerHTML='<section class="p-3 md:p-5 space-y-3"><header class="bg-white border rounded-xl p-4"><h2 class="font-black text-lg">Expediente por ID</h2><p class="text-xs text-slate-500 mt-1">Consulta reservada a Administración.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca el ID exacto del remitente o agente" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+msg+'</section>';const form=$('sendwayo-investigation-form');if(form)form.addEventListener('submit',function(ev){ev.preventDefault();showAccountInvestigation($('sendwayo-investigation-id').value);});if(!q)setTimeout(()=>$('sendwayo-investigation-id')?.focus(),0);return;}
   const tokens=tokenSet(a),tx=accountTransactions(a,tokens),ben=beneficiaryRows(a,tokens),m=accountMoney(a);
   const userId=txt(a.id),status=a.active===false||a.activo===false||norm(a.estado||a.status).includes('inactivo')?'Inactivo':'Activo';
   const transactionHtml=tx.map((t,i)=>{
@@ -8957,7 +9111,7 @@ window.sendwayoShareReceipt=async function(){
   }).join('')||'<tr><td colspan="8" class="p-5 text-center text-slate-500">No se encontraron movimientos vinculados a esta cuenta en los registros sincronizados.</td></tr>';
   const beneficiariesHtml=ben.map((b,i)=>'<tr class="border-t"><td class="p-2">'+String(i+1).padStart(2,'0')+'</td><td class="p-2">'+esc(b.id||b.firebaseKey||'')+'</td><td class="p-2">'+esc(b.nombre||b.name||'')+'</td><td class="p-2">'+esc(b.paisNombre||b.paisIso2||'')+' '+esc(b.codigoPais||'')+'</td><td class="p-2">'+esc(b.telefonoE164||b.telefonoCompleto||b.telefono||b.phone||'')+'</td><td class="p-2">'+esc(b.direccion||'')+'</td><td class="p-2">'+esc(b.estado||(b.active===false?'Inactivo':'Activo'))+'</td></tr>').join('')||'<tr><td colspan="7" class="p-5 text-center text-slate-500">No se encontraron beneficiarios asociados a esta cuenta en el directorio sincronizado.</td></tr>';
   root.innerHTML='<section class="p-3 md:p-5 space-y-4 bg-slate-50 rounded-xl">'+
-   '<header class="bg-white border rounded-xl p-4"><div class="font-black text-lg">Investigación individual de cuentas</div><p class="text-xs text-slate-500 mt-1">Consulta de datos y movimientos asociados a un único administrador, agente o remitente.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca ID o código de cuenta" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+
+   '<header class="bg-white border rounded-xl p-4"><div class="font-black text-lg">Expediente por ID</div><p class="text-xs text-slate-500 mt-1">Consulta de datos y movimientos asociados a un único administrador, agente o remitente.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca el ID exacto del remitente o agente" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-black text-base">'+esc(a.nombre||a.name||'Cuenta')+'</h3><p class="text-xs text-slate-500">'+esc(role(a))+' · '+esc(status)+'</p></div><div class="text-right text-xs"><b>ID: '+esc(userId)+'</b><br><b>Código: '+esc(a.codigo||a.code||'—')+'</b></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 text-xs"><div class="border rounded-lg p-3"><span class="text-slate-500">Correo</span><div class="font-bold break-all">'+esc(a.email||a.usuario||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Celular</span><div class="font-bold">'+esc(a.celular||a.telefono||a.phone||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Clave interna Firebase</span><div class="font-bold break-all">'+esc(accountKey(a)||'No disponible')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">UID de autenticación</span><div class="font-bold break-all">'+esc(a.authUid||'No disponible')+'</div></div></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3"><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance DOP</span><div class="font-black">RD$ '+fmt(m.dop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance HTG</span><div class="font-black">HTG '+fmt(m.htg)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión DOP</span><div class="font-black">RD$ '+fmt(m.cdop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión HTG</span><div class="font-black">HTG '+fmt(m.chtg)+'</div></div></div></section>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Movimientos vinculados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+tx.length+' registros</span></div><div class="overflow-x-auto mt-3 max-h-[520px]"><table class="w-full min-w-[1050px] text-xs"><thead class="bg-slate-100 sticky top-0"><tr><th class="p-2">N°</th><th class="p-2 text-left">Fecha</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-left">Ruta / detalle</th><th class="p-2 text-left">Beneficiario</th><th class="p-2 text-left">Monto</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Registro</th></tr></thead><tbody>'+transactionHtml+'</tbody></table></div></section>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Beneficiarios asociados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+ben.length+' registros</span></div><div class="overflow-x-auto mt-3"><table class="w-full min-w-[850px] text-xs"><thead class="bg-slate-100"><tr><th class="p-2">N°</th><th class="p-2 text-left">ID</th><th class="p-2 text-left">Nombre</th><th class="p-2 text-left">País</th><th class="p-2 text-left">Teléfono</th><th class="p-2 text-left">Dirección</th><th class="p-2 text-left">Estado</th></tr></thead><tbody>'+beneficiariesHtml+'</tbody></table></div></section>'+
@@ -8969,7 +9123,7 @@ window.sendwayoShareReceipt=async function(){
   if(!side)return;
   if(isAdmin()){
    let b=side.querySelector('[data-sendwayo-nav="investigacion"]');
-   if(!b){b=document.createElement('button');b.type='button';b.dataset.sendwayoNav='investigacion';const ref=Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('informaciones secretas'))||Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('remitentes'));b.className=ref?ref.className:'w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2';b.textContent='🔎 Investigación de cuentas';b.addEventListener('click',()=>window.showView('investigacion'));if(ref)ref.insertAdjacentElement('beforebegin',b);else side.appendChild(b);}
+   if(!b){b=document.createElement('button');b.type='button';b.dataset.sendwayoNav='investigacion';const ref=Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('informaciones secretas'))||Array.from(side.querySelectorAll('button')).find(x=>norm(x.textContent).includes('remitentes'));b.className=ref?ref.className:'w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2';b.textContent='🔎 Expediente por ID';b.addEventListener('click',()=>window.showView('investigacion'));if(ref)ref.insertAdjacentElement('beforebegin',b);else side.appendChild(b);}
    b.hidden=false;
   }else{const b=side.querySelector('[data-sendwayo-nav="investigacion"]');if(b)b.remove();}
  }
@@ -9073,15 +9227,12 @@ window.sendwayoShareReceipt=async function(){
   const side=$('sendwayo-main-sidebar');if(side&&!side.dataset.sendwayoDepositBadgeObserver){side.dataset.sendwayoDepositBadgeObserver='1';new MutationObserver(clearFakeDepositBadge).observe(side,{childList:true,subtree:true,characterData:true});}
  }
  function moveBusinessNameAboveUser(){
-  const userBadge=$('user-top'),hour=$('hora-top');if(!userBadge||userBadge.dataset.sendwayoPositioned==='1'||!hour)return;
-  const header=hour.parentElement&&hour.parentElement.parentElement,left=header&&header.firstElementChild;
-  if(!left)return;
-  const title=Array.from(left.querySelectorAll('span')).find(x=>norm(x.textContent)==='sendwayo express');
-  if(!title)return;
-  const wrap=document.createElement('div');wrap.className='sendwayo-business-user-stack';wrap.style.cssText='display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;line-height:1.15;flex:0 0 auto;';
-  title.parentNode.insertBefore(wrap,title);wrap.appendChild(title);wrap.appendChild(userBadge);
-  userBadge.dataset.sendwayoPositioned='1';userBadge.style.cssText+=';margin:0!important;display:inline-flex!important;max-width:180px;white-space:normal;font-size:9px!important;padding:3px 8px!important;';
-  left.style.flexWrap='wrap';left.style.alignItems='center';
+  // La marca permanece arriba; identidad y hora en una franja de ancho completo debajo.
+  $('sendwayo-active-identity-strip')?.remove();
+  const userBadge=$('user-top');if(userBadge){userBadge.textContent='';userBadge.removeAttribute('data-sendwayo-positioned');}
+  const oldClock=$('hora-top');if(oldClock)oldClock.setAttribute('aria-hidden','true');
+  window.sendwayoRefreshIdentityHeader?.();
+  return;
  }
  function installInvestigationViewRoute(){
   const previous=window.showView;if(typeof previous!=='function'||previous.__sendwayoInvestigationWrapped)return;
@@ -9114,8 +9265,7 @@ window.sendwayoShareReceipt=async function(){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
  document.addEventListener('sendwayo:firebase-ready',()=>{installInvestigationNav();installBadgeCleanup();moveBusinessNameAboveUser();enhanceBeneficiaryViewButton();});
  const benObserver=new MutationObserver(enhanceBeneficiaryViewButton);const benRoot=$('view-beneficiarios');if(benRoot)benObserver.observe(benRoot,{childList:true,subtree:true});
- const observer=new MutationObserver(()=>{if($('sendwayo-main-sidebar')){installInvestigationNav();clearFakeDepositBadge();}});
- if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+ // Sidebar installation is event-driven (DOMContentLoaded, login and firebase-ready).
 })();
 </script>
 
@@ -9184,3 +9334,661 @@ window.sendwayoShareReceipt=async function(){
  };
 })();
 </script>
+
+<script id="sendwayo-v7-expediente-por-id">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id),txt=v=>String(v==null?'':v);
+ const norm=v=>txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const esc=v=>txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function subjects(){let a=[],r=[];try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))a=AGENTES;else if(Array.isArray(window.AGENTES))a=window.AGENTES;}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))r=REMITENTES;else if(Array.isArray(window.REMITENTES))r=window.REMITENTES;}catch(e){}return a.concat(r);}
+ function identity(a){return [a.id,a.idAnterior,a.legacyId,a.accountId,a.staffId].concat(Array.isArray(a.idAliases)?a.idAliases:[]).filter(Boolean).map(norm);}
+ function tokens(a){return new Set(identity(a).concat([a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid,a.email,a.authEmail].filter(Boolean).map(norm)));}
+ function linked(row,set){
+  const found=[];function walk(o,d){if(!o||typeof o!=='object'||d>3)return;Object.keys(o).forEach(k=>{const v=o[k];if(/(user.?id|owner.?id|account.?id|remitente.?id|sender.?id|agent.?id|created.?by|actor.?id|authuid|target.?userid|reviewed.?by|dbuserkey|firebaseownerkey)/i.test(k)){if(typeof v==='string'||typeof v==='number')found.push(norm(v));if(Array.isArray(v))v.forEach(x=>{if(typeof x==='string'||typeof x==='number')found.push(norm(x));});}if(v&&typeof v==='object')walk(v,d+1);});}
+  walk(row,0);return found.some(v=>set.has(v));
+ }
+ function table(title,rows,heads,render){
+  const body=rows.length?rows.map((x,i)=>'<tr class="border-t">'+render(x,i)+'</tr>').join(''):'<tr><td colspan="'+heads.length+'" class="p-4 text-center text-slate-500">No hay registros vinculados a este ID.</td></tr>';
+  return '<section data-sendwayo-exp-section class="bg-white border rounded-xl p-4 mt-4"><h3 class="font-black">'+title+' ('+rows.length+')</h3><div class="overflow-x-auto mt-3"><table class="w-full min-w-[700px] text-xs"><thead class="bg-slate-100"><tr>'+heads.map(x=>'<th class="p-2 text-left">'+x+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div></section>';
+ }
+ function decorate(){
+  const root=$('view-investigacion');if(!root||root.classList.contains('hidden'))return;
+  const input=$('sendwayo-investigation-id'),q=norm(input&&input.value),matches=subjects().filter(x=>identity(x).includes(q)),a=matches.length===1?matches[0]:null;
+  root.querySelectorAll('[data-sendwayo-exp-section]').forEach(x=>x.remove());
+  root.querySelectorAll('[data-sendwayo-exp-agent-note]').forEach(x=>x.remove());
+  if(!a)return;
+  if(norm(a.role||a.rol).includes('agente'))root.insertAdjacentHTML('afterbegin','<div data-sendwayo-exp-agent-note class="mx-3 mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">Este agente opera con fondos de Administración. No tiene un balance operativo ni una comisión propia independiente; este expediente reúne su actividad y los registros vinculados.</div>');
+  root.querySelectorAll('pre').forEach(pre=>{
+   try{
+    const blocked=/(password|contrasena|clave|secret|token|api.?key|authorization|cvv|pin)/i;
+    const clean=(v,d)=>{if(d>6)return '[profundidad omitida]';if(Array.isArray(v))return v.map(x=>clean(x,d+1));if(v&&typeof v==='object'){const o={};Object.keys(v).forEach(k=>{if(!blocked.test(k))o[k]=clean(v[k],d+1)});return o;}return v;};
+    pre.textContent=JSON.stringify(clean(JSON.parse(pre.textContent),0),null,2);
+   }catch(e){}
+  });
+  const set=tokens(a),requests=(window.SENDWAYO_REQUESTS||[]).filter(x=>linked(x,set)),banks=(window.SENDWAYO_BANKS||[]).filter(x=>linked(x,set));
+  const date=x=>{const n=Number(x.timestamp||x.createdAtMs||x.fechaMs)||Date.parse(x.fecha||x.date||x.createdAt||'');return n?new Date(n).toLocaleString('es-DO'):'—';};
+  const req=table('Solicitudes y revisiones relacionadas',requests,['N°','Fecha','Tipo','ID','Estado','Motivo / detalle'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(date(x))+'</td><td class="p-2">'+esc(x.tipoSolicitud||x.tipo||x.type||'Solicitud')+'</td><td class="p-2">'+esc(x.id||x.requestId||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Pendiente')+'</td><td class="p-2">'+esc(x.motivo||x.reason||x.notas||x.description||x.detalle||'—')+'</td>');
+  const bank=table('Cuentas bancarias vinculadas',banks,['N°','Banco','Titular','Cuenta','Moneda','Estado'],(x,i)=>'<td class="p-2">'+(i+1)+'</td><td class="p-2">'+esc(x.banco||x.bank||x.bankName||'—')+'</td><td class="p-2">'+esc(x.titular||x.holder||x.accountHolder||'—')+'</td><td class="p-2">'+esc(x.cuenta||x.account||x.accountNumber||'—')+'</td><td class="p-2">'+esc(x.currency||x.moneda||'—')+'</td><td class="p-2">'+esc(x.estado||x.status||'Activo')+'</td>');
+  const candidates=Array.from(root.querySelectorAll('section')).filter(x=>Array.from(x.querySelectorAll('h3')).some(t=>/beneficiarios asociados/i.test(t.textContent||'')));const anchor=candidates.sort((a,b)=>a.querySelectorAll('section').length-b.querySelectorAll('section').length)[0];if(anchor)anchor.insertAdjacentHTML('afterend',req+bank);else root.insertAdjacentHTML('beforeend',req+bank);
+ }
+ function validate(event){
+  const form=event.target;if(!form||form.id!=='sendwayo-investigation-form')return;
+  const q=norm($('sendwayo-investigation-id')?.value);if(!q)return;
+  const matches=subjects().filter(a=>identity(a).includes(q));
+  if(matches.length!==1){
+   event.preventDefault();event.stopImmediatePropagation();
+   let msg=$('sendwayo-expediente-validation');if(!msg){msg=document.createElement('div');msg.id='sendwayo-expediente-validation';msg.className='mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900';form.insertAdjacentElement('afterend',msg);}
+   msg.textContent=matches.length>1?'Este ID está repetido en más de una cuenta. No se abrió ningún expediente para evitar confundir personas. Revise los IDs con Administración.':'El expediente por ID admite remitentes y agentes. Verifique el ID y vuelva a intentarlo.';return;
+  }
+  window.setTimeout(decorate,0);window.setTimeout(decorate,180);
+ }
+ function rename(){const b=document.querySelector('[data-sendwayo-nav="investigacion"]');if(b)b.textContent='📁 Expediente por ID';const root=$('view-investigacion');if(root)root.querySelectorAll('h2,h3,div').forEach(el=>{if((el.textContent||'').trim()==='Investigación individual de cuentas')el.textContent='Expediente por ID';});}
+ document.addEventListener('submit',validate,true);
+ document.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('[data-sendwayo-nav="investigacion"]'))window.setTimeout(decorate,100);});
+ document.addEventListener('DOMContentLoaded',rename,{once:true});window.addEventListener('sendwayo:firebase-ready',rename);window.addEventListener('sendwayo:transactions-updated',decorate);window.addEventListener('load',rename);
+})();
+</script>
+
+
+
+<style id="sendwayo-v7-canonical-top-workspace-style">
+/* Encabezado superior único: marca, identidad activa y menú arriba. */
+#sendwayo-brand-bar{
+ position:sticky!important;top:0!important;z-index:2147482000!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ flex-wrap:nowrap!important;gap:12px!important;width:100%!important;min-height:58px!important;
+ height:auto!important;padding:8px clamp(10px,2vw,22px)!important;box-sizing:border-box!important;
+ background:#0b1a2f!important;color:#fff!important;box-shadow:0 3px 12px rgba(5,18,36,.18)!important
+}
+#sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;flex:1 1 auto!important}
+#sendwayo-brand-bar .sendwayo-brand-logo{display:block!important;width:38px!important;height:38px!important;object-fit:contain!important;flex:0 0 38px!important;background:#fff!important;border-radius:50%!important}
+#sendwayo-brand-bar .sendwayo-brand-title{display:block!important;color:#fff!important;font-size:14px!important;font-weight:900!important;letter-spacing:.05em!important;white-space:nowrap!important}
+#sendwayo-brand-bar .sendwayo-brand-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:9px!important;flex:0 0 auto!important}
+#sendwayo-brand-bar .sendwayo-legacy-header-values{display:none!important}
+#sendwayo-brand-bar #bell-top{width:38px!important;height:38px!important;min-height:38px!important;flex:0 0 38px!important}
+#sendwayo-brand-bar #sendwayo-top-logout{min-height:38px!important;padding:8px 15px!important}
+
+/* Identidad y hora siempre debajo de la marca y encima del módulo. */
+#sendwayo-v7-user-strip{
+ position:sticky!important;top:58px!important;z-index:2147481900!important;
+ display:none!important;align-items:center!important;justify-content:space-between!important;
+ flex-wrap:wrap!important;gap:10px 22px!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:10px clamp(12px,2vw,28px)!important;
+ box-sizing:border-box!important;border:0!important;border-bottom:1px solid #d9e2ed!important;
+ border-radius:0!important;background:#f8fafc!important;color:#102b4e!important;
+ box-shadow:0 3px 12px rgba(15,36,64,.08)!important
+}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px 13px!important;min-width:0!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-kicker{font-size:9px!important;font-weight:900!important;letter-spacing:.12em!important;color:#64748b!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:14px!important;font-weight:900!important;overflow-wrap:anywhere!important;color:#102b4e!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px 11px!important;font-size:11px!important;color:#334155!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta strong{color:#0f2440!important;font-weight:900!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:7px!important;font-size:11px!important;font-weight:800!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-time span{padding:6px 10px!important;border:1px solid #dbe3ec!important;border-radius:999px!important;background:#fff!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip #sendwayo-v7-duration{background:#ffedd5!important;border-color:#fdba74!important;color:#9a3412!important}
+
+/* Ningún menú queda fijo en el costado: se despliega desde arriba a todo el ancho. */
+#sendwayo-main-sidebar{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+ position:fixed!important;left:0!important;right:0!important;
+ top:var(--sendwayo-top-menu-top,118px)!important;bottom:auto!important;
+ width:100vw!important;max-width:100vw!important;height:auto!important;min-height:0!important;
+ max-height:calc(100dvh - var(--sendwayo-top-menu-top,118px) - 10px)!important;
+ grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;
+ align-content:start!important;align-items:stretch!important;gap:7px!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ padding:14px clamp(12px,2.4vw,28px) calc(16px + env(safe-area-inset-bottom))!important;
+ box-sizing:border-box!important;background:#0f2440!important;color:#fff!important;
+ border:0!important;border-top:1px solid rgba(255,255,255,.12)!important;
+ border-radius:0 0 18px 18px!important;box-shadow:0 16px 38px rgba(0,0,0,.28)!important;
+ z-index:2147482600!important;transform:translateY(-12px)!important;
+ opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+ transition:transform .18s ease,opacity .18s ease,visibility .18s ease!important
+}
+#sendwayo-main-sidebar.sendwayo-menu-open{
+ display:grid!important;transform:translateY(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important
+}
+#sendwayo-main-sidebar>div:first-child{grid-column:1/-1!important;padding:4px 4px 8px!important}
+#sendwayo-main-sidebar button{
+ display:flex!important;align-items:center!important;gap:9px!important;
+ width:100%!important;min-width:0!important;min-height:44px!important;height:auto!important;
+ margin:0!important;padding:10px 12px!important;border:1px solid rgba(255,255,255,.10)!important;
+ border-radius:11px!important;background:rgba(255,255,255,.045)!important;color:#fff!important;
+ font-size:12px!important;font-weight:700!important;line-height:1.3!important;
+ text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important
+}
+#sendwayo-main-sidebar button:hover,#sendwayo-main-sidebar button:focus-visible{background:#21466f!important;outline:2px solid rgba(255,255,255,.25)!important}
+#sendwayo-main-sidebar button span,#sendwayo-main-sidebar button i,#sendwayo-main-sidebar button svg{flex:0 0 auto!important;color:inherit!important;opacity:1!important}
+#sendwayo-main-sidebar .sidebar-brand,#sendwayo-main-sidebar .sidebar-business-name,
+#sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,
+#sendwayo-main-sidebar #sendwayo-active-identity-strip,#sendwayo-main-sidebar #sendwayo-v7-user-strip,
+#sendwayo-main-sidebar .sendwayo-business-user-stack,#sendwayo-main-sidebar [data-sendwayo-user-identity]{
+ display:none!important;visibility:hidden!important
+}
+#sendwayo-menu-shade{
+ display:none!important;position:fixed!important;inset:0!important;
+ background:rgba(3,12,26,.42)!important;z-index:2147482500!important;
+ backdrop-filter:blur(1px)!important
+}
+#sendwayo-menu-shade.open{display:block!important}
+
+/* Botón de navegación integrado en la barra superior, nunca flotando a la izquierda. */
+#sendwayo-mobile-menu.sendwayo-top-menu-toggle{
+ display:none!important;position:static!important;inset:auto!important;left:auto!important;top:auto!important;
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ flex:0 0 40px!important;align-items:center!important;justify-content:center!important;
+ width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
+ margin:0!important;padding:0!important;border:1px solid rgba(255,255,255,.22)!important;
+ border-radius:11px!important;background:#173b68!important;color:#fff!important;
+ font-size:22px!important;font-weight:900!important;line-height:1!important;
+ box-shadow:0 2px 8px #0003!important;cursor:pointer!important;z-index:2147482100!important
+}
+body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:inline-flex!important}
+body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
+
+/* El contenido de cada pantalla ocupa todo el ancho, sin una columna lateral. */
+#sendwayo-workspace-shell{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}
+#sendwayo-main-content{display:block!important;flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:clamp(10px,2vw,24px)!important;box-sizing:border-box!important}
+#sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
+#user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
+@media(max-width:700px){
+ #sendwayo-brand-bar{min-height:54px!important;padding:7px 9px!important;gap:6px!important}
+ #sendwayo-brand-bar .sendwayo-brand-left{gap:6px!important}
+ #sendwayo-brand-bar .sendwayo-brand-logo{width:32px!important;height:32px!important;flex-basis:32px!important}
+ #sendwayo-brand-bar .sendwayo-brand-title{font-size:11px!important;white-space:normal!important;line-height:1.1!important}
+ #sendwayo-brand-bar #bell-top{width:34px!important;height:34px!important;min-height:34px!important;flex-basis:34px!important}
+ #sendwayo-brand-bar #sendwayo-top-logout{font-size:10px!important;padding:7px 10px!important;min-height:34px!important}
+ #sendwayo-mobile-menu.sendwayo-top-menu-toggle{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;font-size:20px!important}
+ #sendwayo-v7-user-strip{top:54px!important;gap:7px!important;padding:8px 10px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-person{gap:4px 8px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important;justify-content:flex-start!important}
+ #sendwayo-main-content{padding:8px!important}
+ #sendwayo-main-sidebar{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;padding-left:9px!important;padding-right:9px!important}
+}
+</style>
+<script id="sendwayo-v7-workspace-layout-controller">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const txt=v=>String(v==null?'':v).trim();
+ const current=()=>{
+  try{if(window.currentUser&&(window.currentUser.id||window.currentUser.email||window.currentUser.codigo))return window.currentUser;}catch(e){}
+  try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}
+ };
+ const roleLabel=u=>{
+  const r=txt(u&&(u.role||u.rol)).toUpperCase();
+  return r.includes('ADMIN')?'ADMINISTRADOR':r.includes('AGENTE')?'AGENTE':'REMITENTE';
+ };
+ function findSidebar(){return $('sendwayo-main-sidebar');}
+ let purgingLegacyIdentity=false;
+ function purgeLegacySideIdentity(){
+  const side=findSidebar();if(!side||purgingLegacyIdentity)return;
+  purgingLegacyIdentity=true;
+  try{
+   side.querySelectorAll(
+    '#sendwayo-v7-user-strip,#sendwayo-active-identity-strip,#user-top,#hora-top,'+
+    '[data-sendwayo-user-identity],.sidebar-brand,.sidebar-business-name,'+
+    '.sendwayo-business-user-stack,.sendwayo-sidebar-identity,.sendwayo-sidebar-user,'+
+    '.sendwayo-sidebar-profile,.sidebar-user,.sidebar-profile'
+   ).forEach(el=>el.remove());
+   Array.from(side.children).forEach(el=>{
+    if(!el||el.tagName==='BUTTON'||el.querySelector('button'))return;
+    const label=String(el.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    if(/menu principal/.test(label))return;
+    if(/sendwayo\s+express|administrador|\bid\s*:|codigo\s*:|hora\s*:|cuenta activa/.test(label))el.remove();
+   });
+  }catch(error){console.warn('[SENDWAYO] No se pudo limpiar la identidad antigua del menú:',error);}
+  finally{purgingLegacyIdentity=false;}
+ }
+ window.sendwayoPurgeLegacySideIdentity=purgeLegacySideIdentity;
+ function closeTopMenu(){
+  const side=findSidebar(),btn=$('sendwayo-mobile-menu');
+  side?.classList.remove('sendwayo-menu-open');
+  $('sendwayo-menu-shade')?.classList.remove('open');
+  $('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
+  if(btn)btn.textContent='☰';
+  document.body.classList.remove('sendwayo-top-menu-open');
+ }
+ function updateMenuPosition(){
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip');
+  if(!bar)return;
+  const barHeight=Math.ceil(bar.getBoundingClientRect().height||58);
+  const stripHeight=document.body.classList.contains('sendwayo-authenticated')&&strip
+   ?Math.ceil(strip.getBoundingClientRect().height||0):0;
+  document.documentElement.style.setProperty('--sendwayo-top-menu-top',(barHeight+stripHeight)+'px');
+ }
+ function refreshClock(){
+  const date=$('sendwayo-v7-date'),clock=$('sendwayo-v7-clock');
+  const now=new Date();
+  if(date)date.textContent=now.toLocaleDateString('es-DO');
+  if(clock)clock.textContent=now.toLocaleTimeString('es-DO');
+ }
+ function refreshIdentity(){
+  const u=current(),strip=$('sendwayo-v7-user-strip'),brand=$('sendwayo-v7-business-name');
+  if(!strip)return;
+  if(brand)brand.textContent='SENDWAYO EXPRESS';
+  const values={
+   'sendwayo-v7-name':txt(u&&(u.nombre||u.name||u.email)||'Usuario'),
+   'sendwayo-v7-role':u?roleLabel(u):'',
+   'sendwayo-v7-id':txt(u&&(u.id||u.accountId)||'—'),
+   'sendwayo-v7-code':txt(u&&(u.codigo||u.code||u.codigo2)||'—')
+  };
+  Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el)el.textContent=value;});
+  refreshClock();updateMenuPosition();
+  strip.setAttribute('aria-label','Cuenta activa: '+values['sendwayo-v7-role']+'; ID '+values['sendwayo-v7-id']+'; código '+values['sendwayo-v7-code']);
+ }
+ window.sendwayoRefreshIdentityHeader=refreshIdentity;
+ function ensureMenu(){
+  const bar=$('sendwayo-brand-bar'),side=findSidebar(),btn=$('sendwayo-mobile-menu');
+  if(!bar||!side||!btn)return;
+  const actions=bar.querySelector('.sendwayo-brand-actions');
+  if(actions&&btn.parentElement!==actions)actions.insertBefore(btn,actions.firstChild);
+  let shade=$('sendwayo-menu-shade');
+  if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
+  side.setAttribute('aria-label','Menú principal de SENDWAYO EXPRESS');
+  btn.classList.add('sendwayo-top-menu-toggle');
+  btn.setAttribute('aria-label','Abrir menú principal');
+  btn.setAttribute('aria-controls','sendwayo-main-sidebar');
+  btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');
+  // Los listeners antiguos quedan neutralizados por el manejador de captura de este botón.
+  btn.onclick=null;shade.onclick=null;
+  if(!btn.dataset.sendwayoCanonicalMenu){
+   btn.dataset.sendwayoCanonicalMenu='1';
+   btn.addEventListener('click',ev=>{
+    ev.preventDefault();ev.stopImmediatePropagation();
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const open=!side.classList.contains('sendwayo-menu-open');
+    side.classList.toggle('sendwayo-menu-open',open);
+    shade?.classList.toggle('open',open);
+    document.body.classList.toggle('sendwayo-top-menu-open',open);
+    btn.setAttribute('aria-expanded',open?'true':'false');
+    btn.textContent=open?'✕':'☰';
+    if(open)updateMenuPosition();
+   },true);
+   shade?.addEventListener('click',ev=>{ev.preventDefault();ev.stopImmediatePropagation();closeTopMenu();},true);
+   side.addEventListener('click',ev=>{
+    if(ev.target&&ev.target.closest&&ev.target.closest('button[onclick*="showView"],a[onclick*="showView"]'))window.setTimeout(closeTopMenu,80);
+   },true);
+   document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeTopMenu();},true);
+  }
+  // El menú conserva solo la navegación; los datos de la cuenta viven en la franja superior.
+  side.querySelectorAll('#sendwayo-v7-user-strip,#sendwayo-active-identity-strip,[data-sendwayo-user-identity],.sidebar-business-name').forEach(el=>el.remove());
+  purgeLegacySideIdentity();
+ }
+ function layout(){
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip'),shell=$('sendwayo-workspace-shell'),main=$('sendwayo-main-content'),side=findSidebar();
+  if(!bar||!strip)return;
+  if(strip.parentElement!==document.body||strip.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',strip);
+  // El menú no reserva una columna: se convierte en panel superpuesto de ancho completo.
+  if(side&&side.parentElement!==document.body)document.body.appendChild(side);
+  purgeLegacySideIdentity();
+  bar.classList.add('sticky');
+  if(shell){shell.style.setProperty('display','block','important');shell.style.setProperty('width','100%','important');shell.style.setProperty('max-width','100%','important');shell.style.setProperty('margin','0','important');}
+  if(main){main.style.setProperty('display','block','important');main.style.setProperty('flex','none','important');main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');main.style.setProperty('min-width','0','important');main.style.setProperty('margin','0','important');}
+  ensureMenu();refreshIdentity();updateMenuPosition();
+ }
+ function refresh(){layout();}
+ function wrapLogin(){
+  const old=window.intentarLogin;
+  if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
+  const wrapped=function(){const out=old.apply(this,arguments);window.setTimeout(refresh,250);window.setTimeout(refresh,800);return out;};
+  wrapped.__sendwayoCanonicalLayout=true;window.intentarLogin=wrapped;
+ }
+ function wrapLogout(){
+  const old=window.cerrarSesion;
+  if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
+  const wrapped=function(){closeTopMenu();const out=old.apply(this,arguments);window.setTimeout(refresh,0);return out;};
+  wrapped.__sendwayoCanonicalLayout=true;window.cerrarSesion=wrapped;
+ }
+ function wrapShowView(){
+  const old=window.showView;
+  if(typeof old!=='function'||old.__sendwayoCanonicalLayout)return;
+  const wrapped=function(route){
+   const out=old.apply(this,arguments);
+   window.setTimeout(()=>{closeTopMenu();layout();},0);
+   return out;
+  };
+  wrapped.__sendwayoCanonicalLayout=true;window.showView=wrapped;
+ }
+ function bindExit(){
+  const button=$('sendwayo-top-logout');if(!button)return;
+  button.onclick=null;
+  if(!button.dataset.sendwayoLogoutBound){
+   button.dataset.sendwayoLogoutBound='1';
+   button.addEventListener('click',ev=>{ev.preventDefault();window.cerrarSesion?.();});
+  }
+ }
+ function setup(){
+  layout();bindExit();wrapLogin();wrapLogout();wrapShowView();
+ }
+ document.addEventListener('DOMContentLoaded',setup,{once:true});
+ window.addEventListener('load',setup);
+ window.addEventListener('pageshow',setup);
+ window.addEventListener('resize',updateMenuPosition);
+ window.addEventListener('sendwayo:firebase-ready',setup);
+ document.addEventListener('sendwayo:firebase-ready',setup);
+ document.addEventListener('sendwayo:login-success',setup);
+ window.addEventListener('sendwayo:transactions-updated',refreshIdentity);
+ window.addEventListener('sendwayo:workspace-header-refresh',refreshIdentity);
+ if(typeof ResizeObserver!=='undefined'){
+  const ro=new ResizeObserver(updateMenuPosition);
+  window.addEventListener('load',()=>{if($('sendwayo-brand-bar'))ro.observe($('sendwayo-brand-bar'));if($('sendwayo-v7-user-strip'))ro.observe($('sendwayo-v7-user-strip'));},{once:true});
+ }
+ window.setInterval(refreshClock,5000);
+ setup();
+})();
+</script>
+
+<style id="sendwayo-v7-no-side-identity-final">
+/* Disposición final: marca, identidad y hora arriba; módulo a todo el ancho. */
+#sendwayo-brand-bar{position:sticky!important;top:0!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;z-index:2147482000!important}
+#sendwayo-v7-user-strip{position:sticky!important;top:58px!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
+#sendwayo-workspace-shell{display:block!important;position:relative!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+#sendwayo-main-content{display:block!important;position:relative!important;float:none!important;flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:clamp(8px,1.5vw,20px)!important;box-sizing:border-box!important}
+#sendwayo-main-content>.view,#sendwayo-main-content>.view:not(.hidden),#sendwayo-main-content .view:not(.hidden){display:block;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}
+#sendwayo-main-sidebar{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+ position:fixed!important;left:0!important;right:0!important;top:var(--sendwayo-top-menu-top,118px)!important;bottom:auto!important;
+ width:100vw!important;max-width:100vw!important;height:auto!important;min-height:0!important;
+ max-height:calc(100dvh - var(--sendwayo-top-menu-top,118px) - 8px)!important;
+ grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;
+ align-content:start!important;gap:7px!important;overflow-y:auto!important;overflow-x:hidden!important;
+ transform:translateY(-12px)!important;
+ z-index:2147482600!important;border-radius:0 0 18px 18px!important
+}
+#sendwayo-main-sidebar.sendwayo-menu-open{display:grid!important;transform:translateY(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+#sendwayo-main-sidebar .sidebar-brand,#sendwayo-main-sidebar .sidebar-business-name,
+#sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,#sendwayo-main-sidebar #sendwayo-active-identity-strip,
+#sendwayo-main-sidebar #sendwayo-v7-user-strip,#sendwayo-main-sidebar .sendwayo-business-user-stack,
+#sendwayo-main-sidebar [data-sendwayo-user-identity]{display:none!important;visibility:hidden!important}
+#user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
+
+/* Identidad, ID, código y horario en filas completas: jamás al costado del módulo. */
+#sendwayo-v7-user-strip{
+ display:none!important;
+ flex-direction:column!important;
+ align-items:stretch!important;
+ justify-content:flex-start!important;
+ gap:8px!important;
+ width:100%!important;
+}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:stretch!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-person{
+ display:flex!important;
+ width:100%!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:5px!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta{
+ display:flex!important;
+ width:100%!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:3px!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-time{
+ display:flex!important;
+ width:100%!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:4px!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-time span{
+ display:block!important;
+ width:100%!important;
+ max-width:100%!important;
+ white-space:normal!important;
+}
+@media(max-width:700px){
+ #sendwayo-v7-user-strip{top:54px!important;padding:8px 10px!important;gap:7px!important}
+ #sendwayo-main-content{padding:8px!important}
+ #sendwayo-main-sidebar{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;padding-left:9px!important;padding-right:9px!important}
+}
+</style>
+
+<!-- SENDWAYO V7: centro de pagos, transferencias y selección de cuentas de liquidación -->
+<style id="sendwayo-v7-payment-transfer-hub-style">
+#sendwayo-v7-payment-transfer-hub{color:#10243d}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card{border:1px solid #dbe4ef;border-radius:16px;background:#fff;padding:16px;box-shadow:0 3px 14px rgba(15,36,64,.06)}
+#sendwayo-v7-payment-transfer-hub .sw-pay-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+#sendwayo-v7-payment-transfer-hub .sw-pay-status{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#fff7ed;color:#9a3412;font-size:10px;font-weight:900}
+#sendwayo-v7-payment-transfer-hub .sw-pay-flow{border-left:3px solid #cbd5e1;padding:3px 0 3px 12px}
+#sendwayo-v7-payment-transfer-hub .sw-pay-note{border:1px solid #f2d29a;background:#fffbeb;color:#854d0e;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
+#sendwayo-v7-payment-transfer-hub .sw-pay-good{border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card h3{font-size:15px;font-weight:900;color:#10243d}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card p{font-size:12px;line-height:1.55;color:#475569}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card a{color:#1d4ed8;text-decoration:underline;font-weight:800}
+#sendwayo-v7-payment-transfer-hub .sw-pay-field{display:flex;flex-direction:column;gap:5px}
+#sendwayo-v7-payment-transfer-hub .sw-pay-field label{font-size:11px;font-weight:800;color:#334155}
+#sendwayo-v7-payment-transfer-hub .sw-pay-field select{width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;padding:8px 10px;font-size:12px;color:#10243d}
+#sendwayo-v7-payment-transfer-hub .sw-pay-primary{background:#12366a;color:#fff;border:0;border-radius:999px;padding:11px 16px;font-size:12px;font-weight:900}
+#sendwayo-v7-payment-transfer-hub .sw-pay-secondary{border:1px solid #cbd5e1;background:#fff;color:#12366a;border-radius:999px;padding:9px 13px;font-size:11px;font-weight:800}
+#sendwayo-v7-payment-transfer-hub .sw-pay-bank-info{border:1px solid #dbeafe;background:#f8fbff;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
+#sendwayo-v7-payment-transfer-hub .sw-pay-muted{font-size:11px;color:#64748b;line-height:1.5}
+</style>
+<script id="sendwayo-v7-payment-transfer-hub">
+(function(){
+ 'use strict';
+ if(window.__SENDWAYO_V7_PAYMENT_TRANSFER_HUB__)return;
+ window.__SENDWAYO_V7_PAYMENT_TRANSFER_HUB__=true;
+ var VIEW='sendwayo-v7-payment-transfer-hub';
+ var BUTTON='sendwayo-v7-payment-transfer-hub-button';
+ var ROOT='sendwayo_express_v2';
+ var $=function(id){return document.getElementById(id);};
+ var config={azulSettlementBankId:'',cardnetSettlementBankId:'',incomingTransferBankId:'',treasuryBankId:''};
+ var loadingConfig=false;
+ function current(){return window.currentUser||null;}
+ function role(){return String(current()&&(current().role||current().rol)||'').toUpperCase();}
+ function isAdmin(){return role().indexOf('ADMIN')>=0;}
+ function allowed(){return isAdmin()||role().indexOf('REMITENTE')>=0;}
+ function safe(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+ function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+ function fb(){return window.sendwayoFirebase||null;}
+ function bankRows(){
+  var rows=Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[];
+  var byId=new Map();
+  rows.forEach(function(raw){
+   var id=String(raw&& (raw.id||raw.firebaseKey)||'').trim();
+   var account=String(raw&&(raw.cuenta||raw.account||raw.accountNumber||raw.number||raw.numero)||'').trim();
+   if(!id||!account||raw.active===false||norm(raw.estado||raw.status)==='inactivo')return;
+   if(byId.has(id))return;
+   byId.set(id,{
+    id:id,
+    banco:String(raw.banco||raw.bank||raw.bankName||'Banco').trim(),
+    cuenta:account,
+    titular:String(raw.titular||raw.holder||raw.accountHolder||'').trim(),
+    currency:String(raw.currency||raw.moneda||raw.divisa||'').trim().toUpperCase()
+   });
+  });
+  return Array.from(byId.values());
+ }
+ function maskAccount(account){var digits=String(account||'').replace(/\s/g,'');return digits.length>4?'•••• '+digits.slice(-4):digits;}
+ function bankLabel(b,full){
+  var label=b.banco+' — '+(b.titular||'Titular no informado')+' — '+maskAccount(b.cuenta);
+  return full?label+' — '+b.cuenta:label;
+ }
+ function ensureView(){
+  if($(VIEW))return $(VIEW);
+  var host=$('sendwayo-main-content')||$('sendwayo-workspace-shell')||($('view-tablero')&&$('view-tablero').parentElement);
+  if(!host)return null;
+  var view=document.createElement('section');
+  view.id=VIEW;view.className='view hidden rounded-xl border bg-slate-50 p-3 md:p-5';
+  view.innerHTML=
+   '<header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><div class="sw-pay-label">SENDWAYO EXPRESS · V7</div><h2 class="mt-1 text-2xl font-black">Pagos y transferencias</h2><p class="mt-1 max-w-3xl text-sm text-slate-600">Cobros con tarjeta, depósitos desde cualquier banco y entregas a cuentas bancarias, MonCash o NatCash.</p></div><span class="sw-pay-status">Activación de proveedores pendiente</span></header>'+
+   '<div class="sw-pay-note mb-4"><b>El recorrido del dinero:</b> el cliente paga con tarjeta o transfiere desde su banco; AZUL/CardNET o el banco confirma el ingreso; el dinero se liquida en la cuenta comercial SENDWAYO elegida; después Administración ordena la entrega al banco, MonCash o NatCash. Cobrar la tarjeta y pagar al beneficiario son dos operaciones separadas.</div>'+
+   '<div class="grid grid-cols-1 gap-3 xl:grid-cols-2">'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga en la Página de Pagos segura de AZUL o en un enlace de pago habilitado. El cargo se solicita cuando confirma el checkout y el emisor aprueba la transacción.</p><p class="mt-2"><b>Liquidación:</b> AZUL abona primero al comercio afiliado y liquida en la cuenta bancaria comercial que SENDWAYO haya registrado y AZUL haya validado. El abono no se envía directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>Activación:</b> requiere afiliación, cuenta bancaria en pesos a nombre del titular admitido, documentos del comercio, credenciales de pruebas y certificación técnica.</p><p class="mt-3"><a href="https://www.azul.com.do/Pages/es/hazte-cliente.aspx" target="_blank" rel="noopener noreferrer">Solicitar afiliación AZUL</a> · <a href="https://dev.azul.com.do/Pages/developer/pages/lib/index.aspx" target="_blank" rel="noopener noreferrer">Documentación técnica</a></p></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga mediante el botón/checkout seguro de CardNET. CardNET publica integración para web y APP, tokenización y autenticación 3-D Secure. La venta se confirma desde el servidor y con la referencia del adquirente.</p><p class="mt-2"><b>Liquidación:</b> el pago se liquida en la cuenta bancaria comercial que figure en la afiliación CardNET. Solo después de la confirmación del adquirente se inicia la entrega al destinatario.</p><p class="mt-2"><b>WhatsApp:</b> CardNET publica Cobros por WhatsApp y Enlace de Pago. SENDWAYO podrá enviar el enlace oficial de cobro al cliente; el pago pasa por CardNET y luego la entrega a una billetera se tramita por separado.</p><p class="mt-3"><a href="https://www.cardnet.com.do/afiliate" target="_blank" rel="noopener noreferrer">Iniciar afiliación CardNET</a> · <a href="https://www.cardnet.com.do/afiliate/empresarial" target="_blank" rel="noopener noreferrer">Afiliación empresarial</a> · <a href="https://www.cardnet.com.do/soluciones/online/boton-de-pago" target="_blank" rel="noopener noreferrer">Botón de pago</a> · <a href="https://www.cardnet.com.do/tarifario" target="_blank" rel="noopener noreferrer">Tarifario y cobros por WhatsApp</a></p></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Ingreso desde cualquier banco</div><h3 class="mt-1">Transferencia bancaria a SENDWAYO</h3><p class="mt-3">El cliente puede transferir desde la aplicación o sucursal de su propio banco a la cuenta comercial de recepción de SENDWAYO que Administración haya seleccionado y verificado.</p><p class="mt-2"><b>Confirmación:</b> la operación queda Pendiente de verificación hasta que el abono aparezca en el estado de cuenta de SENDWAYO. Una captura o recibo del cliente no acredita por sí solo los fondos.</p><p class="mt-2">Una transferencia bancaria tradicional se debita de una cuenta bancaria. Para pagar con tarjeta de crédito, el cliente usa el checkout AZUL/CardNET cuando el adquirente esté activo; no se asume que todos los bancos admitan transferencias financiadas con tarjeta.</p><div id="sw-pay-incoming-bank" class="sw-pay-bank-info mt-3">Cuenta de recepción: pendiente de seleccionar y verificar por Administración.</div></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Entrega / dispersión</div><h3 class="mt-1">Bancos, MonCash y NatCash</h3><p class="mt-3"><b>MonCash:</b> existe un programa oficial MonCash Business con API, sandbox y soluciones de desembolso empresarial. Se requiere alta comercial y paso a producción autorizado.</p><p class="mt-2"><b>NatCash:</b> se puede incorporar mediante un convenio directo de Natcom o un agregador autorizado. Tranzak y LevaPay publican APIs independientes; hay que evaluar contrato, liquidación, tarifas, titular del beneficiario y reversos antes de conectar.</p><p class="mt-2"><b>Otra cuenta bancaria:</b> Administración puede transferir desde la cuenta de tesorería SENDWAYO en el portal del banco y registrar referencia/comprobante. La automatización necesita un convenio o API específica del banco.</p><p class="mt-3"><a href="https://moncashdfs.com/business" target="_blank" rel="noopener noreferrer">MonCash Business</a> · <a href="https://docs.tranzak.co/" target="_blank" rel="noopener noreferrer">Tranzak API (tercero)</a> · <a href="https://levapay.dev/api-natcash" target="_blank" rel="noopener noreferrer">LevaPay NatCash (tercero)</a></p></article>'+
+   '</div>'+
+   '<section id="sw-pay-settlement-admin" class="sw-pay-card mt-4 hidden"><div class="sw-pay-label">Configuración de tesorería · solo Administración</div><h3 class="mt-1">Seleccionar a cuál de las cuentas bancarias registradas llega cada cobro</h3><p class="mt-2">La selección usa las cuentas ya registradas en SENDWAYO/Firebase. No se inventan cuentas ni números. Elige la cuenta comercial que el titular y el adquirente aprobarán en cada contrato; AZUL y CardNET pueden exigir comprobante bancario y validación del titular.</p><div id="sw-pay-bank-count" class="sw-pay-muted mt-2">Cargando cuentas bancarias registradas…</div><div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">'+
+    '<div class="sw-pay-field"><label for="sw-pay-azul-bank">Liquidación de AZUL (DOP)</label><select id="sw-pay-azul-bank"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+    '<div class="sw-pay-field"><label for="sw-pay-cardnet-bank">Liquidación de CardNET (DOP)</label><select id="sw-pay-cardnet-bank"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+    '<div class="sw-pay-field"><label for="sw-pay-incoming-bank-select">Recepción de transferencias bancarias (DOP)</label><select id="sw-pay-incoming-bank-select"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+    '<div class="sw-pay-field"><label for="sw-pay-treasury-bank">Tesorería para transferencias salientes</label><select id="sw-pay-treasury-bank"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+   '</div><div class="mt-3 flex flex-wrap items-center gap-3"><button id="sw-pay-save-settlement" type="button" class="sw-pay-primary">Guardar asignación de cuentas</button><span id="sw-pay-settlement-status" class="sw-pay-muted" role="status">Todavía no se ha guardado ninguna asignación.</span></div><div class="sw-pay-note mt-3">No se ha elegido una cuenta automáticamente porque no debo adivinar cuál de tus tres cuentas está afiliada ni cuál coincide con el titular del contrato. La asignación se guardará en Firebase solo cuando Administración la seleccione y las reglas de seguridad autoricen la escritura.</div></section>'+
+   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Ruta del dinero · separación obligatoria</div><h3 class="mt-1">Del pagador al beneficiario</h3><div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4"><div class="sw-pay-flow"><b>1. Pagador</b><p class="mt-1">Tarjeta AZUL/CardNET, enlace por WhatsApp o transferencia bancaria.</p></div><div class="sw-pay-flow"><b>2. Ingreso confirmado</b><p class="mt-1">El adquirente/banco verifica importe, moneda y referencia. La captura no basta.</p></div><div class="sw-pay-flow"><b>3. Cuenta comercial SENDWAYO</b><p class="mt-1">La liquidación entra en la cuenta elegida y validada por el adquirente.</p></div><div class="sw-pay-flow"><b>4. Entrega</b><p class="mt-1">Tesorería envía a banco, MonCash o NatCash y espera confirmación.</p></div></div></section>'+
+   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Estados que verá Administración</div><div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pendiente de pago</b><p class="mt-1">El cliente no ha pagado o el abono no aparece.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pago confirmado</b><p class="mt-1">AZUL, CardNET o el banco confirmó el ingreso.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Dispersión en proceso</b><p class="mt-1">El dinero sale hacia la cuenta o billetera seleccionada.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Entregado / Rechazado</b><p class="mt-1">El banco o proveedor confirmó la entrega o el fallo/reverso.</p></div></div></section>'+
+   '<div class="sw-pay-good mt-4"><b>Protecciones:</b> DOP y HTG permanecen separados; no se acredita por el retorno del navegador ni por un comprobante subido; cada cobro/dispersión requiere referencia idempotente y verificación servidor-a-servidor; nunca se guardan PAN, CVV o PIN en SENDWAYO.</div>'+
+   '<div class="sw-pay-note mt-3">Este módulo todavía no procesa cargos ni envía fondos. AZUL/CardNET necesitan afiliación y credenciales sandbox/producción; MonCash necesita activar la cuenta Business; NatCash necesita convenio y proveedor aprobado. El dinero real no se moverá mientras falte cualquiera de esas verificaciones.</div>';
+  host.appendChild(view);
+  return view;
+ }
+ function setSelectOptions(select,rows,selected){
+  if(!select)return;
+  var old=selected||select.value;
+  select.replaceChildren();
+  var placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=rows.length?'Seleccione la cuenta registrada':'No hay cuentas bancarias activas disponibles';select.appendChild(placeholder);
+  rows.forEach(function(b){var o=document.createElement('option');o.value=b.id;o.textContent=bankLabel(b,false);select.appendChild(o);});
+  if(old&&rows.some(function(b){return b.id===old;}))select.value=old;
+ }
+ function updateClientBankDisplay(rows){
+  var box=$('sw-pay-incoming-bank');if(!box)return;
+  var id=config.incomingTransferBankId;
+  var bank=rows.find(function(b){return b.id===id;});
+  if(!bank){box.textContent='Cuenta de recepción: Administración todavía no ha seleccionado una cuenta comercial. No realices una transferencia hasta que se publique el dato validado.';return;}
+  box.innerHTML='<b>Cuenta de recepción SENDWAYO:</b><br>'+safe(bank.banco)+'<br><b>Titular:</b> '+safe(bank.titular||'No informado')+'<br><b>Número de cuenta:</b> '+safe(bank.cuenta)+'<br><b>Moneda:</b> '+safe(bank.currency||'DOP')+'<br><span class="sw-pay-muted">Envía el importe y espera la confirmación del abono antes de darlo por pagado.</span>';
+ }
+ async function loadConfig(){
+  if(loadingConfig)return;
+  loadingConfig=true;
+  var f=fb(),status=$('sw-pay-settlement-status');
+  try{
+   if(!f||!f.db||!f.auth||!f.auth.currentUser)throw new Error('Inicie sesión con Firebase para consultar la configuración bancaria.');
+   var snap=await f.db.ref(ROOT+'/settings/paymentSettlement').once('value');
+   var data=snap.exists()?snap.val():{};
+   config={
+    azulSettlementBankId:String(data.azulSettlementBankId||''),
+    cardnetSettlementBankId:String(data.cardnetSettlementBankId||''),
+    incomingTransferBankId:String(data.incomingTransferBankId||''),
+    treasuryBankId:String(data.treasuryBankId||'')
+   };
+   if(status)status.textContent=snap.exists()?'Asignación bancaria cargada desde Firebase.':'No existe una asignación guardada todavía.';
+  }catch(e){
+   if(status)status.textContent='No se pudo leer la asignación: '+(e&&e.message||'acceso denegado');
+  }finally{
+   loadingConfig=false;
+   renderBanks();
+  }
+ }
+ function renderBanks(){
+  var rows=bankRows();
+  var dops=rows.filter(function(b){return !b.currency||b.currency==='DOP'||b.currency==='RD$'||b.currency.indexOf('PESO')>=0;});
+  var count=$('sw-pay-bank-count');
+  if(count)count.textContent='Cuentas bancarias activas disponibles en esta sesión: '+rows.length+(rows.length===3?' (se detectaron las tres cuentas registradas).':'.');
+  setSelectOptions($('sw-pay-azul-bank'),dops,config.azulSettlementBankId);
+  setSelectOptions($('sw-pay-cardnet-bank'),dops,config.cardnetSettlementBankId);
+  setSelectOptions($('sw-pay-incoming-bank-select'),dops,config.incomingTransferBankId);
+  setSelectOptions($('sw-pay-treasury-bank'),rows,config.treasuryBankId);
+  var adminBox=$('sw-pay-settlement-admin');if(adminBox)adminBox.classList.toggle('hidden',!isAdmin());
+  updateClientBankDisplay(rows);
+ }
+ async function saveConfig(){
+  var f=fb(),status=$('sw-pay-settlement-status');
+  if(!isAdmin()){if(status)status.textContent='Solo Administración puede cambiar las cuentas de liquidación.';return;}
+  if(!f||!f.db||!f.auth||!f.auth.currentUser){if(status)status.textContent='No hay una sesión Firebase autenticada.';return;}
+  var rows=bankRows();
+  var map=new Map(rows.map(function(b){return [b.id,b];}));
+  var ids={
+   azulSettlementBankId:$('sw-pay-azul-bank')?.value||'',
+   cardnetSettlementBankId:$('sw-pay-cardnet-bank')?.value||'',
+   incomingTransferBankId:$('sw-pay-incoming-bank-select')?.value||'',
+   treasuryBankId:$('sw-pay-treasury-bank')?.value||''
+  };
+  for(var key of Object.keys(ids)){
+   if(ids[key]&&!map.has(ids[key])){if(status)status.textContent='La cuenta seleccionada ya no está registrada; actualiza la lista.';return;}
+  }
+  if(!ids.azulSettlementBankId||!ids.cardnetSettlementBankId||!ids.incomingTransferBankId||!ids.treasuryBankId){
+   if(status)status.textContent='Selecciona una cuenta para AZUL, CardNET, transferencias entrantes y tesorería.';
+   return;
+  }
+  var payload=Object.assign({},ids,{
+   updatedAtMs:Date.now(),
+   updatedByUserId:String(f.profileKey||current()?.id||''),
+   updatedByAuthUid:String(f.auth.currentUser.uid||'')
+  });
+  if(status)status.textContent='Guardando configuración bancaria…';
+  try{
+   await f.db.ref(ROOT+'/settings/paymentSettlement').set(payload);
+   config=ids;
+   if(status)status.textContent='Configuración guardada en Firebase. La activación de AZUL/CardNET sigue pendiente de validación del adquirente.';
+   renderBanks();
+  }catch(e){
+   if(status)status.textContent='Firebase no autorizó el guardado; no se cambió ninguna cuenta: '+(e&&e.message||'error de permisos');
+  }
+ }
+ function bindAdminControls(){
+  var save=$('sw-pay-save-settlement');
+  if(save&&!save.dataset.bound){save.dataset.bound='1';save.addEventListener('click',saveConfig);}
+ }
+ function open(){
+  if(!allowed()){window.alert('Este módulo está disponible para Administración y remitentes.');return;}
+  var view=ensureView();if(!view){window.alert('No se pudo abrir el centro de pagos.');return;}
+  document.querySelectorAll('.view').forEach(function(el){el.classList.add('hidden');});
+  view.classList.remove('hidden');
+  $('sendwayo-main-sidebar')?.classList.remove('sendwayo-menu-open');
+  $('sendwayo-menu-shade')?.classList.remove('open');
+  $('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
+  document.body.dataset.sendwayoActiveView='pagos-transferencias';
+  bindAdminControls();
+  renderBanks();
+  loadConfig().then(renderBanks);
+  window.scrollTo(0,0);
+ }
+ function addButton(){
+  var side=$('sendwayo-main-sidebar');if(!side||$(BUTTON))return;
+  var btn=document.createElement('button');btn.id=BUTTON;btn.type='button';
+  btn.className='sw-pay-menu-button w-full flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold text-white';
+  btn.innerHTML='<span aria-hidden="true">💳</span><span>Pagos y transferencias</span>';
+  btn.addEventListener('click',open);side.appendChild(btn);
+ }
+ function refresh(){
+  try{
+   ensureView();addButton();bindAdminControls();
+   var btn=$(BUTTON);if(btn)btn.style.display=allowed()?'flex':'none';
+   renderBanks();
+  }catch(e){console.warn('[SENDWAYO V7 payments]',e);}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+ window.addEventListener('load',refresh);
+ window.addEventListener('pageshow',refresh);
+ window.addEventListener('sendwayo:firebase-ready',refresh);
+ window.addEventListener('sendwayo:banks-ready',renderBanks);
+ window.addEventListener('sendwayo:workspace-header-refresh',refresh);
+ if(typeof MutationObserver!=='undefined'&&document.body){
+  var pending=false;
+  var obs=new MutationObserver(function(){
+   if(pending)return;pending=true;
+   window.setTimeout(function(){pending=false;if(!$(VIEW)||!$(BUTTON))refresh();},80);
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+ }
+ window.sendwayoOpenPaymentTransferHub=open;
+})();
+</script>
+
+<style id="sendwayo-v7-top-identity-and-width-final">
+/* Última regla: nunca mostrar usuario, ID, código o reloj en columnas laterales. */
+#sendwayo-v7-user-strip{display:none!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-direction:column!important;align-items:stretch!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;width:100%!important;max-width:100%!important;gap:5px!important}
+#sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,#sendwayo-main-sidebar #sendwayo-v7-user-strip,#sendwayo-main-sidebar #sendwayo-active-identity-strip,#sendwayo-main-sidebar [data-sendwayo-user-identity]{display:none!important;visibility:hidden!important}
+#user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
+#sendwayo-workspace-shell,#sendwayo-main-content{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;float:none!important;flex:none!important;box-sizing:border-box!important}
+#sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
+</style>
+</body>
+</html>
