@@ -2,10 +2,17 @@
 
 Estado: prototipo aislado en rama de revisión; no desplegado ni conectado a dinero real.
 
-## Vía prioritaria para tarjeta
-**CardNET** es el candidato local a evaluar para tarjetas de crédito y débito. Su sitio oficial describe Botón de Pago para web/app, redirección a pantalla segura, 3-D Secure y tokenización. La documentación técnica ofrece modalidades POST, SOAP y REST. SENDWAYO debe solicitar afiliación e informar expresamente que su actividad incluye servicios de remesas, cobros y pagos a terceros; la aceptación de tarjetas para ese giro debe quedar confirmada por escrito antes de continuar.
+## Elegibilidad documental antes de solicitar tarjeta
+**Datos del titular que deben respetarse:** no tiene cédula dominicana; se identifica con pasaporte. Sus cuentas de Banco Popular, BHD y Banreservas fueron abiertas usando ese pasaporte. No pedirle cédula ni afirmar que una cuenta bancaria personal equivale a una cuenta comercial.
 
-- Afiliación: https://www.cardnet.com.do/afiliate
+**CardNET:** su formulario público de afiliación para personas enumera copia de la cédula del propietario, estado de cuenta y contrato de alquiler o título del local. Por eso, la ruta personal publicada no está confirmada para este titular con pasaporte solamente. Antes de iniciar una solicitud, hay que pedir a CardNET confirmación escrita de si acepta pasaporte extranjero y cuentas personales abiertas con ese pasaporte, y si autoriza expresamente el giro de remesas/cobros/pagos a terceros. Contacto oficial: servicioalafiliado@cardnet.com.do; 809-473-3200. No enviar datos bancarios completos por este documento.
+
+**Alternativa condicionada:** Portal DOM publica para persona jurídica una lista que incluye pasaporte del socio principal, además de Registro Mercantil, RNC, acta, estatutos y cuenta bancaria a nombre de la compañía. Esto solo sería una vía a evaluar si SENDWAYO dispone de esa entidad y cuenta empresarial; no equivale a aceptar una cuenta personal. Persona física publica cédula como requisito. Confirmar por escrito también la autorización del giro de remesas.
+
+- CardNET afiliación personal: https://www.cardnet.com.do/afiliate/personal
+- CardNET afiliación general: https://www.cardnet.com.do/afiliate
+- Portal DOM comercio electrónico y requisitos: https://portaldom.do/servicios/comercio-electronico/
+- CardNET Botón de Pago: https://www.cardnet.com.do/soluciones/online/boton-de-pago
 - Botón de pago: https://www.cardnet.com.do/soluciones/online/boton-de-pago
 - Documentación: https://developers.cardnet.com.do/guias/boton-de-pago/
 - REST: https://developers.cardnet.com.do/guias/boton-de-pago/web-sin-pantalla-rest.html
