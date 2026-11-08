@@ -3830,7 +3830,7 @@ window.sendwayoShareReceipt=async function(){
  const SENDWAYO_OFFICIAL_BANKS = [];
  // Siempre usar los tres datos oficiales exactos; conservar solo cuentas adicionales creadas por el administrador.
  const bankStorage=readJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',[]);
- const customBanks=Array.isArray(bankStorage)?bankStorage.filter(b=>String(b.id||'').startsWith('BANK-')&&!SENDWAYO_OFFICIAL_BANKS.some(o=>String(o.cuenta)===String(b.cuenta))):[];
+ const customBanks=Array.isArray(bankStorage)?bankStorage:[]; // Conservar todas las cuentas ya registradas; no descartar cuentas por formato de ID.
  window.SENDWAYO_BANKS=[...SENDWAYO_OFFICIAL_BANKS,...customBanks];
  writeJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',window.SENDWAYO_BANKS);
  const bankOptions=()=>window.SENDWAYO_BANKS.map(b=>`<option value="${esc(b.id)}">${esc(b.banco)} — ${esc(b.cuenta)} — ${esc(b.titular)} — Pasaporte ${esc(b.documento)}</option>`).join('');
@@ -5203,7 +5203,7 @@ window.sendwayoShareReceipt=async function(){
     const pager = $('sendwayo-module-pagination-' + view); if (!pager) return;
     const start = total ? 1 : 0;
     const end = total ? Math.min(10,total-(page-1)*10) : 0;
-    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Posterior</button></div></div>`;
+    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Siguiente</button></div></div>`;
   }
   window.sendwayoSetModulePage = function(view, page) {
     const state = modulePageState[view] || (modulePageState[view] = {page:1, query:''});
@@ -5577,7 +5577,7 @@ window.sendwayoShareReceipt=async function(){
     emptyRows.forEach(tr=>tr.style.display=filtered.length?'none':'');
     const pager=ensurePager(table);
     const localFirst=filtered.length?1:0, localLast=filtered.length?end-start:0;
-    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página posterior" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Posterior</button></div></div>`;
+    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página siguiente" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Siguiente</button></div></div>`;
     if(pager.dataset.html!==html){ pager.innerHTML=html; pager.dataset.html=html; }
     if(pager.dataset.sendwayoPagerHandlers!=='1'){
       pager.dataset.sendwayoPagerHandlers='1';
@@ -6119,7 +6119,7 @@ window.sendwayoShareReceipt=async function(){
     }else if(isCommissionPayment(t)){if(!isAdmin()){announce('Solo Administración puede gestionar pagos de comisión.');return;}const dest=accountById(t.destinoId);if(!dest||roleOf(dest)!=='REMITENTE'){announce('Seleccione un remitente válido para trasladar su propia comisión al balance.');return;}if(!t.pagoComisionAplicado){const sourceCom=commissions(dest),destBal=balances(dest);if(num(sourceCom[cur])+0.000001<amount){announce('Comisión insuficiente del remitente. Disponible: '+num(sourceCom[cur]).toFixed(2)+' '+cur+'.');return;}sourceCom[cur]=round2(num(sourceCom[cur])-amount);destBal[cur]=round2(num(destBal[cur])+amount);t.pagoComisionAplicado=true;t.pagoComisionWallet=true;t.pagoComisionMonto=amount;t.pagoComisionDestinoId=String(dest.id);t.pagoComisionOrigenId=String(dest.id);t.pagoComisionMoneda=cur;}
     }else if(isSpend(t)){const debited=debit(t,true);if(!debited.ok){announce(debited.reason||'No se pudo descontar el balance; la operación continúa pendiente.');return;}applyCommission(t);
     }else{announce('Este tipo de registro no tiene una acción de aprobación financiera disponible.');return;}
-    t.estado='Aprobado';t.aprobadoPor=(getUser()&&getUser().id)||'ADMINADMIN';t.fechaAprobacion=new Date().toLocaleString('es-DO');t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('Operación aprobada. El balance y la comisión correspondientes fueron actualizados una sola vez.');try{if(window.verComprobante)window.verComprobante(t.id);}catch(_){}
+    try{if(typeof window.sendwayoTaxAssess==='function')window.sendwayoTaxAssess(t)}catch(fiscalError){console.warn('[SENDWAYO fiscal]',fiscalError)}t.estado='Aprobado';t.aprobadoPor=(getUser()&&getUser().id)||'ADMINADMIN';t.fechaAprobacion=new Date().toLocaleString('es-DO');t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('Operación aprobada. El balance y la comisión correspondientes fueron actualizados una sola vez.');try{if(window.verComprobante)window.verComprobante(t.id);}catch(_){}
   }
   function reject(id){const t=findTx(id);if(!t)return;if(status(t)==='rechazado'){announce('Esta operación ya está rechazada.');return;}if(status(t)==='aprobado'&&!isAdmin()){announce('Solo Administración puede revertir una operación aprobada.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden rechazar operaciones permitidas de otras cuentas.');return;}if(status(t)==='aprobado'&&isAdmin())undoAccounting(t);else refundDebit(t);t.estado='Rechazado';t.rechazadoPor=(getUser()&&getUser().id)||'ADMINADMIN';t.fechaRechazo=new Date().toLocaleString('es-DO');t.reservaAplicada=false;refreshAll();announce('Operación rechazada. La contabilidad correspondiente fue revertida una sola vez.');}
   function noCoincide(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'||status(t)==='rechazado'){announce('Solo se puede marcar No coincide una operación que siga pendiente.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden marcar No coincide operaciones permitidas de otras cuentas.');return;}if(isSpend(t)&&!(t.fondosDebitados&&!t.fondosDevueltos)){const r=debit(t,true);if(!r.ok){announce(r.reason||'No se pudo reservar el balance.');return;}}t.estado='No coincide';t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('La operación quedó marcada como No coincide y el monto continúa retenido.');}
@@ -9792,7 +9792,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
  function current(){return window.currentUser||null;}
  function role(){return String(current()&&(current().role||current().rol)||'').toUpperCase();}
  function isAdmin(){return role().indexOf('ADMIN')>=0;}
- function allowed(){return isAdmin()||role().indexOf('REMITENTE')>=0;}
+ function allowed(){return isAdmin()||role().indexOf('REMITENTE')>=0||role().indexOf('AGENTE')>=0;}
  function safe(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
  function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
  function fb(){return window.sendwayoFirebase||null;}
@@ -9990,5 +9990,9 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 #sendwayo-workspace-shell,#sendwayo-main-content{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;float:none!important;flex:none!important;box-sizing:border-box!important}
 #sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
 </style>
+<script defer src="./SENDWAYO-V7-FISCAL-INTERNACIONAL.js"></script>
+
+
+
 </body>
 </html>
