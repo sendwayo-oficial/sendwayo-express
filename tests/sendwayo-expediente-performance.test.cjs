@@ -75,17 +75,20 @@ assert.doesNotMatch(html, /received=net\/2\.30/, 'el cálculo de ruta no debe di
 assert.doesNotMatch(html, /rec=formatMoney\(net\/2\.3\)\s*\+\s*' DOP'/, 'el registro de transacciones no debe convertir automáticamente HTG en DOP');
 assert.doesNotMatch(html, /rate='Tasa HT→RD 2\.30'/, 'la calculadora heredada no debe presentar 2.30 como tasa automática');
 assert.doesNotMatch(html, /Tasa HT→RD:\s*2\.30/, 'el tablero no debe anunciar una tasa HT→RD no autorizada');
-// Encabezado y navegación: todo arriba; ninguna columna lateral permanente.
-assert.match(html, /sendwayo-v7-canonical-top-workspace-style/);
+// Encabezado horizontal y navegación vertical desde el borde izquierdo.
+assert.match(html, /sendwayo-v7-requested-topbar-and-left-vertical-menu-2026-11-08/);
 assert.match(html, /sendwayo-v7-workspace-layout-controller/);
 assert.match(html, /sendwayo-v7-user-strip/);
 assert.match(html, /insertAdjacentElement\('afterend',strip\)/);
-assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?left:0!important;right:0!important;/);
-assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateY\(0\)/);
-assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(/);
+assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?left:0!important;top:0!important;right:auto!important;bottom:0!important;/);
+assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?flex-direction:column!important/);
+assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateX\(0\)/);
+assert.match(html, /brandLeft\.insertBefore\(btn,brandLogo\|\|brandLeft\.firstChild\)/);
 assert.match(html, /#sendwayo-main-content\{display:block!important;flex:none!important;width:100%!important/);
-assert.match(html, /const actions=bar\.querySelector\('\.sendwayo-brand-actions'\)/);
-assert.match(html, /actions\.insertBefore\(btn,actions\.firstChild\)/);
+for (const id of ['sendwayo-v7-top-bal-dop','sendwayo-v7-top-bal-htg','sendwayo-v7-top-com-dop','sendwayo-v7-top-com-htg']) {
+ assert.ok(html.includes('id="' + id + '"'), 'falta el indicador financiero superior ' + id);
+}
+assert.match(html, /topPairs\.forEach/);
 assert.match(html, /window\.sendwayoRefreshIdentityHeader=refreshIdentity/);
 
 // Comprobante auténtico en imagen PNG.
