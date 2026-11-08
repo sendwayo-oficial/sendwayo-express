@@ -97,6 +97,14 @@ assert.match(html, /image\/png/);
 
 const toolbarFunction = html.match(/function alignToolbars\(root\)\{[\s\S]*?\n  function wrapModuleLauncher/)?.[0] || '';
 assert.ok(toolbarFunction, 'la rutina de barras de herramientas debe estar presente');
+
+const legacyToolbarStart = html.lastIndexOf('function alignToolbars(){');
+assert.ok(legacyToolbarStart >= 0, 'debe localizarse el segundo formateador heredado');
+const legacyToolbar = html.slice(legacyToolbarStart, html.indexOf('function queueToolbar()', legacyToolbarStart));
+assert.match(legacyToolbar, /sendwayo-authenticated/, 'el formateador heredado no debe ejecutarse antes del login');
+assert.match(legacyToolbar, /view:not\(\.hidden\)/, 'el formateador heredado debe limitarse a la vista activa');
+assert.doesNotMatch(legacyToolbar, /document\.querySelectorAll\('\.view'\)/, 'no debe recorrer módulos ocultos');
+assert.doesNotMatch(html.slice(html.indexOf('const observer=new MutationObserver(queueToolbar)', legacyToolbarStart)), /observe\(document\.documentElement/, 'el observador de barras no debe vigilar todo documentElement');
 assert.match(toolbarFunction, /sendwayo-authenticated/, 'no debe formatear controles antes del acceso');
 assert.match(toolbarFunction, /\.view:not\(\.hidden\)/, 'debe limitarse a la pantalla activa');
 assert.doesNotMatch(toolbarFunction, /document\.querySelectorAll\('input\[type="search"\]'\)/, 'no debe escanear todas las búsquedas de la plataforma');
