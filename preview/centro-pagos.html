@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SENDWAYO EXPRESS | Centro de pagos — revisión</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#132238;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:980px;margin:auto;padding:24px}.top{background:#0e2747;color:white;padding:24px;border-radius:18px}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#a9c6e8}.top h1{margin:8px 0;font-size:clamp(25px,5vw,36px)}.top p{color:#d5e3f2;max-width:700px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0}.card{background:white;border:1px solid #dbe4ef;border-radius:16px;padding:18px;box-shadow:0 5px 18px #0e274710}.card h2{font-size:18px;margin:0 0 8px}.card p{color:#53657a;font-size:14px;line-height:1.5}.tag{display:inline-block;border-radius:99px;background:#fff2d5;color:#79520b;padding:5px 9px;font-size:12px;font-weight:700}.tag.green{background:#e2f5eb;color:#17613b}.tag.gray{background:#edf1f5;color:#45566b}.row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #edf1f5;padding:10px 0}.muted{color:#66788e;font-size:13px}.panel{background:white;border:1px solid #dbe4ef;border-radius:16px;padding:20px;margin-top:16px}.panel h2{margin-top:0}label{display:block;font-weight:700;font-size:13px;margin:12px 0 6px}input,select{width:100%;padding:13px;border:1px solid #cbd6e2;border-radius:10px;font:inherit;background:white}button,.link{display:inline-block;border:0;border-radius:10px;padding:12px 16px;font-weight:700;text-decoration:none;background:#1c5ea8;color:white;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.notice{background:#fff8e8;border:1px solid #f0d69a;padding:14px;border-radius:12px;color:#634b16;font-size:13px;line-height:1.5}.foot{font-size:12px;color:#66788e;margin:22px 0}.brand{font-weight:800;letter-spacing:.04em}@media(max-width:560px){.wrap{padding:14px}.top{padding:19px}.row{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="top"><div class="eyebrow">SENDWAYO EXPRESS · revisión previa</div><h1>Centro de pagos</h1><p>Vista de aprobación para preparar cobros con tarjetas de crédito y débito, transferencias bancarias y confirmación segura. Esta vista no captura tarjetas ni mueve dinero.</p></header>
+<section class="grid">
+<article class="card"><h2>Tarjetas de crédito y débito</h2><span class="tag">Validación documental pendiente</span><p><b>CardNET:</b> la afiliación personal publica cédula del propietario como requisito. El titular de SENDWAYO usa pasaporte y sus cuentas bancarias están abiertas con ese pasaporte. Primero se debe obtener confirmación escrita de aceptación de pasaporte y del giro de remesas; no iniciar una solicitud suponiendo que cumple.</p><a class="link" href="mailto:servicioalafiliado@cardnet.com.do?subject=Consulta%20de%20afiliacion%20con%20pasaporte%20y%20actividad%20de%20remesas">Consultar requisitos a CardNET</a></article>
+<article class="card"><h2>Transferencia bancaria</h2><span class="tag green">Flujo manual preparable</span><p>Banco Popular, BHD y Banreservas se podrán configurar cuando Administración verifique titularidad, tipo de cuenta y autorización para recibir fondos de SENDWAYO.</p><span class="muted">No se muestran ni inventan números de cuenta.</span></article>
+<article class="card"><h2>Otra ruta a evaluar</h2><span class="tag">Solo si existe empresa registrada</span><p>Portal DOM publica una ruta de persona jurídica que contempla pasaporte del socio principal, pero exige Registro Mercantil, RNC, estatutos, acta y cuenta bancaria a nombre de la compañía. No está confirmada para cuentas personales.</p><a class="link" href="https://portaldom.do/servicios/comercio-electronico/" target="_blank" rel="noopener">Revisar requisitos de Portal DOM</a></article>
+</section>
+<section class="panel"><h2>Vista del cliente — solicitar un pago</h2><p class="muted">Ejemplo de interfaz. No crea una orden real mientras no exista un proveedor contratado y configurado.</p>
+<label for="amount">Importe</label><input id="amount" inputmode="decimal" type="number" min="1" step="0.01" placeholder="Ej. 2500">
+<label for="currency">Moneda</label><select id="currency"><option value="DOP">DOP — Peso dominicano</option><option value="HTG">HTG — Gourde haitiano</option></select>
+<label for="method">Método de pago</label><select id="method"><option value="cardnet">Tarjeta de crédito o débito — CardNET</option><option value="bank">Transferencia bancaria</option></select>
+<div class="notice" style="margin:14px 0">El checkout de tarjeta será alojado o tokenizado por un adquirente que acepte por escrito el pasaporte del titular y el giro de SENDWAYO. Nunca pedir ni guardar número completo de tarjeta, CVV, PIN o vencimiento. Las cuentas del titular en Popular, BHD y Banreservas fueron abiertas con pasaporte; su uso como cuentas receptoras debe ser autorizado por el proveedor y el banco. La transferencia queda pendiente hasta comprobar el abono bancario.</div>
+<button id="continue" disabled>Continuar al pago — deshabilitado</button>
+<p id="status" class="muted" role="status">Pendiente de aceptación documental (pasaporte), aprobación expresa del giro, credenciales de prueba y conexión del backend. No procesa dinero todavía.</p>
+</section>
+<section class="panel"><h2>Controles obligatorios antes de activar</h2>
+<div class="row"><b>Verificación servidor a servidor</b><span class="tag gray">Requerida</span></div>
+<div class="row"><b>Webhook firmado y protección contra repetición</b><span class="tag gray">Requerida</span></div>
+<div class="row"><b>Idempotencia: no acreditar dos veces</b><span class="tag gray">Requerida</span></div>
+<div class="row"><b>Conciliación y reversos / contracargos</b><span class="tag gray">Requerida</span></div>
+<div class="row"><b>Autorización legal para cobros vinculados a remesas</b><span class="tag gray">Por confirmar</span></div>
+</section>
+<p class="foot">Prototipo aislado para revisión. No está conectado a Firebase, a cuentas bancarias ni a procesadores. No sustituye afiliación, aprobación regulatoria ni pruebas de certificación.</p>
+</main></body></html>
