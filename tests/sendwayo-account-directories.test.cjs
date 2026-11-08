@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const html=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
-const block=(html.match(/<script id="sendwayo-v7-account-directory-behavior">([\\s\\S]*?)<\\/script>/)||[])[1];
+const block=(html.match(/<script id="sendwayo-v7-account-directory-behavior">([\s\S]*?)<\/script>/)||[])[1];
 assert.ok(block,'directorio script exists');
 new Function(block);
 for(const term of ['sendwayo-account-toolbar','sendwayoSearchAccountDirectory','Balance compartido con administración','Balance DOP','Balance HTG','ID fijo','Código fijo','sendwayoAdminEditAccount','sendwayoAdminToggleAccount'])assert.ok(html.includes(term),term);
