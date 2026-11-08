@@ -5201,9 +5201,9 @@ window.sendwayoShareReceipt=async function(){
   const modulePageState = window.__sendwayoModulePageState || (window.__sendwayoModulePageState = Object.create(null));
   function renderModulePager(view, total, page, pageCount) {
     const pager = $('sendwayo-module-pagination-' + view); if (!pager) return;
-    const start = total ? (page - 1) * 10 + 1 : 0;
-    const end = Math.min(total, page * 10);
-    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Mostrando ${start}–${end} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Siguiente</button></div></div>`;
+    const start = total ? 1 : 0;
+    const end = total ? Math.min(10,total-(page-1)*10) : 0;
+    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Posterior</button></div></div>`;
   }
   window.sendwayoSetModulePage = function(view, page) {
     const state = modulePageState[view] || (modulePageState[view] = {page:1, query:''});
@@ -5281,7 +5281,7 @@ window.sendwayoShareReceipt=async function(){
       const amount = txt(t.monto || (Number(t.montoValue)||0)+' '+cur);
       const fee = txt(t.feeText || ((Number(t.fee)||0) ? `Comisión ${t.fee} ${cur}` : '—'));
       const detail = txt(t.rutaExacta || t.detalle || '');
-      return `<tr data-transaction-id="${safe(t.id)}"><td style="font-weight:900">${String(pageStart+i+1).padStart(2,'0')}</td><td><strong>${safe(t.id)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(t.fecha || '')}</div></td><td><strong>${safe(t.ruta || names[view])}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(detail)}</div></td><td><div>${safe(accountNameForId(t.remitenteId || t.creadorId))}</div><div style="font-size:10px;color:#64748b;margin-top:4px">Registrado por: ${safe(accountNameForId(t.creadorId))}</div></td><td><strong>${safe(amount)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(fee)}</div></td><td>${safe(t.beneficiario || t.beneficiarioTel || '—')}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:999px;background:${color}">${safe(state)}</span></td><td><div class="sendwayo-action-row">${rowActions(view,t)}</div></td></tr>`;
+      return `<tr data-transaction-id="${safe(t.id)}"><td style="font-weight:900">${String(i+1).padStart(2,'0')}</td><td><strong>${safe(t.id)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(t.fecha || '')}</div></td><td><strong>${safe(t.ruta || names[view])}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(detail)}</div></td><td><div>${safe(accountNameForId(t.remitenteId || t.creadorId))}</div><div style="font-size:10px;color:#64748b;margin-top:4px">Registrado por: ${safe(accountNameForId(t.creadorId))}</div></td><td><strong>${safe(amount)}</strong><div style="font-size:10px;color:#64748b;margin-top:4px">${safe(fee)}</div></td><td>${safe(t.beneficiario || t.beneficiarioTel || '—')}</td><td><span style="display:inline-block;padding:5px 9px;border-radius:999px;background:${color}">${safe(state)}</span></td><td><div class="sendwayo-action-row">${rowActions(view,t)}</div></td></tr>`;
     }).join('');
   }
   window.sendwayoOpenModuleForm = openModuleForm;
@@ -5572,12 +5572,12 @@ window.sendwayoShareReceipt=async function(){
     filtered.forEach((tr,i)=>{
       const onPage=i>=start && i<end;
       tr.style.display=onPage?'':'none';
-      if(numbered && tr.cells?.[0]) { const num=String(i+1).padStart(2,'0'); if(String(tr.cells[0].textContent||'').trim()!==num) tr.cells[0].textContent=num; }
+      if(numbered && tr.cells?.[0]) { const num=String(i-start+1).padStart(2,'0'); if(String(tr.cells[0].textContent||'').trim()!==num) tr.cells[0].textContent=num; }
     });
     emptyRows.forEach(tr=>tr.style.display=filtered.length?'none':'');
     const pager=ensurePager(table);
-    const first=filtered.length?start+1:0, last=end;
-    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Mostrando ${first}–${last} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Siguiente</button></div></div>`;
+    const localFirst=filtered.length?1:0, localLast=filtered.length?end-start:0;
+    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página posterior" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Posterior</button></div></div>`;
     if(pager.dataset.html!==html){ pager.innerHTML=html; pager.dataset.html=html; }
     if(pager.dataset.sendwayoPagerHandlers!=='1'){
       pager.dataset.sendwayoPagerHandlers='1';
@@ -9758,7 +9758,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
 }
 </style>
 
-<!-- SENDWAYO V7: centro de pagos, transferencias bancarias y dispersión -->
+<!-- SENDWAYO V7: centro de pagos, transferencias y selección de cuentas de liquidación -->
 <style id="sendwayo-v7-payment-transfer-hub-style">
 #sendwayo-v7-payment-transfer-hub{color:#10243d}
 #sendwayo-v7-payment-transfer-hub .sw-pay-card{border:1px solid #dbe4ef;border-radius:16px;background:#fff;padding:16px;box-shadow:0 3px 14px rgba(15,36,64,.06)}
@@ -9769,7 +9769,14 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
 #sendwayo-v7-payment-transfer-hub .sw-pay-good{border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
 #sendwayo-v7-payment-transfer-hub .sw-pay-card h3{font-size:15px;font-weight:900;color:#10243d}
 #sendwayo-v7-payment-transfer-hub .sw-pay-card p{font-size:12px;line-height:1.55;color:#475569}
-#sendwayo-v7-payment-transfer-hub .sw-pay-menu-button{border:1px solid rgba(255,255,255,.12)!important}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card a{color:#1d4ed8;text-decoration:underline;font-weight:800}
+#sendwayo-v7-payment-transfer-hub .sw-pay-field{display:flex;flex-direction:column;gap:5px}
+#sendwayo-v7-payment-transfer-hub .sw-pay-field label{font-size:11px;font-weight:800;color:#334155}
+#sendwayo-v7-payment-transfer-hub .sw-pay-field select{width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;padding:8px 10px;font-size:12px;color:#10243d}
+#sendwayo-v7-payment-transfer-hub .sw-pay-primary{background:#12366a;color:#fff;border:0;border-radius:999px;padding:11px 16px;font-size:12px;font-weight:900}
+#sendwayo-v7-payment-transfer-hub .sw-pay-secondary{border:1px solid #cbd5e1;background:#fff;color:#12366a;border-radius:999px;padding:9px 13px;font-size:11px;font-weight:800}
+#sendwayo-v7-payment-transfer-hub .sw-pay-bank-info{border:1px solid #dbeafe;background:#f8fbff;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
+#sendwayo-v7-payment-transfer-hub .sw-pay-muted{font-size:11px;color:#64748b;line-height:1.5}
 </style>
 <script id="sendwayo-v7-payment-transfer-hub">
 (function(){
@@ -9778,44 +9785,167 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
  window.__SENDWAYO_V7_PAYMENT_TRANSFER_HUB__=true;
  var VIEW='sendwayo-v7-payment-transfer-hub';
  var BUTTON='sendwayo-v7-payment-transfer-hub-button';
+ var ROOT='sendwayo_express_v2';
  var $=function(id){return document.getElementById(id);};
- function activeUser(){
-  try{if(window.currentUser)return window.currentUser;}catch(_){}
-  try{return typeof currentUser!=='undefined'?currentUser:null;}catch(_){return null;}
+ var config={azulSettlementBankId:'',cardnetSettlementBankId:'',incomingTransferBankId:'',treasuryBankId:''};
+ var loadingConfig=false;
+ function current(){return window.currentUser||null;}
+ function role(){return String(current()&&(current().role||current().rol)||'').toUpperCase();}
+ function isAdmin(){return role().indexOf('ADMIN')>=0;}
+ function allowed(){return isAdmin()||role().indexOf('REMITENTE')>=0;}
+ function safe(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+ function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+ function fb(){return window.sendwayoFirebase||null;}
+ function bankRows(){
+  var rows=Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[];
+  var byId=new Map();
+  rows.forEach(function(raw){
+   var id=String(raw&& (raw.id||raw.firebaseKey)||'').trim();
+   var account=String(raw&&(raw.cuenta||raw.account||raw.accountNumber||raw.number||raw.numero)||'').trim();
+   if(!id||!account||raw.active===false||norm(raw.estado||raw.status)==='inactivo')return;
+   if(byId.has(id))return;
+   byId.set(id,{
+    id:id,
+    banco:String(raw.banco||raw.bank||raw.bankName||'Banco').trim(),
+    cuenta:account,
+    titular:String(raw.titular||raw.holder||raw.accountHolder||'').trim(),
+    currency:String(raw.currency||raw.moneda||raw.divisa||'').trim().toUpperCase()
+   });
+  });
+  return Array.from(byId.values());
  }
- function role(){
-  var u=activeUser();return String(u&&(u.role||u.rol)||'').toUpperCase();
+ function maskAccount(account){var digits=String(account||'').replace(/\s/g,'');return digits.length>4?'•••• '+digits.slice(-4):digits;}
+ function bankLabel(b,full){
+  var label=b.banco+' — '+(b.titular||'Titular no informado')+' — '+maskAccount(b.cuenta);
+  return full?label+' — '+b.cuenta:label;
  }
- function allowed(){var r=role();return r.indexOf('ADMIN')>=0||r.indexOf('REMITENTE')>=0;}
- function build(){
-  if($(VIEW))return;
+ function ensureView(){
+  if($(VIEW))return $(VIEW);
   var host=$('sendwayo-main-content')||$('sendwayo-workspace-shell')||($('view-tablero')&&$('view-tablero').parentElement);
-  if(!host)return;
+  if(!host)return null;
   var view=document.createElement('section');
   view.id=VIEW;view.className='view hidden rounded-xl border bg-slate-50 p-3 md:p-5';
   view.innerHTML=
-   '<header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><div class="sw-pay-label">SENDWAYO EXPRESS · V7</div><h2 class="mt-1 text-2xl font-black">Pagos y transferencias</h2><p class="mt-1 max-w-3xl text-sm text-slate-600">Cobros con tarjeta, depósitos desde cualquier banco y entregas a cuentas bancarias, MonCash o NatCash. Cada etapa conserva su propia confirmación.</p></div><span class="sw-pay-status">Configuración pendiente · sin cobros reales</span></header>'+
-   '<div class="sw-pay-note mb-4"><b>Importante:</b> este centro organiza el recorrido, pero no captura tarjetas, no mueve dinero y no modifica balances. AZUL, CardNET y los proveedores de dispersión necesitan afiliación, credenciales de servidor y certificación antes de activar operaciones.</div>'+
+   '<header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><div class="sw-pay-label">SENDWAYO EXPRESS · V7</div><h2 class="mt-1 text-2xl font-black">Pagos y transferencias</h2><p class="mt-1 max-w-3xl text-sm text-slate-600">Cobros con tarjeta, depósitos desde cualquier banco y entregas a cuentas bancarias, MonCash o NatCash.</p></div><span class="sw-pay-status">Activación de proveedores pendiente</span></header>'+
+   '<div class="sw-pay-note mb-4"><b>El recorrido del dinero:</b> el cliente paga con tarjeta o transfiere desde su banco; AZUL/CardNET o el banco confirma el ingreso; el dinero se liquida en la cuenta comercial SENDWAYO elegida; después Administración ordena la entrega al banco, MonCash o NatCash. Cobrar la tarjeta y pagar al beneficiario son dos operaciones separadas.</div>'+
    '<div class="grid grid-cols-1 gap-3 xl:grid-cols-2">'+
-    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Cobro a tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente elige pagar con su tarjeta desde el checkout alojado por AZUL. La tarjeta se autoriza/cobra cuando el cliente confirma el pago y AZUL/emisor aprueban la operación.</p><p class="mt-2"><b>¿Dónde llega el dinero?</b> Primero a la liquidación del comercio SENDWAYO; AZUL deposita en la cuenta bancaria comercial declarada en el contrato de afiliación. No va directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>¿Cuándo se entrega?</b> Solo después de que el servidor confirme el pago y el estado de fondos, se ordena la entrega del servicio. La fecha de liquidación bancaria exacta depende del contrato del comercio.</p></article>'+
-    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Cobro a tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga desde el botón/checkout seguro de CardNET. SENDWAYO valida la respuesta desde el servidor y consulta o verifica el resultado con la referencia de la operación; nunca confía solamente en el retorno del navegador.</p><p class="mt-2"><b>¿Dónde llega el dinero?</b> A la cuenta de liquidación comercial que SENDWAYO registre al afiliarse con CardNET. Después la tesorería utiliza fondos ya confirmados para la entrega al destinatario.</p><p class="mt-2"><b>¿Cuándo se cobra?</b> Cuando el cliente confirma en la pasarela y CardNET/emisor aprueban la transacción. El abono en la cuenta comercial sigue el calendario pactado con CardNET y el banco.</p></article>'+
-    '<article class="sw-pay-card"><div class="sw-pay-label">Ingreso desde cualquier banco</div><h3 class="mt-1">Transferencia bancaria a SENDWAYO</h3><p class="mt-3">El cliente puede iniciar una transferencia desde la aplicación o sucursal de su propio banco hacia una cuenta bancaria comercial de SENDWAYO previamente verificada y mostrada por Administración.</p><p class="mt-2"><b>Cuándo se acredita:</b> queda “Pendiente de verificación” hasta que el abono se vea en el estado de cuenta de SENDWAYO y Administración lo confirme. Una foto/comprobante por sí sola no acredita dinero.</p><p class="mt-2"><b>Tarjeta de crédito:</b> si el cliente desea pagar con tarjeta, utiliza el checkout AZUL/CardNET cuando esté afiliado. Una transferencia bancaria normal no se convierte automáticamente en un cargo a tarjeta; eso depende de que el banco y el adquirente ofrezcan expresamente esa modalidad.</p></article>'+
-    '<article class="sw-pay-card"><div class="sw-pay-label">Entrega / dispersión</div><h3 class="mt-1">Bancos, MonCash y NatCash</h3><p class="mt-3">Una vez confirmado el cobro y reservados los fondos, Administración selecciona el destino: cuenta bancaria del beneficiario, MonCash o NatCash. Se conserva país, moneda, referencia, titular verificado y estado del proveedor.</p><p class="mt-2"><b>Cuenta bancaria:</b> puede salir desde una cuenta de tesorería SENDWAYO. Mientras no exista una API bancaria contratada, Administración ejecuta la transferencia en el portal del banco y confirma con el comprobante y la verificación del abono.</p><p class="mt-2"><b>MonCash:</b> existe un programa oficial MonCash Business con API y desembolsos empresariales; exige cuenta comercial y pruebas/sandbox antes de producción.</p><p class="mt-2"><b>NatCash:</b> queda disponible como destino del diseño; falta contratar/verificar un proveedor de dispersión autorizado y sus credenciales. No se presentará como conectado hasta completar esa etapa.</p></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga en la Página de Pagos segura de AZUL o en un enlace de pago habilitado. El cargo se solicita cuando confirma el checkout y el emisor aprueba la transacción.</p><p class="mt-2"><b>Liquidación:</b> AZUL abona primero al comercio afiliado y liquida en la cuenta bancaria comercial que SENDWAYO haya registrado y AZUL haya validado. El abono no se envía directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>Activación:</b> requiere afiliación, cuenta bancaria en pesos a nombre del titular admitido, documentos del comercio, credenciales de pruebas y certificación técnica.</p><p class="mt-3"><a href="https://www.azul.com.do/Pages/es/hazte-cliente.aspx" target="_blank" rel="noopener noreferrer">Solicitar afiliación AZUL</a> · <a href="https://dev.azul.com.do/Pages/developer/pages/lib/index.aspx" target="_blank" rel="noopener noreferrer">Documentación técnica</a></p></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga mediante el botón/checkout seguro de CardNET. CardNET publica integración para web y APP, tokenización y autenticación 3-D Secure. La venta se confirma desde el servidor y con la referencia del adquirente.</p><p class="mt-2"><b>Liquidación:</b> el pago se liquida en la cuenta bancaria comercial que figure en la afiliación CardNET. Solo después de la confirmación del adquirente se inicia la entrega al destinatario.</p><p class="mt-2"><b>WhatsApp:</b> CardNET publica Cobros por WhatsApp y Enlace de Pago. SENDWAYO podrá enviar el enlace oficial de cobro al cliente; el pago pasa por CardNET y luego la entrega a una billetera se tramita por separado.</p><p class="mt-3"><a href="https://www.cardnet.com.do/afiliate/personal" target="_blank" rel="noopener noreferrer">Afiliación CardNET</a> · <a href="https://www.cardnet.com.do/soluciones/online/boton-de-pago" target="_blank" rel="noopener noreferrer">Botón de pago</a> · <a href="https://www.cardnet.com.do/tarifario" target="_blank" rel="noopener noreferrer">Tarifario y cobros por WhatsApp</a></p></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Ingreso desde cualquier banco</div><h3 class="mt-1">Transferencia bancaria a SENDWAYO</h3><p class="mt-3">El cliente puede transferir desde la aplicación o sucursal de su propio banco a la cuenta comercial de recepción de SENDWAYO que Administración haya seleccionado y verificado.</p><p class="mt-2"><b>Confirmación:</b> la operación queda Pendiente de verificación hasta que el abono aparezca en el estado de cuenta de SENDWAYO. Una captura o recibo del cliente no acredita por sí solo los fondos.</p><p class="mt-2">Una transferencia bancaria tradicional se debita de una cuenta bancaria. Para pagar con tarjeta de crédito, el cliente usa el checkout AZUL/CardNET cuando el adquirente esté activo; no se asume que todos los bancos admitan transferencias financiadas con tarjeta.</p><div id="sw-pay-incoming-bank" class="sw-pay-bank-info mt-3">Cuenta de recepción: pendiente de seleccionar y verificar por Administración.</div></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Entrega / dispersión</div><h3 class="mt-1">Bancos, MonCash y NatCash</h3><p class="mt-3"><b>MonCash:</b> existe un programa oficial MonCash Business con API, sandbox y soluciones de desembolso empresarial. Se requiere alta comercial y paso a producción autorizado.</p><p class="mt-2"><b>NatCash:</b> se puede incorporar mediante un convenio directo de Natcom o un agregador autorizado. Tranzak y LevaPay publican APIs independientes; hay que evaluar contrato, liquidación, tarifas, titular del beneficiario y reversos antes de conectar.</p><p class="mt-2"><b>Otra cuenta bancaria:</b> Administración puede transferir desde la cuenta de tesorería SENDWAYO en el portal del banco y registrar referencia/comprobante. La automatización necesita un convenio o API específica del banco.</p><p class="mt-3"><a href="https://moncashdfs.com/business" target="_blank" rel="noopener noreferrer">MonCash Business</a> · <a href="https://docs.tranzak.co/" target="_blank" rel="noopener noreferrer">Tranzak API (tercero)</a> · <a href="https://levapay.dev/api-natcash" target="_blank" rel="noopener noreferrer">LevaPay NatCash (tercero)</a></p></article>'+
    '</div>'+
-   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Ruta del dinero · separación obligatoria</div><h3 class="mt-1">Del pagador al beneficiario</h3><div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4"><div class="sw-pay-flow"><b>1. Pagador</b><p class="mt-1">Tarjeta AZUL/CardNET o transferencia desde su banco.</p></div><div class="sw-pay-flow"><b>2. Confirmación de ingreso</b><p class="mt-1">Adquirente/banco confirma; se valida importe, moneda y referencia en servidor.</p></div><div class="sw-pay-flow"><b>3. Tesorería SENDWAYO</b><p class="mt-1">La liquidación entra en la cuenta comercial designada. Se registra una sola vez.</p></div><div class="sw-pay-flow"><b>4. Entrega</b><p class="mt-1">Transferencia bancaria, MonCash o NatCash; se cierra solo con confirmación final.</p></div></div></section>'+
-   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Estados que verá Administración</div><div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pendiente de pago</b><p class="mt-1">El cliente aún no ha pagado o la transferencia no aparece.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pago confirmado</b><p class="mt-1">AZUL/CardNET/banco confirmó el ingreso.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Dispersión en proceso</b><p class="mt-1">El pago salió hacia el banco o billetera elegida.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Entregado / Rechazado</b><p class="mt-1">El proveedor confirmó la entrega o devolvió un fallo/reversa.</p></div></div></section>'+
-   '<div class="sw-pay-good mt-4"><b>Protecciones:</b> importes DOP y HTG se mantienen separados; no se acredita por una respuesta del navegador; cada cobro y cada dispersión usa referencia idempotente; un webhook debe verificarse en servidor; la tarjeta nunca se almacena en SENDWAYO; no hay doble cargo ni doble entrega por reintentos.</div>';
+   '<section id="sw-pay-settlement-admin" class="sw-pay-card mt-4 hidden"><div class="sw-pay-label">Configuración de tesorería · solo Administración</div><h3 class="mt-1">Seleccionar a cuál de las cuentas bancarias registradas llega cada cobro</h3><p class="mt-2">La selección usa las cuentas ya registradas en SENDWAYO/Firebase. No se inventan cuentas ni números. Elige la cuenta comercial que el titular y el adquirente aprobarán en cada contrato; AZUL y CardNET pueden exigir comprobante bancario y validación del titular.</p><div id="sw-pay-bank-count" class="sw-pay-muted mt-2">Cargando cuentas bancarias registradas…</div><div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">'+
+    '<div class="sw-pay-field"><label for="sw-pay-azul-bank">Liquidación de AZUL (DOP)</label><select id="sw-pay-azul-bank"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+    '<div class="sw-pay-field"><label for="sw-pay-cardnet-bank">Liquidación de CardNET (DOP)</label><select id="sw-pay-cardnet-bank"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+    '<div class="sw-pay-field"><label for="sw-pay-incoming-bank-select">Recepción de transferencias bancarias (DOP)</label><select id="sw-pay-incoming-bank-select"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+    '<div class="sw-pay-field"><label for="sw-pay-treasury-bank">Tesorería para transferencias salientes</label><select id="sw-pay-treasury-bank"><option value="">Seleccione la cuenta bancaria</option></select></div>'+
+   '</div><div class="mt-3 flex flex-wrap items-center gap-3"><button id="sw-pay-save-settlement" type="button" class="sw-pay-primary">Guardar asignación de cuentas</button><span id="sw-pay-settlement-status" class="sw-pay-muted" role="status">Todavía no se ha guardado ninguna asignación.</span></div><div class="sw-pay-note mt-3">No se ha elegido una cuenta automáticamente porque no debo adivinar cuál de tus tres cuentas está afiliada ni cuál coincide con el titular del contrato. La asignación se guardará en Firebase solo cuando Administración la seleccione y las reglas de seguridad autoricen la escritura.</div></section>'+
+   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Ruta del dinero · separación obligatoria</div><h3 class="mt-1">Del pagador al beneficiario</h3><div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4"><div class="sw-pay-flow"><b>1. Pagador</b><p class="mt-1">Tarjeta AZUL/CardNET, enlace por WhatsApp o transferencia bancaria.</p></div><div class="sw-pay-flow"><b>2. Ingreso confirmado</b><p class="mt-1">El adquirente/banco verifica importe, moneda y referencia. La captura no basta.</p></div><div class="sw-pay-flow"><b>3. Cuenta comercial SENDWAYO</b><p class="mt-1">La liquidación entra en la cuenta elegida y validada por el adquirente.</p></div><div class="sw-pay-flow"><b>4. Entrega</b><p class="mt-1">Tesorería envía a banco, MonCash o NatCash y espera confirmación.</p></div></div></section>'+
+   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Estados que verá Administración</div><div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pendiente de pago</b><p class="mt-1">El cliente no ha pagado o el abono no aparece.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pago confirmado</b><p class="mt-1">AZUL, CardNET o el banco confirmó el ingreso.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Dispersión en proceso</b><p class="mt-1">El dinero sale hacia la cuenta o billetera seleccionada.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Entregado / Rechazado</b><p class="mt-1">El banco o proveedor confirmó la entrega o el fallo/reverso.</p></div></div></section>'+
+   '<div class="sw-pay-good mt-4"><b>Protecciones:</b> DOP y HTG permanecen separados; no se acredita por el retorno del navegador ni por un comprobante subido; cada cobro/dispersión requiere referencia idempotente y verificación servidor-a-servidor; nunca se guardan PAN, CVV o PIN en SENDWAYO.</div>'+
+   '<div class="sw-pay-note mt-3">Este módulo todavía no procesa cargos ni envía fondos. AZUL/CardNET necesitan afiliación y credenciales sandbox/producción; MonCash necesita activar la cuenta Business; NatCash necesita convenio y proveedor aprobado. El dinero real no se moverá mientras falte cualquiera de esas verificaciones.</div>';
   host.appendChild(view);
+  return view;
+ }
+ function setSelectOptions(select,rows,selected){
+  if(!select)return;
+  var old=selected||select.value;
+  select.replaceChildren();
+  var placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=rows.length?'Seleccione la cuenta registrada':'No hay cuentas bancarias activas disponibles';select.appendChild(placeholder);
+  rows.forEach(function(b){var o=document.createElement('option');o.value=b.id;o.textContent=bankLabel(b,false);select.appendChild(o);});
+  if(old&&rows.some(function(b){return b.id===old;}))select.value=old;
+ }
+ function updateClientBankDisplay(rows){
+  var box=$('sw-pay-incoming-bank');if(!box)return;
+  var id=config.incomingTransferBankId;
+  var bank=rows.find(function(b){return b.id===id;});
+  if(!bank){box.textContent='Cuenta de recepción: Administración todavía no ha seleccionado una cuenta comercial. No realices una transferencia hasta que se publique el dato validado.';return;}
+  box.innerHTML='<b>Cuenta de recepción SENDWAYO:</b><br>'+safe(bank.banco)+'<br><b>Titular:</b> '+safe(bank.titular||'No informado')+'<br><b>Número de cuenta:</b> '+safe(bank.cuenta)+'<br><b>Moneda:</b> '+safe(bank.currency||'DOP')+'<br><span class="sw-pay-muted">Envía el importe y espera la confirmación del abono antes de darlo por pagado.</span>';
+ }
+ async function loadConfig(){
+  if(loadingConfig)return;
+  loadingConfig=true;
+  var f=fb(),status=$('sw-pay-settlement-status');
+  try{
+   if(!f||!f.db||!f.auth||!f.auth.currentUser)throw new Error('Inicie sesión con Firebase para consultar la configuración bancaria.');
+   var snap=await f.db.ref(ROOT+'/settings/paymentSettlement').once('value');
+   var data=snap.exists()?snap.val():{};
+   config={
+    azulSettlementBankId:String(data.azulSettlementBankId||''),
+    cardnetSettlementBankId:String(data.cardnetSettlementBankId||''),
+    incomingTransferBankId:String(data.incomingTransferBankId||''),
+    treasuryBankId:String(data.treasuryBankId||'')
+   };
+   if(status)status.textContent=snap.exists()?'Asignación bancaria cargada desde Firebase.':'No existe una asignación guardada todavía.';
+  }catch(e){
+   if(status)status.textContent='No se pudo leer la asignación: '+(e&&e.message||'acceso denegado');
+  }finally{
+   loadingConfig=false;
+   renderBanks();
+  }
+ }
+ function renderBanks(){
+  var rows=bankRows();
+  var dops=rows.filter(function(b){return !b.currency||b.currency==='DOP'||b.currency==='RD$'||b.currency.indexOf('PESO')>=0;});
+  var count=$('sw-pay-bank-count');
+  if(count)count.textContent='Cuentas bancarias activas disponibles en esta sesión: '+rows.length+(rows.length===3?' (se detectaron las tres cuentas registradas).':'.');
+  setSelectOptions($('sw-pay-azul-bank'),dops,config.azulSettlementBankId);
+  setSelectOptions($('sw-pay-cardnet-bank'),dops,config.cardnetSettlementBankId);
+  setSelectOptions($('sw-pay-incoming-bank-select'),dops,config.incomingTransferBankId);
+  setSelectOptions($('sw-pay-treasury-bank'),rows,config.treasuryBankId);
+  var adminBox=$('sw-pay-settlement-admin');if(adminBox)adminBox.classList.toggle('hidden',!isAdmin());
+  updateClientBankDisplay(rows);
+ }
+ async function saveConfig(){
+  var f=fb(),status=$('sw-pay-settlement-status');
+  if(!isAdmin()){if(status)status.textContent='Solo Administración puede cambiar las cuentas de liquidación.';return;}
+  if(!f||!f.db||!f.auth||!f.auth.currentUser){if(status)status.textContent='No hay una sesión Firebase autenticada.';return;}
+  var rows=bankRows();
+  var map=new Map(rows.map(function(b){return [b.id,b];}));
+  var ids={
+   azulSettlementBankId:$('sw-pay-azul-bank')?.value||'',
+   cardnetSettlementBankId:$('sw-pay-cardnet-bank')?.value||'',
+   incomingTransferBankId:$('sw-pay-incoming-bank-select')?.value||'',
+   treasuryBankId:$('sw-pay-treasury-bank')?.value||''
+  };
+  for(var key of Object.keys(ids)){
+   if(ids[key]&&!map.has(ids[key])){if(status)status.textContent='La cuenta seleccionada ya no está registrada; actualiza la lista.';return;}
+  }
+  if(!ids.azulSettlementBankId||!ids.cardnetSettlementBankId||!ids.incomingTransferBankId||!ids.treasuryBankId){
+   if(status)status.textContent='Selecciona una cuenta para AZUL, CardNET, transferencias entrantes y tesorería.';
+   return;
+  }
+  var payload=Object.assign({},ids,{
+   updatedAtMs:Date.now(),
+   updatedByUserId:String(f.profileKey||current()?.id||''),
+   updatedByAuthUid:String(f.auth.currentUser.uid||'')
+  });
+  if(status)status.textContent='Guardando configuración bancaria…';
+  try{
+   await f.db.ref(ROOT+'/settings/paymentSettlement').set(payload);
+   config=ids;
+   if(status)status.textContent='Configuración guardada en Firebase. La activación de AZUL/CardNET sigue pendiente de validación del adquirente.';
+   renderBanks();
+  }catch(e){
+   if(status)status.textContent='Firebase no autorizó el guardado; no se cambió ninguna cuenta: '+(e&&e.message||'error de permisos');
+  }
+ }
+ function bindAdminControls(){
+  var save=$('sw-pay-save-settlement');
+  if(save&&!save.dataset.bound){save.dataset.bound='1';save.addEventListener('click',saveConfig);}
  }
  function open(){
   if(!allowed()){window.alert('Este módulo está disponible para Administración y remitentes.');return;}
-  build();var view=$(VIEW);if(!view){window.alert('No se pudo abrir el centro de pagos.');return;}
+  var view=ensureView();if(!view){window.alert('No se pudo abrir el centro de pagos.');return;}
   document.querySelectorAll('.view').forEach(function(el){el.classList.add('hidden');});
   view.classList.remove('hidden');
   $('sendwayo-main-sidebar')?.classList.remove('sendwayo-menu-open');
   $('sendwayo-menu-shade')?.classList.remove('open');
   $('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
   document.body.dataset.sendwayoActiveView='pagos-transferencias';
+  bindAdminControls();
+  renderBanks();
+  loadConfig().then(renderBanks);
   window.scrollTo(0,0);
  }
  function addButton(){
@@ -9824,13 +9954,38 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
   btn.className='sw-pay-menu-button w-full flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold text-white';
   btn.innerHTML='<span aria-hidden="true">💳</span><span>Pagos y transferencias</span>';
   btn.addEventListener('click',open);side.appendChild(btn);
-  btn.style.display=allowed()?'flex':'none';
  }
- function refresh(){try{build();addButton();var b=$(BUTTON);if(b)b.style.display=allowed()?'flex':'none';}catch(e){console.warn('[SENDWAYO V7 payments]',e);}}
+ function refresh(){
+  try{
+   ensureView();addButton();bindAdminControls();
+   var btn=$(BUTTON);if(btn)btn.style.display=allowed()?'flex':'none';
+   renderBanks();
+  }catch(e){console.warn('[SENDWAYO V7 payments]',e);}
+ }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
  window.addEventListener('load',refresh);
- document.addEventListener('sendwayo:firebase-ready',refresh);
- if(typeof MutationObserver!=='undefined'&&document.body){var obs=new MutationObserver(function(){if(!$(VIEW)||!$(BUTTON))refresh();});obs.observe(document.body,{childList:true,subtree:true});}
+ window.addEventListener('pageshow',refresh);
+ window.addEventListener('sendwayo:firebase-ready',refresh);
+ window.addEventListener('sendwayo:workspace-header-refresh',refresh);
+ if(typeof MutationObserver!=='undefined'&&document.body){
+  var pending=false;
+  var obs=new MutationObserver(function(){
+   if(pending)return;pending=true;
+   window.setTimeout(function(){pending=false;if(!$(VIEW)||!$(BUTTON))refresh();},80);
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+ }
  window.sendwayoOpenPaymentTransferHub=open;
 })();
 </script>
+
+<style id="sendwayo-v7-top-identity-and-width-final">
+/* Última regla: nunca mostrar usuario, ID, código o reloj en columnas laterales. */
+#sendwayo-v7-user-strip{display:none!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-direction:column!important;align-items:stretch!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;width:100%!important;max-width:100%!important;gap:5px!important}
+#sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,#sendwayo-main-sidebar #sendwayo-v7-user-strip,#sendwayo-main-sidebar #sendwayo-active-identity-strip,#sendwayo-main-sidebar [data-sendwayo-user-identity]{display:none!important;visibility:hidden!important}
+#user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
+#sendwayo-workspace-shell,#sendwayo-main-content{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;float:none!important;flex:none!important;box-sizing:border-box!important}
+#sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
+</style>
