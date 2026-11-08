@@ -10349,5 +10349,49 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  refresh();
 })();
 </script>
+
+<style id="sendwayo-v7-header-one-line-fix">
+#sendwayo-brand-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:nowrap!important;padding:7px 12px!important;min-height:58px!important;overflow-x:auto!important}
+#sendwayo-brand-bar .sendwayo-brand-left,#sendwayo-brand-bar .sendwayo-brand-actions{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important}
+#sendwayo-v7-user-strip{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;padding:4px 8px!important;background:transparent!important;border:0!important;box-shadow:none!important;position:static!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-kicker{display:none!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta strong{font-weight:800!important}
+#sendwayo-v7-user-strip [id="sendwayo-v7-date"]{display:none!important}
+body:not(.sendwayo-authenticated) #sendwayo-v7-user-strip{display:none!important}
+body.sendwayo-authenticated>#welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
+@media(max-width:760px){
+ #sendwayo-brand-bar{gap:5px!important;padding:6px!important}
+ #sendwayo-brand-bar .sendwayo-brand-title{display:none!important}
+ #sendwayo-v7-user-strip{gap:5px!important;padding:2px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-name{max-width:82px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:9px!important}
+ #sendwayo-top-logout{padding:7px 9px!important;font-size:10px!important}
+}
+</style>
+<script id="sendwayo-v7-header-one-line-runtime">
+(function(){
+ const $=id=>document.getElementById(id);
+ function placeHeader(){
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip');
+  if(bar&&strip&&strip.parentElement!==bar){const actions=bar.querySelector('.sendwayo-brand-actions');bar.insertBefore(strip,actions||null);}
+ }
+ function authView(){
+  let u=null;try{u=window.currentUser||currentUser||null}catch(e){u=window.currentUser||null}
+  const ok=!!(u&&(u.id||u.uid||u.codigo||u.email));
+  document.body.classList.toggle('sendwayo-authenticated',ok);
+  const w=$('welcome-landing'),l=$('login-screen');
+  if(ok){if(w){w.hidden=true;w.style.setProperty('display','none','important')}if(l){l.classList.add('hidden');l.style.setProperty('display','none','important')}placeHeader();}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{placeHeader();authView()},{once:true});else{placeHeader();authView()}
+ document.addEventListener('click',()=>setTimeout(()=>{placeHeader();authView()},80),true);
+ const mo=new MutationObserver(()=>{placeHeader();authView()});
+ mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
+})();
+</script>
 </body>
 </html>
