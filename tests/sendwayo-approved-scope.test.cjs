@@ -18,15 +18,23 @@ assert.match(html, /document\.querySelectorAll\('\.view'\)\.forEach\(v=>v\.class
 assert.match(html, /const perPage=10;/);
 assert.match(html, /aria-label="Página posterior"/);
 
-// Métodos aprobados: débito, crédito, transferencia, CardNET, AZUL y Stripe.
-for (const term of ['Tarjeta de débito o crédito', 'Débito', 'Crédito', 'Transferencia bancaria a SENDWAYO', 'CardNET', 'AZUL', 'Stripe']) {
-  assert.ok(html.includes(term), 'falta método de pago: ' + term);
+// Pagos reales: la interfaz describe AZUL/CardNET y transferencias, pero no simula cargos activos.
+assert.match(html, /Pagos y transferencias/);
+assert.match(html, /Tarjeta/);
+assert.match(html, /AZUL/);
+assert.match(html, /CardNET/);
+assert.match(html, /Afiliación pendiente/);
+assert.match(html, /Transferencia bancaria a SENDWAYO/);
+assert.match(html, /El pago se liquida en la cuenta bancaria comercial/);
+for (const selector of ['sw-pay-azul-bank', 'sw-pay-cardnet-bank', 'sw-pay-incoming-bank-select', 'sw-pay-treasury-bank']) {
+  assert.ok(html.includes('id="' + selector + '"'), 'falta selección bancaria: ' + selector);
 }
-assert.match(html, /No habilitado para RD/);
-assert.match(html, /https:\/\/stripe\.com\/global/);
-assert.match(html, /requirements-to-open-a-stripe-account-in-another-country/);
-assert.match(html, /SENDWAYO no solicita ni almacena número completo de tarjeta, fecha de vencimiento, CVV ni PIN/);
+assert.match(html, /settings\/paymentSettlement/);
+assert.match(html, /Configuración guardada en Firebase/);
 assert.match(html, /Este módulo todavía no procesa cargos ni envía fondos/);
+assert.match(html, /no se acredita por el retorno del navegador ni por un comprobante subido/);
+assert.match(html, /PAN, CVV o PIN/);
+assert.doesNotMatch(html, /sk_live_|sk_test_|whsec_|STRIPE_SECRET/i);
 
 // La V7 no contiene funciones, etiquetas ni rutas de dividendos; no se borran datos externos.
 assert.doesNotMatch(html, /dividend|dividendo/i);
