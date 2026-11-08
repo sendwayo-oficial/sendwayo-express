@@ -122,6 +122,11 @@ assert.match(html, /#sendwayo-main-sidebar\{[^}]*left:0!important;right:0!import
 assert.match(html, /function identity\(a\)\{return \[a\.id,a\.idAnterior,a\.legacyId,a\.accountId,a\.staffId\]/, 'Expediente por ID debe buscar identificadores de cuenta');
 const expedienteIdentity = html.match(/function identity\(a\)\{[^}]+\}/)?.[0] || '';
 assert.doesNotMatch(expedienteIdentity, /codigo|codeAliases|email|phone|telefono/, 'Expediente por ID no debe aceptar códigos, correo ni teléfonos');
-assert.match(html, /setVisibleAfterLogin\(appUser\)[\s\S]{0,900}\(async function loadDashboardData\(\)/, 'la restauración debe mostrar el panel antes de sincronizar todas las listas');
+const restoreStart = html.indexOf('auth.onAuthStateChanged(async user=>{', html.indexOf('state.authReadyPromise = auth.setPersistence'));
+const restoreEnd = html.indexOf('  });\n  }).catch(error=>', restoreStart);
+assert.ok(restoreStart >= 0 && restoreEnd > restoreStart, 'debe existir el callback específico de restauración Firebase');
+const restoreBlock = html.slice(restoreStart, restoreEnd);
+assert.match(restoreBlock, /setVisibleAfterLogin\(appUser\)[\s\S]*loadRestoredDashboardData/, 'al restaurar, el panel debe abrirse antes de las lecturas secundarias');
+assert.doesNotMatch(restoreBlock, /await loadCloudTransactions\(/, 'la restauración no debe esperar los movimientos para mostrar el panel');
 assert.match(html, /const IDLE_LIMIT=40\*60\*1000/, 'se debe conservar el cierre por 40 minutos');
 assert.match(html, /fallbackCountriesData=\[/, 'el catálogo internacional completo debe estar integrado localmente');
