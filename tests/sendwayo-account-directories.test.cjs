@@ -12,4 +12,6 @@ assert.ok(html.includes('function publishDirectoryRows(rows, profileRow, role)')
 assert.ok(html.includes('function accountMoney(profile)'),'balances read from Firebase profile');
 assert.ok(html.includes("function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}"),'shared agent funds rule preserved');
 assert.ok(html.includes("function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}"),'commission rules preserved');
+assert.ok(html.includes('var sortedRows=directoryRows.slice().sort'),'directory rows sorted by fixed ID');
+assert.ok(html.includes("account.aliases=Array.from(new Set"),'AGE legacy code alias prepared before login');
 console.log('PASS: Agent/Remitter directory UI, separate DOP/HTG balances, fixed IDs/codes, exports, search and 10-row paging.');

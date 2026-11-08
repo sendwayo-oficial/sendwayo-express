@@ -10234,7 +10234,15 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  }
  function normalizeRows(view,table){
   var body=table.tBodies&&table.tBodies[0];if(!body)return;
-  Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;}).forEach(function(row){
+  var directoryRows=Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;});
+  var sortedRows=directoryRows.slice().sort(function(a,b){
+   var aid=parseInt(String(a.cells[3]&&a.cells[3].textContent||'').replace(/\D/g,''),10)||0;
+   var bid=parseInt(String(b.cells[3]&&b.cells[3].textContent||'').replace(/\D/g,''),10)||0;
+   return aid-bid;
+  });
+  sortedRows.forEach(function(row,index){var current=body.children[index];if(current!==row)body.insertBefore(row,current||null);});
+  directoryRows=sortedRows;
+  directoryRows.forEach(function(row){
    var account=rowAccount(view,row);
    if(account){
     var code=visibleCode(account,view),codeCell=row.cells[4];
@@ -10270,7 +10278,13 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
   }
  }
  function enhance(view){if(!pages[view])return;var table=getTable(view);if(!table)return;toolbar(view);headersAndBalances(view,table);normalizeRows(view,table);draw(view);}
- function refresh(){enhance('agentes');enhance('remitentes');}
+ function refresh(){
+  accounts('agentes').forEach(function(account){
+   var code=visibleCode(account,'agentes');
+   if(code)account.aliases=Array.from(new Set([].concat(Array.isArray(account.aliases)?account.aliases:[],[code])));
+  });
+  enhance('agentes');enhance('remitentes');
+ }
  window.sendwayoAccountDirectoryPage=function(view,page){if(!pages[view])return;pages[view].page=Math.max(1,Number(page)||1);enhance(view);};
  window.sendwayoSearchAccountDirectory=function(view,value){if(!pages[view])return;pages[view].query=String(value||'');pages[view].page=1;var input=$('sendwayo-search-'+view);if(input)input.value=String(value||'');enhance(view);};
  document.addEventListener('click',function(event){
