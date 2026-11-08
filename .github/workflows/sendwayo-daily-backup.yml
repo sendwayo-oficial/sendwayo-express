@@ -37,6 +37,29 @@ jobs:
         run: |
           mkdir -p backup
           firebase database:get / --project sendwayo-express --json > "backup/sendwayo-rtdb-$(date -u +%Y-%m-%d).json"
+      - name: Validate and normalize backup JSON
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          FILE=$(find backup -maxdepth 1 -name '*.json' -type f | head -n 1)
+          test -n "$FILE"
+          node - "$FILE" <<'NODE'
+          const fs = require('fs');
+          const file = process.argv[2];
+          const raw = fs.readFileSync(file, 'utf8').trim();
+          if (!raw) throw new Error('El respaldo está vacío');
+          let value = JSON.parse(raw);
+          // Firebase CLI puede envolver la respuesta en {status,result}.
+          if (value && !Array.isArray(value) && value.status === 'success' && Object.prototype.hasOwnProperty.call(value, 'result')) {
+            value = typeof value.result === 'string' ? JSON.parse(value.result) : value.result;
+          }
+          if (!value || typeof value !== 'object' || Array.isArray(value)) {
+            throw new Error('La raíz del respaldo no es un objeto JSON de Realtime Database');
+          }
+          const normalized = JSON.stringify(value);
+          JSON.parse(normalized);
+          fs.writeFileSync(file, normalized + '\n');
+          console.log('Respaldo JSON válido y normalizado:', file, fs.statSync(file).size, 'bytes');
+          NODE
       - name: Upload backup artifact
         if: steps.guard.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
