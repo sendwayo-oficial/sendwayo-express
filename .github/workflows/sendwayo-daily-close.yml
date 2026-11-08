@@ -57,11 +57,6 @@ jobs:
           if (!Array.isArray(report.issues) || !report.byCollection || typeof report.byCollection !== 'object') throw new Error('Estructura del cierre incompleta');
           console.log('Cierre diario validado:', report.closeDate, report.status, report.operationsApproved, 'operaciones');
           NODE
-      - name: Store daily close report
-        if: steps.guard.outputs.ready == 'true'
-        run: |
-          CLOSE_DATE=$(node -e "const r=require('./daily-close.json');process.stdout.write(r.closeDate)")
-          firebase database:set "sendwayo_express_v2/dailyReports/$CLOSE_DATE" daily-close.json --project sendwayo-express --confirm
       - name: Upload close artifact
         if: steps.guard.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
@@ -69,3 +64,8 @@ jobs:
           name: sendwayo-daily-close-${{ github.run_number }}
           path: daily-close.json
           retention-days: 90
+      - name: Store daily close report
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          CLOSE_DATE=$(node -e "const r=require('./daily-close.json');process.stdout.write(r.closeDate)")
+          firebase database:set "sendwayo_express_v2/dailyReports/$CLOSE_DATE" daily-close.json --project sendwayo-express --confirm
