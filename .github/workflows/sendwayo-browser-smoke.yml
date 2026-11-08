@@ -56,8 +56,17 @@ jobs:
               await cdp.send('Runtime.enable');
               await cdp.send('Debugger.enable');
               const parsedScripts = new Map();
+              const failedScripts = [];
               cdp.on('Debugger.scriptParsed', event => {
                 parsedScripts.set(event.scriptId, {url:event.url || '',startLine:event.startLine ?? 0});
+              });
+              cdp.on('Debugger.scriptFailedToParse', event => {
+                failedScripts.push({
+                  scriptId:event.scriptId, url:event.url, sourceURL:event.sourceURL,
+                  startLine:event.startLine, startColumn:event.startColumn,
+                  endLine:event.endLine, endColumn:event.endColumn,
+                  errorMessage:event.errorMessage, hash:event.hash
+                });
               });
               cdp.on('Runtime.exceptionThrown', async event => {
                 const d = event.exceptionDetails || {};
@@ -137,6 +146,7 @@ jobs:
               console.log('INITIAL PAGE STATE:', JSON.stringify(initial, null, 2));
               if (!initial.welcomeExists || initial.welcomeDisplay === 'none' || initial.welcomeVisibility === 'hidden') {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
+                console.error('FAILED SCRIPTS:', JSON.stringify(failedScripts, null, 2));
                 console.error('CONSOLE ERRORS:', JSON.stringify(blockingConsoleErrors(), null, 2));
                 await page.screenshot({ path: 'sendwayo-page-failed.png', fullPage: false });
                 throw new Error('La bienvenida no se muestra en la página pública.');
