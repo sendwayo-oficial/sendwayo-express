@@ -6149,13 +6149,47 @@ window.sendwayoShareReceipt=async function(){
       }
     }return oldActionGeneric.apply(this,arguments);};actionWrapper.__sendwayoFinancialWrap=true;window.sendwayoActionGeneric=actionWrapper;}
   // One responsive toolbar class for all modules with Add + Search + Excel/PDF/CSV.
-  function alignToolbars(){document.querySelectorAll('input[type="search"]').forEach(input=>{let n=input.parentElement,chosen=null,depth=0;while(n&&n!==document.body&&depth<5){const buttons=[...n.querySelectorAll('button')].map(b=>normalize(b.textContent));const hasAdd=buttons.some(x=>/agregar nuevo|agregar deposito|agregar cuenta|agregar nuevo envio|agregar nueva recarga/.test(x));const hasExcel=buttons.some(x=>x==='excel'),hasPdf=buttons.some(x=>x==='pdf'),hasCsv=buttons.some(x=>x==='csv');if(hasAdd&&hasExcel&&hasPdf&&hasCsv){chosen=n;break;}n=n.parentElement;depth++;}if(chosen){chosen.classList.add('sendwayo-toolbar-one-line');const add=[...chosen.querySelectorAll('button')].find(b=>/agregar/.test(normalize(b.textContent)));if(add){add.title=add.title||add.textContent.trim();add.setAttribute('aria-label',add.title);}}});}
+  function alignToolbars(root){
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const scope=root&&root.querySelectorAll?root:document.querySelector('.view:not(.hidden)');
+    if(!scope)return;
+    scope.querySelectorAll('input[type="search"]').forEach(input=>{
+      let n=input.parentElement,chosen=null,depth=0;
+      while(n&&n!==scope.parentElement&&depth<5){
+        const buttons=[...n.querySelectorAll('button')].map(b=>normalize(b.textContent));
+        const hasAdd=buttons.some(x=>/agregar nuevo|agregar deposito|agregar cuenta|agregar nuevo envio|agregar nueva recarga/.test(x));
+        const hasExcel=buttons.some(x=>x==='excel'),hasPdf=buttons.some(x=>x==='pdf'),hasCsv=buttons.some(x=>x==='csv');
+        if(hasAdd&&hasExcel&&hasPdf&&hasCsv){chosen=n;break;}
+        n=n.parentElement;depth++;
+      }
+      if(chosen){chosen.classList.add('sendwayo-toolbar-one-line');const add=[...chosen.querySelectorAll('button')].find(b=>/agregar/.test(normalize(b.textContent)));if(add){add.title=add.title||add.textContent.trim();add.setAttribute('aria-label',add.title);}}
+    });
+  }
+  let toolbarObserverTimer=null;
+  function queueToolbar(){
+    if(!document.body.classList.contains('sendwayo-authenticated')||toolbarObserverTimer!==null)return;
+    toolbarObserverTimer=window.setTimeout(()=>{
+      toolbarObserverTimer=null;
+      const active=document.querySelector('.view:not(.hidden)');
+      if(active)alignToolbars(active);
+    },120);
+  }
   function wrapModuleLauncher(){[['sendwayoAgregarModulo'],['sendwayoOpenModuleForm'],['abrirModalSeparado']].forEach(([key])=>{const old=window[key];if(typeof old==='function'&&!old.__sendwayoFinanceLaunchWrap){const wrapped=function(view){const r=old.apply(this,arguments);setTimeout(()=>{ensureFacturasSource();alignToolbars();},40);return r;};wrapped.__sendwayoFinanceLaunchWrap=true;window[key]=wrapped;}});}
   function init(){getAgents().forEach(a=>{if(!a.commissions)a.commissions=a.comisiones||{DOP:0,HTG:0};if(a.commissions.DOP==null)a.commissions.DOP=0;if(a.commissions.HTG==null)a.commissions.HTG=0;a.comisiones=a.commissions;});ensureFacturasSource();alignToolbars();installSaveWrappers();wrapModuleLauncher();wrapBonusView();syncLegacy();saveAccounts();}
   function installSaveWrappers(){['v162_guardarEnvio','v162_guardarRetiro','guardarEnvioCompacto','guardarRetiroCompacto','v162_guardarRec','v162_guardarPkt','v162_guardarPaq'].forEach(wrapSave);ensureFacturasSource();alignToolbars();wrapModuleLauncher();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.addEventListener('load',()=>{getAgents().forEach(a=>{if(!a.commissions)a.commissions=a.comisiones||{DOP:0,HTG:0};if(a.commissions.DOP==null)a.commissions.DOP=0;if(a.commissions.HTG==null)a.commissions.HTG=0;a.comisiones=a.commissions;});installSaveWrappers();syncLegacy();saveAccounts();alignToolbars();wrapModuleLauncher();wrapBonusView();setTimeout(installBonusTableActions,50);});
-  const observer=new MutationObserver(()=>alignToolbars());observer.observe(document.documentElement,{childList:true,subtree:true});
+  const observer=new MutationObserver(records=>{
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const relevant=records.some(rec=>[...rec.addedNodes,...rec.removedNodes].some(node=>{
+      if(node.nodeType!==1)return false;
+      return node.matches?.('input[type="search"],table,.view,[id^="view-"]')||node.querySelector?.('input[type="search"],table,.view,[id^="view-"]');
+    }));
+    if(relevant)queueToolbar();
+  });
+  if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('click',ev=>{if(ev.target.closest('button[onclick*="showView("],button[onclick*="sendwayoAgregarModulo"],button[onclick*="abrirModalSeparado"]'))queueToolbar();},true);
+  window.addEventListener('sendwayo:firebase-ready',queueToolbar);
 })();
 
 </script>
