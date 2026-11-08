@@ -100,7 +100,7 @@ assert.ok(toolbarFunction, 'la rutina de barras de herramientas debe estar prese
 
 const legacyToolbarStart = html.lastIndexOf('function alignToolbars(scope){');
 assert.ok(legacyToolbarStart >= 0, 'debe localizarse el segundo formateador heredado');
-const legacyToolbar = html.slice(legacyToolbarStart, html.indexOf('function queueToolbar()', legacyToolbarStart));
+const legacyToolbar = html.slice(legacyToolbarStart, html.indexOf('function queueToolbar(root)', legacyToolbarStart));
 assert.match(legacyToolbar, /sendwayo-authenticated/, 'el formateador heredado no debe ejecutarse antes del login');
 assert.match(legacyToolbar, /view:not\(\.hidden\)/, 'el formateador heredado debe limitarse a la vista activa');
 assert.doesNotMatch(legacyToolbar, /document\.querySelectorAll\('\.view'\)/, 'no debe recorrer módulos ocultos');
