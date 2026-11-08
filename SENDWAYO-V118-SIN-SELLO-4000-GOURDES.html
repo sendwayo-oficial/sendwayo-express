@@ -4191,8 +4191,8 @@ window.sendwayoShareReceipt=async function(){
 
  // Mobile hamburger button; use the real sidebar containing the section navigation.
  function installHamburger(){
-  const navButtons=Array.from(document.querySelectorAll('button[onclick]')).filter(b=>/showView\\s*\\(\\s*['"]/.test(b.getAttribute('onclick')||''));
-  const retirosBtn=navButtons.find(b=>/showView\\s*\\(\\s*['"]retiros['"]/.test(b.getAttribute('onclick')||''));
+  const navButtons=Array.from(document.querySelectorAll('button[onclick]')).filter(b=>/showView\s*\(\s*['"]/.test(b.getAttribute('onclick')||''));
+  const retirosBtn=navButtons.find(b=>/showView\s*\(\s*['"]retiros['"]/.test(b.getAttribute('onclick')||''));
   if(!retirosBtn)return;
   let sidebar=retirosBtn;
   while(sidebar.parentElement&&sidebar.parentElement!==document.body){
