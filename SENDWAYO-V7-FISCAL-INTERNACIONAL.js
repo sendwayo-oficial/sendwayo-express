@@ -41,7 +41,7 @@ function assess(t,iso){
  if(!iso){t.fiscalStatus='PAIS_PENDIENTE';persist();return{ok:false,message:'Seleccione país ISO.'}}
  if(!rulesLoaded){t.fiscalStatus='REGLAS_NO_CARGADAS';persist();return{ok:false,message:'Las reglas fiscales aún no están disponibles desde Firebase.'}}
  const now=new Date(),kind=service(t),amount=Math.max(0,num(t.montoValue!=null?t.montoValue:t.amount)),fee=Math.max(0,num(t.fee));
- const applicable=rules.filter(r=>r&&r.enabled!==false&&String(r.country).toUpperCase()===iso&&(r.service==='TODOS'||r.service===kind)&&(!r.start||new Date(r.start+'T00:00:00')<=now)&&(!r.end||new Date(r.end+'T23:59:59')>=now));
+ const txCurrency=String(t.moneda||t.currency||'DOP').toUpperCase();const applicable=rules.filter(r=>r&&r.enabled!==false&&String(r.country).toUpperCase()===iso&&(r.service==='TODOS'||r.service===kind)&&(!r.start||new Date(r.start+'T00:00:00')<=now)&&(!r.end||new Date(r.end+'T23:59:59')>=now)&&String(r.currency||txCurrency).toUpperCase()===txCurrency);
  const previous=Array.isArray(t.impuestosDebitos)?t.impuestosDebitos:[];
  t.impuestosDebitos=applicable.map(r=>{
   const base=r.base==='COMISION'?fee:(r.base==='FIJO'?1:amount),value=r.calc==='FIJO'?num(r.value):base*num(r.value)/100,old=previous.find(x=>String(x.ruleId)===String(r.id));
@@ -109,15 +109,16 @@ function paymentView(){return $('sendwayo-v7-payment-transfer-hub')}
 function intlPanel(){
  const v=paymentView();if(!v||$('sw-intl-ops')||!current())return;style();
  const el=document.createElement('section');el.id='sw-intl-ops';el.className='swi-card mt-4';
- el.innerHTML='<div class="flex flex-wrap justify-between gap-2"><div><div class="swf-muted font-black">SENDWAYO EXPRESS · RED INTERNACIONAL</div><h3 class="text-xl font-black">Envíos internacionales y devoluciones</h3><p class="text-xs text-slate-600">249 países/territorios en el selector de teléfonos. Las rutas de pagos dependen de acuerdos y licencias vigentes.</p></div><span class="swf-muted">Proveedores por activar</span></div>'+
- '<div class="swi-note mt-3"><b>Seguridad del dinero:</b> este formulario registra solicitudes y no cobra ni desembolsa fondos. No escriba el número completo de su tarjeta, CVV, PIN o clave bancaria. El cobro de tarjeta debe realizarse dentro del checkout oficial del adquirente.</div>'+
+ el.innerHTML='<div class="flex flex-wrap justify-between gap-2"><div><div class="swf-muted font-black">SENDWAYO EXPRESS · RED INTERNACIONAL</div><h3 class="text-xl font-black">Envíos internacionales y devoluciones</h3><p class="text-xs text-slate-600">249 países/territorios y prefijos telefónicos. Las rutas de pago dependen de acuerdos y habilitaciones vigentes.</p></div><span class="swf-muted">Pasarelas y dispersión por activar</span></div>'+
+ '<div class="swi-note mt-3"><b>Protección del dinero:</b> este módulo registra solicitudes y conciliación, pero no cobra tarjetas ni ejecuta transferencias. AZUL/CardNET deben confirmar el cobro en su checkout seguro. La salida a banco, MonCash, NatCash o efectivo exige un proveedor autorizado. Nunca escriba aquí el número completo de la tarjeta, CVV, PIN ni clave bancaria.</div>'+
  '<form id="swi-request" class="swi-card mt-3"><b>Preparar un envío internacional</b><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">'+
  '<div><label>País destino</label><select id="swi-country" required>'+countryOptions('HT')+'</select></div><div><label>Moneda de entrega</label><input id="swi-currency" value="HTG" maxlength="8" required></div><div><label>Monto a entregar</label><input id="swi-amount" type="number" min="0.01" step="0.01" required></div>'+
  '<div><label>Beneficiario</label><input id="swi-name" maxlength="120" required></div><div><label>Medio de entrega</label><select id="swi-method"><option value="MONCASH">MonCash</option><option value="NATCASH">NatCash</option><option value="BANK_ACCOUNT">Cuenta bancaria</option><option value="CASH_PICKUP">Efectivo / agente</option><option value="OTHER_WALLET">Otra billetera</option></select></div><div><label>Teléfono beneficiario</label><input id="swi-phone" type="tel" maxlength="40" placeholder="+509 …"></div>'+
- '<div><label>Banco destino</label><input id="swi-destination-bank" maxlength="100"></div><div><label>Últimos 4 dígitos de cuenta</label><input id="swi-last4" maxlength="4" inputmode="numeric"></div><div><label>Financiación</label><select id="swi-funding"><option value="CARD_DEBIT_AZUL">Débito · AZUL</option><option value="CARD_CREDIT_AZUL">Crédito · AZUL</option><option value="CARD_DEBIT_CARDNET">Débito · CardNET</option><option value="CARD_CREDIT_CARDNET">Crédito · CardNET</option><option value="BANK_TRANSFER">Transferencia bancaria</option></select></div>'+
+ '<div><label>Banco destino</label><input id="swi-destination-bank" maxlength="100" placeholder="Nombre del banco"></div><div><label>Últimos 4 dígitos de cuenta</label><input id="swi-last4" maxlength="4" inputmode="numeric" placeholder="1234"></div><div><label>Financiación</label><select id="swi-funding"><option value="CARD_DEBIT_AZUL">Débito · AZUL</option><option value="CARD_CREDIT_AZUL">Crédito · AZUL</option><option value="CARD_DEBIT_CARDNET">Débito · CardNET</option><option value="CARD_CREDIT_CARDNET">Crédito · CardNET</option><option value="BANK_TRANSFER">Transferencia bancaria</option></select></div>'+
  '<div><label>Cuenta SENDWAYO de liquidación</label><select id="swi-bank"><option value="">Seleccione cuenta</option>'+bankOptions()+'</select></div><div><label>Nota / referencia</label><input id="swi-note" maxlength="160"></div><div class="flex items-end"><button class="swi-btn w-full">Registrar solicitud</button></div></div><div id="swi-status" class="swf-muted mt-2">Quedará pendiente de verificación; no se debitará dinero automáticamente.</div></form>'+
- '<div class="swi-card mt-3"><div class="flex justify-between gap-2"><b>Solicitudes recientes</b><button type="button" class="swi-btn" id="swi-refresh">Actualizar</button></div><div class="overflow-x-auto mt-3"><table class="swi-table"><thead><tr><th>ID</th><th>Destino</th><th>Canal</th><th>Monto</th><th>Financiación</th><th>Estado</th></tr></thead><tbody id="swi-rows"><tr><td colspan="6">Cargando…</td></tr></tbody></table></div></div>'+
- '<form id="swi-refund" class="swi-card mt-3"><b>Registrar solicitud de devolución de tarjeta (Administración)</b><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3"><div><label>Proveedor</label><select id="swi-refund-provider"><option>AZUL</option><option>CardNET</option></select></div><div><label>Referencia original del cobro</label><input id="swi-refund-ref" maxlength="120" required></div><div><label>Monto a devolver</label><input id="swi-refund-amount" type="number" min="0.01" step="0.01" required></div><div class="md:col-span-2"><label>Motivo</label><input id="swi-refund-reason" maxlength="200" required></div><div class="flex items-end"><button class="swi-btn w-full">Registrar devolución pendiente</button></div></div><div id="swi-refund-status" class="swf-muted mt-2">La solicitud no se envía a la tarjeta hasta ejecutarla en el proveedor original.</div></form>';
+ '<div class="swi-card mt-3"><div class="flex justify-between gap-2"><b>Solicitudes recientes</b><button type="button" class="swi-btn" id="swi-refresh">Actualizar</button></div><div class="overflow-x-auto mt-3"><table class="swi-table"><thead><tr><th>ID</th><th>Destino</th><th>Canal</th><th>Monto</th><th>Cuenta de liquidación</th><th>Estado</th><th>Acción de Administración</th></tr></thead><tbody id="swi-rows"><tr><td colspan="7">Cargando…</td></tr></tbody></table></div></div>'+
+ '<form id="swi-refund" class="swi-card mt-3"><b>Registrar solicitud de devolución de tarjeta (Administración)</b><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3"><div><label>Proveedor</label><select id="swi-refund-provider"><option>AZUL</option><option>CardNET</option></select></div><div><label>Referencia original del cobro</label><input id="swi-refund-ref" maxlength="120" required></div><div><label>Monto a devolver</label><input id="swi-refund-amount" type="number" min="0.01" step="0.01" required></div><div class="md:col-span-2"><label>Motivo</label><input id="swi-refund-reason" maxlength="200" required></div><div class="flex items-end"><button class="swi-btn w-full">Registrar devolución pendiente</button></div></div><div id="swi-refund-status" class="swf-muted mt-2">La solicitud queda pendiente. Debe ejecutarse y confirmarse en el proveedor original.</div></form>'+
+ '<div class="swi-card mt-3"><b>Devoluciones recientes</b><div class="overflow-x-auto mt-3"><table class="swi-table"><thead><tr><th>ID</th><th>Pasarela</th><th>Referencia original</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="swi-refund-rows"><tr><td colspan="6">Cargando…</td></tr></tbody></table></div></div>';
  v.appendChild(el);bindIntl();if(!admin()&&$('swi-refund'))$('swi-refund').style.display='none';
 }
 function bindIntl(){
@@ -125,6 +126,7 @@ function bindIntl(){
  const form=$('swi-request');if(form&&!form.dataset.bound){form.dataset.bound='1';form.onsubmit=createRequest}
  const refund=$('swi-refund');if(refund&&!refund.dataset.bound){refund.dataset.bound='1';refund.onsubmit=createRefund}
  const refresh=$('swi-refresh');if(refresh&&!refresh.dataset.bound){refresh.dataset.bound='1';refresh.onclick=loadRequests}
+ const root=$('sw-intl-ops');if(root&&!root.dataset.actionBound){root.dataset.actionBound='1';root.addEventListener('click',handleIntlAction)}
  if($('swi-phone')&&!$('swi-phone').dataset.swPhoneReady)enhancePhone('swi-phone','+509');
 }
 async function createRequest(ev){
@@ -132,8 +134,10 @@ async function createRequest(ev){
  const amount=num($('swi-amount').value),iso=$('swi-country').value,bankId=$('swi-bank').value;
  if(!(amount>0)||!iso||!$('swi-name').value.trim()){if(status)status.textContent='Complete país, beneficiario y monto.';return}
  if(!bankId||!banks().some(b=>String(b.id)===bankId)){if(status)status.textContent='Seleccione una cuenta SENDWAYO registrada.';return}
- const bank=banks().find(b=>String(b.id)===bankId),funding=$('swi-funding').value;
- const record={createdAt:new Date().toISOString(),createdAtMs:Date.now(),createdBy:String(u.id||u.email||''),createdByRole:role(),destinationCountryISO:iso,destinationCountryName:(COUNTRIES.find(c=>c.iso===iso)||{}).name||iso,currency:String($('swi-currency').value||'USD').toUpperCase(),amount:Number(amount.toFixed(2)),beneficiaryName:$('swi-name').value.trim(),beneficiaryPhone:$('swi-phone').value.trim(),payoutMethod:$('swi-method').value,destinationInstitution:$('swi-destination-bank').value.trim(),destinationAccountLast4:String($('swi-last4').value||'').replace(/\D/g,'').slice(-4),fundingMethod:funding,fundingProvider:funding.includes('AZUL')?'AZUL':funding.includes('CARDNET')?'CardNET':'BANCO',settlementBankId:bankId,settlementBankName:String(bank.banco||bank.bank||''),note:$('swi-note').value.trim(),status:'PENDIENTE_VERIFICACION',actualCardCharge:false,actualBankDebit:false,actualPayout:false};
+ const method=$('swi-method').value,last4=String($('swi-last4').value||'').replace(/\D/g,'').slice(-4);
+ if(method==='BANK_ACCOUNT'&&(!$('swi-destination-bank').value.trim()||last4.length!==4)){if(status)status.textContent='Para cuenta bancaria indique banco y últimos cuatro dígitos. Los datos completos se introducen solo en el portal seguro del proveedor.';return}
+ const bank=banks().find(b=>String(b.id)===bankId),funding=$('swi-funding').value,provider=funding.includes('AZUL')?'AZUL':funding.includes('CARDNET')?'CardNET':'BANCO',now=new Date().toISOString();
+ const record={createdAt:now,createdAtMs:Date.now(),createdBy:String(u.id||u.email||''),createdByAuthUid:String(f.auth.currentUser.uid||''),createdByRole:role(),destinationCountryISO:iso,destinationCountryName:(COUNTRIES.find(c=>c.iso===iso)||{}).name||iso,currency:String($('swi-currency').value||'USD').toUpperCase(),amount:Number(amount.toFixed(2)),beneficiaryName:$('swi-name').value.trim(),beneficiaryPhone:$('swi-phone').value.trim(),payoutMethod:method,destinationInstitution:$('swi-destination-bank').value.trim(),destinationAccountLast4:last4,fundingMethod:funding,fundingProvider:provider,settlementBankId:bankId,settlementBankName:String(bank.banco||bank.bank||''),note:$('swi-note').value.trim(),status:provider==='BANCO'?'PENDIENTE_VERIFICACION_BANCARIA':'PENDIENTE_PAGO_PASARELA',paymentConfirmed:false,payoutConfirmed:false,actualCardCharge:false,actualBankDebit:false,actualPayout:false,cardDataStored:false,events:[{type:'SOLICITUD_CREADA',at:now,by:String(u.id||u.email||'')}]};
  if(status)status.textContent='Guardando solicitud…';
  try{const ref=f.db.ref(ROOT+'/internationalTransferRequests').push();record.id=ref.key||('INTL-'+Date.now());await ref.set(record);if(status)status.textContent='Solicitud registrada. No hubo cargo ni desembolso; requiere verificación y proveedor activo.';form.reset();$('swi-currency').value='HTG';await loadRequests()}
  catch(e){if(status)status.textContent='Firebase no autorizó guardar; no se debitó dinero: '+(e.message||'error')}
@@ -142,16 +146,53 @@ async function createRefund(ev){
  ev.preventDefault();const status=$('swi-refund-status'),f=fb();if(!admin()||!f||!f.db||!f.auth||!f.auth.currentUser){if(status)status.textContent='Solo Administración con sesión Firebase puede registrar la devolución.';return}
  const amount=num($('swi-refund-amount').value),original=$('swi-refund-ref').value.trim(),reason=$('swi-refund-reason').value.trim();
  if(!(amount>0)||!original||!reason){if(status)status.textContent='Complete referencia original, monto y motivo.';return}
- const rec={provider:$('swi-refund-provider').value,originalTransactionReference:original,amount:Number(amount.toFixed(2)),reason:reason,status:'PENDIENTE_EJECUCION_PROVEEDOR',requestedAt:new Date().toISOString(),requestedBy:String(current().id||current().email||''),executed:false,refundToOriginalCard:true,cardDataStored:false};
+ const rec={provider:$('swi-refund-provider').value,originalTransactionReference:original,amount:Number(amount.toFixed(2)),reason:reason,status:'PENDIENTE_EJECUCION_PROVEEDOR',requestedAt:new Date().toISOString(),requestedBy:String(current().id||current().email||''),executed:false,refundToOriginalCard:true,cardDataStored:false,events:[{type:'DEVOLUCION_SOLICITADA',at:new Date().toISOString(),by:String(current().id||current().email||'')}]};
  if(status)status.textContent='Guardando solicitud de devolución…';
- try{const ref=f.db.ref(ROOT+'/refundRequests').push();rec.id=ref.key||('REF-'+Date.now());await ref.set(rec);if(status)status.textContent='Solicitud guardada. Debe ejecutarse y confirmarse mediante el proveedor original; no se ha enviado el reembolso.';refund.reset()}
+ try{const ref=f.db.ref(ROOT+'/refundRequests').push();rec.id=ref.key||('REF-'+Date.now());await ref.set(rec);if(status)status.textContent='Solicitud guardada. Debe ejecutarse y confirmarse mediante el proveedor original; no se ha enviado el reembolso.';ev.target.reset();await loadRequests()}
  catch(e){if(status)status.textContent='Firebase rechazó la solicitud; no se hizo reembolso: '+(e.message||'error')}
 }
+async function handleIntlAction(ev){
+ const b=ev.target.closest('button[data-intl-action]');if(!b||!admin())return;
+ const f=fb();if(!f||!f.db||!f.auth||!f.auth.currentUser)return;
+ const action=b.dataset.intlAction,id=b.dataset.id;
+ try{
+  if(action==='payment'||action==='payout'){
+   const ref=f.db.ref(ROOT+'/internationalTransferRequests/'+id),snap=await ref.once('value');if(!snap.exists())throw new Error('Solicitud no encontrada.');
+   const rec=snap.val(),reference=window.prompt(action==='payment'?'Referencia del abono confirmado en banco/AZUL/CardNET:':'Referencia de la entrega confirmada por el proveedor de destino:','');
+   if(!reference||!reference.trim())return;
+   const now=new Date().toISOString(),events=Array.isArray(rec.events)?rec.events:[];
+   if(action==='payment'){
+    const confirmed=num(window.prompt('Monto exacto que aparece confirmado en el banco/pasarela ('+rec.currency+'): ',String(rec.amount)));
+    if(Math.abs(confirmed-num(rec.amount))>0.0001){alert('El importe confirmado no coincide con el importe solicitado. No se registró.');return}
+    rec.paymentConfirmed=true;rec.paymentConfirmationReference=reference.trim();rec.paymentConfirmedAmount=confirmed;rec.paymentConfirmedAt=now;rec.paymentConfirmedBy=String(current().id||current().email||'');rec.status='PAGO_CONFIRMADO_EXTERNAMENTE';events.push({type:'PAGO_CONFIRMADO_EXTERNAMENTE',at:now,by:rec.paymentConfirmedBy,reference:reference.trim(),amount:confirmed});
+   }else{
+    if(!rec.paymentConfirmed){alert('Primero debe registrar el pago recibido y confirmado.');return}
+    rec.payoutConfirmed=true;rec.payoutConfirmationReference=reference.trim();rec.payoutConfirmedAt=now;rec.payoutConfirmedBy=String(current().id||current().email||'');rec.status='ENTREGA_CONFIRMADA_EXTERNAMENTE';events.push({type:'ENTREGA_CONFIRMADA_EXTERNAMENTE',at:now,by:rec.payoutConfirmedBy,reference:reference.trim()});
+   }
+   rec.events=events;await ref.set(rec);await loadRequests();alert(action==='payment'?'Se guardó la confirmación externa. Esta pantalla no cobró la tarjeta.':'Se guardó la referencia externa. Esta pantalla no ejecutó el desembolso.');
+  }else if(action==='refund'){
+   const ref=f.db.ref(ROOT+'/refundRequests/'+id),snap=await ref.once('value');if(!snap.exists())throw new Error('Solicitud de devolución no encontrada.');
+   const rec=snap.val(),decision=window.prompt('Escriba CONFIRMADO o RECHAZADO según la respuesta real del proveedor:','');
+   if(!decision)return;const state=decision.trim().toUpperCase();if(!['CONFIRMADO','RECHAZADO'].includes(state)){alert('Respuesta no reconocida.');return}
+   const reference=window.prompt('Referencia de respuesta de AZUL/CardNET:','');if(!reference||!reference.trim())return;
+   const now=new Date().toISOString(),by=String(current().id||current().email||'');rec.status=state==='CONFIRMADO'?'DEVOLUCION_CONFIRMADA_POR_PASARELA':'DEVOLUCION_RECHAZADA_POR_PASARELA';rec.executed=state==='CONFIRMADO';rec.providerResponseReference=reference.trim();rec.providerRespondedAt=now;rec.providerRespondedBy=by;rec.events=Array.isArray(rec.events)?rec.events:[];rec.events.push({type:rec.status,at:now,by,reference:reference.trim()});await ref.set(rec);await loadRequests();alert('Se registró la respuesta externa indicada. Esta pantalla no envió el reembolso al proveedor.');
+  }
+ }catch(e){alert('No se pudo guardar la actualización: '+(e.message||'error Firebase'))}
+}
 async function loadRequests(){
- const body=$('swi-rows'),f=fb(),u=current();if(!body)return;if(!f||!f.db||!f.auth||!f.auth.currentUser){body.innerHTML='<tr><td colspan="6">Inicie sesión para consultar solicitudes.</td></tr>';return}
- body.innerHTML='<tr><td colspan="6">Cargando…</td></tr>';
- try{const snap=await f.db.ref(ROOT+'/internationalTransferRequests').limitToLast(30).once('value'),val=snap.exists()?snap.val():{};let rows=Object.keys(val||{}).map(k=>Object.assign({id:k},val[k]||{})).sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0));if(!admin())rows=rows.filter(r=>String(r.createdBy)===String(u.id||u.email||''));body.innerHTML=rows.map(r=>'<tr><td><b>'+esc(r.id)+'</b></td><td>'+esc(r.destinationCountryName)+' ('+esc(r.destinationCountryISO)+')</td><td>'+esc(r.payoutMethod)+'</td><td>'+esc(r.amount)+' '+esc(r.currency)+'</td><td>'+esc(r.fundingProvider)+'</td><td>'+esc(r.status)+'</td></tr>').join('')||'<tr><td colspan="6">No hay solicitudes.</td></tr>'}
- catch(e){body.innerHTML='<tr><td colspan="6">No se pudo leer: '+esc(e.message||'permiso denegado')+'</td></tr>'}
+ const body=$('swi-rows'),refundBody=$('swi-refund-rows'),f=fb(),u=current();if(!body)return;
+ if(!f||!f.db||!f.auth||!f.auth.currentUser){body.innerHTML='<tr><td colspan="7">Inicie sesión para consultar solicitudes.</td></tr>';if(refundBody)refundBody.innerHTML='<tr><td colspan="6">Inicie sesión.</td></tr>';return}
+ body.innerHTML='<tr><td colspan="7">Cargando…</td></tr>';
+ try{
+  const [snap,refundSnap]=await Promise.all([f.db.ref(ROOT+'/internationalTransferRequests').limitToLast(30).once('value'),admin()?f.db.ref(ROOT+'/refundRequests').limitToLast(30).once('value'):Promise.resolve(null)]);
+  const val=snap.exists()?snap.val():{};let rows=Object.keys(val||{}).map(k=>Object.assign({id:k},val[k]||{})).sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0));
+  if(!admin())rows=rows.filter(r=>String(r.createdBy)===String(u.id||u.email||''));
+  body.innerHTML=rows.map(r=>'<tr><td><b>'+esc(r.id)+'</b></td><td>'+esc(r.destinationCountryName||r.destinationCountryISO)+' ('+esc(r.destinationCountryISO)+')</td><td>'+esc(r.payoutMethod)+'</td><td>'+esc(r.amount)+' '+esc(r.currency)+'</td><td>'+esc(r.settlementBankName||r.fundingProvider)+'</td><td>'+esc(r.status)+'</td><td>'+(admin()?'<button type="button" class="swi-btn" data-intl-action="payment" data-id="'+esc(r.id)+'" '+(r.paymentConfirmed?'disabled':'')+'>Registrar cobro confirmado</button> <button type="button" class="swi-btn" data-intl-action="payout" data-id="'+esc(r.id)+'" '+(!r.paymentConfirmed||r.payoutConfirmed?'disabled':'')+'>Registrar entrega confirmada</button>':'—')+'</td></tr>').join('')||'<tr><td colspan="7">No hay solicitudes.</td></tr>';
+  if(refundBody){
+   const rv=refundSnap&&refundSnap.exists()?refundSnap.val():{},refunds=Object.keys(rv||{}).map(k=>Object.assign({id:k},rv[k]||{})).sort((a,b)=>String(b.requestedAt||'').localeCompare(String(a.requestedAt||'')));
+   refundBody.innerHTML=admin()?refunds.map(r=>'<tr><td><b>'+esc(r.id)+'</b></td><td>'+esc(r.provider)+'</td><td>'+esc(r.originalTransactionReference)+'</td><td>'+esc(r.amount)+'</td><td>'+esc(r.status)+'</td><td><button type="button" class="swi-btn" data-intl-action="refund" data-id="'+esc(r.id)+'">Registrar respuesta del proveedor</button></td></tr>').join('')||'<tr><td colspan="6">No hay devoluciones.</td></tr>':'<tr><td colspan="6">Disponible para Administración.</td></tr>';
+  }
+ }catch(e){body.innerHTML='<tr><td colspan="7">No se pudo leer: '+esc(e.message||'permiso denegado')+'</td></tr>';if(refundBody)refundBody.innerHTML='<tr><td colspan="6">No se pudo leer: '+esc(e.message||'permiso denegado')+'</td></tr>'}
 }
 function boot(){
  phoneFields();style();if(admin())addFiscalButton();
