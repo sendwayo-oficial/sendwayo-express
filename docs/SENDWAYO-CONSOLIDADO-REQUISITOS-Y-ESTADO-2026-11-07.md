@@ -151,3 +151,12 @@ La copia V7 fue recuperada de la rama y comparada byte por byte con el archivo f
 - La fecha, hora y duración no se ubican en una columna al lado de la identidad. El área de Recargas, Envíos, Retiros y demás vistas sigue al 100% de ancho.
 - La navegación continúa cerrada por defecto como panel superpuesto superior; no ocupa ancho cuando está cerrada.
 - Esta especificación se aplica a escritorio, tableta y teléfono. La validación visual real del navegador sigue pendiente.
+
+
+## 15. Ajustes del 8 de noviembre de 2026
+
+- Paginación uniforme de transacciones: 10 registros por página, numeración 01–10 reiniciada en cada página y controles Anterior/Posterior.
+- Centro de pagos ampliado con el recorrido de liquidación, cobros por WhatsApp de CardNET, transferencias entrantes desde cualquier banco y entregas a bancos/MonCash/NatCash.
+- Administración puede asignar cuentas bancarias existentes a AZUL, CardNET, transferencias entrantes y tesorería. Solo se guardan IDs de cuenta. No se asigna una cuenta automáticamente ni se expone el número completo a quien no lo necesite.
+- La identidad de usuario, rol, ID, código, hora y duración se fuerza a la franja superior; los campos heredados laterales quedan ocultos y el módulo conserva ancho completo.
+- No se declara afiliación activa ni movimiento real: falta revisión de documentos por los adquirentes, credenciales y certificación técnica.
