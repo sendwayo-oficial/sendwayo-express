@@ -37,8 +37,6 @@ for(const x of approved){
   amount+=num(r.amount);
   if(!byCollection[x.col])byCollection[x.col]={operations:0,amount:0,commission:0,adminCommission:0,remitterCommission:0,agentCommission:0};
   const b=byCollection[x.col];b.operations++;b.amount+=num(r.amount);b.commission+=g;
-  const isAgent=Boolean(r.isAgent||r.agentId||r.agentUserId||String(r.operationChannel||r.channel||'').toLowerCase()==='agent'||String(r.role||'').toLowerCase()==='agent'||String(r.currency||r.currencyCode||'').toUpperCase()==='GDES'&&Boolean(r.agent));
-  const isDeposit=String(r.accountingType||'').toUpperCase()==='DEPOSITO_CAPITAL' || String(r.type||'').toLowerCase()==='deposito';
   b.adminCommission+=isDeposit?0:(isAgent?g:num(r.commissionAdmin??g*.5));
   b.remitterCommission+=isDeposit?0:(isAgent?0:num(r.commissionUser??g*.5));
   b.agentCommission+=isDeposit?0:(isAgent?g:0);
