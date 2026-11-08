@@ -117,6 +117,16 @@ console.log('SENDWAYO: expediente, catálogo internacional, sesión, rendimiento
 assert.match(html, /function restoreSessionWithoutResettingActivity\(\)\{try\{sessionStorage\.removeItem\('sendwayo_express_oficial_20261029_auth_snapshot_v1'\)\}catch\(_\)\{\}\}/, 'la recarga no debe borrar el último momento de actividad');
 assert.match(html, /function restoreAuth\(\)\{try\{sessionStorage\.removeItem\(AUTH_KEY\)\}catch\(_\)\{\}\}/, 'la restauración no debe reiniciar el reloj de inactividad');
 assert.match(html, /num=view==='agentes'\?40001:1/, 'los nuevos agentes deben comenzar con ID AGE40001');
+assert.match(html, /let num=role==='AGENTE'\?40001:1/, 'el formulario heredado debe comenzar a crear agentes desde AGE40001');
+assert.match(html, /let next=ag\?40001:1/, 'el formulario conectado a Firebase debe sugerir AGE40001');
+assert.match(html, /El ID de un agente nuevo debe tener el formato AGE seguido de cinco dígitos/, 'Firebase debe exigir formato AGE + cinco dígitos al crear un agente');
+assert.match(html, /El ID de un remitente nuevo debe tener el formato REM seguido de cinco dígitos/, 'Firebase debe mantener el formato REM + cinco dígitos para remitentes');
+const legacyExpStart = html.indexOf('<script id="sendwayo-account-investigation-v2">');
+const legacyExpEnd = html.indexOf('</script>', legacyExpStart);
+const legacyExpBlock = html.slice(legacyExpStart, legacyExpEnd);
+const legacyFind = legacyExpBlock.match(/function findAccount\(q\)\{[^}]+\}/)?.[0] || '';
+assert.ok(legacyFind, 'debe existir la búsqueda original del expediente');
+assert.doesNotMatch(legacyFind, /codigo|codeAliases|email|phone|telefono|celular/, 'el expediente heredado tampoco debe buscar por código, correo o teléfono');
 assert.match(html, /document\.body\.appendChild\(side\)/, 'el menú debe salir del diseño lateral y superponerse desde arriba');
 assert.match(html, /#sendwayo-main-sidebar\{[^}]*left:0!important;right:0!important;[^}]*width:100vw!important/s, 'el menú superior debe usar todo el ancho');
 assert.match(html, /function identity\(a\)\{return \[a\.id,a\.idAnterior,a\.legacyId,a\.accountId,a\.staffId\]/, 'Expediente por ID debe buscar identificadores de cuenta');
