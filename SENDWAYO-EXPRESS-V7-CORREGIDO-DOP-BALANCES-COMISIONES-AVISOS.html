@@ -3425,7 +3425,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script id="sendwayo-v7-final-integrity">
 (function(){
  'use strict';
- const norm=v=>String(v??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+ const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
  const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];
  const approved=t=>['aprobado','approved','pagado'].includes(norm(t&&(t.estado||t.status)));
  const busy=new Set();
@@ -8132,7 +8132,7 @@ window.sendwayoShareReceipt=async function(){
         const currentStatus=norm(currentRow.status||currentRow.estado||'Pendiente');
         if(['aprobado','approved','pagado'].includes(currentStatus))throw new Error('Esta transacción ya fue aprobada en otro dispositivo. No se repetirá el crédito ni el pago.');
         const lockRef=recordRef.child('approvalLock');
-        const lock={authUid:auth.currentUser.uid,userId:state.profileKey,role:actorRole,transactionId:txt(t.id),claimedAtMs:Date.now()};
+        const lock={authUid:auth.currentUser.uid,userId:state.profileKey,role:role,transactionId:txt(t.id),claimedAtMs:Date.now()};
         const claim=await lockRef.transaction(value=>value?undefined:lock,undefined,false);
         if(!claim.committed)throw new Error('Otro usuario ya está procesando la aprobación de esta transacción. No se realizará un segundo pago.');
         approvalClaims.push({recordRef,lockRef,lock});
