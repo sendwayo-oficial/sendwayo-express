@@ -3404,7 +3404,7 @@ window.sendwayoShareReceipt=async function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',styleSidebar);else styleSidebar();
   window.addEventListener('resize',styleSidebar);
-  document.addEventListener('click',function(){window.setTimeout(styleSidebar,50);});
+  // Navigation styling is CSS-driven; avoid rescanning every menu button after every click.
 })();
 </script>
 
@@ -4054,7 +4054,7 @@ window.sendwayoShareReceipt=async function(){
  renameModuleLabels();
  // Ensure all visible control actions are rewired after the original view renderer paints.
  const priorShow=window.showView;window.showView=function(view){if(typeof priorShow==='function')priorShow(view);if(['depositos','cuentas','bienvenida','creditos','ajustes','referencia','conciliacion','reportes','informes','mibanco','perfil','secretas'].includes(view))renderCustom(view);setTimeout(hookVisibleExports,0);};
- document.addEventListener('click',()=>setTimeout(hookVisibleExports,20));
+ // Export controls are prepared by the existing module-navigation hook, not global clicks.
   // Account IDs and profiles are hydrated from Firebase after authentication.
 
   // Asegurar páginas para los módulos pedidos y enlazar sus botones laterales.
@@ -5400,7 +5400,17 @@ window.sendwayoShareReceipt=async function(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
   window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage) showWelcome(); else { updateIdentity(); applyIdentityDefaults(false); } });
-  document.addEventListener('click', () => setTimeout(() => { refreshBellCount(); if (current()) { updateIdentity(); applyIdentityDefaults(false); } }, 60));
+  document.addEventListener('click', event => {
+    const trigger = event.target && event.target.closest
+      ? event.target.closest('button[onclick*="modal-"],button[onclick*="v162_abrir"],button[onclick*="sendwayoOpen"],[data-sendwayo-open-modal]')
+      : null;
+    if (!trigger) return;
+    window.setTimeout(() => {
+      if (!current()) return;
+      installModalIdentity();
+      applyIdentityDefaults(false);
+    }, 60);
+  }, true);
 })();
 </script>
 
@@ -6276,14 +6286,14 @@ window.sendwayoShareReceipt=async function(){
   function deliverQueue(){const u=current();if(!u)return;const id=uid(u);const roleKey=role(u).includes('ADMIN')?'ADMIN':role(u).includes('AGENTE')?'AGENTE':role(u).includes('REMITENTE')?'REMITENTE':'';if(!roleKey)return;const q=readArray(QUEUE_KEY);const delivered=readArray(DELIVERED_PREFIX+id);let changed=false;for(const item of q){if(!item||delivered.some(x=>x===item.id))continue;if(item.excludeUserId&&item.excludeUserId===id)continue;const idMatch=Array.isArray(item.targetIds)&&item.targetIds.some(x=>String(x)===id);const roleMatch=Array.isArray(item.targetRoles)&&item.targetRoles.includes(roleKey);if(!idMatch&&!roleMatch)continue;const arr=notiArray();const already=arr&&arr.some(noti=>String(noti.id)===String(item.id));if(!already&&typeof window.addNotificacion==='function'){window.addNotificacion(item.msg,item.tipo||'Envío');const fresh=notiArray();if(fresh&&fresh[0]){fresh[0].id=item.id;fresh[0].txId=item.txId||'';fresh[0].targetView=routeForType(item.tipo||'');}}delivered.push(item.id);changed=true;}if(changed){try{localStorage.setItem(DELIVERED_PREFIX+id,JSON.stringify(delivered.slice(-1500)))}catch(_){}persistCurrentNotifications();renderSavedNotifications();}}
   window.sendwayoDeliverQueue=deliverQueue;window.sendwayoRenderSavedNotifications=renderSavedNotifications;window.sendwayoQueuePending=queuePending;window.sendwayoQueueStatus=queueStatus;
   function detectNew(before){const created=txArray().filter(t=>t&&!before.has(String(t.id)));created.forEach(queuePending);}
-  function wrapSaveForQueue(name){const old=window[name];if(typeof old!=='function'||old.__sendwayoQueueWrap)return;const wrapped=function(){const before=new Set(txArray().map(t=>String(t.id)));const result=old.apply(this,arguments);setTimeout(()=>{detectNew(before);persistCurrentNotifications();updateVisibleMoney()},80);return result};wrapped.__sendwayoQueueWrap=true;window[name]=wrapped;}
-  ['v162_guardarEnvio','v162_guardarRetiro','v162_guardarDep','guardarDepositoExacto','v162_guardarRec','v162_guardarPkt','v162_guardarFac','v162_guardarPaq','guardarRecargaExacto','guardarPaquetikoExacto','guardarFacturaExacto','guardarComisionExacto'].forEach(wrapSaveForQueue);
+  function wrapSaveForQueue(name){const old=window[name];if(typeof old!=='function'||old.__sendwayoQueueWrap)return;const wrapped=function(){const before=new Set(txArray().map(t=>String(t.id)));const result=old.apply(this,arguments);const after=()=>setTimeout(()=>{detectNew(before);persistCurrentNotifications();updateVisibleMoney();try{window.dispatchEvent(new CustomEvent('sendwayo:local-data-changed',{detail:{source:name}}));}catch(_){}},80);if(result&&typeof result.then==='function')result.then(after,after);else after();return result};wrapped.__sendwayoQueueWrap=true;window[name]=wrapped;}
+  ['v162_guardarEnvio','v162_guardarRetiro','v162_guardarDep','guardarDepositoExacto','v162_guardarRec','v162_guardarPkt','v162_guardarFac','v162_guardarPaq','guardarRecargaExacto','guardarPaquetikoExacto','guardarFacturaExacto','guardarComisionExacto','v162_guardarAju','v162_guardarCred','v162_guardarCom'].forEach(wrapSaveForQueue);
 
   // Notify the original account when an agent/admin changes its pending transaction status.
-  function wrapStatus(name,successLabel){const old=window[name];if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(id){const t=findTx(id);const before=t?norm(t.estado):'';const actor=uid(current());const result=old.apply(this,arguments);setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications();}},80);return result};wrapped.__sendwayoStatusQueueWrap=true;window[name]=wrapped;}
+  function wrapStatus(name,successLabel){const old=window[name];if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(id){const t=findTx(id);const before=t?norm(t.estado):'';const result=old.apply(this,arguments);setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications();try{window.dispatchEvent(new CustomEvent('sendwayo:local-data-changed',{detail:{source:name,id:String(id)}}));}catch(_){} }},80);return result};wrapped.__sendwayoStatusQueueWrap=true;window[name]=wrapped;}
   ['aprobar','rechazar','noCoincide'].forEach(name=>wrapStatus(name,name));
   // Older administrative screens dispatch approvals through sendwayoActionGeneric instead of window.aprobar.
-  (function wrapGenericStatus(){const old=window.sendwayoActionGeneric;if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(view,action,id){const key=norm(action).replace(/[\s_-]/g,'');const t=findTx(id);const before=t?norm(t.estado):'';const result=old.apply(this,arguments);if(['aprobar','rechazar','nocoincide'].includes(key)){setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications()}},90)}return result};wrapped.__sendwayoStatusQueueWrap=true;window.sendwayoActionGeneric=wrapped})();
+  (function wrapGenericStatus(){const old=window.sendwayoActionGeneric;if(typeof old!=='function'||old.__sendwayoStatusQueueWrap)return;const wrapped=function(view,action,id){const key=norm(action).replace(/[\s_-]/g,'');const t=findTx(id);const before=t?norm(t.estado):'';const result=old.apply(this,arguments);if(['aprobar','rechazar','nocoincide'].includes(key)){setTimeout(()=>{const fresh=findTx(id);const after=fresh?text(fresh.estado):'';if(fresh&&norm(after)!==before&&after){fresh.actualizadoEn=new Date().toLocaleString('es-DO');try{localStorage.setItem('sendwayo_express_oficial_20261029_transacciones',JSON.stringify(txArray()))}catch(_){}queueStatus(fresh,after);updateVisibleMoney();renderSavedNotifications();try{window.dispatchEvent(new CustomEvent('sendwayo:local-data-changed',{detail:{source:'generic-status',id:String(id)}}));}catch(_){} }},90)}return result};wrapped.__sendwayoStatusQueueWrap=true;window.sendwayoActionGeneric=wrapped})();
 
   // Do not display approval controls to a remittee, or to an agent for their own transaction/deposits.
   function hideUnauthorizedApprovalButtons(){const u=current();if(!u)return;const aid=uid(u);document.querySelectorAll('button').forEach(btn=>{const label=norm(btn.textContent);const onclick=btn.getAttribute('onclick')||'';const approval=/^(aprobar|rechazar|no coincide)$/.test(label)||/(?:aprobar|rechazar|nocoincide)/i.test(onclick);if(!approval)return;let hide=isRemitter();if(isAgent()){const row=btn.closest('tr');const rowText=text(row&&row.textContent);const tx=txArray().find(t=>row&&rowText.includes(String(t.id)));const own=tx&&[tx.creadorId,tx.creadoPorId,tx.usuarioId].some(x=>String(x)===aid);hide=hide||!tx||own||isDeposit(tx);}if(hide){btn.hidden=true;btn.disabled=true;btn.style.setProperty('display','none','important');}});}
@@ -6918,7 +6928,7 @@ window.sendwayoShareReceipt=async function(){
   window.addEventListener('pageshow',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('load',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
   window.addEventListener('storage',e=>{if(['sendwayo_express_oficial_20261029_transacciones','sendwayo_express_oficial_20261029_account_values_v5','sendwayo_express_oficial_20261029_accounts_v5'].includes(e.key)){setTimeout(()=>{syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()},50)}});
-  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},15000);
+  setInterval(()=>{window.refreshBellCount();updateSidebarPendingCounts()},30000);
   window.addEventListener('sendwayo:transactions-updated',()=>{window.refreshBellCount();updateSidebarPendingCounts();});
    window.sendwayoDopLedgerDiagnostics={currencyFor:curOf,isSpend,transactions:()=>allTx().length,accountBalance:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(balance(a)[cur]):null},accountCommission:(accountId,cur='DOP')=>{const a=findAccount(accountId);return a?n(commissions(a)[cur]):null}};
 })();
@@ -7883,9 +7893,21 @@ window.sendwayoShareReceipt=async function(){
       try{restoreLocalAccounts();await loadCloudTransactions({key:state.profileKey,data:state.profile},canonicalRole(state.profile,state.profileKey),auth.currentUser.uid);state.lastTxSnapshot=makeTransactionSnapshot();}catch(e){}
     }finally{state.syncBusy=false;}
   }
+  let cloudSyncRequestTimer=null;
+  const CLOUD_SYNC_INTERVAL_MS=15000;
+  function queueCloudSync(){
+    if(!state.readReady||!auth.currentUser||!state.profile)return;
+    if(cloudSyncRequestTimer)window.clearTimeout(cloudSyncRequestTimer);
+    cloudSyncRequestTimer=window.setTimeout(()=>{
+      cloudSyncRequestTimer=null;
+      reconcileCloudChanges().catch(error=>showSyncIssue(error?.message||'Error de sincronización.'));
+    },120);
+  }
+  window.addEventListener('sendwayo:local-data-changed',queueCloudSync);
+  if(window.sendwayoFirebase)window.sendwayoFirebase.requestSync=queueCloudSync;
   function startCloudSync(){
     if(state.syncTimer)clearInterval(state.syncTimer);
-    state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},5000);
+    state.syncTimer=setInterval(()=>{reconcileCloudChanges().catch(e=>showSyncIssue(e?.message||'Error de sincronización.'));},CLOUD_SYNC_INTERVAL_MS);
   }
   function scrubLegacyCredentials(){
     const strip=o=>{if(!o||typeof o!=='object')return;for(const k of ['password','password2','contrasena','allowedPasswords','clave','passwordHash'])if(k in o)delete o[k];};
@@ -8618,7 +8640,7 @@ window.sendwayoShareReceipt=async function(){
  // FIX V7: no observar el mismo tablero que refresh modifica; evita un ciclo continuo de mutaciones.
  window.addEventListener('sendwayo:firebase-ready',refresh);
  window.addEventListener('load',function(){window.setTimeout(refresh,250);});
- window.setInterval(refresh,30000);
+ window.setInterval(()=>{const active=document.querySelector('.view:not(.hidden)');if(active&&active.id==='view-tablero')refresh();},60000);
 })();
 </script>
 
@@ -9655,7 +9677,7 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   const ro=new ResizeObserver(updateMenuPosition);
   window.addEventListener('load',()=>{if($('sendwayo-brand-bar'))ro.observe($('sendwayo-brand-bar'));if($('sendwayo-v7-user-strip'))ro.observe($('sendwayo-v7-user-strip'));},{once:true});
  }
- window.setInterval(refreshClock,1000);
+ window.setInterval(refreshClock,5000);
  setup();
 })();
 </script>
