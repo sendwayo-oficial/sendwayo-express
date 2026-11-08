@@ -9626,8 +9626,9 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   if(side&&side.parentElement!==document.body)document.body.appendChild(side);
   purgeLegacySideIdentity();
   bar.classList.add('sticky');
-  if(shell){shell.style.setProperty('display','block','important');shell.style.setProperty('width','100%','important');shell.style.setProperty('max-width','100%','important');shell.style.setProperty('margin','0','important');}
-  if(main){main.style.setProperty('display','block','important');main.style.setProperty('flex','none','important');main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');main.style.setProperty('min-width','0','important');main.style.setProperty('margin','0','important');}
+  // Dejar que las reglas responsive gobiernen la disposición: menú fijo a la izquierda en escritorio y panel superior en móvil.
+  if(shell){['display','width','max-width','margin'].forEach(name=>shell.style.removeProperty(name));}
+  if(main){['display','flex','width','max-width','min-width','margin'].forEach(name=>main.style.removeProperty(name));}
   ensureMenu();refreshIdentity();updateMenuPosition();
  }
  function refresh(){layout();}
@@ -9829,6 +9830,8 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
    '<header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><div class="sw-pay-label">SENDWAYO EXPRESS · V7</div><h2 class="mt-1 text-2xl font-black">Pagos y transferencias</h2><p class="mt-1 max-w-3xl text-sm text-slate-600">Cobros con tarjeta, depósitos desde cualquier banco y entregas a cuentas bancarias, MonCash o NatCash.</p></div><span class="sw-pay-status">Activación de proveedores pendiente</span></header>'+
    '<div class="sw-pay-note mb-4"><b>El recorrido del dinero:</b> el cliente paga con tarjeta o transfiere desde su banco; AZUL/CardNET o el banco confirma el ingreso; el dinero se liquida en la cuenta comercial SENDWAYO elegida; después Administración ordena la entrega al banco, MonCash o NatCash. Cobrar la tarjeta y pagar al beneficiario son dos operaciones separadas.</div>'+
    '<div class="grid grid-cols-1 gap-3 xl:grid-cols-2">'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Medios de tarjeta · selección del cliente</div><h3 class="mt-1">Tarjeta de débito o crédito</h3><div class="mt-2 flex flex-wrap gap-2"><span class="sw-pay-status">Débito</span><span class="sw-pay-status">Crédito</span></div><p class="mt-3">El cliente podrá elegir si paga con tarjeta de débito o con tarjeta de crédito. El cobro se procesará únicamente en el checkout alojado o en la integración tokenizada aprobada por AZUL o CardNET, una vez completadas afiliación, pruebas y autorización para la actividad de SENDWAYO.</p><p class="mt-2"><b>Protección:</b> SENDWAYO no solicita ni almacena número completo de tarjeta, fecha de vencimiento, CVV ni PIN. La pantalla de SENDWAYO solo recibirá la referencia y el estado verificado por el proveedor.</p><span class="sw-pay-status">Preparado · cobro real desactivado</span></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Proveedor internacional · tarjetas</div><h3 class="mt-1">Stripe</h3></div><span class="sw-pay-status">No habilitado para RD</span></div><p class="mt-3">La República Dominicana no figura actualmente en la lista oficial de países/regiones donde Stripe admite la apertura de cuentas de pagos. Por eso, esta versión no crea cargos, checkout ni claves Stripe para una empresa constituida solamente en República Dominicana.</p><p class="mt-2"><b>Condición para evaluarlo:</b> una entidad legal legítima en un país admitido, identificación fiscal, domicilio físico, teléfono, identificación oficial y cuenta bancaria física en ese país. No se usarán domicilios, compañías ni datos bancarios ficticios.</p><p class="mt-3"><a href="https://stripe.com/global" target="_blank" rel="noopener noreferrer">Consultar países admitidos por Stripe</a> · <a href="https://support.stripe.com/questions/requirements-to-open-a-stripe-account-in-another-country" target="_blank" rel="noopener noreferrer">Requisitos de cuenta en otro país</a></p><span class="sw-pay-status">Pendiente de elegibilidad y verificación</span></article>'+
     '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga en la Página de Pagos segura de AZUL o en un enlace de pago habilitado. El cargo se solicita cuando confirma el checkout y el emisor aprueba la transacción.</p><p class="mt-2"><b>Liquidación:</b> AZUL abona primero al comercio afiliado y liquida en la cuenta bancaria comercial que SENDWAYO haya registrado y AZUL haya validado. El abono no se envía directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>Activación:</b> requiere afiliación, cuenta bancaria en pesos a nombre del titular admitido, documentos del comercio, credenciales de pruebas y certificación técnica.</p><p class="mt-2"><b>WhatsApp:</b> AZUL ofrece enlaces de pago para que el cliente pague con tarjeta desde WhatsApp, correo o redes sociales. El dinero se liquida primero en la cuenta comercial aprobada por AZUL.</p><p class="mt-3"><a href="https://www.azul.com.do/Pages/es/hazte-cliente.aspx" target="_blank" rel="noopener noreferrer">Solicitar afiliación AZUL</a> · <a href="https://www.azul.com.do/Pages/es/app-azul.aspx" target="_blank" rel="noopener noreferrer">Enlaces de pago AZUL por WhatsApp</a> · <a href="https://dev.azul.com.do/Pages/developer/pages/lib/index.aspx" target="_blank" rel="noopener noreferrer">Documentación técnica</a></p></article>'+
     '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga mediante el botón/checkout seguro de CardNET. CardNET publica integración para web y APP, tokenización y autenticación 3-D Secure. La venta se confirma desde el servidor y con la referencia del adquirente.</p><p class="mt-2"><b>Liquidación:</b> el pago se liquida en la cuenta bancaria comercial que figure en la afiliación CardNET. Solo después de la confirmación del adquirente se inicia la entrega al destinatario.</p><p class="mt-2"><b>WhatsApp:</b> CardNET publica Cobros por WhatsApp y Enlace de Pago. SENDWAYO podrá enviar el enlace oficial de cobro al cliente; el pago pasa por CardNET y luego la entrega a una billetera se tramita por separado.</p><p class="mt-3"><a href="https://www.cardnet.com.do/afiliate" target="_blank" rel="noopener noreferrer">Iniciar afiliación CardNET</a> · <a href="https://www.cardnet.com.do/afiliate/empresarial" target="_blank" rel="noopener noreferrer">Afiliación empresarial</a> · <a href="https://www.cardnet.com.do/soluciones/online/boton-de-pago" target="_blank" rel="noopener noreferrer">Botón de pago</a> · <a href="https://www.cardnet.com.do/soluciones/online/cobros-por-whatsapp" target="_blank" rel="noopener noreferrer">Cobros por WhatsApp</a> · <a href="https://www.cardnet.com.do/tarifario" target="_blank" rel="noopener noreferrer">Tarifario</a></p></article>'+
     '<article class="sw-pay-card"><div class="sw-pay-label">Ingreso desde cualquier banco</div><h3 class="mt-1">Transferencia bancaria a SENDWAYO</h3><p class="mt-3">El cliente puede transferir desde la aplicación o sucursal de su propio banco a la cuenta comercial de recepción de SENDWAYO que Administración haya seleccionado y verificado.</p><p class="mt-2"><b>Confirmación:</b> la operación queda Pendiente de verificación hasta que el abono aparezca en el estado de cuenta de SENDWAYO. Una captura o recibo del cliente no acredita por sí solo los fondos.</p><p class="mt-2">Una transferencia bancaria tradicional se debita de una cuenta bancaria. Para pagar con tarjeta de crédito, el cliente usa el checkout AZUL/CardNET cuando el adquirente esté activo; no se asume que todos los bancos admitan transferencias financiadas con tarjeta.</p><div id="sw-pay-incoming-bank" class="sw-pay-bank-info mt-3">Cuenta de recepción: pendiente de seleccionar y verificar por Administración.</div></article>'+
@@ -9989,6 +9992,52 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 #user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
 #sendwayo-workspace-shell,#sendwayo-main-content{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;float:none!important;flex:none!important;box-sizing:border-box!important}
 #sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
+</style>
+<style id="sendwayo-v7-approved-desktop-left-sidebar">
+/* Reapertura del menú lateral izquierdo en escritorio; identidad y hora permanecen arriba. */
+@media(min-width:1025px){
+ body.sendwayo-authenticated #sendwayo-main-sidebar,
+ body.sendwayo-authenticated #sendwayo-main-sidebar.sendwayo-menu-open{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:5px!important;
+  position:fixed!important;left:0!important;right:auto!important;
+  top:var(--sendwayo-top-menu-top,118px)!important;bottom:0!important;
+  width:250px!important;min-width:250px!important;max-width:250px!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+  padding:12px 8px 18px!important;box-sizing:border-box!important;
+  border:0!important;border-right:1px solid rgba(255,255,255,.14)!important;border-radius:0!important;
+  background:linear-gradient(180deg,#102b4e 0%,#091a30 100%)!important;
+  box-shadow:4px 0 18px rgba(4,18,36,.12)!important;
+  transform:none!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+  z-index:2147481900!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-sidebar>div:first-child{
+  position:sticky!important;top:0!important;z-index:2!important;flex:0 0 auto!important;
+  padding:8px 10px 12px!important;background:#102b4e!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-sidebar button{
+  flex:0 0 auto!important;width:100%!important;min-width:0!important;min-height:44px!important;height:auto!important;
+  margin:0!important;padding:10px 11px!important;border-radius:9px!important;
+  text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  font-size:12px!important;line-height:1.35!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-content{
+  display:block!important;position:relative!important;float:none!important;flex:none!important;
+  width:calc(100% - 250px)!important;max-width:calc(100% - 250px)!important;
+  min-width:0!important;margin:0 0 0 250px!important;padding:clamp(10px,1.5vw,22px)!important;
+  box-sizing:border-box!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-content .view.hidden{display:none!important}
+ body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
+ body.sendwayo-authenticated #sendwayo-menu-shade{display:none!important}
+}
+@media(max-width:1024px){
+ body.sendwayo-authenticated #sendwayo-main-content{
+  display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
+  margin:0!important;box-sizing:border-box!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-content .view.hidden{display:none!important}
+}
 </style>
 </body>
 </html>

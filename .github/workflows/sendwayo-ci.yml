@@ -63,3 +63,10 @@ jobs:
           grep -q 'balanceDOP' index.html
           grep -q 'SENDWAYO EXPRESS — Plataforma oficial' index.html
           echo "SENDWAYO official fusion and balance markers OK"
+      - name: Run V7 regression tests
+        run: |
+          set -euo pipefail
+          for test_file in tests/*.test.cjs; do
+            echo "Running $test_file"
+            node "$test_file"
+          done
