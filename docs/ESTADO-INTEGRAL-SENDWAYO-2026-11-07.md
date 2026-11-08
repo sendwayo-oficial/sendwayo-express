@@ -44,14 +44,14 @@ Comportamiento fijado:
 
 ## 3. IDs, códigos y directorio
 
-- La regla de identificación de agentes para **nuevas cuentas** es el prefijo `AGE` seguido de cinco dígitos. La siguiente serie nueva comienza en `AGE40001`, luego `AGE40002`, etc.
+- La regla de identificación de agentes para **nuevas cuentas** es el prefijo `AGE` seguido de cinco dígitos. La siguiente serie nueva comienza en `AGE400I1`, luego `AGE400I2` y continúa hasta `AGE400I9`; la I es la letra I, no el número 1.
 - Los nuevos formularios de alta deben sugerir y validar ese formato para agentes.
 - Los nuevos remitentes conservan la serie `REM00001`, `REM00002`, etc.
 - Los cinco agentes que ya existen no se renumeran automáticamente. Sus IDs históricos se conservan hasta que Administración autorice un plan de migración y sus alias.
 - Los códigos comerciales `AG-...` y `REM-...` son datos distintos del ID. No se deben confundir en búsquedas por ID.
 - La población de referencia del sistema es 1 administrador, 5 agentes y 15 remitentes; no se deben inventar cuentas ni aumentar esos totales para pruebas.
 
-**Estado en esta rama:** los dos formularios de altas nuevos empiezan en `AGE40001`, evitan reutilizar IDs históricos/alias y la creación Firebase valida el patrón. Los IDs preexistentes no se han reescrito.
+**Estado en esta rama:** los dos formularios de altas nuevos empiezan en `AGE400I1`, evitan reutilizar IDs históricos/alias y la creación Firebase valida el patrón. Los IDs preexistentes no se han reescrito.
 
 ## 4. Acceso, sesión y protección
 
@@ -191,4 +191,4 @@ Cambios realizados en desarrollo:
 - No se publicó ni se modificó `main`/GitHub Pages.
 - No se escribieron saldos, comisiones, reglas o transacciones en Firebase.
 
-**Siguiente barrera antes de publicar:** probar login/refresh/40 minutos de inactividad, IDs reales del expediente, creación de un agente nuevo `AGE40001` en entorno controlado, encabezado y menú en móvil/escritorio, rendimiento medido, beneficiarios/recibos/avisos y flujos financieros sin mover dinero real. Solo después de aprobar esa batería y recibir autorización explícita se plantea la publicación.
+**Siguiente barrera antes de publicar:** probar login/refresh/40 minutos de inactividad, IDs reales del expediente, creación de un agente nuevo `AGE400I1` en entorno controlado, encabezado y menú en móvil/escritorio, rendimiento medido, beneficiarios/recibos/avisos y flujos financieros sin mover dinero real. Solo después de aprobar esa batería y recibir autorización explícita se plantea la publicación.
