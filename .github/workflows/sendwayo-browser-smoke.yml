@@ -35,8 +35,11 @@ jobs:
 
       - name: Open the published site and press the login button
         env:
-          PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release=cf8c4f4248dbc24e2b84b427cc66718ba730aedf
+          PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha || '' }}
         run: |
+          if [ -n "$DEPLOYED_SHA" ]; then export PAGE_URL="${PAGE_URL}?sendwayo_release=${DEPLOYED_SHA}"; fi
+          echo "Smoke test URL: $PAGE_URL"
           node <<'NODE'
           const { chromium } = require('playwright');
 
@@ -49,9 +52,15 @@ jobs:
             try {
               const page = await browser.newPage();
               const pageErrors = [];
+              const cdp = await page.context().newCDPSession(page);
+              await cdp.send('Runtime.enable');
+              cdp.on('Runtime.exceptionThrown', event => {
+                const d = event.exceptionDetails || {};
+                pageErrors.push({message:d.exception?.description || d.text || 'JavaScript exception',url:d.url || '',line:d.lineNumber ?? null,column:d.columnNumber ?? null});
+              });
               const consoleErrors = [];
               const blockingConsoleErrors = () => consoleErrors.filter(error => !(error.url.endsWith('/favicon.ico') && /404/.test(error.text)));
-              page.on('pageerror', error => pageErrors.push({ message: error.message, stack: error.stack }));
+              page.on('pageerror', error => { if (!pageErrors.some(e => e.message === error.message)) pageErrors.push({ message: error.message, stack: error.stack || '' }); });
               page.on('console', message => {
                 if (message.type() === 'error') {
                   const location = message.location();
