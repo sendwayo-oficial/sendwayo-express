@@ -202,6 +202,8 @@ function addFiscalButton(){const side=$('sendwayo-main-sidebar');if(!side||$('se
 async function openFiscal(){if(!admin()){alert('El módulo fiscal es exclusivo de Administración.');return}document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));fiscalView().classList.remove('hidden');document.body.dataset.sendwayoActiveView='impuestos-debitos';fiscalPage=1;await loadRules();renderFiscal();$('sendwayo-main-sidebar')?.classList.remove('sendwayo-menu-open')}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.addEventListener('load',boot);window.addEventListener('sendwayo:firebase-ready',function(){phoneFields();loadRules()});window.addEventListener('sendwayo:workspace-header-refresh',boot);window.addEventListener('sendwayo:banks-ready',boot);
-if(document.body)new MutationObserver(function(){phoneFields();if(admin()&&!$('sendwayo-v7-fiscal-button'))addFiscalButton();if(paymentView()&&!$('sw-intl-ops'))intlPanel()}).observe(document.body,{childList:true,subtree:true});
+let bootQueued=false;
+function queueBoot(){if(bootQueued)return;bootQueued=true;const run=()=>{bootQueued=false;phoneFields();if(admin()&&!$('sendwayo-v7-fiscal-button'))addFiscalButton();if(paymentView()&&!$('sw-intl-ops'))intlPanel()};if(typeof window.requestAnimationFrame==='function')window.requestAnimationFrame(run);else window.setTimeout(run,80)}
+if(document.body)new MutationObserver(queueBoot).observe(document.body,{childList:true,subtree:true});
 window.sendwayoOpenFiscalModule=openFiscal;window.sendwayoLoadInternationalRequests=loadRequests;
 })();
