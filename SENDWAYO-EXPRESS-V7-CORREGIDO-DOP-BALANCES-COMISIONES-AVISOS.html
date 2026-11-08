@@ -9757,3 +9757,80 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
  #sendwayo-main-sidebar{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;padding-left:9px!important;padding-right:9px!important}
 }
 </style>
+
+<!-- SENDWAYO V7: centro de pagos, transferencias bancarias y dispersión -->
+<style id="sendwayo-v7-payment-transfer-hub-style">
+#sendwayo-v7-payment-transfer-hub{color:#10243d}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card{border:1px solid #dbe4ef;border-radius:16px;background:#fff;padding:16px;box-shadow:0 3px 14px rgba(15,36,64,.06)}
+#sendwayo-v7-payment-transfer-hub .sw-pay-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+#sendwayo-v7-payment-transfer-hub .sw-pay-status{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#fff7ed;color:#9a3412;font-size:10px;font-weight:900}
+#sendwayo-v7-payment-transfer-hub .sw-pay-flow{border-left:3px solid #cbd5e1;padding:3px 0 3px 12px}
+#sendwayo-v7-payment-transfer-hub .sw-pay-note{border:1px solid #f2d29a;background:#fffbeb;color:#854d0e;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
+#sendwayo-v7-payment-transfer-hub .sw-pay-good{border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;border-radius:12px;padding:12px;font-size:12px;line-height:1.55}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card h3{font-size:15px;font-weight:900;color:#10243d}
+#sendwayo-v7-payment-transfer-hub .sw-pay-card p{font-size:12px;line-height:1.55;color:#475569}
+#sendwayo-v7-payment-transfer-hub .sw-pay-menu-button{border:1px solid rgba(255,255,255,.12)!important}
+</style>
+<script id="sendwayo-v7-payment-transfer-hub">
+(function(){
+ 'use strict';
+ if(window.__SENDWAYO_V7_PAYMENT_TRANSFER_HUB__)return;
+ window.__SENDWAYO_V7_PAYMENT_TRANSFER_HUB__=true;
+ var VIEW='sendwayo-v7-payment-transfer-hub';
+ var BUTTON='sendwayo-v7-payment-transfer-hub-button';
+ var $=function(id){return document.getElementById(id);};
+ function activeUser(){
+  try{if(window.currentUser)return window.currentUser;}catch(_){}
+  try{return typeof currentUser!=='undefined'?currentUser:null;}catch(_){return null;}
+ }
+ function role(){
+  var u=activeUser();return String(u&&(u.role||u.rol)||'').toUpperCase();
+ }
+ function allowed(){var r=role();return r.indexOf('ADMIN')>=0||r.indexOf('REMITENTE')>=0;}
+ function build(){
+  if($(VIEW))return;
+  var host=$('sendwayo-main-content')||$('sendwayo-workspace-shell')||($('view-tablero')&&$('view-tablero').parentElement);
+  if(!host)return;
+  var view=document.createElement('section');
+  view.id=VIEW;view.className='view hidden rounded-xl border bg-slate-50 p-3 md:p-5';
+  view.innerHTML=
+   '<header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><div class="sw-pay-label">SENDWAYO EXPRESS · V7</div><h2 class="mt-1 text-2xl font-black">Pagos y transferencias</h2><p class="mt-1 max-w-3xl text-sm text-slate-600">Cobros con tarjeta, depósitos desde cualquier banco y entregas a cuentas bancarias, MonCash o NatCash. Cada etapa conserva su propia confirmación.</p></div><span class="sw-pay-status">Configuración pendiente · sin cobros reales</span></header>'+
+   '<div class="sw-pay-note mb-4"><b>Importante:</b> este centro organiza el recorrido, pero no captura tarjetas, no mueve dinero y no modifica balances. AZUL, CardNET y los proveedores de dispersión necesitan afiliación, credenciales de servidor y certificación antes de activar operaciones.</div>'+
+   '<div class="grid grid-cols-1 gap-3 xl:grid-cols-2">'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Cobro a tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente elige pagar con su tarjeta desde el checkout alojado por AZUL. La tarjeta se autoriza/cobra cuando el cliente confirma el pago y AZUL/emisor aprueban la operación.</p><p class="mt-2"><b>¿Dónde llega el dinero?</b> Primero a la liquidación del comercio SENDWAYO; AZUL deposita en la cuenta bancaria comercial declarada en el contrato de afiliación. No va directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>¿Cuándo se entrega?</b> Solo después de que el servidor confirme el pago y el estado de fondos, se ordena la entrega del servicio. La fecha de liquidación bancaria exacta depende del contrato del comercio.</p></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Cobro a tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga desde el botón/checkout seguro de CardNET. SENDWAYO valida la respuesta desde el servidor y consulta o verifica el resultado con la referencia de la operación; nunca confía solamente en el retorno del navegador.</p><p class="mt-2"><b>¿Dónde llega el dinero?</b> A la cuenta de liquidación comercial que SENDWAYO registre al afiliarse con CardNET. Después la tesorería utiliza fondos ya confirmados para la entrega al destinatario.</p><p class="mt-2"><b>¿Cuándo se cobra?</b> Cuando el cliente confirma en la pasarela y CardNET/emisor aprueban la transacción. El abono en la cuenta comercial sigue el calendario pactado con CardNET y el banco.</p></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Ingreso desde cualquier banco</div><h3 class="mt-1">Transferencia bancaria a SENDWAYO</h3><p class="mt-3">El cliente puede iniciar una transferencia desde la aplicación o sucursal de su propio banco hacia una cuenta bancaria comercial de SENDWAYO previamente verificada y mostrada por Administración.</p><p class="mt-2"><b>Cuándo se acredita:</b> queda “Pendiente de verificación” hasta que el abono se vea en el estado de cuenta de SENDWAYO y Administración lo confirme. Una foto/comprobante por sí sola no acredita dinero.</p><p class="mt-2"><b>Tarjeta de crédito:</b> si el cliente desea pagar con tarjeta, utiliza el checkout AZUL/CardNET cuando esté afiliado. Una transferencia bancaria normal no se convierte automáticamente en un cargo a tarjeta; eso depende de que el banco y el adquirente ofrezcan expresamente esa modalidad.</p></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Entrega / dispersión</div><h3 class="mt-1">Bancos, MonCash y NatCash</h3><p class="mt-3">Una vez confirmado el cobro y reservados los fondos, Administración selecciona el destino: cuenta bancaria del beneficiario, MonCash o NatCash. Se conserva país, moneda, referencia, titular verificado y estado del proveedor.</p><p class="mt-2"><b>Cuenta bancaria:</b> puede salir desde una cuenta de tesorería SENDWAYO. Mientras no exista una API bancaria contratada, Administración ejecuta la transferencia en el portal del banco y confirma con el comprobante y la verificación del abono.</p><p class="mt-2"><b>MonCash:</b> existe un programa oficial MonCash Business con API y desembolsos empresariales; exige cuenta comercial y pruebas/sandbox antes de producción.</p><p class="mt-2"><b>NatCash:</b> queda disponible como destino del diseño; falta contratar/verificar un proveedor de dispersión autorizado y sus credenciales. No se presentará como conectado hasta completar esa etapa.</p></article>'+
+   '</div>'+
+   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Ruta del dinero · separación obligatoria</div><h3 class="mt-1">Del pagador al beneficiario</h3><div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4"><div class="sw-pay-flow"><b>1. Pagador</b><p class="mt-1">Tarjeta AZUL/CardNET o transferencia desde su banco.</p></div><div class="sw-pay-flow"><b>2. Confirmación de ingreso</b><p class="mt-1">Adquirente/banco confirma; se valida importe, moneda y referencia en servidor.</p></div><div class="sw-pay-flow"><b>3. Tesorería SENDWAYO</b><p class="mt-1">La liquidación entra en la cuenta comercial designada. Se registra una sola vez.</p></div><div class="sw-pay-flow"><b>4. Entrega</b><p class="mt-1">Transferencia bancaria, MonCash o NatCash; se cierra solo con confirmación final.</p></div></div></section>'+
+   '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Estados que verá Administración</div><div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pendiente de pago</b><p class="mt-1">El cliente aún no ha pagado o la transferencia no aparece.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pago confirmado</b><p class="mt-1">AZUL/CardNET/banco confirmó el ingreso.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Dispersión en proceso</b><p class="mt-1">El pago salió hacia el banco o billetera elegida.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Entregado / Rechazado</b><p class="mt-1">El proveedor confirmó la entrega o devolvió un fallo/reversa.</p></div></div></section>'+
+   '<div class="sw-pay-good mt-4"><b>Protecciones:</b> importes DOP y HTG se mantienen separados; no se acredita por una respuesta del navegador; cada cobro y cada dispersión usa referencia idempotente; un webhook debe verificarse en servidor; la tarjeta nunca se almacena en SENDWAYO; no hay doble cargo ni doble entrega por reintentos.</div>';
+  host.appendChild(view);
+ }
+ function open(){
+  if(!allowed()){window.alert('Este módulo está disponible para Administración y remitentes.');return;}
+  build();var view=$(VIEW);if(!view){window.alert('No se pudo abrir el centro de pagos.');return;}
+  document.querySelectorAll('.view').forEach(function(el){el.classList.add('hidden');});
+  view.classList.remove('hidden');
+  $('sendwayo-main-sidebar')?.classList.remove('sendwayo-menu-open');
+  $('sendwayo-menu-shade')?.classList.remove('open');
+  $('sendwayo-mobile-menu')?.setAttribute('aria-expanded','false');
+  document.body.dataset.sendwayoActiveView='pagos-transferencias';
+  window.scrollTo(0,0);
+ }
+ function addButton(){
+  var side=$('sendwayo-main-sidebar');if(!side||$(BUTTON))return;
+  var btn=document.createElement('button');btn.id=BUTTON;btn.type='button';
+  btn.className='sw-pay-menu-button w-full flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold text-white';
+  btn.innerHTML='<span aria-hidden="true">💳</span><span>Pagos y transferencias</span>';
+  btn.addEventListener('click',open);side.appendChild(btn);
+  btn.style.display=allowed()?'flex':'none';
+ }
+ function refresh(){try{build();addButton();var b=$(BUTTON);if(b)b.style.display=allowed()?'flex':'none';}catch(e){console.warn('[SENDWAYO V7 payments]',e);}}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+ window.addEventListener('load',refresh);
+ document.addEventListener('sendwayo:firebase-ready',refresh);
+ if(typeof MutationObserver!=='undefined'&&document.body){var obs=new MutationObserver(function(){if(!$(VIEW)||!$(BUTTON))refresh();});obs.observe(document.body,{childList:true,subtree:true});}
+ window.sendwayoOpenPaymentTransferHub=open;
+})();
+</script>
