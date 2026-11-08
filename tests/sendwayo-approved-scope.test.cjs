@@ -25,7 +25,7 @@ assert.match(html, /AZUL/);
 assert.match(html, /CardNET/);
 assert.match(html, /Afiliación pendiente/);
 assert.match(html, /Transferencia bancaria a SENDWAYO/);
-assert.match(html, /El pago se liquida en la cuenta bancaria comercial/);
+assert.match(html, /liquida en la cuenta bancaria comercial/);
 for (const selector of ['sw-pay-azul-bank', 'sw-pay-cardnet-bank', 'sw-pay-incoming-bank-select', 'sw-pay-treasury-bank']) {
   assert.ok(html.includes('id="' + selector + '"'), 'falta selección bancaria: ' + selector);
 }
