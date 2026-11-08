@@ -34,7 +34,7 @@ assert.doesNotMatch(html, /dividend|dividendo/i);
 // Protecciones financieras críticas no se sustituyen al añadir el menú y el panel de métodos.
 assert.match(html, /function balanceOwner\(a\)\{return a&&roleOf\(a\)==='AGENTE'\?\(adminAccount\(\)\|\|a\):\(a\|\|null\);\}/);
 assert.match(html, /function commissionOwner\(a\)\{return a&&roleOf\(a\)==='AGENTE'\?\(adminAccount\(\)\|\|a\):\(a\|\|null\);\}/);
-assert.match(html, /No se acredita por el retorno del navegador ni por un comprobante subido/);
+assert.match(html, /no se acredita por el retorno del navegador ni por un comprobante subido/i);
 assert.doesNotMatch(html, /sk_live_|sk_test_|whsec_|STRIPE_SECRET/i);
 
 console.log('SENDWAYO V7 approved scope: desktop sidebar, module isolation, card methods and financial safeguards verified.');
