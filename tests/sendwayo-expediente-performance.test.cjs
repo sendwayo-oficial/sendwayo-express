@@ -116,10 +116,10 @@ console.log('SENDWAYO: expediente, catálogo internacional, sesión, rendimiento
 
 assert.match(html, /function restoreSessionWithoutResettingActivity\(\)\{try\{sessionStorage\.removeItem\('sendwayo_express_oficial_20261029_auth_snapshot_v1'\)\}catch\(_\)\{\}\}/, 'la recarga no debe borrar el último momento de actividad');
 assert.match(html, /function restoreAuth\(\)\{try\{sessionStorage\.removeItem\(AUTH_KEY\)\}catch\(_\)\{\}\}/, 'la restauración no debe reiniciar el reloj de inactividad');
-assert.match(html, /num=view==='agentes'\?40001:1/, 'los nuevos agentes deben comenzar con ID AGE40001');
-assert.match(html, /let num=role==='AGENTE'\?40001:1/, 'el formulario heredado debe comenzar a crear agentes desde AGE40001');
-assert.match(html, /let next=ag\?40001:1/, 'el formulario conectado a Firebase debe sugerir AGE40001');
-assert.match(html, /El ID de un agente nuevo debe tener el formato AGE seguido de cinco dígitos/, 'Firebase debe exigir formato AGE + cinco dígitos al crear un agente');
+assert.match(html, /var prefix=view==='agentes'\?'AGE400I':'REM',num=1/, 'el formulario complementario debe comenzar la serie de agentes en AGE400I1');
+assert.match(html, /const prefix=role==='AGENTE'\?'AGE400I':'REM'/, 'el formulario heredado debe comenzar la serie de agentes en AGE400I1');
+assert.match(html, /const idPrefix=ag\?'AGE400I':'REM'/, 'el formulario conectado a Firebase debe sugerir AGE400I1');
+assert.match(html, /El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9/, 'Firebase debe validar la serie de agente indicada');
 assert.match(html, /El ID de un remitente nuevo debe tener el formato REM seguido de cinco dígitos/, 'Firebase debe mantener el formato REM + cinco dígitos para remitentes');
 const legacyExpStart = html.indexOf('<script id="sendwayo-account-investigation-v2">');
 const legacyExpEnd = html.indexOf('</script>', legacyExpStart);
@@ -140,3 +140,5 @@ assert.match(restoreBlock, /setVisibleAfterLogin\(appUser\)[\s\S]*loadRestoredDa
 assert.doesNotMatch(restoreBlock, /await loadCloudTransactions\(/, 'la restauración no debe esperar los movimientos para mostrar el panel');
 assert.match(html, /const IDLE_LIMIT=40\*60\*1000/, 'se debe conservar el cierre por 40 minutos');
 assert.match(html, /fallbackCountriesData=\[/, 'el catálogo internacional completo debe estar integrado localmente');
+
+assert.doesNotMatch(html, /AGE40001/, 'no debe sustituir la letra I del ID por el número uno');
