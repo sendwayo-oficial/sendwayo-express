@@ -3830,7 +3830,7 @@ window.sendwayoShareReceipt=async function(){
  const SENDWAYO_OFFICIAL_BANKS = [];
  // Siempre usar los tres datos oficiales exactos; conservar solo cuentas adicionales creadas por el administrador.
  const bankStorage=readJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',[]);
- const customBanks=Array.isArray(bankStorage)?bankStorage.filter(b=>String(b.id||'').startsWith('BANK-')&&!SENDWAYO_OFFICIAL_BANKS.some(o=>String(o.cuenta)===String(b.cuenta))):[];
+ const customBanks=Array.isArray(bankStorage)?bankStorage:[]; // Conservar todas las cuentas ya registradas; no descartar cuentas por formato de ID.
  window.SENDWAYO_BANKS=[...SENDWAYO_OFFICIAL_BANKS,...customBanks];
  writeJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',window.SENDWAYO_BANKS);
  const bankOptions=()=>window.SENDWAYO_BANKS.map(b=>`<option value="${esc(b.id)}">${esc(b.banco)} — ${esc(b.cuenta)} — ${esc(b.titular)} — Pasaporte ${esc(b.documento)}</option>`).join('');
@@ -5577,7 +5577,7 @@ window.sendwayoShareReceipt=async function(){
     emptyRows.forEach(tr=>tr.style.display=filtered.length?'none':'');
     const pager=ensurePager(table);
     const localFirst=filtered.length?1:0, localLast=filtered.length?end-start:0;
-    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página posterior" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Posterior</button></div></div>`;
+    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página siguiente" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Siguiente</button></div></div>`;
     if(pager.dataset.html!==html){ pager.innerHTML=html; pager.dataset.html=html; }
     if(pager.dataset.sendwayoPagerHandlers!=='1'){
       pager.dataset.sendwayoPagerHandlers='1';
