@@ -8768,14 +8768,14 @@ window.sendwayoShareReceipt=async function(){
   }else{
    fee=Math.round(amount*.08*100)/100;net=amount-fee;
    if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
-   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur='HTG';received=net/2.3;receivedCur='DOP';}
+   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur=d.currency;received=net;receivedCur=cur;}
    else{cur=d.currency;received=net;receivedCur=cur;}
   }
   var fmt=function(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});};
   var el=$('v162-'+kind+'-neto');if(el)el.textContent=fmt(net)+' '+cur;
   el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
   el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
-  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Tasa 2.30':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
+  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Sin conversión automática':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
   if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
  }
  function mountRouteControls(kind){
