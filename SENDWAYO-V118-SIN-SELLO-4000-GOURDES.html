@@ -9018,10 +9018,10 @@ window.sendwayoShareReceipt=async function(){
  }
  function findAccount(q){
   const wanted=norm(q);if(!wanted)return null;
-  // El expediente acepta únicamente IDs/códigos de agentes y remitentes; no correo, teléfono, nombre ni ADMIN.
+  // Expediente por ID: solo IDs actuales, anteriores o aliases del ID de remitentes/agentes.
   return accounts().find(a=>role(a)!=='ADMIN'&&[
-   a.id,a.idAnterior,a.legacyId,a.accountId,a.staffId,a.codigo,a.codigo2,a.codigoAnterior,a.code,
-   ...(Array.isArray(a.idAliases)?a.idAliases:[]),...(Array.isArray(a.codeAliases)?a.codeAliases:[])
+   a.id,a.idAnterior,a.legacyId,a.accountId,a.staffId,
+   ...(Array.isArray(a.idAliases)?a.idAliases:[])
   ].some(v=>norm(v)===wanted))||null;
  }
  function accountKey(a){return txt(a&&(a.dbUserKey||a.rtdbUserKey||a.firebaseKey))||(role(a)==='ADMIN'?'admin':'');}
