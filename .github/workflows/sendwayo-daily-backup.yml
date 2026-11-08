@@ -46,8 +46,36 @@ jobs:
           const file = process.argv[2];
           const raw = fs.readFileSync(file, 'utf8').trim();
           if (!raw) throw new Error('El respaldo está vacío');
-          let value = JSON.parse(raw);
-          // Firebase CLI puede envolver la respuesta en {status,result}.
+          function parseJsonStream(input) {
+            let start = 0;
+            while (/\s/.test(input[start] || '')) start++;
+            if (input[start] !== '{' && input[start] !== '[') throw new Error('El respaldo no comienza con JSON');
+            let depth = 0, inString = false, escaped = false, end = -1;
+            for (let i = start; i < input.length; i++) {
+              const ch = input[i];
+              if (inString) {
+                if (escaped) escaped = false;
+                else if (ch === '\\\\') escaped = true;
+                else if (ch === '"') inString = false;
+                continue;
+              }
+              if (ch === '"') inString = true;
+              else if (ch === '{' || ch === '[') depth++;
+              else if (ch === '}' || ch === ']') {
+                depth--;
+                if (depth === 0) { end = i + 1; break; }
+              }
+            }
+            if (end < 0) throw new Error('El JSON del respaldo está incompleto');
+            const first = JSON.parse(input.slice(start, end));
+            const trailerText = input.slice(end).trim();
+            if (trailerText) {
+              const trailer = JSON.parse(trailerText);
+              if (!trailer || trailer.status !== 'success') throw new Error('La respuesta final de Firebase no confirma success');
+            }
+            return first;
+          }
+          let value = parseJsonStream(raw);
           if (value && !Array.isArray(value) && value.status === 'success' && Object.prototype.hasOwnProperty.call(value, 'result')) {
             value = typeof value.result === 'string' ? JSON.parse(value.result) : value.result;
           }
@@ -56,7 +84,7 @@ jobs:
           }
           const normalized = JSON.stringify(value);
           JSON.parse(normalized);
-          fs.writeFileSync(file, normalized + '\n');
+          fs.writeFileSync(file, normalized + '\\n');
           console.log('Respaldo JSON válido y normalizado:', file, fs.statSync(file).size, 'bytes');
           NODE
       - name: Upload backup artifact
