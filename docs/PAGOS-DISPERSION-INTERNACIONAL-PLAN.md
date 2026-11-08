@@ -175,3 +175,10 @@ Fuentes oficiales de afiliación y documentación:
 - Las vistas Envíos, Recargas y Paqueticos usan su paginador propio; las demás tablas transaccionales usan el paginador general.
 
 **Límite de activación:** la asignación bancaria en SENDWAYO no sustituye el alta contractual, la revisión de documentos, las credenciales sandbox/producción ni la certificación de AZUL/CardNET. Tampoco habilita transferencias automáticas a MonCash/NatCash sin la API y el convenio correspondientes.
+
+
+### Nota de afiliación empresarial y cuentas bancarias
+
+- Para CardNET empresarial, la página oficial solicita Registro Mercantil actualizado, última asamblea, estatutos, cédula del gerente/apoderado y estado de cuenta o cheque de la cuenta donde se recibirán los depósitos. Para persona física, solicita cédula, estado de cuenta y contrato de alquiler o título del local.
+- El módulo usa un enlace de afiliación general y el enlace empresarial; no envía formularios ni documentos privados al adquirente desde SENDWAYO. El propietario completa la solicitud de afiliación directamente en el portal oficial.
+- La lista de cuentas bancarias se refresca desde Firebase al cargar el directorio bancario. Cuando la lista llega, el módulo actualiza el contador y los selectores. Si Firebase no permite guardar la asignación de tesorería, el módulo informa el error y no afirma que se haya cambiado.
