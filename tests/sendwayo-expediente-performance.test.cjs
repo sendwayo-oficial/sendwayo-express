@@ -70,6 +70,11 @@ assert.equal(fields['v162-envio-rec'].textContent, '1,840.00 HTG', 'no se invent
 assert.equal(fields['v162-envio-tasa'].textContent, 'Sin conversión automática', 'la ruta HT → RD no aplica una tasa supuesta');
 assert.equal(fields['v162-envio-monto'].dataset.esHT, '1', 'el débito conserva la moneda HTG');
 
+// Ningún módulo heredado ni calculadora secundaria debe reintroducir HTG→DOP automático.
+assert.doesNotMatch(html, /received=net\/2\.30/, 'el cálculo de ruta no debe dividir HTG por una tasa fija no acordada');
+assert.doesNotMatch(html, /rec=formatMoney\(net\/2\.3\)\s*\+\s*' DOP'/, 'el registro de transacciones no debe convertir automáticamente HTG en DOP');
+assert.doesNotMatch(html, /rate='Tasa HT→RD 2\.30'/, 'la calculadora heredada no debe presentar 2.30 como tasa automática');
+assert.doesNotMatch(html, /Tasa HT→RD:\s*2\.30/, 'el tablero no debe anunciar una tasa HT→RD no autorizada');
 // Encabezado y navegación: todo arriba; ninguna columna lateral permanente.
 assert.match(html, /sendwayo-v7-canonical-top-workspace-style/);
 assert.match(html, /sendwayo-v7-workspace-layout-controller/);
