@@ -44,6 +44,20 @@ jobs:
         env:
           CLOSE_DATE: ${{ inputs.close_date }}
         run: node scripts/sendwayo-daily-close.mjs < sendwayo-rtdb.json > daily-close.json
+      - name: Validate daily close report
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('daily-close.json', 'utf8'));
+          if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(report.closeDate || '')) throw new Error('closeDate inválida');
+          for (const key of ['operationsApproved','totalAmount','grossCommission','adminCommission','remitterCommission','agentCommission']) {
+            if (!Number.isFinite(Number(report[key]))) throw new Error('Campo financiero inválido: ' + key);
+          }
+          if (!['CERRADO','REVISAR'].includes(report.status)) throw new Error('Estado del cierre inválido');
+          if (!Array.isArray(report.issues) || !report.byCollection || typeof report.byCollection !== 'object') throw new Error('Estructura del cierre incompleta');
+          console.log('Cierre diario validado:', report.closeDate, report.status, report.operationsApproved, 'operaciones');
+          NODE
       - name: Store daily close report
         if: steps.guard.outputs.ready == 'true'
         run: |
