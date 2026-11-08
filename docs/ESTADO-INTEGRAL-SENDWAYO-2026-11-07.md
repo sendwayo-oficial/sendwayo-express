@@ -44,14 +44,14 @@ Comportamiento fijado:
 
 ## 3. IDs, códigos y directorio
 
-- La regla de identificación de agentes para **nuevas cuentas** es el prefijo `AGE` seguido de cinco dígitos. La siguiente serie nueva comienza en `AGE400I1`, luego `AGE400I2` y continúa hasta `AGE400I9`; la I es la letra I, no el número 1.
+- La regla de identificación de agentes para **nuevas cuentas** es el prefijo `AGE` seguido por el bloque alfanumérico de cinco caracteres `400I1`. La serie nueva continúa `AGE400I1`, `AGE400I2` … `AGE400I9`; la I es la letra I, no el número 1.
 - Los nuevos formularios de alta deben sugerir y validar ese formato para agentes.
 - Los nuevos remitentes conservan la serie `REM00001`, `REM00002`, etc.
 - Los cinco agentes que ya existen no se renumeran automáticamente. Sus IDs históricos se conservan hasta que Administración autorice un plan de migración y sus alias.
 - Los códigos comerciales `AG-...` y `REM-...` son datos distintos del ID. No se deben confundir en búsquedas por ID.
 - La población de referencia del sistema es 1 administrador, 5 agentes y 15 remitentes; no se deben inventar cuentas ni aumentar esos totales para pruebas.
 
-**Estado en esta rama:** los dos formularios de altas nuevos empiezan en `AGE400I1`, evitan reutilizar IDs históricos/alias y la creación Firebase valida el patrón. Los IDs preexistentes no se han reescrito.
+**Estado en esta rama:** los formularios y generadores de altas usan la serie `AGE400I1` … `AGE400I9`, evitan reutilizar IDs históricos/alias y la creación Firebase valida el patrón. Los IDs preexistentes no se han reescrito.
 
 ## 4. Acceso, sesión y protección
 
@@ -184,7 +184,7 @@ Cambios realizados en desarrollo:
 ## 13. Verificación y estado de entrega
 
 Última verificación estática realizada sobre el archivo recién descargado de la rama:
-- 84 aserciones estáticas ejecutadas: **aprobadas**.
+- 85 aserciones estáticas ejecutadas: **aprobadas**.
 - 43 bloques JavaScript inline: **0 errores de sintaxis**.
 - Comparar además la rama de desarrollo con `main` antes de entregar.
 - No se ejecutaron pruebas de navegador reales ni pruebas con cuentas reales de Firebase en esta sesión.
