@@ -10216,9 +10216,9 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  function headersAndBalances(view,table){
   var head=table.tHead&&table.tHead.rows&&table.tHead.rows[0];if(!head)return;
   var cells=head.cells;if(cells.length<7)return;
-  cells[3].textContent='ID fijo';cells[4].textContent='Código fijo';
-  if(view==='agentes'){cells[5].textContent='Balance compartido con administración';return;}
-  cells[5].textContent='Balance DOP';
+  if(cells[3].textContent!=='ID fijo')cells[3].textContent='ID fijo';if(cells[4].textContent!=='Código fijo')cells[4].textContent='Código fijo';
+  if(view==='agentes'){if(cells[5].textContent!=='Balance compartido con administración')cells[5].textContent='Balance compartido con administración';return;}
+  if(cells[5].textContent!=='Balance DOP')cells[5].textContent='Balance DOP';
   if(!head.querySelector('th[data-sendwayo-balance-htg]')){
    var th=document.createElement('th');th.className=cells[5].className;th.textContent='Balance HTG';th.dataset.sendwayoBalanceHtg='1';cells[5].insertAdjacentElement('afterend',th);
   }
