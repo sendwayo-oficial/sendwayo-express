@@ -144,3 +144,34 @@ La lista oficial de disponibilidad de Stripe no incluye República Dominicana en
 | Stripe | No habilitar para una empresa registrada solamente en República Dominicana mientras el país no aparezca admitido en Stripe Global. |
 
 El módulo de interfaz incluido en la V7 de desarrollo explica el recorrido y muestra los estados pendientes, pero **no cobra ni envía dinero**. No se activa ninguna vía hasta recibir las credenciales directamente en el entorno seguro de cada proveedor y pasar las pruebas de sandbox, webhook, idempotencia, reversos y conciliación.
+
+
+---
+
+## 11. Cuentas bancarias de liquidación y pagos por WhatsApp (8 de noviembre de 2026)
+
+- El centro de pagos de V7 lee las cuentas bancarias existentes desde la ruta Firebase `sendwayo_express_v2/accounts`; no incorpora ni inventa números de cuenta.
+- Administración dispone de cuatro asignaciones: liquidación AZUL, liquidación CardNET, recepción de transferencias entrantes y cuenta de tesorería para transferencias salientes. Las asignaciones guardan solo los IDs de las cuentas y metadatos de auditoría en `sendwayo_express_v2/settings/paymentSettlement`.
+- La interfaz no preselecciona arbitrariamente una de las tres cuentas. Debe elegirse la cuenta que esté a nombre del comercio y que el adquirente acepte en el contrato. Una escritura denegada por las reglas de Firebase se muestra como error y no se anuncia como guardada.
+- Los remitentes solo ven la cuenta de recepción seleccionada para transferencias entrantes. Administración puede ver y elegir las cuentas de liquidación; los agentes no pueden cambiar esta configuración.
+- CardNET publica Botón de Pago, tokenización, 3-D Secure y cobros por WhatsApp. La operación por WhatsApp es un enlace/cobro del adquirente; después de que CardNET liquide en la cuenta comercial elegida, la dispersión a MonCash/NatCash es una segunda operación.
+- AZUL ofrece Página de Pagos y Webservices. La afiliación exige documentación del comercio y comprobante bancario; en su proceso técnico entrega credenciales de prueba, certifica el intercambio y luego facilita credenciales de producción.
+- Las cuentas no se asignan como afiliadas por código: la aplicación guarda la preferencia de tesorería, pero solo AZUL/CardNET determinan si aceptan la cuenta y el titular tras revisar los documentos y contrato.
+
+Fuentes oficiales de afiliación y documentación:
+- AZUL afiliación: https://www.azul.com.do/Pages/es/hazte-cliente.aspx
+- AZUL documentación e-commerce: https://dev.azul.com.do/Pages/developer/pages/lib/index.aspx
+- CardNET afiliación: https://www.cardnet.com.do/afiliate/personal
+- CardNET botón de pago: https://www.cardnet.com.do/soluciones/online/boton-de-pago
+- CardNET tarifario (incluye Cobros por WhatsApp): https://www.cardnet.com.do/tarifario
+- MonCash Business: https://moncashdfs.com/business
+
+## 12. Paginación uniforme de transacciones
+
+- Todas las tablas de transacciones incluidas en las vistas admitidas se muestran en páginas de 10 registros.
+- La numeración de fila se reinicia en cada página: 01 a 10; la página siguiente comienza de nuevo en 01.
+- Cada listado presenta los controles Anterior y Posterior/Siguiente, deshabilitados al llegar al principio o al final.
+- El filtro de búsqueda se aplica antes de calcular el número de páginas; al cambiar la búsqueda vuelve a la primera página.
+- Las vistas Envíos, Recargas y Paqueticos usan su paginador propio; las demás tablas transaccionales usan el paginador general.
+
+**Límite de activación:** la asignación bancaria en SENDWAYO no sustituye el alta contractual, la revisión de documentos, las credenciales sandbox/producción ni la certificación de AZUL/CardNET. Tampoco habilita transferencias automáticas a MonCash/NatCash sin la API y el convenio correspondientes.
