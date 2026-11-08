@@ -8578,7 +8578,7 @@ window.sendwayoShareReceipt=async function(){
         let credential;
         try{credential=await secondaryAuth.createUserWithEmailAndPassword(email,password);}finally{try{await secondaryAuth.signOut();}catch(e){}}
         const uid=credential.user.uid,dbKey=uid;
-        if(ag&&!/^AGE400I[1-9]$/.test(ident))throw new Error('El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9; el primer ID es AGE400I1.');
+        if(ag&&!/^AGE\d{5}$/.test(ident))throw new Error('El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9; el primer ID es AGE400I1.');
         if(!ag&&!/^REM\d{5}$/.test(ident))throw new Error('El ID de un remitente nuevo debe tener el formato REM seguido de cinco dígitos.');
         const idDuplicate=accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(ident)));
         if(idDuplicate)throw new Error('Ese ID ya existe o fue utilizado anteriormente.');
@@ -10143,5 +10143,196 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 
 
 
+
+<style id="sendwayo-v7-account-directory-layout">
+.sendwayo-account-toolbar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;width:100%!important}
+.sendwayo-account-toolbar>button{flex:0 0 auto!important;min-width:max-content!important;min-height:38px!important;padding:8px 12px!important;font-size:11px!important;white-space:nowrap!important}
+.sendwayo-account-search{flex:0 1 245px!important;width:245px!important;min-width:155px!important;max-width:270px!important;min-height:38px!important}
+.sendwayo-account-row-actions{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:7px!important;min-width:175px!important}
+.sendwayo-account-row-actions button{flex:0 0 auto!important;min-height:36px!important;padding:8px 13px!important;border:1px solid #cbd5e1!important;border-radius:999px!important;background:#fff!important;color:#102b4e!important;font-size:11px!important;font-weight:800!important;white-space:nowrap!important}
+.sendwayo-account-row-actions button.is-inactive{border-color:#f2c3c3!important;background:#fff7f7!important;color:#a12525!important}
+.sendwayo-account-row-actions button.is-active{border-color:#b7dfc4!important;background:#f0fdf4!important;color:#166534!important}
+.sendwayo-account-pagination{width:100%!important;padding:6px 4px 3px!important}
+.sendwayo-account-pager-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:wrap!important;padding:10px 3px!important;color:#334155!important;font-size:11px!important}
+.sendwayo-account-pager-actions{display:flex!important;align-items:center!important;gap:8px!important}
+.sendwayo-account-pager-actions button{min-height:39px!important;padding:8px 14px!important;border:1px solid #cbd5e1!important;border-radius:999px!important;background:#fff!important;color:#102b4e!important;font-size:11px!important;font-weight:800!important}
+.sendwayo-account-pager-actions button:disabled{background:#e2e8f0!important;color:#94a3b8!important;cursor:not-allowed!important;opacity:.75!important}
+#tabla-sendwayo-agentes tbody tr,#tabla-sendwayo-remitentes tbody tr{vertical-align:middle!important}
+#tabla-sendwayo-agentes td,#tabla-sendwayo-remitentes td{padding:13px 12px!important;line-height:1.45!important}
+@media(max-width:680px){
+ .sendwayo-account-toolbar{gap:5px!important}
+ .sendwayo-account-toolbar>button{padding:7px 10px!important;font-size:10px!important;min-height:36px!important}
+ .sendwayo-account-search{flex:1 1 100%!important;width:100%!important;max-width:100%!important}
+ .sendwayo-account-pager-row{align-items:flex-start!important;flex-direction:column!important}
+}
+</style>
+<script id="sendwayo-v7-account-directory-behavior">
+(function(){
+ 'use strict';
+ var $=function(id){return document.getElementById(id);};
+ var norm=function(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();};
+ var pages=window.__sendwayoDirectoryPages||(window.__sendwayoDirectoryPages={agentes:{page:1,query:''},remitentes:{page:1,query:''}});
+ function accounts(view){
+  try{if(view==='agentes'&&typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))return AGENTES;if(view==='remitentes'&&typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))return REMITENTES;}catch(e){}
+  var arr=view==='agentes'?window.AGENTES:window.REMITENTES;return Array.isArray(arr)?arr:[];
+ }
+ function allAccounts(){
+  var out=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)out.push(ADMIN);}catch(e){}
+  return out.concat(accounts('agentes'),accounts('remitentes'));
+ }
+ function visibleCode(a,view){
+  var c=String(a&&(a.codigo||a.code||a.staffId)||'').trim();
+  return view==='agentes'&&/^AG-/i.test(c)?'AGE-'+c.slice(3):c;
+ }
+ function canonicalCode(c){
+  c=String(c||'').trim().toUpperCase();return c.indexOf('AG-')===0?'AGE-'+c.slice(3):c;
+ }
+ function toolbar(view){
+  var input=$('sendwayo-search-'+view);if(!input)return;
+  var bar=input.parentElement;if(!bar)return;
+  bar.classList.add('sendwayo-account-toolbar');input.classList.add('sendwayo-account-search');
+  var buttons=Array.from(bar.querySelectorAll('button'));
+  var add=buttons.find(function(b){return /agregar nuevo|agregar usuario/i.test(b.textContent||'');});
+  var excel=buttons.find(function(b){return /^excel$/i.test((b.textContent||'').trim());});
+  var pdf=buttons.find(function(b){return /^pdf$/i.test((b.textContent||'').trim());});
+  var csv=buttons.find(function(b){return /^csv$/i.test((b.textContent||'').trim());});
+  [add,excel,pdf,csv,input].filter(Boolean).forEach(function(el,index){var at=bar.children[index]||null;if(at!==el)bar.insertBefore(el,at);});
+  if(input.dataset.sendwayoDirectorySearch!=='1'){
+   input.dataset.sendwayoDirectorySearch='1';
+   input.oninput=function(){pages[view].query=String(input.value||'');pages[view].page=1;draw(view);};
+  }
+ }
+ function getTable(view){return $('tabla-sendwayo-'+view);}
+ function getPager(view){
+  var table=getTable(view);if(!table)return null;
+  var pager=$('sendwayo-account-pagination-'+view);
+  if(!pager){pager=document.createElement('div');pager.id='sendwayo-account-pagination-'+view;pager.className='sendwayo-account-pagination';(table.closest('.overflow-x-auto')||table).insertAdjacentElement('afterend',pager);}
+  return pager;
+ }
+ function rowAccount(view,row){
+  var id=String(row.cells[3]&&row.cells[3].textContent||'').trim();
+  return accounts(view).find(function(a){return String(a.id||'')===id;})||null;
+ }
+ function headersAndBalances(view,table){
+  var head=table.tHead&&table.tHead.rows&&table.tHead.rows[0];if(!head)return;
+  var cells=head.cells;if(cells.length<7)return;
+  if(cells[3].textContent!=='ID fijo')cells[3].textContent='ID fijo';if(cells[4].textContent!=='Código fijo')cells[4].textContent='Código fijo';
+  if(view==='agentes'){if(cells[5].textContent!=='Balance compartido con administración')cells[5].textContent='Balance compartido con administración';return;}
+  if(cells[5].textContent!=='Balance DOP')cells[5].textContent='Balance DOP';
+  if(!head.querySelector('th[data-sendwayo-balance-htg]')){
+   var th=document.createElement('th');th.className=cells[5].className;th.textContent='Balance HTG';th.dataset.sendwayoBalanceHtg='1';cells[5].insertAdjacentElement('afterend',th);
+  }
+  table.querySelectorAll('tbody tr').forEach(function(row){
+   if(row.dataset.sendwayoBalanceSplit==='1'||row.cells.length<8)return;
+   var cell=row.cells[5],raw=String(cell.textContent||'');
+   var dop=(raw.match(/DOP\s*([\d,.+-]+)/i)||[])[1]||'0.00';
+   var htg=(raw.match(/HTG\s*([\d,.+-]+)/i)||[])[1]||'0.00';
+   cell.textContent='DOP '+dop;
+   var extra=document.createElement('td');extra.className=cell.className;extra.textContent='HTG '+htg;
+   cell.insertAdjacentElement('afterend',extra);row.dataset.sendwayoBalanceSplit='1';
+  });
+ }
+ function normalizeRows(view,table){
+  var body=table.tBodies&&table.tBodies[0];if(!body)return;
+  Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;}).forEach(function(row){
+   var account=rowAccount(view,row);
+   if(account){
+    var code=visibleCode(account,view),codeCell=row.cells[4];
+    if(codeCell&&code&&codeCell.textContent!==code)codeCell.textContent=code;
+    if(code&&view==='agentes')account.aliases=Array.from(new Set([].concat(Array.isArray(account.aliases)?account.aliases:[],[code])));
+    if(codeCell){
+     var same=accounts(view).filter(function(a){return canonicalCode(a.codigo||a.code)===canonicalCode(code);});
+     if(same.length>1){codeCell.title='Código repetido en más de una cuenta; revisar antes de utilizarlo como alias de acceso.';codeCell.style.color='#b45309';codeCell.style.fontWeight='900';}
+    }
+   }
+   var actionCell=row.cells[row.cells.length-1];if(!actionCell||actionCell.dataset.sendwayoActionsNormalized==='1')return;
+   Array.from(actionCell.querySelectorAll('button')).forEach(function(button){var label=norm(button.textContent);if(!label.includes('modificar')&&!label.includes('inactivar')&&!label.includes('activar'))button.remove();});
+   actionCell.classList.add('sendwayo-account-row-actions-cell');
+   var box=actionCell.querySelector('div');if(box)box.classList.add('sendwayo-account-row-actions');
+   actionCell.dataset.sendwayoActionsNormalized='1';
+  });
+ }
+ function draw(view){
+  var table=getTable(view),pager=getPager(view);if(!table||!pager||!table.tBodies||!table.tBodies[0])return;
+  var body=table.tBodies[0],state=pages[view];
+  var rows=Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;});
+  var query=norm(state.query||''),filtered=rows.filter(function(r){return !query||norm(r.innerText||r.textContent).includes(query);});
+  var count=Math.max(1,Math.ceil(filtered.length/10));state.page=Math.min(Math.max(1,Number(state.page)||1),count);
+  var start=(state.page-1)*10,end=Math.min(filtered.length,start+10);
+  rows.forEach(function(r){r.style.display='none';});
+  filtered.forEach(function(r,i){var visible=i>=start&&i<end;r.style.display=visible?'':'none';if(visible&&r.cells[0]){var n=String(i-start+1).padStart(2,'0');if(r.cells[0].textContent!==n)r.cells[0].textContent=n;}});
+  Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !!r.querySelector('td[colspan]');}).forEach(function(r){r.style.display=filtered.length?'none':'';});
+  var first=filtered.length?start+1:0,last=filtered.length?end:0;
+  var signature=[view,first,last,filtered.length,state.page,count].join('|');
+  if(pager.dataset.signature!==signature){
+   pager.dataset.signature=signature;
+   pager.innerHTML='<div class="sendwayo-account-pager-row"><span>Registros '+String(first).padStart(2,'0')+'–'+String(last).padStart(2,'0')+' de '+filtered.length+' · Página '+state.page+' de '+count+'</span><div class="sendwayo-account-pager-actions"><button type="button" data-dir-page="prev" '+(state.page<=1?'disabled':'')+'>Anterior</button><button type="button" data-dir-page="next" '+(state.page>=count?'disabled':'')+'>Siguiente</button></div></div>';
+  }
+ }
+ function enhance(view){if(!pages[view])return;var table=getTable(view);if(!table)return;toolbar(view);headersAndBalances(view,table);normalizeRows(view,table);draw(view);}
+ function refresh(){enhance('agentes');enhance('remitentes');}
+ window.sendwayoAccountDirectoryPage=function(view,page){if(!pages[view])return;pages[view].page=Math.max(1,Number(page)||1);enhance(view);};
+ window.sendwayoSearchAccountDirectory=function(view,value){if(!pages[view])return;pages[view].query=String(value||'');pages[view].page=1;var input=$('sendwayo-search-'+view);if(input)input.value=String(value||'');enhance(view);};
+ document.addEventListener('click',function(event){
+  var button=event.target&&event.target.closest?event.target.closest('[data-dir-page]'):null;if(!button)return;
+  var pager=button.closest('.sendwayo-account-pagination'),view=pager&&pager.id.indexOf('agentes')>=0?'agentes':'remitentes';
+  if(!pages[view])return;pages[view].page=button.dataset.dirPage==='prev'?Math.max(1,pages[view].page-1):pages[view].page+1;enhance(view);
+ });
+ document.addEventListener('click',function(event){
+  var button=event.target&&event.target.closest?event.target.closest('button[onclick*="showView"]'):null;if(!button)return;
+  var match=(button.getAttribute('onclick')||'').match(/showView\(['"]([^'"]+)['"]\)/);
+  if(match&&pages[match[1]])window.setTimeout(function(){enhance(match[1]);},60);
+ },true);
+ ['agentes','remitentes'].forEach(function(view){
+  var el=$(view==='agentes'?'view-agentes':'view-remitentes');if(!el)return;
+  var queued=false,observer=new MutationObserver(function(){
+   if(queued)return;queued=true;
+   window.setTimeout(function(){queued=false;enhance(view);},80);
+  });
+  observer.observe(el,{childList:true,subtree:true});
+ });
+ window.addEventListener('sendwayo:firebase-ready',function(){window.setTimeout(refresh,80);});
+ window.addEventListener('load',function(){window.setTimeout(refresh,120);});
+ window.addEventListener('pageshow',function(){window.setTimeout(refresh,120);});
+ if(typeof window.sendwayoOpenAccountForm==='function'){
+  var oldOpen=window.sendwayoOpenAccountForm;
+  window.sendwayoOpenAccountForm=function(view,id){
+   var result=oldOpen.apply(this,arguments);
+   window.setTimeout(function(){
+    var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name');
+    if(!idInput||!codeInput)return;
+    idInput.readOnly=true;codeInput.readOnly=true;codeInput.setAttribute('aria-readonly','true');
+    var list=accounts(view),existing=id?list.find(function(a){return String(a.id||'')===String(id);}):null,prefix=view==='agentes'?'AGE':'REM';
+    if(existing){idInput.value=String(existing.id||'');codeInput.value=visibleCode(existing,view);return;}
+    var max=0;list.forEach(function(a){var match=String(a.id||'').match(new RegExp('^'+prefix+'(\\d{5})$','i'));if(match)max=Math.max(max,Number(match[1]));});
+    idInput.value=prefix+String(max+1).padStart(5,'0');
+    var makeCode=function(value){var p=String(value||'').trim().split(/\s+/).filter(Boolean);var clean=function(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/gi,'').slice(0,3).toUpperCase();};return prefix+'-'+clean(p[0]||'USR')+clean(p.length>1?p[p.length-1]:p[0]||'USR');};
+    codeInput.value=makeCode(nameInput&&nameInput.value);
+    if(nameInput&&!nameInput.dataset.sendwayoFixedCodeBound){nameInput.dataset.sendwayoFixedCodeBound='1';nameInput.addEventListener('input',function(){codeInput.value=makeCode(nameInput.value);});}
+   },0);
+   return result;
+  };
+ }
+ if(typeof window.sendwayoSaveAccountForm==='function'){
+  var oldSave=window.sendwayoSaveAccountForm;
+  window.sendwayoSaveAccountForm=async function(view,id){
+   var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name'),existing=id?allAccounts().find(function(a){return String(a.id||'')===String(id)||String(a.dbUserKey||'')===String(id);}):null;
+   if(id){
+    if(!existing){window.alert('No se encontró la cuenta original; no se modificó.');return false;}
+    if(idInput&&String(idInput.value||'')!==String(existing.id||'')){window.alert('El ID es fijo y no se puede cambiar.');return false;}
+    if(codeInput&&String(codeInput.value||'')!==visibleCode(existing,view)){window.alert('El código es fijo y no se puede cambiar.');return false;}
+   }else{
+    var ident=String(idInput&&idInput.value||''),prefix=view==='agentes'?'AGE':'REM',code=String(codeInput&&codeInput.value||'').trim();
+    if(!(new RegExp('^'+prefix+'\\d{5}$','i')).test(ident)){window.alert('ID inválido. Debe usar '+prefix+' seguido de cinco dígitos.');return false;}
+    var duplicate=allAccounts().find(function(a){return canonicalCode(a.codigo||a.code)===canonicalCode(code);});
+    if(duplicate){window.alert('Ese código ya pertenece a otra cuenta. No se creará una cuenta duplicada.');return false;}
+    if(!String(nameInput&&nameInput.value||'').trim()){window.alert('Escriba el nombre completo.');return false;}
+   }
+   return oldSave.apply(this,arguments);
+  };
+ }
+ refresh();
+})();
+</script>
 </body>
 </html>
