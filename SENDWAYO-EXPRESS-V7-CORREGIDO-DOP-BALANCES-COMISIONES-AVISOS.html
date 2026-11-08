@@ -9991,5 +9991,140 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 #sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
 </style>
 <script defer src="./SENDWAYO-V7-FISCAL-INTERNACIONAL.js"></script>
+
+<style id="sendwayo-v7-international-ops-style">
+#sw-intl-ops{color:#10243d}
+#sw-intl-ops .swi-card{background:#fff;border:1px solid #dbe4ef;border-radius:15px;padding:14px}
+#sw-intl-ops label{display:block;font-size:11px;font-weight:800;color:#334155;margin-bottom:5px}
+#sw-intl-ops input,#sw-intl-ops select{width:100%;min-height:40px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;padding:8px 10px;font-size:12px;color:#10243d}
+#sw-intl-ops button{cursor:pointer}
+#sw-intl-ops .swi-primary{background:#12366a;color:#fff;border:0;border-radius:999px;padding:10px 15px;font-size:11px;font-weight:900}
+#sw-intl-ops .swi-secondary{background:#fff;color:#12366a;border:1px solid #cbd5e1;border-radius:999px;padding:8px 12px;font-size:10px;font-weight:800}
+#sw-intl-ops .swi-note{background:#fff8e8;border:1px solid #f4d08b;border-radius:12px;color:#7c4a03;padding:12px;font-size:11px;line-height:1.55}
+#sw-intl-ops .swi-table{width:100%;border-collapse:collapse;min-width:700px;font-size:11px}
+#sw-intl-ops .swi-table th{background:#f1f5f9;text-align:left;padding:9px;white-space:nowrap}
+#sw-intl-ops .swi-table td{border-top:1px solid #e2e8f0;padding:9px;vertical-align:middle}
+#sw-intl-ops .swi-status{display:inline-block;border-radius:999px;background:#f1f5f9;padding:4px 8px;font-size:9px;font-weight:900}
+</style>
+<script id="sendwayo-v7-international-requests-refunds">
+(function(){
+ 'use strict';
+ if(window.__SENDWAYO_V7_INTL_REQUESTS__)return;
+ window.__SENDWAYO_V7_INTL_REQUESTS__=true;
+ const ROOT='sendwayo_express_v2',VIEW='sendwayo-v7-payment-transfer-hub';
+ const $=id=>document.getElementById(id),n=v=>Number(v)||0;
+ const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+ const countries=()=>Array.isArray(window.SENDWAYO_COUNTRIES)?window.SENDWAYO_COUNTRIES:[];
+ function user(){try{if(typeof currentUser!=='undefined'&&currentUser)return currentUser}catch(_){}return window.currentUser||null}
+ function role(){return String(user()&&(user().role||user().rol)||'').toUpperCase()}
+ function admin(){return role().includes('ADMIN')}
+ function allowed(){return admin()||role().includes('AGENTE')||role().includes('REMITENTE')}
+ function fb(){return window.sendwayoFirebase||null}
+ function banks(){return(Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[]).filter(b=>b&&b.id&&b.cuenta&&b.active!==false&&String(b.estado||'').toLowerCase()!=='inactivo')}
+ function currency(iso){const c=countries().find(x=>x.iso===iso);return c&&c.currency?String(c.currency).split(',')[0]:'USD'}
+ function countryOptions(selected){return countries().map(c=>'<option value="'+esc(c.iso)+'"'+(c.iso===selected?' selected':'')+'>'+esc(c.name+' ('+c.iso+')')+'</option>').join('')}
+ function bankOptions(){return banks().map(b=>'<option value="'+esc(b.id)+'">'+esc((b.banco||'Banco')+' · '+(b.titular||'Titular')+' · •••• '+String(b.cuenta).slice(-4))+'</option>').join('')}
+ function uid(){return String(user()&&(user().id||user().email)||'')}
+ function requestRef(){const f=fb();return f&&f.db?f.db.ref(ROOT+'/internationalTransferRequests'):null}
+ function refundRef(){const f=fb();return f&&f.db?f.db.ref(ROOT+'/refundRequests'):null}
+ function ensure(){
+  const v=$(VIEW);if(!v||$('sw-intl-ops'))return;
+  const sec=document.createElement('section');sec.id='sw-intl-ops';sec.className='swi-card mt-4';
+  sec.innerHTML=
+   '<div class="flex flex-wrap items-start justify-between gap-3"><div><div class="text-[10px] font-black tracking-widest text-slate-500">SENDWAYO EXPRESS · RED INTERNACIONAL</div><h3 class="text-xl font-black mt-1">Envíos internacionales, depósitos y devoluciones</h3><p class="text-xs text-slate-600 mt-1">Directorio de 249 países y territorios, prefijos telefónicos internacionales y registro de cada solicitud.</p></div><span class="swi-status">Integraciones de salida por activar</span></div>'+
+   '<div class="swi-note mt-3"><b>Protección de fondos:</b> este módulo registra solicitudes y conciliación. No procesa cargos de tarjeta ni transferencias reales todavía. Las tarjetas se cobran únicamente en el checkout seguro del adquirente afiliado; nunca se almacenan números completos, CVV ni claves bancarias. La salida a bancos, MonCash, NatCash o efectivo exige contrato y conexión de desembolso activa. Tener un país en el directorio no significa que la ruta de pagos esté habilitada.</div>'+
+   '<form id="swi-form" class="swi-card mt-3"><b class="text-sm">Nueva solicitud internacional</b><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">'+
+    '<div><label>País de destino</label><select id="swi-country" required>'+countryOptions('HT')+'</select></div>'+
+    '<div><label>Moneda de entrega</label><input id="swi-currency" value="'+esc(currency('HT'))+'" maxlength="8" required></div>'+
+    '<div><label>Monto a entregar</label><input id="swi-amount" type="number" min="0.01" step="0.01" placeholder="0.00" required></div>'+
+    '<div><label>Nombre del beneficiario</label><input id="swi-beneficiary" maxlength="120" required></div>'+
+    '<div><label>Canal de entrega</label><select id="swi-payout"><option value="MONCASH">MonCash</option><option value="NATCASH">NatCash</option><option value="BANK_ACCOUNT">Cuenta bancaria</option><option value="CASH_PICKUP">Retiro de efectivo / agente</option><option value="OTHER_WALLET">Otra billetera móvil</option></select></div>'+
+    '<div><label>Teléfono / billetera del beneficiario</label><input id="swi-phone" type="tel" maxlength="40" placeholder="+509 …"></div>'+
+    '<div><label>Banco / entidad destino</label><input id="swi-bank" maxlength="100" placeholder="Nombre de banco o agente"></div>'+
+    '<div><label>Últimos 4 dígitos de cuenta</label><input id="swi-account-last4" maxlength="4" inputmode="numeric" placeholder="1234"></div>'+
+    '<div><label>Financiación</label><select id="swi-funding"><option value="CARD_DEBIT_AZUL">Débito · AZUL</option><option value="CARD_CREDIT_AZUL">Crédito · AZUL</option><option value="CARD_DEBIT_CARDNET">Débito · CardNET</option><option value="CARD_CREDIT_CARDNET">Crédito · CardNET</option><option value="BANK_TRANSFER">Transferencia bancaria</option></select></div>'+
+    '<div><label>Cuenta comercial de liquidación</label><select id="swi-settlement"><option value="">Seleccione una cuenta registrada</option>'+bankOptions()+'</select></div>'+
+    '<div class="md:col-span-2"><label>Referencia / motivo</label><input id="swi-note" maxlength="180" placeholder="Referencia de la operación"></div>'+
+    '<div class="flex items-end"><button class="swi-primary w-full" type="submit">Registrar solicitud</button></div>'+
+   '</div><div id="swi-form-status" class="text-xs text-slate-600 mt-3" role="status">Pendiente de verificación: no se hará ningún débito automático.</div></form>'+
+   '<div class="swi-card mt-3"><div class="flex flex-wrap justify-between gap-2 items-center"><b class="text-sm">Solicitudes internacionales recientes</b><button class="swi-secondary" id="swi-reload" type="button">Actualizar</button></div><div class="overflow-x-auto mt-3"><table class="swi-table"><thead><tr><th>Solicitud</th><th>Destino</th><th>Canal</th><th>Monto</th><th>Cuenta</th><th>Estado</th><th>Acción administrativa</th></tr></thead><tbody id="swi-rows"><tr><td colspan="7">Inicie sesión para consultar.</td></tr></tbody></table></div></div>'+
+   '<form id="swi-refund-form" class="swi-card mt-3"><b class="text-sm">Solicitar devolución a la tarjeta original</b><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3"><div><label>Adquirente</label><select id="swi-r-provider"><option>AZUL</option><option>CardNET</option></select></div><div><label>Referencia de pago original</label><input id="swi-r-original" maxlength="100" required></div><div><label>Monto a devolver</label><input id="swi-r-amount" type="number" min="0.01" step="0.01" required></div><div class="md:col-span-2"><label>Motivo</label><input id="swi-r-reason" maxlength="200" required></div><div class="flex items-end"><button class="swi-primary w-full" type="submit">Registrar devolución</button></div></div><div id="swi-r-status" class="text-xs text-slate-600 mt-3" role="status">Se guarda una solicitud pendiente; no se ejecuta el reembolso sin respuesta real del adquirente.</div></form>'+
+   '<div class="swi-card mt-3"><b class="text-sm">Devoluciones recientes</b><div class="overflow-x-auto mt-3"><table class="swi-table"><thead><tr><th>ID</th><th>Pasarela</th><th>Referencia original</th><th>Monto</th><th>Motivo</th><th>Estado</th><th>Respuesta</th></tr></thead><tbody id="swi-refund-rows"><tr><td colspan="7">Inicie sesión para consultar.</td></tr></tbody></table></div></div>'+
+   '<div class="swi-note mt-3">Para reembolsar se utilizará la función de devolución del adquirente y, normalmente, la tarjeta original. La plataforma conservará el ID de autorización, referencia, importe, fecha y estado. Las devoluciones parciales o totales deben ajustarse al pago original confirmado. No se liberará balance de agente ni de remitente por una devolución no confirmada.</div>';
+  v.appendChild(sec);bind();loadAll();
+ }
+ function bind(){
+  const f=$('swi-form');if(f&&!f.dataset.bound){f.dataset.bound='1';f.addEventListener('submit',createRequest)}
+  const r=$('swi-refund-form');if(r&&!r.dataset.bound){r.dataset.bound='1';r.addEventListener('submit',createRefund)}
+  const c=$('swi-country');if(c&&!c.dataset.bound){c.dataset.bound='1';c.addEventListener('change',()=>{$('swi-currency').value=currency(c.value);const entry=countries().find(x=>x.iso===c.value);if(entry&&entry.dial&&entry.dial.length)$('swi-phone').placeholder='+'+entry.dial[0]+' …'})}
+  const reload=$('swi-reload');if(reload&&!reload.dataset.bound){reload.dataset.bound='1';reload.addEventListener('click',loadAll)}
+  const sec=$('sw-intl-ops');if(sec&&!sec.dataset.actions){sec.dataset.actions='1';sec.addEventListener('click',handleAction)}
+ }
+ async function createRequest(ev){
+  ev.preventDefault();const status=$('swi-form-status'),f=fb();
+  if(!allowed()||!f||!f.db||!f.auth||!f.auth.currentUser){if(status)status.textContent='Se requiere sesión SENDWAYO y Firebase. No se debitó ningún fondo.';return}
+  const amount=n($('swi-amount').value),iso=$('swi-country').value,bankId=$('swi-settlement').value,beneficiary=$('swi-beneficiary').value.trim(),channel=$('swi-payout').value;
+  const phone=$('swi-phone').value.trim(),last4=String($('swi-account-last4').value||'').replace(/\D/g,'').slice(-4);
+  if(!(amount>0)||!iso||!beneficiary||!bankId){if(status)status.textContent='Complete país, beneficiario, monto y cuenta comercial de liquidación.';return}
+  if(channel==='BANK_ACCOUNT'&&(!$('swi-bank').value.trim()||last4.length!==4)){if(status)status.textContent='Para cuenta bancaria indique banco y últimos cuatro dígitos. El número completo se introduce solo en el portal seguro del proveedor.';return}
+  const bank=banks().find(b=>String(b.id)===bankId);if(!bank){if(status)status.textContent='La cuenta seleccionada no está disponible.';return}
+  const funding=$('swi-funding').value,provider=funding.includes('AZUL')?'AZUL':funding.includes('CARDNET')?'CARDNET':'BANCO';
+  const record={createdAt:new Date().toISOString(),createdAtMs:Date.now(),createdBy:uid(),createdByAuthUid:String(f.auth.currentUser.uid||''),createdByRole:role(),destinationCountryISO:iso,destinationCountryName:(countries().find(c=>c.iso===iso)||{}).name||iso,payoutMethod:channel,currency:String($('swi-currency').value||currency(iso)).toUpperCase(),amount:Number(amount.toFixed(2)),beneficiaryName:beneficiary,beneficiaryPhone:phone,destinationInstitution:$('swi-bank').value.trim(),destinationAccountLast4:last4,fundingMethod:funding,fundingProvider:provider,settlementBankId:bankId,settlementBankName:String(bank.banco||''),note:$('swi-note').value.trim(),status:provider==='BANCO'?'PENDIENTE_VERIFICACION_BANCARIA':'PENDIENTE_PAGO_PASARELA',paymentConfirmed:false,payoutConfirmed:false,actualCardCharge:false,actualBankDebit:false,actualPayout:false,cardDataStored:false,events:[{type:'SOLICITUD_CREADA',at:new Date().toISOString(),by:uid()}]};
+  if(status)status.textContent='Guardando solicitud en Firebase…';
+  try{const ref=requestRef().push();record.id=ref.key;await ref.set(record);if(status)status.textContent='Solicitud guardada con ID '+record.id+'. No se hizo cargo ni desembolso; falta confirmación bancaria/pasarela.';$('swi-form').reset();$('swi-currency').value=currency($('swi-country').value);await loadAll()}
+  catch(e){if(status)status.textContent='No se pudo guardar la solicitud: '+(e.message||'error de permisos')+'. No se debitó ningún dinero.'}
+ }
+ async function createRefund(ev){
+  ev.preventDefault();const status=$('swi-r-status'),f=fb();
+  if(!admin()||!f||!f.db||!f.auth||!f.auth.currentUser){if(status)status.textContent='Solo Administración con sesión Firebase puede registrar esta solicitud.';return}
+  const amount=n($('swi-r-amount').value),original=$('swi-r-original').value.trim(),reason=$('swi-r-reason').value.trim(),provider=$('swi-r-provider').value;
+  if(!(amount>0)||!original||!reason){if(status)status.textContent='Complete la referencia, monto y motivo.';return}
+  const record={provider,originalTransactionReference:original,amount:Number(amount.toFixed(2)),reason,status:'PENDIENTE_REVISION_PASARELA',requestedAt:new Date().toISOString(),requestedBy:uid(),executed:false,refundToOriginalCard:true,cardDataStored:false,events:[{type:'DEVOLUCION_SOLICITADA',at:new Date().toISOString(),by:uid()}]};
+  if(status)status.textContent='Registrando solicitud…';
+  try{const ref=refundRef().push();record.id=ref.key;await ref.set(record);status.textContent='Solicitud guardada como '+record.id+'. El dinero aún no se ha devuelto; falta la confirmación de '+provider+'.';$('swi-refund-form').reset();await loadAll()}
+  catch(e){if(status)status.textContent='No se pudo registrar la devolución: '+(e.message||'error de permisos')}
+ }
+ async function handleAction(ev){
+  const b=ev.target.closest('button[data-intl-action]');if(!b||!admin())return;
+  const f=fb();if(!f||!f.db||!f.auth||!f.auth.currentUser)return;
+  const action=b.dataset.intlAction,id=b.dataset.id;
+  try{
+   if(action==='payment'||action==='payout'){
+    const ref=requestRef().child(id),snap=await ref.once('value');if(!snap.exists())throw new Error('Solicitud no encontrada.');
+    const rec=snap.val(),title=action==='payment'?'Referencia del pago confirmado en AZUL/CardNET/banco:':'Referencia de entrega confirmada por el proveedor de salida:';
+    const external=window.prompt(title,'');if(!external||!external.trim())return;
+    const now=new Date().toISOString(),events=Array.isArray(rec.events)?rec.events:[];
+    if(action==='payment'){rec.paymentConfirmed=true;rec.paymentConfirmationReference=external.trim();rec.paymentConfirmedAt=now;rec.paymentConfirmedBy=uid();rec.status='PAGO_CONFIRMADO_EXTERNAMENTE';events.push({type:'PAGO_CONFIRMADO_EXTERNAMENTE',at:now,by:uid(),reference:external.trim()})}
+    else{if(!rec.paymentConfirmed){alert('Primero registre el pago recibido y confirmado.');return}rec.payoutConfirmed=true;rec.payoutConfirmationReference=external.trim();rec.payoutConfirmedAt=now;rec.payoutConfirmedBy=uid();rec.status='ENTREGA_CONFIRMADA_EXTERNAMENTE';events.push({type:'ENTREGA_CONFIRMADA_EXTERNAMENTE',at:now,by:uid(),reference:external.trim()})}
+    rec.events=events;await ref.set(rec);await loadAll();alert(action==='payment'?'Se registró la confirmación externa; no se cobró la tarjeta desde esta pantalla.':'Se registró la confirmación externa; no se ejecutó la transferencia desde esta pantalla.');
+   }else if(action==='refund'){
+    const ref=refundRef().child(id),snap=await ref.once('value');if(!snap.exists())throw new Error('Devolución no encontrada.');
+    const rec=snap.val(),decision=window.prompt('Escriba CONFIRMADO o RECHAZADO según la respuesta real de la pasarela:','');if(!decision)return;
+    const value=decision.trim().toUpperCase();if(!['CONFIRMADO','RECHAZADO'].includes(value)){alert('Respuesta no reconocida.');return}
+    const external=window.prompt('Referencia de respuesta del adquirente:','');if(!external||!external.trim())return;
+    const now=new Date().toISOString();rec.status=value==='CONFIRMADO'?'DEVOLUCION_CONFIRMADA_POR_PASARELA':'DEVOLUCION_RECHAZADA_POR_PASARELA';rec.executed=value==='CONFIRMADO';rec.providerResponseReference=external.trim();rec.providerRespondedAt=now;rec.providerRespondedBy=uid();rec.events=Array.isArray(rec.events)?rec.events:[];rec.events.push({type:rec.status,at:now,by:uid(),reference:external.trim()});await ref.set(rec);await loadAll();alert('Se guardó la respuesta externa informada. Esta pantalla no envió el reembolso al adquirente.');
+   }
+  }catch(e){alert('No se pudo actualizar: '+(e.message||'error de Firebase'))}
+ }
+ async function loadAll(){
+  const body=$('swi-rows'),refundBody=$('swi-refund-rows'),f=fb();if(!body||!refundBody)return;
+  if(!f||!f.db||!f.auth||!f.auth.currentUser){body.innerHTML='<tr><td colspan="7">Inicie sesión en Firebase.</td></tr>';return}
+  try{
+   const [a,b]=await Promise.all([requestRef().limitToLast(30).once('value'),refundRef().limitToLast(30).once('value')]);
+   let rows=a.exists()?Object.keys(a.val()||{}).map(k=>Object.assign({id:k},a.val()[k]||{})):[],refunds=b.exists()?Object.keys(b.val()||{}).map(k=>Object.assign({id:k},b.val()[k]||{})):[];
+   rows.sort((x,y)=>(y.createdAtMs||0)-(x.createdAtMs||0));refunds.sort((x,y)=>String(y.requestedAt||'').localeCompare(String(x.requestedAt||'')));
+   if(!admin()){rows=rows.filter(r=>String(r.createdBy)===uid());refunds=[]}
+   body.innerHTML=rows.map(r=>'<tr><td><b>'+esc(r.id)+'</b><div class="text-[9px] text-slate-500">'+esc(r.createdAt||'')+'</div></td><td>'+esc(r.destinationCountryName||r.destinationCountryISO)+' ('+esc(r.destinationCountryISO)+')</td><td>'+esc(r.payoutMethod)+'</td><td>'+esc(r.amount)+' '+esc(r.currency)+'</td><td>'+esc(r.settlementBankName||'Cuenta registrada')+'</td><td><span class="swi-status">'+esc(r.status)+'</span></td><td>'+(admin()?'<button class="swi-secondary" data-intl-action="payment" data-id="'+esc(r.id)+'" '+(r.paymentConfirmed?'disabled':'')+'>Registrar cobro confirmado</button> <button class="swi-secondary" data-intl-action="payout" data-id="'+esc(r.id)+'" '+(!r.paymentConfirmed||r.payoutConfirmed?'disabled':'')+'>Registrar entrega confirmada</button>':'—')+'</td></tr>').join('')||'<tr><td colspan="7">No hay solicitudes.</td></tr>';
+   refundBody.innerHTML=admin()?refunds.map(r=>'<tr><td><b>'+esc(r.id)+'</b></td><td>'+esc(r.provider)+'</td><td>'+esc(r.originalTransactionReference)+'</td><td>'+esc(r.amount)+'</td><td>'+esc(r.reason)+'</td><td>'+esc(r.status)+'</td><td><button class="swi-secondary" data-intl-action="refund" data-id="'+esc(r.id)+'">Registrar respuesta del adquirente</button></td></tr>').join('')||'<tr><td colspan="7">No hay devoluciones.</td></tr>':'<tr><td colspan="7">Disponible para Administración.</td></tr>';
+  }catch(e){body.innerHTML='<tr><td colspan="7">No se pudieron cargar solicitudes: '+esc(e.message||'permiso denegado')+'</td></tr>';refundBody.innerHTML='<tr><td colspan="7">No se pudieron cargar devoluciones.</td></tr>'}
+ }
+ function refresh(){if(!allowed())return;ensure()}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+ window.addEventListener('load',refresh);window.addEventListener('sendwayo:firebase-ready',refresh);window.addEventListener('sendwayo:banks-ready',refresh);window.addEventListener('sendwayo:workspace-header-refresh',refresh);
+ if(document.body)new MutationObserver(()=>{if($(VIEW)&&!$('sw-intl-ops'))refresh()}).observe(document.body,{childList:true,subtree:true});
+ window.sendwayoLoadInternationalRequests=loadAll;
+})();
+</script>
+
 </body>
 </html>
