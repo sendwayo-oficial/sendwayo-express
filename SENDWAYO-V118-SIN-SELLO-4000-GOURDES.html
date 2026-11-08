@@ -6595,9 +6595,11 @@ window.sendwayoShareReceipt=async function(){
     const blob=new Blob([csv],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=(viewKey(root)||'sendwayo')+(format==='excel'?'.xls':'.csv');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function exportIt(root,format){const view=viewKey(root);if(typeof window.sendwayoExportModule==='function'){window.sendwayoExportModule(view,format);return}if(typeof window.exportTable==='function'){window.exportTable(view,format);return}if(typeof window.v162_exportarModulo==='function'&&['envios','retiros','depositos'].includes(view)){window.v162_exportarModulo(view,format);return}if(typeof window.sendwayoTariffExport==='function'&&view.includes('tarif')){window.sendwayoTariffExport(format);return}genericTableExport(root,format);}
-  function alignToolbars(){
-    document.querySelectorAll('.view').forEach(root=>{
-      const table=root.querySelector('table');
+  function alignToolbars(scope){
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const root=scope&&scope.matches&&scope.matches('.view')?scope:document.querySelector('.view:not(.hidden)');
+    if(!root||root.classList.contains('hidden'))return;
+    const table=root.querySelector('table');
       if(!table)return;
       const view=viewKey(root);
       let row=root.querySelector('.sendwayo-toolbar-one-line[data-sendwayo-toolbar-v2="1"]');
@@ -6661,15 +6663,34 @@ window.sendwayoShareReceipt=async function(){
       const alreadyOrdered=row.children.length===ordered.length&&ordered.every((el,i)=>row.children[i]===el);
       if(!alreadyOrdered)row.replaceChildren(...ordered);
       row.querySelectorAll('button,a,input').forEach(el=>{el.style.minWidth='0';el.style.maxWidth='100%';el.style.boxSizing='border-box';});
-    });
   }
   // Don't let a mutation observer repeatedly reprocess the same row; wait once after renders.
-  let toolbarQueued=false;function queueToolbar(){if(!document.body.classList.contains('sendwayo-authenticated')||toolbarQueued)return;toolbarQueued=true;setTimeout(()=>{toolbarQueued=false;try{alignToolbars()}catch(_){}},100)}
+  let toolbarQueued=false,toolbarPendingRoot=null;
+  function queueToolbar(root){
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    toolbarPendingRoot=root||document.querySelector('.view:not(.hidden)');
+    if(toolbarQueued)return;
+    toolbarQueued=true;
+    setTimeout(()=>{
+      toolbarQueued=false;const target=toolbarPendingRoot;toolbarPendingRoot=null;
+      try{alignToolbars(target)}catch(_){}
+    },120);
+  }
   function init(){cleanLogin();setupManualAmounts();alignToolbars();updateFinanceDisplay();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.addEventListener('load',()=>{cleanLogin();setupManualAmounts();alignToolbars();updateFinanceDisplay();});
   document.addEventListener('click',ev=>{if(ev.target.closest('button[onclick*="showView("],button[onclick*="sendwayoAgregarModulo"],button[onclick*="abrirModalSeparado"]'))setTimeout(()=>{setupManualAmounts();alignToolbars()},80)},true);
-  const observer=new MutationObserver(queueToolbar);try{observer.observe(document.documentElement,{subtree:true,childList:true})}catch(_){}
+  const observer=new MutationObserver(records=>{
+    if(!document.body.classList.contains('sendwayo-authenticated'))return;
+    const active=document.querySelector('.view:not(.hidden)');if(!active)return;
+    const relevant=records.some(rec=>[...rec.addedNodes,...rec.removedNodes].some(node=>{
+      if(node.nodeType!==1||node.closest?.('.sendwayo-toolbar-one-line'))return false;
+      if(node!==active&&!active.contains(node))return false;
+      return node.matches?.('table,tbody,input[type="search"],.overflow-x-auto')||node.querySelector?.('table,tbody,input[type="search"]');
+    }));
+    if(relevant)queueToolbar(active);
+  });
+  if(document.body)observer.observe(document.body,{subtree:true,childList:true});
   window.sendwayoFinalRefreshControls=()=>{setupManualAmounts();alignToolbars();cleanLogin()};
 })();
 </script>
