@@ -3408,6 +3408,112 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
+
+<!-- SENDWAYO V7: idempotencia de aprobaciones, paginación modular y menú móvil -->
+<style id="sendwayo-v7-final-order">
+@media(max-width:1024px){
+ #sendwayo-mobile-menu{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+ #sendwayo-main-sidebar{z-index:2147482600!important}
+ #sendwayo-menu-shade{z-index:2147482500!important}
+}
+#view-tablero table:has(#tabla-principal-body){display:none!important}
+#view-tablero #tabla-principal-body{display:none!important}
+.sendwayo-generic-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px;font-size:12px;color:#334155}
+.sendwayo-generic-pager button{border:1px solid #cbd5e1;border-radius:999px;padding:9px 14px;font-weight:800;background:#fff;min-height:40px}
+.sendwayo-generic-pager button:disabled{opacity:.45}
+</style>
+<script id="sendwayo-v7-final-integrity">
+(function(){
+ 'use strict';
+ const norm=v=>String(v??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+ const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];
+ const approved=t=>['aprobado','approved','pagado'].includes(norm(t&&(t.estado||t.status)));
+ const busy=new Set();
+ function findTx(id){return txs().find(t=>String(t.id)===String(id));}
+ // Protección inmediata del botón y segunda barrera atómica en Firebase durante la sincronización.
+ const approveOriginal=window.aprobar;
+ if(typeof approveOriginal==='function'&&!approveOriginal.__sendwayoOnce){
+  const guarded=function(id){
+   const t=findTx(id);
+   if(!t){return;}
+   if(approved(t)){alert('Esta transacción ya está aprobada. No se puede aprobar dos veces.');return;}
+   const key=String(id);
+   if(busy.has(key)){return;}
+   busy.add(key);
+   try{return approveOriginal.apply(this,arguments);}
+   finally{window.setTimeout(()=>busy.delete(key),5000);}
+  };
+  guarded.__sendwayoOnce=true;window.aprobar=guarded;
+ }
+ const genericOriginal=window.sendwayoActionGeneric;
+ if(typeof genericOriginal==='function'&&!genericOriginal.__sendwayoOnce){
+  const guardedGeneric=function(view,action,id){
+   if(['aprobar','approve','aceptar'].includes(norm(action))){
+    const t=findTx(id);
+    if(t&&approved(t)){alert('Esta transacción ya está aprobada. No se repetirá.');return;}
+    const k=String(view)+':'+String(id);
+    if(busy.has(k))return;
+    busy.add(k);
+    try{return genericOriginal.apply(this,arguments);}
+    finally{window.setTimeout(()=>busy.delete(k),5000);}
+   }
+   return genericOriginal.apply(this,arguments);
+  };
+  guardedGeneric.__sendwayoOnce=true;window.sendwayoActionGeneric=guardedGeneric;
+ }
+ // Paginación 10 por página para tablas de los módulos personalizados; no toca el tablero.
+ const pages=Object.create(null);
+ function applyPager(view){
+  if(!view||view==='tablero')return;
+  const root=document.getElementById('view-'+view);if(!root||root.classList.contains('hidden'))return;
+  const table=root.querySelector('table[id^="tabla-sendwayo-"],table');
+  if(!table||!table.tBodies||!table.tBodies[0])return;
+  if(root.querySelector('[id^="sendwayo-module-pagination-"]'))return;
+  const body=table.tBodies[0],all=[...body.rows];
+  if(!all.length)return;
+  const key=view,st=pages[key]||(pages[key]={page:1,query:''});
+  let pager=root.querySelector('.sendwayo-generic-pager');
+  if(!pager){pager=document.createElement('div');pager.className='sendwayo-generic-pager';pager.id='sendwayo-generic-pager-'+view;table.parentElement.insertAdjacentElement('afterend',pager);}
+  const inputs=[...root.querySelectorAll('input[type="search"],input[placeholder*="Buscador"],input[placeholder*="buscar" i]')];
+  const input=inputs[0];
+  if(input&&!input.dataset.sendwayoPagerBound){
+   input.dataset.sendwayoPagerBound='1';
+   input.addEventListener('input',()=>{st.page=1;window.setTimeout(()=>applyPager(view),0);});
+  }
+  const q=norm(input&&input.value||'');
+  if(st.query!==q){st.query=q;st.page=1;}
+  const filtered=all.filter(row=>!q||norm(row.innerText).includes(q));
+  const count=Math.max(1,Math.ceil(filtered.length/10));st.page=Math.min(Math.max(1,st.page),count);
+  const start=(st.page-1)*10;
+  all.forEach(row=>row.style.display='none');
+  filtered.forEach((row,index)=>{
+   const visible=index>=start&&index<start+10;
+   row.style.display=visible?'':'none';
+   if(visible&&row.cells.length){
+    const first=row.cells[0];
+    if(first.dataset.sendwayoOriginalNumber===undefined)first.dataset.sendwayoOriginalNumber=first.textContent.trim();
+    first.textContent=String(index+1-start).padStart(2,'0');
+   }
+  });
+  const from=filtered.length?start+1:0,to=Math.min(start+10,filtered.length);
+  pager.innerHTML='<span>Registros '+String(from).padStart(2,'0')+'–'+String(to).padStart(2,'0')+' de '+filtered.length+' · Página '+st.page+' de '+count+'</span><div style="display:flex;gap:8px"><button type="button" '+(st.page<=1?'disabled':'')+' data-page="-1">Anterior</button><button type="button" '+(st.page>=count?'disabled':'')+' data-page="1">Siguiente</button></div>';
+  pager.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{st.page=Math.min(count,Math.max(1,st.page+Number(btn.dataset.page)));applyPager(view);}));
+ }
+ const renderOriginal=window.renderModuloSeparado;
+ if(typeof renderOriginal==='function'&&!renderOriginal.__sendwayoPager){
+  const wrapped=function(view){
+   const result=renderOriginal.apply(this,arguments);
+   window.setTimeout(()=>applyPager(view),0);
+   return result;
+  };
+  wrapped.__sendwayoPager=true;window.renderModuloSeparado=wrapped;
+ }
+ window.addEventListener('sendwayo:transactions-updated',()=>{
+  const active=[...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden'));
+  if(active)window.setTimeout(()=>applyPager(active.id.replace(/^view-/,'')||''),0);
+ });
+})();
+</script>
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
@@ -8008,7 +8114,29 @@ window.sendwayoShareReceipt=async function(){
     const accountChanged=(role==='ADMIN'||role==='AGENTE')&&localMoneyChanged;
     if(!changed.length&&!accountChanged&&!deleted.length){return;}
     state.syncBusy=true;
+    const approvalClaims=[];
     try{
+      // Reclamo atómico en Realtime Database: una sola sesión puede obtener el derecho de aprobar.
+      // Si las reglas no permiten el reclamo, la operación falla cerrada y no acredita balances.
+      for(const t of changed){
+        const nextStatus=norm(t.estado||t.status||'');
+        const raw=t._cloudRaw||{};
+        const previousStatus=norm(raw.status||raw.estado||'Pendiente');
+        if(nextStatus!=='aprobado'||['aprobado','approved','pagado'].includes(previousStatus))continue;
+        const category=txt(t.firebaseCategory||categoryForTx(t));
+        const key=safeDbKey(t.firebaseKey||t.id);
+        if(!category)throw new Error('No se pudo identificar la categoría para proteger la aprobación única.');
+        const recordRef=db.ref(ROOT+'/'+category+'/'+key);
+        const currentSnap=await recordRef.once('value');
+        const currentRow=currentSnap.val()||{};
+        const currentStatus=norm(currentRow.status||currentRow.estado||'Pendiente');
+        if(['aprobado','approved','pagado'].includes(currentStatus))throw new Error('Esta transacción ya fue aprobada en otro dispositivo. No se repetirá el crédito ni el pago.');
+        const lockRef=recordRef.child('approvalLock');
+        const lock={authUid:auth.currentUser.uid,userId:state.profileKey,role:actorRole,transactionId:txt(t.id),claimedAtMs:Date.now()};
+        const claim=await lockRef.transaction(value=>value?undefined:lock,undefined,false);
+        if(!claim.committed)throw new Error('Otro usuario ya está procesando la aprobación de esta transacción. No se realizará un segundo pago.');
+        approvalClaims.push({recordRef,lockRef,lock});
+      }
       const packageData=await buildCloudUpdates({current:changed,deleted});
       if(!Object.keys(packageData.updates).length){changed.forEach(t=>state.lastTxSnapshot.set(txt(t.id),transactionSignature(t)));return;}
       await db.ref().update(packageData.updates);
@@ -8027,8 +8155,20 @@ window.sendwayoShareReceipt=async function(){
       if(state.directory.some(r=>r.key===state.profileKey)){try{const currentProfileSnap=await userRoot.child(state.profileKey).once('value');if(currentProfileSnap.exists())state.profile=currentProfileSnap.val();}catch(e){}}
       clearSyncIssue();
     }catch(error){
+      // Liberar un reclamo únicamente si el registro sigue sin aprobarse. Si Firebase ya guardó
+      // la aprobación, el candado se conserva aunque se haya perdido la respuesta de red.
+      for(const claim of approvalClaims){
+        try{
+          const snap=await claim.recordRef.once('value');
+          const row=snap.val()||{};
+          const status=norm(row.status||row.estado||'Pendiente');
+          if(!['aprobado','approved','pagado'].includes(status)){
+            await claim.lockRef.transaction(value=>value&&value.authUid===claim.lock.authUid?null:undefined,undefined,false);
+          }
+        }catch(releaseError){console.warn('[SENDWAYO] No se pudo liberar un reclamo de aprobación fallido:',releaseError?.message||releaseError);}
+      }
       const message=error?.code==='PERMISSION_DENIED'||/permission_denied|permission denied/i.test(error?.message||'')
-        ? 'Firebase rechazó la escritura por sus reglas de seguridad. La operación no se confirmó; no la repita todavía.'
+        ? 'Firebase rechazó la escritura o el candado de aprobación por sus reglas. La operación no se confirmó; no la repita todavía.'
         : (error?.message||'No fue posible confirmar los cambios en Firebase.');
       showSyncIssue(message);
       // Revert the local transaction list to the last known remote baseline for any failed new record/status edit.
