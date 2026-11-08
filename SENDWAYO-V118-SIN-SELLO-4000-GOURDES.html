@@ -6326,7 +6326,7 @@ window.sendwayoShareReceipt=async function(){
   // Keep the signed-in session after refresh for up to 40 minutes of inactivity in this tab.
   const ACTIVITY_KEY='sendwayo_express_oficial_20261029_last_activity_v5',AUTH_KEY='sendwayo_express_oficial_20261029_auth_snapshot_v1',LIMIT=40*60*1000;
   function saveAuthSnapshot(){const u=current();if(!u)return;try{sessionStorage.setItem(AUTH_KEY,JSON.stringify({user:{id:u.id,uid:u.uid,codigo:u.codigo,nombre:u.nombre,name:u.name,role:u.role,rol:u.rol,email:u.email,usuario:u.usuario,celular:u.celular,telefono:u.telefono},savedAt:Date.now()}));sessionStorage.setItem(ACTIVITY_KEY,String(Date.now()))}catch(_){} }
-  function restoreAuth(){try{sessionStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(ACTIVITY_KEY)}catch(_){}}
+  function restoreAuth(){try{sessionStorage.removeItem(AUTH_KEY)}catch(_){}}
   const oldLogin=window.intentarLogin;if(typeof oldLogin==='function'&&!oldLogin.__sendwayoAuthSnapshot){const wrappedLogin=function(){let r;try{r=oldLogin.apply(this,arguments)}catch(error){console.error('SENDWAYO: error al validar el acceso',error);const err=$('login-error');if(err){err.textContent='No se pudo completar el acceso. Revise usuario y contraseña e inténtelo otra vez.';err.classList.remove('hidden')}const login=$('login-screen');if(login){login.classList.remove('hidden');login.style.display='flex'}return false}setTimeout(()=>{if(current()){saveAuthSnapshot();renderSavedNotifications();deliverQueue();setupExactSelectors();updateVisibleMoney();hideUnauthorizedApprovalButtons()}},250);return r};wrappedLogin.__sendwayoAuthSnapshot=true;window.intentarLogin=wrappedLogin;}
   const oldLogout=window.cerrarSesion;if(typeof oldLogout==='function'&&!oldLogout.__sendwayoAuthSnapshot){const wrappedLogout=function(){const before=current();const r=oldLogout.apply(this,arguments);try{sessionStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(ACTIVITY_KEY)}catch(_){}return r};wrappedLogout.__sendwayoAuthSnapshot=true;window.cerrarSesion=wrappedLogout;}
   ['pointerdown','keydown','touchstart','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>{if(current())saveAuthActivityOnly()}, {capture:true,passive:true}));
@@ -6908,7 +6908,7 @@ window.sendwayoShareReceipt=async function(){
   function updateSidebarPendingCounts(){const side=$('sendwayo-main-sidebar');if(!side)return;const u=getUser(),uId=aid(activeAccount()||u),uRole=role(u);const txs=allTx();side.querySelectorAll('button[onclick*="showView("]').forEach(btn=>{const m=(btn.getAttribute('onclick')||'').match(/showView\(['"]([^'"]+)['"]\)/);if(!m)return;const view=m[1];if(!['envios','retiros','depositos','recargas','paquetikos','facturas'].includes(view))return;let count=txs.filter(t=>moduleForType(t.tipo)===view&&['pendiente','no coincide'].includes(norm(t.estado))).filter(t=>{if(view==='depositos')return uRole.includes('ADMIN');if(uRole.includes('AGENTE'))return ![t.creadorId,t.creadoPorId,t.usuarioId].some(v=>String(v)===String(uId));return uRole.includes('ADMIN')}).length;let badge=btn.querySelector('[data-sendwayo-pending-count]');if(!badge){badge=document.createElement('span');badge.dataset.sendwayoPendingCount='1';badge.style.cssText='display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:10px;font-weight:900;vertical-align:middle';btn.appendChild(badge)}badge.textContent=count?String(count):'';badge.style.display=count?'inline-flex':'none';});}
 
   // Restore the active account's balance view after refresh while less than 40 minutes of inactivity have elapsed.
-  function restoreSessionWithoutResettingActivity(){try{sessionStorage.removeItem('sendwayo_express_oficial_20261029_auth_snapshot_v1');sessionStorage.removeItem('sendwayo_express_oficial_20261029_last_activity_v5')}catch(_){}}
+  function restoreSessionWithoutResettingActivity(){try{sessionStorage.removeItem('sendwayo_express_oficial_20261029_auth_snapshot_v1')}catch(_){}}
   function initialize(){restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts();try{window.sendwayoFinalRefreshControls?.()}catch(_){} }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
   window.addEventListener('pageshow',()=>{restoreSessionWithoutResettingActivity();syncMirrors();window.refreshBellCount();updateSidebarPendingCounts()});
@@ -8145,40 +8145,76 @@ window.sendwayoShareReceipt=async function(){
   state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
-      if(state.loginBusy || state.sessionEstablished) return;
-      state.sessionEstablished=false;
-      state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
+      if(state.loginBusy||state.sessionEstablished)return;
+      state.sessionEstablished=false;state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
       stopListeners();if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;}
       try{window.currentUser=null;currentUser=null}catch(e){}
       showLogin();return;
     }
-    if(state.loginBusy||state.readReady||state.sessionEstablished) return;
+    if(state.loginBusy||state.readReady||state.sessionEstablished)return;
     state.loginBusy=true;
     try{
-      // La sesión se valida con Firebase Authentication y el perfil/rol de Realtime Database.
-      // El Worker no debe bloquear la apertura del portal si su endpoint externo no responde.
-      const found=await readProfile(user);
-      if(!found) throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise el directorio.');
+      // Validar identidad, rol y activación del agente antes de abrir el área privada.
+      const found=await loginStep(readProfile(user),'La lectura del perfil en Firebase',12000);
+      if(!found)throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise su cuenta.');
       const role=canonicalRole(found.data,found.key);
-      if(!role||!isActive(found.data)) throw new Error('El perfil no tiene un rol válido o está inactivo.');
-      const linked=await bindIdentity(found,user,role);
-      if(role==='ADMIN') await ensureInitialDirectoryProfiles(user);
-      await activateAgentMapping(user,linked,role);
-      await loadDirectory(linked,role);watchDirectory(linked,role);
-      await loadAuxiliaryData(linked,role);
+      if(!role||!isActive(found.data))throw new Error('El perfil no tiene un rol válido o está inactivo.');
+      const linked=await loginStep(bindIdentity(found,user,role),'La vinculación del perfil',8000);
+      if(role==='AGENTE')await loginStep(activateAgentMapping(user,linked,role),'La validación de activación del agente',8000);
+
       const appId=appIdFor(linked.data,linked.key,role);
       const account=hydrateFrontendAccount(linked.key,linked.data,appId,role);
       const appUser={...account,id:appId,dbUserKey:linked.key,uid:user.uid,email:user.email,usuario:user.email,role,nombre:account.nombre,name:account.name,codigo:account.codigo};
       window.currentUser=appUser;try{currentUser=appUser}catch(e){}
-      state.profile=linked.data;state.profileKey=linked.key;
-      await loadCloudTransactions(linked,role,user.uid);
-      state.lastTxSnapshot=makeTransactionSnapshot();state.lastAccountSnapshot=makeAccountSnapshot();state.lastAccountValues=makeAccountValueSnapshot();
-      state.lastSyncError='';startCloudSync();setVisibleAfterLogin(appUser);
-      try{if(typeof renderPrincipal==='function')renderPrincipal();if(typeof updateVisibleMoney==='function')updateVisibleMoney()}catch(e){}
+      state.profile=linked.data;state.profileKey=linked.key;state.directory=[linked];
+      state.sessionEstablished=true;state.readReady=false;state.remoteTransactions={};
+
+      // La sesión restaurada se muestra apenas la identidad queda validada.
+      setVisibleAfterLogin(appUser);
+      try{if(typeof renderPrincipal==='function')renderPrincipal();}catch(e){}
+      try{if(typeof updateVisibleMoney==='function')updateVisibleMoney();}catch(e){}
+      window.dispatchEvent(new CustomEvent('sendwayo:firebase-ready',{detail:{role,profileKey:linked.key,sessionRestored:true}}));
+
+      // Directorio, avisos, beneficiarios y movimientos se sincronizan en segundo plano.
+      (async function loadRestoredDashboardData(){
+        try{
+          if(role==='ADMIN'){
+            try{await loginStep(ensureInitialDirectoryProfiles(user),'La preparación del directorio',10000);}
+            catch(error){console.warn('[SENDWAYO] Preparación del directorio pendiente:',error);}
+          }
+          try{
+            await loginStep(loadDirectory(linked,role),'La carga del directorio',10000);
+            watchDirectory(linked,role);
+          }catch(error){console.warn('[SENDWAYO] Directorio no disponible todavía:',error);}
+          if(role==='ADMIN'&&typeof window.sendwayoSyncAgentAuthMappings==='function'){
+            try{await loginStep(window.sendwayoSyncAgentAuthMappings(),'La sincronización de agentes',8000);}
+            catch(error){console.warn('[SENDWAYO] Sincronización de agentes pendiente:',error);}
+          }
+          const results=await Promise.allSettled([
+            loginStep(loadAuxiliaryData(linked,role),'La carga de cuentas, beneficiarios y avisos',12000),
+            loginStep(loadCloudTransactions(linked,role,user.uid),'La carga de operaciones',15000)
+          ]);
+          const failed=results.filter(result=>result.status==='rejected');
+          if(state.readReady){
+            state.lastTxSnapshot=makeTransactionSnapshot();state.lastAccountSnapshot=makeAccountSnapshot();state.lastAccountValues=makeAccountValueSnapshot();
+            state.lastSyncError='';startCloudSync();
+            try{if(typeof renderPrincipal==='function')renderPrincipal();}catch(e){}
+            try{if(typeof updateVisibleMoney==='function')updateVisibleMoney();}catch(e){}
+            try{window.dispatchEvent(new CustomEvent('sendwayo:transactions-updated'));}catch(e){}
+          }
+          if(failed.length||!state.readReady){
+            showLoginSyncWarning('La sesión se restauró. Algunas listas todavía se están sincronizando con Firebase; espere a que aparezcan antes de registrar operaciones.');
+          }else document.getElementById('sendwayo-login-sync-warning')?.remove();
+        }catch(backgroundError){
+          console.error('[SENDWAYO] Error de carga posterior a la restauración:',backgroundError);
+          showLoginSyncWarning('La sesión se restauró, pero la sincronización necesita revisión: '+(backgroundError?.message||'error de conexión.'));
+        }
+      })();
     }catch(error){
-      console.error('[SENDWAYO Firebase session]',error);stopListeners();state.readReady=false;
+      console.error('[SENDWAYO Firebase session]',error);stopListeners();state.readReady=false;state.sessionEstablished=false;
       const message=error?.message||'No se pudo restaurar la sesión desde Firebase.';
-      try{await auth.signOut()}catch(e){}showLogin();loginError(message);
+      try{await auth.signOut()}catch(e){}
+      showLogin();loginError(message);
     }finally{state.loginBusy=false;}
   });
   }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLogin();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
@@ -8884,7 +8920,7 @@ window.sendwayoShareReceipt=async function(){
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
    var a=id?accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id);});})||null:null;
-   var prefix=view==='agentes'?'AGE':'REM',num=1;
+   var prefix=view==='agentes'?'AGE':'REM',num=view==='agentes'?40001:1;
    if(!a){while(accounts.some(function(x){return String(x.id||'')===prefix+String(num).padStart(5,'0');}))num++;}
    var visibleId=a?String(a.id):prefix+String(num).padStart(5,'0');
    oldOpen(view,id||'');
@@ -9271,7 +9307,7 @@ window.sendwayoShareReceipt=async function(){
  const norm=v=>txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
  const esc=v=>txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function subjects(){let a=[],r=[];try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))a=AGENTES;else if(Array.isArray(window.AGENTES))a=window.AGENTES;}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))r=REMITENTES;else if(Array.isArray(window.REMITENTES))r=window.REMITENTES;}catch(e){}return a.concat(r);}
- function identity(a){return [a.id,a.idAnterior,a.legacyId,a.accountId,a.staffId,a.codigo,a.codigo2,a.codigoAnterior].concat(Array.isArray(a.idAliases)?a.idAliases:[],Array.isArray(a.codeAliases)?a.codeAliases:[]).filter(Boolean).map(norm);}
+ function identity(a){return [a.id,a.idAnterior,a.legacyId,a.accountId,a.staffId].concat(Array.isArray(a.idAliases)?a.idAliases:[]).filter(Boolean).map(norm);}
  function tokens(a){return new Set(identity(a).concat([a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid,a.email,a.authEmail].filter(Boolean).map(norm)));}
  function linked(row,set){
   const found=[];function walk(o,d){if(!o||typeof o!=='object'||d>3)return;Object.keys(o).forEach(k=>{const v=o[k];if(/(user.?id|owner.?id|account.?id|remitente.?id|sender.?id|agent.?id|created.?by|actor.?id|authuid|target.?userid|reviewed.?by|dbuserkey|firebaseownerkey)/i.test(k)){if(typeof v==='string'||typeof v==='number')found.push(norm(v));if(Array.isArray(v))v.forEach(x=>{if(typeof x==='string'||typeof x==='number')found.push(norm(x));});}if(v&&typeof v==='object')walk(v,d+1);});}
@@ -9525,12 +9561,14 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   side.querySelectorAll('#sendwayo-v7-user-strip,#sendwayo-active-identity-strip,[data-sendwayo-user-identity],.sidebar-business-name').forEach(el=>el.remove());
  }
  function layout(){
-  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip'),shell=$('sendwayo-workspace-shell'),main=$('sendwayo-main-content');
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip'),shell=$('sendwayo-workspace-shell'),main=$('sendwayo-main-content'),side=findSidebar();
   if(!bar||!strip)return;
   if(strip.parentElement!==document.body||strip.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',strip);
+  // El menú no reserva una columna: se convierte en panel superpuesto de ancho completo.
+  if(side&&side.parentElement!==document.body)document.body.appendChild(side);
   bar.classList.add('sticky');
-  if(shell){shell.style.setProperty('display','block','important');shell.style.setProperty('width','100%','important');}
-  if(main){main.style.setProperty('display','block','important');main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');}
+  if(shell){shell.style.setProperty('display','block','important');shell.style.setProperty('width','100%','important');shell.style.setProperty('max-width','100%','important');shell.style.setProperty('margin','0','important');}
+  if(main){main.style.setProperty('display','block','important');main.style.setProperty('flex','none','important');main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');main.style.setProperty('min-width','0','important');main.style.setProperty('margin','0','important');}
   ensureMenu();refreshIdentity();updateMenuPosition();
  }
  function refresh(){layout();}
@@ -9584,3 +9622,33 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
  setup();
 })();
 </script>
+
+<style id="sendwayo-v7-no-side-identity-final">
+/* Disposición final: marca, identidad y hora arriba; módulo a todo el ancho. */
+#sendwayo-brand-bar{position:sticky!important;top:0!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;z-index:2147482000!important}
+#sendwayo-v7-user-strip{position:sticky!important;top:58px!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
+#sendwayo-workspace-shell{display:block!important;position:relative!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+#sendwayo-main-content{display:block!important;position:relative!important;float:none!important;flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:clamp(8px,1.5vw,20px)!important;box-sizing:border-box!important}
+#sendwayo-main-content>.view,#sendwayo-main-content>.view:not(.hidden),#sendwayo-main-content .view:not(.hidden){display:block;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}
+#sendwayo-main-sidebar{
+ position:fixed!important;left:0!important;right:0!important;top:var(--sendwayo-top-menu-top,118px)!important;bottom:auto!important;
+ width:100vw!important;max-width:100vw!important;height:auto!important;min-height:0!important;
+ max-height:calc(100dvh - var(--sendwayo-top-menu-top,118px) - 8px)!important;
+ display:grid!important;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;
+ align-content:start!important;gap:7px!important;overflow-y:auto!important;overflow-x:hidden!important;
+ transform:translateY(-12px)!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+ z-index:2147482600!important;border-radius:0 0 18px 18px!important
+}
+#sendwayo-main-sidebar.sendwayo-menu-open{transform:translateY(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+#sendwayo-main-sidebar .sidebar-brand,#sendwayo-main-sidebar .sidebar-business-name,
+#sendwayo-main-sidebar #user-top,#sendwayo-main-sidebar #hora-top,#sendwayo-main-sidebar #sendwayo-active-identity-strip,
+#sendwayo-main-sidebar #sendwayo-v7-user-strip,#sendwayo-main-sidebar .sendwayo-business-user-stack,
+#sendwayo-main-sidebar [data-sendwayo-user-identity]{display:none!important;visibility:hidden!important}
+#user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
+@media(max-width:700px){
+ #sendwayo-v7-user-strip{top:54px!important;padding:8px 10px!important;gap:7px!important}
+ #sendwayo-main-content{padding:8px!important}
+ #sendwayo-main-sidebar{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;padding-left:9px!important;padding-right:9px!important}
+}
+</style>
