@@ -101,7 +101,8 @@ jobs:
                 throw new Error('La página pública no respondió correctamente.');
               }
 
-              await page.waitForTimeout(5000);\n              await new Promise(resolve => setTimeout(resolve, 300));
+              await page.waitForTimeout(5000);
+              await new Promise(resolve => setTimeout(resolve, 300));
               const initial = await page.evaluate(() => {
                 const welcome = document.querySelector('#welcome-landing');
                 const login = document.querySelector('#login-screen');
