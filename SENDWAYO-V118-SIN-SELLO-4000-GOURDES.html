@@ -10351,3 +10351,84 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 </script>
 </body>
 </html>
+
+<!-- SENDWAYO V7 NAVIGATION RESTORE 2026-11-08 -->
+<style id="sendwayo-v7-left-floating-menu-final">
+/* Escritorio: menú vertical fijo a la izquierda y un solo módulo en el área de trabajo. */
+@media (min-width:1025px){
+  #sendwayo-workspace-shell{
+    display:flex!important; flex-direction:row!important; align-items:stretch!important;
+    width:100%!important; max-width:100%!important; min-width:0!important;
+  }
+  #sendwayo-main-sidebar{
+    display:block!important; visibility:visible!important; opacity:1!important; pointer-events:auto!important;
+    position:sticky!important; top:118px!important; align-self:flex-start!important;
+    flex:0 0 250px!important; width:250px!important; min-width:250px!important; max-width:250px!important;
+    height:calc(100dvh - 118px)!important; min-height:calc(100dvh - 118px)!important;
+    max-height:calc(100dvh - 118px)!important; overflow-y:auto!important; overflow-x:hidden!important;
+    transform:none!important; border-radius:0 16px 16px 0!important;
+    background:#0f2440!important; color:#fff!important; z-index:1000!important;
+    box-shadow:5px 0 20px rgba(15,36,64,.12)!important;
+  }
+  #sendwayo-main-sidebar button[onclick*="showView"]{
+    display:flex!important; width:100%!important; min-height:46px!important; height:auto!important;
+    align-items:center!important; justify-content:flex-start!important; gap:11px!important;
+    padding:11px 14px!important; margin:2px 0!important; border-radius:9px!important;
+    color:#fff!important; text-align:left!important; white-space:normal!important;
+    font-size:13px!important; line-height:1.35!important;
+  }
+  #sendwayo-main-content{
+    display:block!important; flex:1 1 auto!important; float:none!important;
+    width:auto!important; max-width:none!important; min-width:0!important;
+    margin:0!important; padding:clamp(12px,1.5vw,24px)!important; box-sizing:border-box!important;
+  }
+  #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
+  #sendwayo-menu-shade{display:none!important}
+}
+/* Teléfono/tableta: el mismo menú aparece como cajón flotante desde la izquierda. */
+@media (max-width:1024px){
+  #sendwayo-workspace-shell{display:block!important; position:relative!important; width:100%!important; max-width:100%!important}
+  #sendwayo-main-sidebar{
+    display:block!important; visibility:hidden!important; opacity:0!important; pointer-events:none!important;
+    position:fixed!important; left:0!important; right:auto!important;
+    top:var(--sendwayo-top-menu-top,118px)!important; bottom:0!important;
+    width:min(300px,88vw)!important; min-width:0!important; max-width:88vw!important;
+    height:auto!important; max-height:calc(100dvh - var(--sendwayo-top-menu-top,118px))!important;
+    overflow-y:auto!important; overflow-x:hidden!important; transform:translateX(-110%)!important;
+    transition:transform .2s ease!important; grid-template-columns:1fr!important;
+    align-content:start!important; gap:2px!important; border-radius:0 16px 16px 0!important;
+    background:#0f2440!important; color:#fff!important; z-index:2147482600!important;
+    box-shadow:8px 0 28px rgba(0,0,0,.25)!important;
+  }
+  #sendwayo-main-sidebar.sendwayo-menu-open{
+    display:block!important; visibility:visible!important; opacity:1!important;
+    pointer-events:auto!important; transform:translateX(0)!important;
+  }
+  #sendwayo-main-sidebar button[onclick*="showView"]{
+    display:flex!important; width:100%!important; min-height:48px!important; height:auto!important;
+    align-items:center!important; gap:11px!important; padding:11px 14px!important; margin:2px 0!important;
+    color:#fff!important; text-align:left!important; font-size:14px!important;
+    line-height:1.35!important; white-space:normal!important; overflow:visible!important;
+  }
+  #sendwayo-mobile-menu.sendwayo-top-menu-toggle{
+    display:inline-flex!important; position:static!important; left:auto!important; top:auto!important;
+    width:40px!important; height:40px!important; min-width:40px!important; min-height:40px!important;
+    align-items:center!important; justify-content:center!important; margin:0!important;
+    border:0!important; border-radius:10px!important; background:#173b68!important;
+    color:#fff!important; font-size:23px!important; z-index:2147482700!important;
+  }
+  #sendwayo-menu-shade{
+    display:none!important; position:fixed!important; left:0!important; right:0!important;
+    top:var(--sendwayo-top-menu-top,118px)!important; bottom:0!important;
+    background:rgba(0,0,0,.48)!important; z-index:2147482500!important;
+  }
+  #sendwayo-menu-shade.open{display:block!important}
+  #sendwayo-main-content{
+    display:block!important; width:100%!important; max-width:100%!important;
+    min-width:0!important; margin:0!important; padding:10px!important; box-sizing:border-box!important;
+  }
+}
+/* Garantiza que solo se muestre el módulo seleccionado por showView(). */
+#sendwayo-main-content .view.hidden{display:none!important}
+#sendwayo-main-content .view:not(.hidden){display:block!important}
+</style>
