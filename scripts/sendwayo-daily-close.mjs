@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 const fs=require('fs');
-const data=JSON.parse(fs.readFileSync(0,'utf8'));
+const payload=JSON.parse(fs.readFileSync(0,'utf8'));
+const data=payload&&payload.status==='success'&&Object.prototype.hasOwnProperty.call(payload,'result')
+  ? (typeof payload.result==='string'?JSON.parse(payload.result):payload.result)
+  : payload;
 const root=data.sendwayo_express_v2||data||{};
+if(!root||typeof root!=='object'||Array.isArray(root))throw new Error('Snapshot de Realtime Database inválido');
 const cols=['envios','recargas','paqueticos','pagos','paquetes'];
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const dayKey=v=>{
