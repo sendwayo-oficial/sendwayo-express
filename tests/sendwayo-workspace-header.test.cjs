@@ -21,8 +21,8 @@ assert.ok(refreshIdentity.includes("'sendwayo-v7-id':txt(u&&(u.id||u.accountId)"
 assert.match(refreshIdentity, /'sendwayo-v7-code':txt\(u&&\(u\.codigo\|\|u\.codigo2\)/, 'el código visible debe proceder del perfil activo');
 assert.match(html, /id="sendwayo-main-content"/, 'el contenido principal debe usar un único contenedor');
 const layoutCss=html.slice(html.indexOf('<style id="sendwayo-v7-no-side-identity-final">'));
-assert.match(layoutCss, /#sendwayo-main-sidebar\{[\s\S]*?position:fixed!important[\s\S]*?transform:translateX\(-105%\)!important[\s\S]*?visibility:hidden!important/s, 'el menú no debe reservar una columna mientras está cerrado');
-assert.match(layoutCss, /#sendwayo-main-sidebar\\.sendwayo-menu-open\\{[\\s\\S]*?display:grid!important[\\s\\S]*?visibility:visible!important/s, 'el menú debe aparecer solo cuando se abra');
+assert.ok(layoutCss.includes('#sendwayo-main-sidebar{\n display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;'), 'el menú no debe reservar una columna mientras está cerrado');
+assert.ok(layoutCss.includes('#sendwayo-main-sidebar.sendwayo-menu-open{display:grid!important;transform:translateY(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}'), 'el menú debe aparecer solo cuando se abra');
 assert.match(layoutCss, /#sendwayo-main-content\{[\s\S]*?width:100%!important[\s\S]*?max-width:100%!important/s, 'el módulo activo debe ocupar todo el ancho');
 assert.match(html, /id="sendwayo-mobile-menu"/, 'el botón del menú debe estar en la franja superior');
 assert.match(html, /id="sendwayo-top-logout"/, 'Salir debe estar en la franja superior');
