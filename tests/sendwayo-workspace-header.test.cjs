@@ -27,13 +27,13 @@ assert.match(layoutCss, /#sendwayo-main-content\{[\s\S]*?width:100%!important[\s
 assert.match(html, /id="sendwayo-mobile-menu"/, 'el botón del menú debe estar en la franja superior');
 assert.match(html, /id="sendwayo-top-logout"/, 'Salir debe estar en la franja superior');
 const finalLayout = html.slice(html.indexOf('<style id="sendwayo-v7-no-side-identity-final">'));
-assert.match(finalLayout, /#sendwayo-v7-user-strip\\{[^}]*flex-direction:column!important/s,
+assert.ok(finalLayout.includes('#sendwayo-v7-user-strip{\n display:none!important;\n flex-direction:column!important;'),
   'la identidad y el horario deben apilarse verticalmente en una franja superior');
-assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-person\\{[^}]*width:100%!important[^}]*flex-direction:column!important/s,
+assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-person{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;'),
   'el nombre y los datos de la cuenta deben ocupar filas superiores completas');
-assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-time\\{[^}]*width:100%!important[^}]*justify-content:flex-start!important/s,
+assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-time{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;\n align-items:flex-start!important;\n justify-content:flex-start!important;'),
   'fecha, hora y duración deben ir debajo de la identidad y no a su lado');
-assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-meta\\{[^}]*width:100%!important[^}]*flex-direction:column!important/s,
+assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-meta{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;'),
   'el rol, ID y código deben aparecer en líneas verticales completas');
 assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-time\\{[^}]*flex-direction:column!important/s,
   'fecha, hora y duración deben aparecer en líneas separadas y superiores');
