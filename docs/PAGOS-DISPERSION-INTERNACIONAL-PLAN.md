@@ -182,3 +182,17 @@ Fuentes oficiales de afiliación y documentación:
 - Para CardNET empresarial, la página oficial solicita Registro Mercantil actualizado, última asamblea, estatutos, cédula del gerente/apoderado y estado de cuenta o cheque de la cuenta donde se recibirán los depósitos. Para persona física, solicita cédula, estado de cuenta y contrato de alquiler o título del local.
 - El módulo usa un enlace de afiliación general y el enlace empresarial; no envía formularios ni documentos privados al adquirente desde SENDWAYO. El propietario completa la solicitud de afiliación directamente en el portal oficial.
 - La lista de cuentas bancarias se refresca desde Firebase al cargar el directorio bancario. Cuando la lista llega, el módulo actualiza el contador y los selectores. Si Firebase no permite guardar la asignación de tesorería, el módulo informa el error y no afirma que se haya cambiado.
+
+
+## 13. Enlaces de cobro por WhatsApp y autorización de operaciones financiadas con tarjeta
+
+- CardNET dispone de una solución específica de Cobros por WhatsApp y Enlace de Pago. El cliente paga a través del flujo del adquirente; los fondos se liquidan en la cuenta comercial afiliada. La activación de Cobros por WhatsApp aparece como gratuita en su tarifario publicado, sin que eso elimine las demás tarifas que correspondan al comercio.
+- AZUL publica Link de Pagos para compartir por WhatsApp, correo y redes sociales.
+- Un enlace para cobrar al comercio no es una API de desembolso a MonCash/NatCash ni a una cuenta bancaria del beneficiario. El pago al beneficiario necesita un riel de payout independiente y autorizado.
+- Antes de permitir financiación con tarjeta de una remesa, carga de billetera, depósito a MonCash/NatCash o transferencia a terceros, SENDWAYO debe obtener la aprobación escrita de AZUL/CardNET para la actividad, el rubro/MCC y el flujo de fondos. No se habilitará como si fuese una compra ordinaria mientras no esté aprobado.
+- En la interfaz se enlazan las páginas oficiales de AZUL App, CardNET Cobros por WhatsApp y sus procesos de afiliación; el módulo sigue bloqueado para cargos reales mientras falten contratos, credenciales, webhooks, certificación y pruebas de reverso/idempotencia.
+
+Referencias:
+- CardNET Cobros por WhatsApp: https://www.cardnet.com.do/soluciones/online/cobros-por-whatsapp
+- CardNET tarifas: https://www.cardnet.com.do/tarifario
+- AZUL Link de Pagos: https://www.azul.com.do/Pages/es/app-azul.aspx
