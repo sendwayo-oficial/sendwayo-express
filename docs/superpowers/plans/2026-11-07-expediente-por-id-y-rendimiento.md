@@ -14,13 +14,15 @@
 - Trabajar solo en `work/sendwayo-international-payments-session`.
 - No tocar `main`, GitHub Pages, Firebase RTDB, reglas, balances, comisiones ni datos reales.
 - Mantener Firebase Auth con persistencia `SESSION` y cierre por 40 minutos de inactividad.
-- Expediente solo para ADMIN y solo remitentes/agentes como sujetos de consulta.
+- Expediente solo para ADMIN y solo remitentes/agentes como sujetos de consulta; buscar exclusivamente ID actual/anterior/alias de ID.
+- New-agent creation uses the exact prefix/sequence `AGE400I1` through `AGE400I9`; the I is a letter, not a digit. Existing agent IDs remain unchanged.
 - No exponer credenciales, tokens ni secretos en los detalles.
 
 ## Review Focus
-- ID antiguo o código alias: debe localizar la misma cuenta.
+- ID antiguo o alias histórico de ID: debe localizar la misma cuenta; códigos comerciales, correo y teléfono no son claves de búsqueda.
 - ID inexistente o perfil no sincronizado: mostrar mensaje claro sin datos de otra persona.
 - Cuenta sin solicitudes, beneficiarios o bancos: mostrar estados vacíos, sin fallar.
+- Agent ID generation: new accounts start at `AGE400I1` and preserve existing profile IDs without automatic migration.
 - Solicitud creada por UID o ID visible: vincularla al expediente correcto.
 - Portada sin autenticar: observadores deben evitar escaneos y renderizados costosos.
 
@@ -145,3 +147,12 @@
 - Self-review performed because no independent reviewer/subagent execution tool is available in this session.
 - Critical known gaps: browser/device validation and full financial lifecycle tests have not been performed; card/acquiring and payout providers are not connected because onboarding/credentials are still missing.
 - Do not publish or merge until the release gates above are satisfied and the owner authorizes publication.
+
+
+## Additional current-turn implementation record
+
+- The top header is fixed at full width with SENDWAYO EXPRESS branding in the first row and active profile/ID/code/clock in the second row. The navigation panel is moved to `document.body` as a full-width overlay so it does not allocate a permanent left column.
+- Restored Firebase sessions now validate profile, role and agent mapping, show the workspace, then load the directory, beneficiaries, notifications and operations in the background. Refresh no longer deletes the last-activity timestamp.
+- The exact new-agent series is `AGE400I1` to `AGE400I9`; letter I is preserved. Existing profile IDs are not renumbered. New remitter IDs remain `REM` plus five digits.
+- The legacy Expediente renderer and its new overlay both search by ID current/previous/ID alias only; code, email and phone are excluded.
+- Static suite currently includes header, session, ID-only and ID-sequence checks; real browser testing is still pending.
