@@ -159,6 +159,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     event.preventDefault();
     event.stopImmediatePropagation();
     window.__sendwayoLoginPending=true;
+    if(typeof window.sendwayoStartFirebaseSdk==='function')window.sendwayoStartFirebaseSdk();
     const error=document.getElementById('login-error');
     if(error){
       error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
@@ -173,6 +174,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     event.preventDefault();
     event.stopImmediatePropagation();
     window.__sendwayoLoginPending=true;
+    if(typeof window.sendwayoStartFirebaseSdk==='function')window.sendwayoStartFirebaseSdk();
     const error=document.getElementById('login-error');
     if(error){
       error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
@@ -192,12 +194,22 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
       document.head.appendChild(script);
     });
   }
-  window.sendwayoFirebaseSdkReady=loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
-    .then(function(){return Promise.all([
-      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'),
-      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js')
-    ]);});
+  var sdkResolve, sdkReject, sdkStarted=false;
+  window.sendwayoFirebaseSdkReady=new Promise(function(resolve,reject){sdkResolve=resolve;sdkReject=reject;});
+  window.sendwayoStartFirebaseSdk=function(){
+    if(sdkStarted)return window.sendwayoFirebaseSdkReady;
+    sdkStarted=true;
+    loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
+      .then(function(){return Promise.all([
+        loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'),
+        loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js')
+      ]);})
+      .then(function(){sdkResolve(true);},function(error){sdkReject(error);});
+    return window.sendwayoFirebaseSdkReady;
+  };
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
+  // Allow the welcome screen to render before loading authentication dependencies.
+  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},2200);
 })();
 </script>
 
@@ -576,11 +588,11 @@ let ADMIN = {
   role:'ADMIN'
 };
 let AGENTES = [
-  {id:'AGE00001', idAnterior:'AG-HERACE', codigo:'AG-HERFLE', codigoAnterior:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00002', idAnterior:'AG-JULIE', codigo:'AG-JULOCC', codigoAnterior:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00003', idAnterior:'AG-BETINA', codigo:'AG-BETLIN', codigoAnterior:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00004', idAnterior:'AGE00004', codigo:'AG-IDEISM', codigoAnterior:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00005', idAnterior:'AG-MIKE', codigo:'AG-MIKMYK', codigoAnterior:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
+  {id:'AGE00001', idAnterior:'AG-HERACE', codigo:'AGE-HERFLE', codigoAnterior:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00002', idAnterior:'AG-JULIE', codigo:'AGE-JULOCC', codigoAnterior:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00003', idAnterior:'AG-BETINA', codigo:'AGE-BETLIN', codigoAnterior:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00004', idAnterior:'AGE00004', codigo:'AGE-IDEISM', codigoAnterior:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00005', idAnterior:'AG-MIKE', codigo:'AGE-MIKMYK', codigoAnterior:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
 ];
 let REMITENTES = [
   {id:'REM00001', idAnterior:'REM-DANIA', codigo:'REM-DANSAI', codigoAnterior:'REM-001', numero:'01', name:'DANIA SAINTHILAIRE', nombre:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', telefono:'+1-849 8493727884', celular:'+1-849 8493727884', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
@@ -3372,7 +3384,7 @@ document.addEventListener('DOMContentLoaded', function(){
    shade.classList.remove('open');
    button.setAttribute('aria-expanded','false');
   }
-  function syncLayout(){if(isMobile())document.body.classList.remove('sendwayo-sidebar-collapsed');else closeMobile();}
+  function syncLayout(){document.body.classList.remove('sendwayo-sidebar-collapsed');if(isMobile())closeMobile();else{sidebar.classList.remove('sendwayo-menu-open');shade.classList.remove('open');button.setAttribute('aria-expanded','true');}}
   button.addEventListener('click',function(){
    if(!document.body.classList.contains('sendwayo-authenticated'))return;
    if(isMobile()){
@@ -3381,9 +3393,8 @@ document.addEventListener('DOMContentLoaded', function(){
     shade.classList.toggle('open',open);
     button.setAttribute('aria-expanded',open?'true':'false');
    }else{
-    var collapsed=!document.body.classList.contains('sendwayo-sidebar-collapsed');
-    document.body.classList.toggle('sendwayo-sidebar-collapsed',collapsed);
-    button.setAttribute('aria-expanded',collapsed?'false':'true');
+    document.body.classList.remove('sendwayo-sidebar-collapsed');
+    button.setAttribute('aria-expanded','true');
    }
   });
   shade.addEventListener('click',closeMobile);
@@ -5326,9 +5337,9 @@ window.sendwayoShareReceipt=async function(){
   const modulePageState = window.__sendwayoModulePageState || (window.__sendwayoModulePageState = Object.create(null));
   function renderModulePager(view, total, page, pageCount) {
     const pager = $('sendwayo-module-pagination-' + view); if (!pager) return;
-    const start = total ? 1 : 0;
-    const end = total ? Math.min(10,total-(page-1)*10) : 0;
-    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" aria-label="Página posterior" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Siguiente</button></div></div>`;
+    const start = total ? ((page-1)*10)+1 : 0;
+    const end = total ? Math.min(page*10,total) : 0;
+    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" aria-label="Página posterior" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Posterior</button></div></div>`;
   }
   window.sendwayoSetModulePage = function(view, page) {
     const state = modulePageState[view] || (modulePageState[view] = {page:1, query:''});
@@ -5622,7 +5633,7 @@ window.sendwayoShareReceipt=async function(){
     let button=$('sendwayo-mobile-menu');
     if(!button){ button=document.createElement('button'); button.id='sendwayo-mobile-menu'; button.type='button'; button.textContent='☰'; document.body.appendChild(button); }
     button.type='button'; button.setAttribute('aria-label','Abrir o cerrar el menú de navegación'); button.title='Menú';
-    button.onclick = function(ev){
+    if(button.dataset.sendwayoSidebarBound!=='1') button.onclick = function(ev){
       ev.preventDefault(); ev.stopPropagation();
       if(!document.body.classList.contains('sendwayo-authenticated')) return;
       const sidebar=$('sendwayo-main-sidebar'); const shade=$('sendwayo-menu-shade');
@@ -5644,15 +5655,19 @@ window.sendwayoShareReceipt=async function(){
     }
     const sync=()=>{
       const logged=document.body.classList.contains('sendwayo-authenticated');
-      button.style.display=(logged && window.innerWidth<=1024)?'flex':'none';
+      button.style.display=logged?'flex':'none';
       if(!logged || window.innerWidth>1024){ side?.classList.remove('sendwayo-menu-open'); shade.classList.remove('open'); button.setAttribute('aria-expanded','false'); }
     };
     sync();
+    const authObserver=new MutationObserver(sync);
+    authObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+    window.addEventListener('sendwayo:firebase-ready',sync);
+    window.addEventListener('resize',sync,{passive:true});
   }
 
   /* C. Pagina de diez registros para las tablas de los módulos transaccionales. */
   const perPage=10;
-  const transactionViews=new Set(['envios','retiros','depositos','recargas','paquetikos','paquetes','recepcion','facturas','comisiones','creditos','ajustes','transferencia','conciliacion','referencia','reportes','informes']);
+  const transactionViews=new Set(['tablero','envios','retiros','depositos','recargas','paquetikos','paquetes','recepcion','beneficiarios','remitentes','agentes','facturas','mibanco','cuentas','ajustes','comisiones','conciliacion','reportes','informes','secretas','perfil','transferencia','referencia','creditos']);
   const specialTables=new Set(['tabla-sendwayo-envios','tabla-sendwayo-recargas','tabla-sendwayo-paquetikos']);
   const tableStates=new Map();
   const watchedBodies=new WeakSet();
@@ -5702,7 +5717,7 @@ window.sendwayoShareReceipt=async function(){
     emptyRows.forEach(tr=>tr.style.display=filtered.length?'none':'');
     const pager=ensurePager(table);
     const localFirst=filtered.length?1:0, localLast=filtered.length?end-start:0;
-    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página posterior" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Siguiente</button></div></div>`;
+    const html=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 3px;color:#334155;font-size:11px"><span>Registros ${String(localFirst).padStart(2,'0')}–${String(localLast).padStart(2,'0')} de ${filtered.length} · Página ${state.page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" data-page="prev" aria-label="Página anterior" ${state.page<=1?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page<=1?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Anterior</button><button type="button" data-page="next" aria-label="Página posterior" ${state.page>=pageCount?'disabled':''} style="border:1px solid #cbd5e1;border-radius:999px;background:${state.page>=pageCount?'#e2e8f0':'#fff'};padding:9px 13px;font-weight:800">Posterior</button></div></div>`;
     if(pager.dataset.html!==html){ pager.innerHTML=html; pager.dataset.html=html; }
     if(pager.dataset.sendwayoPagerHandlers!=='1'){
       pager.dataset.sendwayoPagerHandlers='1';
@@ -8631,7 +8646,16 @@ window.sendwayoShareReceipt=async function(){
   }
   window.sendwayoBuildFinancialAudit=()=>({rows:auditRows(),totals:auditTotals(auditRows())});
   window.sendwayoFilterAudit=function(value){const q=norm(value);const table=$('sendwayo-audit-table');if(!table)return;table.querySelectorAll('tbody tr').forEach(tr=>{tr.hidden=!!q&&!norm(tr.innerText||tr.textContent).includes(q);});};
-  window.sendwayoExportAudit=function(format){const table=$('sendwayo-audit-table');if(!table)return;const name='SENDWAYO-Auditoria-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){window.alert('Permita ventanas emergentes para imprimir el PDF.');return false;}w.document.write('<!doctype html><html><meta charset="utf-8"><title>'+name+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:10px}td,th{border:1px solid #aaa;padding:4px}</style><h2>'+name+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></html>');w.document.close();return;}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+name+'</h2>'+table.outerHTML+'</body></html>';const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  window.sendwayoExportAudit=function(format){const table=$('sendwayo-audit-table');if(!table)return;const name='SENDWAYO-Auditoria-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){window.alert('Permita ventanas emergentes para imprimir el PDF.');return false;}w.document.write('<!doctype html><html><meta charset="utf-8"><title>'+name+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:10px}td,th{border:1px solid #aaa;padding:4px}</style><h2>'+name+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></html>');w.document.close();return;}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+name+'</h2>'+table.outerHTML+'<style id="sendwayo-v7-left-aligned-admin-toolbars">
+#view-agentes>div:first-child,#view-remitentes>div:first-child{justify-content:flex-start!important;gap:10px!important;flex-wrap:wrap!important}
+#view-agentes>div:first-child>div,#view-remitentes>div:first-child>div{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;flex-wrap:wrap!important;width:auto!important}
+#view-agentes>div:first-child>div>button,#view-remitentes>div:first-child>div>button{order:1!important;flex:0 0 auto!important}
+#view-agentes>div:first-child>div>input,#view-remitentes>div:first-child>div>input{order:2!important;flex:0 1 220px!important;min-width:140px!important}
+#sendwayo-module-list header .flex.flex-wrap.items-center.gap-2{justify-content:flex-start!important}
+#sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>button{order:1!important}
+#sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>input{order:2!important;flex:0 1 220px!important;min-width:140px!important}
+</style>
+</body></html>';const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   const priorShow=window.showView;
   if(typeof priorShow==='function')window.showView=function(view){const r=priorShow.apply(this,arguments);if(['conciliacion','reportes','informes'].includes(view))setTimeout(()=>renderAudit(view),0);return r;};
   window.addEventListener('sendwayo:firebase-ready',()=>{const active=document.body.dataset.sendwayoActiveView||'';if(['conciliacion','reportes','informes'].includes(active))renderAudit(active);});
