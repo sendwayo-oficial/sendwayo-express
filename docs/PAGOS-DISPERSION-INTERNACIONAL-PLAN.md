@@ -196,3 +196,9 @@ Referencias:
 - CardNET Cobros por WhatsApp: https://www.cardnet.com.do/soluciones/online/cobros-por-whatsapp
 - CardNET tarifas: https://www.cardnet.com.do/tarifario
 - AZUL Link de Pagos: https://www.azul.com.do/Pages/es/app-azul.aspx
+
+
+### Paginadores por módulo sin controles duplicados
+
+- Envíos, Recargas y Paqueticos conservan su paginador propio, que pagina el arreglo completo antes de renderizar 10 filas y reinicia la numeración 01–10 por página.
+- Las demás tablas de movimientos usan el paginador general de 10 filas. Se excluyen solamente las tres tablas que ya tienen paginador específico para evitar dos barras de navegación sobre la misma lista.
