@@ -61,32 +61,43 @@ jobs:
               });
               cdp.on('Runtime.exceptionThrown', async event => {
                 const d = event.exceptionDetails || {};
+                const frame = d.stackTrace?.callFrames?.[0] || null;
+                const scriptId = d.scriptId || frame?.scriptId || null;
+                const lineNumber = Number.isInteger(d.lineNumber) ? d.lineNumber : frame?.lineNumber;
+                const columnNumber = Number.isInteger(d.columnNumber) ? d.columnNumber : frame?.columnNumber;
+                const message = d.exception?.description || d.text || 'JavaScript exception';
                 const detail = {
-                  message:d.exception?.description || d.text || 'JavaScript exception',
-                  url:d.url || '',
-                  line:d.lineNumber ?? null,
-                  column:d.columnNumber ?? null,
-                  scriptId:d.scriptId || null,
-                  script:parsedScripts.get(d.scriptId) || null
+                  message,
+                  url:d.url || frame?.url || '',
+                  line:lineNumber ?? null,
+                  column:columnNumber ?? null,
+                  scriptId,
+                  script:parsedScripts.get(scriptId) || null
                 };
-                if (d.scriptId && Number.isInteger(d.lineNumber)) {
+                if (scriptId && Number.isInteger(lineNumber)) {
                   try {
-                    const source = await cdp.send('Debugger.getScriptSource', {scriptId:d.scriptId});
+                    const source = await cdp.send('Debugger.getScriptSource', {scriptId});
                     const lines = (source.scriptSource || '').split('\\n');
-                    const line = lines[d.lineNumber] || '';
-                    const col = Number.isInteger(d.columnNumber) ? d.columnNumber : 0;
-                    detail.sourceLine = line.slice(Math.max(0,col-100),Math.min(line.length,col+140));
+                    const line = lines[lineNumber] || '';
+                    const col = Number.isInteger(columnNumber) ? columnNumber : 0;
+                    detail.sourceLine = line.slice(Math.max(0,col-160),Math.min(line.length,col+220));
                     detail.sourceLineLength = line.length;
-                    detail.sourceLineNumber = d.lineNumber + 1;
+                    detail.sourceLineNumber = lineNumber + 1;
                   } catch (error) {
                     detail.sourceReadError = error.message;
                   }
                 }
-                pageErrors.push(detail);
+                const existing = pageErrors.find(item => item.message === message);
+                if (existing) Object.assign(existing, detail);
+                else pageErrors.push(detail);
               });
               const consoleErrors = [];
               const blockingConsoleErrors = () => consoleErrors.filter(error => !(error.url.endsWith('/favicon.ico') && /404/.test(error.text)));
-              page.on('pageerror', error => { if (!pageErrors.some(e => e.message === error.message)) pageErrors.push({ message: error.message, stack: error.stack || '' }); });
+              page.on('pageerror', error => {
+                const existing = pageErrors.find(e => e.message === error.message);
+                if (existing) existing.stack = error.stack || existing.stack || '';
+                else pageErrors.push({ message: error.message, stack: error.stack || '' });
+              });
               page.on('console', message => {
                 if (message.type() === 'error') {
                   const location = message.location();
