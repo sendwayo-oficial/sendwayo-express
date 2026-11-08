@@ -208,8 +208,10 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     return window.sendwayoFirebaseSdkReady;
   };
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
-  // Allow the welcome screen to render before loading authentication dependencies.
-  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},2200);
+  // Start Firebase downloads immediately in the background; dynamic scripts do not block typing.
+  // This removes the artificial 2.2-second wait before the secure login can initialize.
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){window.sendwayoStartFirebaseSdk();},{once:true});
+  else window.sendwayoStartFirebaseSdk();
 })();
 </script>
 
@@ -839,9 +841,8 @@ function addNotificacion(msg, tipo){
 
 document.getElementById('bell-top').onclick=()=>{ document.getElementById('notif-panel').classList.toggle('hidden'); };
 
-setTimeout(()=>{
-  renderPrincipal();
-},500);
+// No renderizar el tablero completo antes de autenticar: evita bloquear la portada y el formulario de acceso.
+// renderPrincipal() se ejecuta después de validar la sesión Firebase.
 </script>
 
 <!-- MODAL RECARGAS EXACTO FOTO - Recargas - Comisión 5% -->
