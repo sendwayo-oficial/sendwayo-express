@@ -44,6 +44,32 @@ assert.match(html, /setInterval\(syncStorage,15000\)/);
 assert.doesNotMatch(html, /setInterval\(refresh,4000\)/);
 assert.doesNotMatch(html, /setInterval\(syncStorage,2500\)/);
 
+// Moneda: HTG y DOP no se convierten automáticamente en rutas HT → RD.
+const routeCalcSource = html.match(/function updateRouteCalc\(kind\)\{[\s\S]*?\n \}\n function mountRouteControls/)?.[0] || '';
+assert.ok(routeCalcSource, 'debe existir el cálculo de la ruta');
+const field = () => ({ textContent: '', dataset: {} });
+const fields = {
+  'v162-envio-monto': { value: '2000', dataset: {} },
+  'v162-envio-neto': field(),
+  'v162-envio-com': field(),
+  'v162-envio-rec': field(),
+  'v162-envio-tasa': field()
+};
+const routeEnvironment = {
+  $: id => fields[id] || null,
+  window: {},
+  routeData: () => ({ from: {alpha2:'HT'}, to: {alpha2:'DO'}, currency:'HTG' })
+};
+const routeCalc = new Function('$','window','routeData', routeCalcSource.replace(/\n function mountRouteControls[\s\S]*$/, '\n return updateRouteCalc;'))(
+  routeEnvironment.$, routeEnvironment.window, routeEnvironment.routeData
+);
+routeCalc('envio');
+assert.equal(fields['v162-envio-neto'].textContent, '1,840.00 HTG', 'HT → RD mantiene el neto en HTG, descontando solo el 8%');
+assert.equal(fields['v162-envio-com'].textContent, '160.00 HTG', 'la comisión de la ruta HT → RD se expresa en HTG');
+assert.equal(fields['v162-envio-rec'].textContent, '1,840.00 HTG', 'no se inventa un importe recibido convertido a DOP');
+assert.equal(fields['v162-envio-tasa'].textContent, 'Sin conversión automática', 'la ruta HT → RD no aplica una tasa supuesta');
+assert.equal(fields['v162-envio-monto'].dataset.esHT, '1', 'el débito conserva la moneda HTG');
+
 // Encabezado y navegación: todo arriba; ninguna columna lateral permanente.
 assert.match(html, /sendwayo-v7-canonical-top-workspace-style/);
 assert.match(html, /sendwayo-v7-workspace-layout-controller/);
