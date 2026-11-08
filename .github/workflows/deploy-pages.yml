@@ -98,6 +98,7 @@ jobs:
           assert "const num=String(i-start+1).padStart(2,'0')" in html
           assert "String(i+1).padStart(2,'0')" in html
           assert 'aria-label="Página posterior"' in html and 'sendwayoSetModulePage' in html
+          assert "const specialTables=new Set(['tabla-sendwayo-envios','tabla-sendwayo-recargas','tabla-sendwayo-paquetikos']);" in html
           assert 'sw-pay-save-settlement' in html and 'settings/paymentSettlement' in html
           print('PASS: V7, 5 agentes, 15 remitentes, cabecera superior, paginación de 10 y tesorería.')
           PY
