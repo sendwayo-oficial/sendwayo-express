@@ -4114,10 +4114,12 @@ window.sendwayoShareReceipt=async function(){
     if(!name||!email||!phone){alert('Complete nombre, correo y celular.');return;}if(!/^\S+@\S+\.\S+$/.test(email)){alert('Introduzca un correo válido.');return;}
     let a=id?accountById(id):null;const role=view==='agentes'?'AGENTE':'REMITENTE';
     if(!a){const arr=role==='AGENTE'?agents():senders();if(allAccounts().some(x=>norm(x.email||x.usuario)===norm(email))){alert('Ese correo ya está registrado.');return;}
-      let num=role==='AGENTE'?40001:1;const prefix=role==='AGENTE'?'AGE':'REM';
+      let num=1;const prefix=role==='AGENTE'?'AGE400I':'REM';
+      const nextId=()=>role==='AGENTE'?prefix+String(num):prefix+String(num).padStart(5,'0');
       const reserved=value=>allAccounts().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>String(v||'').toUpperCase()===String(value).toUpperCase()));
-      while(reserved(prefix+String(num).padStart(5,'0')))num++;
-      const parts=name.split(/\s+/);const idNew=prefix+String(num).padStart(5,'0');const code=(role==='AGENTE'?'AG-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
+      while(reserved(nextId()))num++;
+      if(role==='AGENTE'&&num>9)throw new Error('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');
+      const parts=name.split(/\s+/);const idNew=nextId();const code=(role==='AGENTE'?'AG-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
       a={id:idNew,codigo:code,codigo2:code,numero:String((role==='AGENTE'?agents():senders()).length+1).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
     } else {a.nombre=a.name=name;a.email=a.usuario=email;a.celular=a.telefono=phone;a.estado=state;a.activo=state==='Activo';}
     a.estado=state;a.activo=state==='Activo';writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
@@ -8370,10 +8372,12 @@ window.sendwayoShareReceipt=async function(){
   window.sendwayoOpenAccountForm=function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede crear o modificar cuentas.');
     const a=id?findAccount(id):null, ag=view==='agentes', roleLabel=ag?'AGENTE':'REMITENTE';
-    let next=ag?40001:1;const idPrefix=ag?'AGE':'REM';
+    let next=1;const idPrefix=ag?'AGE400I':'REM';
+    const nextId=()=>ag?idPrefix+String(next):idPrefix+String(next).padStart(5,'0');
     const idReserved=value=>accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(value)));
-    while(idReserved(idPrefix+String(next).padStart(5,'0')))next++;
-    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||idPrefix+String(next).padStart(5,'0'),
+    while(idReserved(nextId()))next++;
+    if(ag&&next>9)throw new Error('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');
+    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||nextId(),
       password='';
     const f=(field,label,value='',type='text',ro=false)=>`<label class="block text-xs font-bold">${label}<input id="v7-admin-${field}" type="${type}" value="${esc(value)}" ${ro?'readonly':''} class="mt-1 w-full border rounded-xl px-3 py-2.5 font-normal ${ro?'bg-slate-100':''}"></label>`;
     const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','','password')}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
@@ -8411,7 +8415,7 @@ window.sendwayoShareReceipt=async function(){
         let credential;
         try{credential=await secondaryAuth.createUserWithEmailAndPassword(email,password);}finally{try{await secondaryAuth.signOut();}catch(e){}}
         const uid=credential.user.uid,dbKey=uid;
-        if(ag&&!/^AGE\d{5}$/.test(ident))throw new Error('El ID de un agente nuevo debe tener el formato AGE seguido de cinco dígitos, por ejemplo AGE40001.');
+        if(ag&&!/^AGE400I[1-9]$/.test(ident))throw new Error('El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9; el primer ID es AGE400I1.');
         if(!ag&&!/^REM\d{5}$/.test(ident))throw new Error('El ID de un remitente nuevo debe tener el formato REM seguido de cinco dígitos.');
         const idDuplicate=accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(ident)));
         if(idDuplicate)throw new Error('Ese ID ya existe o fue utilizado anteriormente.');
@@ -8927,9 +8931,11 @@ window.sendwayoShareReceipt=async function(){
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
    var a=id?accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id);});})||null:null;
-   var prefix=view==='agentes'?'AGE':'REM',num=view==='agentes'?40001:1;
-   if(!a){while(accounts.some(function(x){return String(x.id||'')===prefix+String(num).padStart(5,'0');}))num++;}
-   var visibleId=a?String(a.id):prefix+String(num).padStart(5,'0');
+   var prefix=view==='agentes'?'AGE400I':'REM',num=1;
+   var nextId=function(){return view==='agentes'?prefix+String(num):prefix+String(num).padStart(5,'0');};
+   if(!a){while(accounts.some(function(x){return [x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'').toLowerCase()===nextId().toLowerCase();});}))num++;}
+   if(view==='agentes'&&!a&&num>9){alert('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');return;}
+   var visibleId=a?String(a.id):nextId();
    oldOpen(view,id||'');
    var name=$('v7-admin-name'),username=$('v7-admin-username'),code=$('v7-admin-code'),email=$('v7-admin-email'),phone=$('v7-admin-phone');
    var body=$('sendwayo-admin-account-modal');
