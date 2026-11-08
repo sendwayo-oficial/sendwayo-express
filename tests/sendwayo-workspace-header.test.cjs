@@ -18,7 +18,7 @@ const refreshIdentity = html.match(/function refreshIdentity\(\)\{[\s\S]*?\n \}/
 assert.match(refreshIdentity, /'sendwayo-v7-name':txt\(u&&\(u\.nombre\|\|u\.name\|\|u\.email\)/, 'el nombre visible debe proceder de la cuenta activa');
 assert.match(refreshIdentity, /'sendwayo-v7-role':u\?roleLabel\(u\)/, 'el rol visible debe proceder del perfil activo');
 assert.ok(refreshIdentity.includes("'sendwayo-v7-id':txt(u&&(u.id||u.accountId)"), 'el ID visible debe proceder del perfil activo');
-assert.match(refreshIdentity, /'sendwayo-v7-code':txt\(u&&\(u\.codigo\|\|u\.codigo2\)/, 'el código visible debe proceder del perfil activo');
+assert.ok(refreshIdentity.includes("'sendwayo-v7-code':txt(u&&(u.codigo||u.code||u.codigo2)"), 'el código visible debe proceder del perfil activo');
 assert.match(html, /id="sendwayo-main-content"/, 'el contenido principal debe usar un único contenedor');
 const layoutCss=html.slice(html.indexOf('<style id="sendwayo-v7-no-side-identity-final">'));
 assert.ok(layoutCss.includes('#sendwayo-main-sidebar{\n display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;'), 'el menú no debe reservar una columna mientras está cerrado');
