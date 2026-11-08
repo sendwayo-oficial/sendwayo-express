@@ -11,9 +11,9 @@ La pantalla privada debe mostrar, siempre arriba y a todo el ancho:
 - Marca y nombre comercial SENDWAYO EXPRESS.
 - Nombre de la cuenta/usuario activo y su rol.
 - ID y código visibles.
-- Fecha, hora y duración de sesión.
+- Fecha, hora y duración de sesión, en filas completas debajo de la identidad.
 
-El nombre, ID, código, marca y hora no deben quedar en una columna lateral. La navegación queda en un botón dentro de la cabecera; al pulsarlo abre un panel superpuesto. Cerrado el panel, la página —incluido Recargas— ocupa todo el ancho, sin una columna lateral reservada. La misma estructura se aplica a todas las vistas.
+El nombre, ID, código, marca y hora no deben quedar en una columna lateral ni alineados en una columna contigua al módulo. La identidad y el horario se apilan verticalmente en la cabecera, antes del área de trabajo. La navegación queda en un botón dentro de la cabecera; al pulsarlo abre un panel superpuesto. Cerrado el panel, la página —incluido Recargas— ocupa todo el ancho, sin una columna lateral reservada. La misma estructura se aplica a todas las vistas.
 
 ## 2. Trabajos de la mañana recuperados del historial
 
@@ -111,3 +111,8 @@ Todavía hace falta probar en navegador, con cuentas y datos de prueba controlad
 - Esta entrega permanece en `work/sendwayo-international-payments-session`.
 - No se hizo merge a `main` ni publicación en GitHub Pages.
 - No se alteraron saldos, comisiones, reglas ni registros de producción.
+
+
+## 8. Ajuste visual final de la franja superior
+
+El último ajuste apila verticalmente nombre/rol, ID, código, fecha, hora y duración. No hay una columna de identidad a la izquierda ni información de sesión a un lado del módulo. El test `sendwayo-workspace-header` exige esta distribución; la prueba visual de navegador debe completarse antes de publicar.

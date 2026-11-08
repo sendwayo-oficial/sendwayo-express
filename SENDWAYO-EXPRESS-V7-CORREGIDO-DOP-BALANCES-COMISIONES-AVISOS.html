@@ -9706,6 +9706,51 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
 #sendwayo-main-sidebar #sendwayo-v7-user-strip,#sendwayo-main-sidebar .sendwayo-business-user-stack,
 #sendwayo-main-sidebar [data-sendwayo-user-identity]{display:none!important;visibility:hidden!important}
 #user-top,#hora-top,#sendwayo-active-identity-strip{display:none!important;visibility:hidden!important}
+
+/* Identidad, ID, código y horario en filas completas: jamás al costado del módulo. */
+#sendwayo-v7-user-strip{
+ display:none!important;
+ flex-direction:column!important;
+ align-items:stretch!important;
+ justify-content:flex-start!important;
+ gap:8px!important;
+ width:100%!important;
+}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:stretch!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-person{
+ display:flex!important;
+ width:100%!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:5px!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta{
+ display:flex!important;
+ width:100%!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:3px!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-time{
+ display:flex!important;
+ width:100%!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:4px!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-time span{
+ display:block!important;
+ width:100%!important;
+ max-width:100%!important;
+ white-space:normal!important;
+}
 @media(max-width:700px){
  #sendwayo-v7-user-strip{top:54px!important;padding:8px 10px!important;gap:7px!important}
  #sendwayo-main-content{padding:8px!important}

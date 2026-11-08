@@ -10,7 +10,8 @@ Este documento reúne las decisiones y requisitos tratados durante el trabajo de
 
 ## 1. Regla visual obligatoria para todas las páginas
 
-- El nombre comercial **SENDWAYO EXPRESS**, el rol/cuenta activa, el nombre de la persona, el ID, el código, la fecha, la hora y el tiempo de sesión van en la parte superior.
+- El nombre comercial **SENDWAYO EXPRESS** aparece en la primera barra superior.
+- Debajo, en una única franja de ancho completo, aparecen verticalmente el rol/cuenta activa, nombre de la persona, ID y código; después, también en líneas completas, fecha, hora y tiempo de sesión. Ninguno de estos datos se coloca a la derecha del módulo ni en una columna al lado.
 - No debe existir una columna lateral permanente con el nombre del administrador, datos del negocio, ID, código u hora.
 - El área del módulo activo ocupa el ancho disponible completo. Al abrir Recargas solo se ve Recargas; al abrir Envíos solo se ve Envíos; no se mezclan paneles ni páginas.
 - La navegación se abre como un panel superpuesto desde el botón de menú superior. Cerrado, no reserva ancho ni deja contenido pegado al lado.
@@ -142,3 +143,11 @@ La copia V7 fue recuperada de la rama y comparada byte por byte con el archivo f
 | JavaScript embebido | 43 bloques compilados; 0 errores de sintaxis |
 
 **Límite:** no se dispuso de una sesión de navegador conectada a Firebase para hacer la prueba visual/funcional real. No se declara velocidad medida ni autenticación comprobada en navegador. La publicación pública sigue pendiente de esa validación y de autorización.
+
+
+## 14. Ajuste de disposición superior solicitado por el propietario
+
+- Se fija la cabecera como una composición vertical de ancho completo: marca arriba; debajo, cuenta activa, rol, nombre, ID y código en líneas completas; después, fecha, hora y duración de sesión, también en líneas completas; debajo de todo eso, el módulo seleccionado.
+- La fecha, hora y duración no se ubican en una columna al lado de la identidad. El área de Recargas, Envíos, Retiros y demás vistas sigue al 100% de ancho.
+- La navegación continúa cerrada por defecto como panel superpuesto superior; no ocupa ancho cuando está cerrada.
+- Esta especificación se aplica a escritorio, tableta y teléfono. La validación visual real del navegador sigue pendiente.
