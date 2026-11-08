@@ -39,7 +39,7 @@ assert.match(html, /IDLE_LIMIT=40\*60\*1000/);
 assert.match(html, /translationPendingRoots/);
 assert.match(html, /translateInterface\(node,languageValue\(\)\)/);
 assert.match(html, /roots\.forEach\(root=>scanTables\(root\)\)/);
-assert.match(html, /setInterval\(refresh,30000\)/);
+assert.match(html, /window\.setInterval\(\(\)=>\{const active=document\.querySelector\('\.view:not\(\.hidden\)'\);if\(active&&active\.id==='view-tablero'\)refresh\(\);\},60000\)/);
 assert.match(html, /setInterval\(syncStorage,15000\)/);
 assert.doesNotMatch(html, /setInterval\(refresh,4000\)/);
 assert.doesNotMatch(html, /setInterval\(syncStorage,2500\)/);
