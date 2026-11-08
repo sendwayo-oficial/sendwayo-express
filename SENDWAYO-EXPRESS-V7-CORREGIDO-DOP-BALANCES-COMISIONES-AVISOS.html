@@ -5528,7 +5528,7 @@ window.sendwayoShareReceipt=async function(){
   /* C. Pagina de diez registros para las tablas de los módulos transaccionales. */
   const perPage=10;
   const transactionViews=new Set(['envios','retiros','depositos','recargas','paquetikos','paquetes','recepcion','facturas','comisiones','creditos','ajustes','transferencia','conciliacion','referencia','reportes','informes']);
-  const specialTables=new Set();
+  const specialTables=new Set(['tabla-sendwayo-envios','tabla-sendwayo-recargas','tabla-sendwayo-paquetikos']);
   const tableStates=new Map();
   const watchedBodies=new WeakSet();
   function viewFor(table){ return table.closest('.view,[id^="view-"]'); }
