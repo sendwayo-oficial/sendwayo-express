@@ -84,7 +84,7 @@ jobs:
           }
           const normalized = JSON.stringify(value);
           JSON.parse(normalized);
-          fs.writeFileSync(file, normalized + '\\n');
+          fs.writeFileSync(file, normalized + '\n');
           console.log('Respaldo JSON válido y normalizado:', file, fs.statSync(file).size, 'bytes');
           NODE
       - name: Upload backup artifact
