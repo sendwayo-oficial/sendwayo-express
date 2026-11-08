@@ -54,9 +54,35 @@ jobs:
               const pageErrors = [];
               const cdp = await page.context().newCDPSession(page);
               await cdp.send('Runtime.enable');
-              cdp.on('Runtime.exceptionThrown', event => {
+              await cdp.send('Debugger.enable');
+              const parsedScripts = new Map();
+              cdp.on('Debugger.scriptParsed', event => {
+                parsedScripts.set(event.scriptId, {url:event.url || '',startLine:event.startLine ?? 0});
+              });
+              cdp.on('Runtime.exceptionThrown', async event => {
                 const d = event.exceptionDetails || {};
-                pageErrors.push({message:d.exception?.description || d.text || 'JavaScript exception',url:d.url || '',line:d.lineNumber ?? null,column:d.columnNumber ?? null});
+                const detail = {
+                  message:d.exception?.description || d.text || 'JavaScript exception',
+                  url:d.url || '',
+                  line:d.lineNumber ?? null,
+                  column:d.columnNumber ?? null,
+                  scriptId:d.scriptId || null,
+                  script:parsedScripts.get(d.scriptId) || null
+                };
+                if (d.scriptId && Number.isInteger(d.lineNumber)) {
+                  try {
+                    const source = await cdp.send('Debugger.getScriptSource', {scriptId:d.scriptId});
+                    const lines = (source.scriptSource || '').split('\\n');
+                    const line = lines[d.lineNumber] || '';
+                    const col = Number.isInteger(d.columnNumber) ? d.columnNumber : 0;
+                    detail.sourceLine = line.slice(Math.max(0,col-100),Math.min(line.length,col+140));
+                    detail.sourceLineLength = line.length;
+                    detail.sourceLineNumber = d.lineNumber + 1;
+                  } catch (error) {
+                    detail.sourceReadError = error.message;
+                  }
+                }
+                pageErrors.push(detail);
               });
               const consoleErrors = [];
               const blockingConsoleErrors = () => consoleErrors.filter(error => !(error.url.endsWith('/favicon.ico') && /404/.test(error.text)));
@@ -75,7 +101,7 @@ jobs:
                 throw new Error('La página pública no respondió correctamente.');
               }
 
-              await page.waitForTimeout(5000);
+              await page.waitForTimeout(5000);\n              await new Promise(resolve => setTimeout(resolve, 300));
               const initial = await page.evaluate(() => {
                 const welcome = document.querySelector('#welcome-landing');
                 const login = document.querySelector('#login-screen');
