@@ -2,7 +2,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
+const legacyUrlHtml = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
+assert.equal(html, legacyUrlHtml, 'el archivo V7 consolidado y el archivo de la URL pública deben contener exactamente la misma versión');
 
 const brandAt = html.indexOf('<div id="sendwayo-brand-bar"');
 const identityAt = html.indexOf('<section id="sendwayo-v7-user-strip"');
