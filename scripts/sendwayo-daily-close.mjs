@@ -7,7 +7,7 @@ function parseJsonStream(raw){
   let depth=0,inString=false,escaped=false,end=-1;
   for(let i=start;i<raw.length;i++){
     const ch=raw[i];
-    if(inString){if(escaped)escaped=false;else if(ch==='\\\\')escaped=true;else if(ch==='"')inString=false;continue;}
+    if(inString){if(escaped)escaped=false;else if(ch==='\\')escaped=true;else if(ch==='"')inString=false;continue;}
     if(ch==='"'){inString=true;continue;}
     if(ch==='{'||ch==='[')depth++;
     else if(ch==='}'||ch===']'){depth--;if(depth===0){end=i+1;break;}}
