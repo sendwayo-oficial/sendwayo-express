@@ -9514,9 +9514,9 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
    ).forEach(el=>el.remove());
    Array.from(side.children).forEach(el=>{
     if(!el||el.tagName==='BUTTON'||el.querySelector('button'))return;
-    const label=String(el.textContent||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+    const label=String(el.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
     if(/menu principal/.test(label))return;
-    if(/sendwayo\\s+express|administrador|\\bid\\s*:|codigo\\s*:|hora\\s*:|cuenta activa/.test(label))el.remove();
+    if(/sendwayo\s+express|administrador|\bid\s*:|codigo\s*:|hora\s*:|cuenta activa/.test(label))el.remove();
    });
   }catch(error){console.warn('[SENDWAYO] No se pudo limpiar la identidad antigua del menú:',error);}
   finally{purgingLegacyIdentity=false;}
