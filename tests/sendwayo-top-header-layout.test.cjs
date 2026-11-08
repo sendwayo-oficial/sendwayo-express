@@ -22,21 +22,21 @@ assert.match(html, /id="sendwayo-v7-clock"/, 'la hora debe estar en la franja su
 assert.match(html, /function purgeLegacySideIdentity\(/, 'debe limpiarse el encabezado viejo del lateral');
 assert.match(legacyUrlHtml, /sendwayo-v7-requested-topbar-and-left-vertical-menu-2026-11-08/,
   'la URL pública debe tener la distribución superior y el menú vertical solicitados');
-assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\\s*\\{[^}]*flex-direction:\\s*column\\s*!important/s,
+assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\s*\{[^}]*flex-direction:\s*column\s*!important/s,
   'todos los menús deben mostrarse en una columna vertical en el panel izquierdo');
-assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\\.sendwayo-menu-open\\s*\\{[^}]*transform:translateX\\(0\\)!important/s,
+assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\.sendwayo-menu-open\s*\{[^}]*transform:translateX\(0\)!important/s,
   'el panel lateral debe deslizarse desde la izquierda al abrirse');
-assert.match(legacyUrlHtml, /brandLeft\\.insertBefore\\(btn,brandLogo\\|\\|brandLeft\\.firstChild\\)/,
+assert.match(legacyUrlHtml, /brandLeft\.insertBefore\(btn,brandLogo\|\|brandLeft\.firstChild\)/,
   'el botón de tres rayas debe quedar a la izquierda de la marca');
 for (const id of ['sendwayo-v7-top-bal-dop','sendwayo-v7-top-bal-htg','sendwayo-v7-top-com-dop','sendwayo-v7-top-com-htg']) {
   assert.match(legacyUrlHtml, new RegExp('id="' + id + '"'),
     'la franja superior debe mostrar balance y comisión en ambas monedas: ' + id);
 }
-assert.match(legacyUrlHtml, /topPairs\\.forEach/,
+assert.match(legacyUrlHtml, /topPairs\.forEach/,
   'los cuatro importes superiores deben actualizarse desde los valores financieros existentes');
-assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \\.sendwayo-workspace-person\\s*\\{[^}]*flex-direction:row\\s*!important/s,
+assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \.sendwayo-workspace-person\s*\{[^}]*flex-direction:row\s*!important/s,
   'administrador, ID, código y datos de sesión deben alinearse horizontalmente');
-assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \\.sendwayo-workspace-time\\s*\\{[^}]*flex-direction:row\\s*!important/s,
+assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \.sendwayo-workspace-time\s*\{[^}]*flex-direction:row\s*!important/s,
   'hora y duración de sesión deben permanecer en la misma franja superior');
 assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/,
   'los campos antiguos no deben duplicar la identidad ni la hora');
