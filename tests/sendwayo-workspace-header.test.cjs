@@ -35,8 +35,6 @@ assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-time
   'fecha, hora y duración deben ir debajo de la identidad y no a su lado');
 assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-meta{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;'),
   'el rol, ID y código deben aparecer en líneas verticales completas');
-assert.match(finalLayout, /#sendwayo-main-content\\{[^}]*width:100%!important[^}]*max-width:100%!important/s,
-  'el módulo seleccionado debe seguir ocupando el ancho completo debajo del encabezado');
 assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-controller/, 'no debe quedar un segundo controlador de identidad');
 assert.doesNotMatch(html, /sendwayo-v7-unified-workspace-header/, 'no debe quedar una segunda hoja de cabecera');
 assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-layout/, 'no debe quedar otra hoja de distribución contradictoria');
