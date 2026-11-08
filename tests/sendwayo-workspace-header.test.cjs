@@ -33,6 +33,10 @@ assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-person\
   'el nombre y los datos de la cuenta deben ocupar filas superiores completas');
 assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-time\\{[^}]*width:100%!important[^}]*justify-content:flex-start!important/s,
   'fecha, hora y duración deben ir debajo de la identidad y no a su lado');
+assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-meta\\{[^}]*width:100%!important[^}]*flex-direction:column!important/s,
+  'el rol, ID y código deben aparecer en líneas verticales completas');
+assert.match(finalLayout, /#sendwayo-v7-user-strip \\.sendwayo-workspace-time\\{[^}]*flex-direction:column!important/s,
+  'fecha, hora y duración deben aparecer en líneas separadas y superiores');
 assert.match(finalLayout, /#sendwayo-main-content\\{[^}]*width:100%!important[^}]*max-width:100%!important/s,
   'el módulo seleccionado debe seguir ocupando el ancho completo debajo del encabezado');
 assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-controller/, 'no debe quedar un segundo controlador de identidad');
