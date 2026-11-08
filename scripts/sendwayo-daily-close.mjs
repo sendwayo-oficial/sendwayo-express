@@ -1,6 +1,24 @@
 #!/usr/bin/env node
 const fs=require('fs');
-const payload=JSON.parse(fs.readFileSync(0,'utf8'));
+const rawInput=fs.readFileSync(0,'utf8').trim();
+function parseJsonStream(raw){
+  let start=0;while(/\s/.test(raw[start]||''))start++;
+  const opening=raw[start];if(opening!=='{'&&opening!=='[')throw new Error('Snapshot Firebase no inicia con JSON');
+  let depth=0,inString=false,escaped=false,end=-1;
+  for(let i=start;i<raw.length;i++){
+    const ch=raw[i];
+    if(inString){if(escaped)escaped=false;else if(ch==='\\\\')escaped=true;else if(ch==='"')inString=false;continue;}
+    if(ch==='"'){inString=true;continue;}
+    if(ch==='{'||ch==='[')depth++;
+    else if(ch==='}'||ch===']'){depth--;if(depth===0){end=i+1;break;}}
+  }
+  if(end<0)throw new Error('Snapshot Firebase contiene JSON incompleto');
+  const first=JSON.parse(raw.slice(start,end));
+  const tail=raw.slice(end).trim();
+  if(tail){const trailer=JSON.parse(tail);if(!trailer||trailer.status!=='success')throw new Error('Respuesta final de Firebase no confirma success');}
+  return first;
+}
+const payload=parseJsonStream(rawInput);
 const data=payload&&payload.status==='success'&&Object.prototype.hasOwnProperty.call(payload,'result')
   ? (typeof payload.result==='string'?JSON.parse(payload.result):payload.result)
   : payload;
