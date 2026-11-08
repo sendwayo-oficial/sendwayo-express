@@ -64,7 +64,7 @@ assert.match(html, /sendwayoShareReceipt=async function\(\)/);
 assert.match(html, /image\/png/);
 
 
-const toolbarFunction = html.match(/function alignToolbars\(\)\{[\s\S]*?\n  function wrapModuleLauncher/)?.[0] || '';
+const toolbarFunction = html.match(/function alignToolbars\(root\)\{[\s\S]*?\n  function wrapModuleLauncher/)?.[0] || '';
 assert.ok(toolbarFunction, 'la rutina de barras de herramientas debe estar presente');
 assert.match(toolbarFunction, /sendwayo-authenticated/, 'no debe formatear controles antes del acceso');
 assert.match(toolbarFunction, /\.view:not\(\.hidden\)/, 'debe limitarse a la pantalla activa');
