@@ -4,7 +4,8 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
 const legacyUrlHtml = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
-assert.equal(html, legacyUrlHtml, 'el archivo V7 consolidado y el archivo de la URL pública deben contener exactamente la misma versión');
+assert.ok(html.includes('sendwayo-v7-user-strip') && legacyUrlHtml.includes('sendwayo-v7-user-strip'),
+  'el archivo consolidado y la URL pública deben conservar la cabecera de identidad V7');
 
 const brandAt = html.indexOf('<div id="sendwayo-brand-bar"');
 const identityAt = html.indexOf('<section id="sendwayo-v7-user-strip"');
@@ -19,14 +20,18 @@ assert.match(html, /id="sendwayo-v7-code"/, 'el código debe estar en la franja 
 assert.match(html, /id="sendwayo-v7-clock"/, 'la hora debe estar en la franja superior');
 
 assert.match(html, /function purgeLegacySideIdentity\(/, 'debe limpiarse el encabezado viejo del lateral');
-assert.match(html, /#sendwayo-main-sidebar\s*\{[^}]*display:\s*none\s*!important/s,
-  'no debe quedar una columna lateral visible');
-assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\s*\{[^}]*display:\s*grid\s*!important/s,
-  'el menú debe aparecer solamente como panel superior al abrirlo');
-assert.match(html, /#sendwayo-workspace-shell\s*\{[^}]*display:\s*block\s*!important/s,
-  'el espacio de trabajo debe eliminar el diseño de dos columnas');
-assert.match(html, /#sendwayo-main-content\s*\{[^}]*width:\s*100%\s*!important/s,
-  'el módulo debe ocupar todo el ancho');
+assert.match(legacyUrlHtml, /SENDWAYO V7 NAVIGATION RESTORE 2026-11-08/,
+  'la URL pública debe incluir la restauración del menú lateral solicitada');
+assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\s*\{[^}]*position:\s*sticky\s*!important/s,
+  'en escritorio el menú debe quedar fijo a la izquierda');
+assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\.sendwayo-menu-open\s*\{[^}]*transform:translateX\(0\)!important/s,
+  'en móvil el menú debe deslizarse desde la izquierda al abrirse');
+assert.match(legacyUrlHtml, /#sendwayo-workspace-shell\s*\{[^}]*display:flex\s*!important/s,
+  'en escritorio el espacio de trabajo debe reservar una columna lateral');
+assert.match(legacyUrlHtml, /#sendwayo-main-content \.view\.hidden\{display:none!important\}/,
+  'los módulos no seleccionados deben permanecer ocultos');
+assert.match(legacyUrlHtml, /function showView\(view\)\{[\s\S]*document\.querySelectorAll\('\.view'\)\.forEach\(v=>v\.classList\.add\('hidden'\)\)/,
+  'al cambiar de módulo debe cerrarse el anterior antes de abrir el seleccionado');
 assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/,
   'los campos antiguos no deben duplicar la identidad ni la hora');
 
