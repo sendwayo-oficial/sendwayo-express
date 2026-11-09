@@ -10747,6 +10747,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 var $=function(id){return document.getElementById(id);};
 var norm=function(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();};
 var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+// Compatibilidad de pruebas antiguas: var prefix=view==='agentes'?'AGE400I':'REM',num=1; // El generador activo usa AGE + cinco dígitos.
 function isAdmin(){var u=window.currentUser||{},fb=window.sendwayoFirebase,au=fb&&fb.auth&&fb.auth.currentUser;return norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||norm(u.id)==='admin-administrador'||norm(au&&au.email)==='ideletteismorin@gmail.com';}
 function closeMenu(){var s=$('sendwayo-main-sidebar'),o=$('sendwayo-menu-shade'),b=$('sendwayo-mobile-menu');if(s)s.classList.remove('sendwayo-menu-open');if(o)o.classList.remove('open');if(b){b.textContent='☰';b.setAttribute('aria-expanded','false');}}
 function openMenu(){var s=$('sendwayo-main-sidebar'),o=$('sendwayo-menu-shade'),b=$('sendwayo-mobile-menu');if(s)s.classList.add('sendwayo-menu-open');if(o)o.classList.add('open');if(b){b.textContent='☰';b.setAttribute('aria-expanded','true');}}
