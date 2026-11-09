@@ -388,6 +388,29 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 }
 .sendwayo-debug-panel,#sendwayo-debug-panel,#sendwayo-debug,.debug-panel,[data-debug="true"]{display:none!important}
 </style>
+<style id="sendwayo-v7-single-photo-welcome">
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
+.swv7-welcome{min-height:100vh!important;width:100%!important;background:#f3f6fb!important;color:#10243d!important;display:flex!important;flex-direction:column!important}
+.swv7-welcome *{box-sizing:border-box}
+.swv7-welcome-header{width:100%!important;background:#fff!important;border-bottom:1px solid #e5ebf2!important;box-shadow:0 3px 16px rgba(15,36,64,.07)!important;padding:12px clamp(14px,3vw,32px)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important}
+.swv7-welcome-brand{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+.swv7-welcome-brand img{width:auto!important;height:48px!important;max-width:120px!important;object-fit:contain!important}
+.swv7-welcome-brand strong{display:block!important;font-size:15px!important;font-weight:900!important;color:#10243d!important;white-space:nowrap!important}
+.swv7-welcome-brand span{display:block!important;font-size:11px!important;color:#64748b!important;margin-top:3px!important}
+.swv7-welcome-actions{display:flex!important;align-items:center!important;gap:10px!important;flex:0 0 auto!important}
+.swv7-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:42px!important;padding:10px 22px!important;border:0!important;border-radius:999px!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;cursor:pointer!important}
+.swv7-btn-secondary{background:#e8eef5!important;color:#10243d!important}
+.swv7-btn-primary{background:#102c4c!important;color:#fff!important}
+.swv7-welcome-hero{width:min(1180px,94vw)!important;margin:24px auto 18px!important}
+.swv7-welcome-photo{margin:0!important;width:100%!important;overflow:hidden!important;border-radius:18px!important;background:#dbe3ec!important;box-shadow:0 14px 34px rgba(15,36,64,.14)!important}
+.swv7-welcome-photo img{display:block!important;width:100%!important;height:auto!important;max-height:58vh!important;object-fit:contain!important;background:#e9eef4!important}
+.swv7-welcome-values{width:min(1180px,94vw)!important;margin:12px auto 24px!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}
+.swv7-welcome-values article{background:#fff!important;border:1px solid #e2e8f0!important;border-radius:15px!important;padding:18px!important;box-shadow:0 5px 16px rgba(15,36,64,.06)!important}
+.swv7-welcome-values h2{font-size:16px!important;font-weight:900!important;color:#102c4c!important;margin:0 0 8px!important}
+.swv7-welcome-values p{font-size:13px!important;line-height:1.55!important;color:#475569!important;margin:0!important}
+.swv7-welcome-footer{margin-top:auto!important;padding:14px!important;text-align:center!important;font-size:11px!important;color:#64748b!important}
+@media(max-width:700px){.swv7-welcome-header{gap:8px!important;padding:9px 10px!important}.swv7-welcome-brand{gap:7px!important}.swv7-welcome-brand img{height:38px!important;max-width:76px!important}.swv7-welcome-brand strong{font-size:12px!important}.swv7-welcome-brand span{font-size:9px!important}.swv7-btn{min-height:38px!important;padding:8px 12px!important;font-size:11px!important}.swv7-welcome-actions{gap:6px!important}.swv7-welcome-hero{width:100%!important;margin:12px auto!important}.swv7-welcome-photo{border-radius:0!important}.swv7-welcome-photo img{max-height:48vh!important}.swv7-welcome-values{grid-template-columns:1fr!important;width:calc(100% - 24px)!important;margin:10px auto 18px!important;gap:9px!important}.swv7-welcome-values article{padding:13px!important}}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -422,7 +445,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
       <div>
         <label class="block text-[11px] font-bold mb-1">Contraseña</label>
         <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
-        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
+        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo electrónico o ID; la contraseña se verifica en Firebase Authentication</div>
       </div>
       <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
       <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
@@ -2537,7 +2560,23 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 .toolbar-round { border-radius: 9999px; }
 </style>
 
-<div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto"><main class="swv7-welcome"><header class="swv7-welcome-header"><div class="swv7-welcome-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" width="120" height="72"><div><strong>SENDWAYO EXPRESS</strong><span>Tu conexión segura entre destinos</span></div></div><nav class="swv7-welcome-actions" aria-label="Acceso"><button type="button" class="swv7-btn swv7-btn-secondary" onclick="window.sendwayoOpenPublicRegistration()">Crear cuenta</button><button type="button" class="swv7-btn swv7-btn-primary" onclick="window.v162_showLogin()">Ingresar</button></nav></header><section class="swv7-welcome-hero"><div class="swv7-welcome-copy"><span class="swv7-eyebrow">REPÚBLICA DOMINICANA · HAITÍ · SERVICIOS INTERNACIONALES</span><h1>Conectamos personas, familias y oportunidades.</h1><p>Envía y recibe dinero, gestiona tus servicios y da seguimiento a tus operaciones desde un solo lugar.</p><div class="swv7-welcome-actions swv7-welcome-actions-main"><button type="button" class="swv7-btn swv7-btn-primary" onclick="window.sendwayoOpenPublicRegistration()">Crear cuenta</button><button type="button" class="swv7-btn swv7-btn-outline" onclick="window.v162_showLogin()">Ingresar</button></div></div><figure class="swv7-welcome-photo"><img src="assets/ca43ab0c2b8e924cfacc.webp" alt="SENDWAYO EXPRESS" width="1200" height="760" fetchpriority="high"></figure></section><section class="swv7-welcome-values"><article><h2>Visión</h2><p>Ser una plataforma de referencia para conectar comunidades y facilitar servicios financieros y logísticos seguros entre países.</p></article><article><h2>Misión</h2><p>Ofrecer servicios accesibles, transparentes y confiables, con seguimiento claro de cada solicitud y atención responsable a nuestros clientes.</p></article><article><h2>Objetivo</h2><p>Conectar progresivamente más países y sucursales, garantizando operaciones verificables, tarifas claras y protección de los fondos.</p></article></section><footer class="swv7-welcome-footer">© SENDWAYO EXPRESS</footer></main></div>
+<div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
+<main class="swv7-welcome">
+<header class="swv7-welcome-header">
+  <div class="swv7-welcome-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" width="120" height="72"><div><strong>SENDWAYO EXPRESS</strong><span>Tu conexión segura entre destinos</span></div></div>
+  <nav class="swv7-welcome-actions" aria-label="Acceso"><button type="button" class="swv7-btn swv7-btn-secondary" onclick="window.sendwayoOpenPublicRegistration()">Crear cuenta</button><button type="button" class="swv7-btn swv7-btn-primary" onclick="window.v162_showLogin()">Ingresar</button></nav>
+</header>
+<section class="swv7-welcome-hero" aria-label="SENDWAYO EXPRESS">
+  <figure class="swv7-welcome-photo"><img src="assets/sendwayo-welcome-single-photo.webp" alt="Atención y entrega de paquetes en SENDWAYO EXPRESS" width="640" height="426" fetchpriority="high"></figure>
+</section>
+<section class="swv7-welcome-values">
+  <article><h2>Visión</h2><p>Ser una plataforma de referencia para conectar comunidades y facilitar servicios financieros y logísticos seguros entre países.</p></article>
+  <article><h2>Misión</h2><p>Ofrecer servicios accesibles, transparentes y confiables, con seguimiento claro de cada solicitud y atención responsable a nuestros clientes.</p></article>
+  <article><h2>Objetivo</h2><p>Conectar progresivamente más países y sucursales, garantizando operaciones verificables, tarifas claras y protección de los fondos.</p></article>
+</section>
+<footer class="swv7-welcome-footer">© SENDWAYO EXPRESS</footer>
+</main>
+</div>
 <style id="sendwayo-v7-public-landing-clean">
 #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
 #welcome-landing>main.sendwayo-home{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:#f3f6fb!important;color:#10243d!important}
@@ -2764,7 +2803,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
       <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
-        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
+        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="text" placeholder="Correo electrónico o ID" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
         <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
@@ -4421,7 +4460,7 @@ window.sendwayoShareReceipt=async function(){
   };
   window.addEventListener('load',()=>{try{installWelcomeExtras();}catch(e){};try{upgradeTargetSelectors();}catch(e){};});
   // Remove the public credential hint from the login screen; inputs never contain default credentials.
-  const hint=$('login-screen')?.querySelector('.text-gray-500');if(hint&&/ADMIN:/.test(hint.textContent))hint.textContent='Usa tu correo, ID o código y tu contraseña.';
+  const hint=$('login-screen')?.querySelector('.text-gray-500');if(hint&&/ADMIN:/.test(hint.textContent))hint.textContent='Usa tu correo electrónico o ID y tu contraseña.';
   console.log('Sendwayo V7: agente 04/remitente 11, altas de cuentas, transferencia, bono, perfil, Mi banco, reportes y bienvenida actualizados.');
 
  // Firebase Authentication is the only credential source; no hard-coded user accounts.
@@ -7684,7 +7723,7 @@ window.sendwayoShareReceipt=async function(){
     let money=accountMoney(profile);
     if(role==='AGENTE'){try{if(typeof ADMIN!=='undefined'&&ADMIN)money=accountMoney(ADMIN);}catch(e){}}
     const record={...profile, id:appId, dbUserKey:key, name, nombre:name, email, usuario:email, phone, telefono:phone, celular:phone, codigo:code, role, ...money};
-    if(role==='ADMIN' && typeof ADMIN!=='undefined') Object.assign(ADMIN, record, {id:'ADMINADMIN', role:'ADMIN'});
+    if(role==='ADMIN' && typeof ADMIN!=='undefined') Object.assign(ADMIN, record, {id:'ADMIN-ADMINISTRADOR', role:'ADMIN'});
     if(role==='AGENTE' && typeof AGENTES!=='undefined' && Array.isArray(AGENTES)){
       let at=AGENTES.findIndex(a=>norm(a.email)===norm(email) || norm(a.nombre||a.name)===norm(name) || norm(a.id)===norm(appId));
       if(at>=0) Object.assign(AGENTES[at], record); else AGENTES.push(record);
@@ -8358,7 +8397,7 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy||state.sessionEstablished)return;
