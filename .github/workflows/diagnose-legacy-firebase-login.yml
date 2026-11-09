@@ -105,7 +105,7 @@ jobs:
             const preferred = instances.find(x => x.databaseUrl && /default|sendwayo/i.test(x.name || x.databaseUrl)) || instances.find(x => x.databaseUrl);
             if (!preferred?.databaseUrl) throw new Error('The Realtime Database instance did not include a database URL.');
             const dbBase = String(preferred.databaseUrl).replace(/\/$/, '');
-            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, adminAuthUid = '', pageToken = '';
+            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, adminAuthUid = '', sendwayoAuthExists = false, pageToken = '';
             const authUserEmails = new Set(), authUserUids = new Set();
             do {
               const qs = new URLSearchParams({ maxResults: '1000' });
@@ -117,7 +117,8 @@ jobs:
                 const userEmail = String(user.email || '').trim().toLowerCase();
                 if (userEmail) authUserEmails.add(userEmail);
                 if (String(user.localId || '').trim()) authUserUids.add(String(user.localId));
-                if (userEmail === 'ideletteismorin@gmail.com') {
+                if (userEmail === 'sendwayoexpress@gmail.com') sendwayoAuthExists = true;
+              if (userEmail === 'ideletteismorin@gmail.com') {
                   adminAuthExists = true;
                   adminAuthDisabled = Boolean(user.disabled);
                   adminAuthUid = String(user.localId || '');
@@ -153,7 +154,7 @@ jobs:
             let active = 0, withAuthUid = 0, withAuthEmail = 0, withUsername = 0;
             let recordsMatchingAnAuthEmail = 0, recordsWithAuthUidInAuth = 0;
             let adminRecordExists = false, adminHasAuthUid = false, adminHasAuthEmail = false;
-            let adminEmailMatchesAuth = false, adminUidMatchesAuth = false, duplicateProfileEmailRecords = 0;
+            let adminEmailMatchesAuth = false, adminUidMatchesAuth = false, adminProfileEmailsMatchAnyAuth = false, adminProfileUidMatchesAnyAuth = false, adminProfileEmailMatchesSendwayoAuth = false, duplicateProfileEmailRecords = 0;
             const profileEmailFrequency = new Map();
             for (const row of records) {
               const id = String(row.__diagnosticKey || '');
@@ -179,6 +180,9 @@ jobs:
                 adminHasAuthEmail = Boolean(rowEmails.some(v => v.includes('@')));
                 adminEmailMatchesAuth = rowEmails.includes('ideletteismorin@gmail.com') && authUserEmails.has('ideletteismorin@gmail.com');
                 adminUidMatchesAuth = Boolean(uid && authUserUids.has(uid) && uid === adminAuthUid);
+              adminProfileEmailsMatchAnyAuth = rowEmails.some(value => authUserEmails.has(value));
+              adminProfileUidMatchesAnyAuth = Boolean(uid && authUserUids.has(uid));
+              adminProfileEmailMatchesSendwayoAuth = rowEmails.includes('sendwayoexpress@gmail.com') && authUserEmails.has('sendwayoexpress@gmail.com');
               }
             }
             duplicateProfileEmailRecords = [...profileEmailFrequency.values()].filter(count => count > 1).length;
@@ -199,7 +203,11 @@ jobs:
             console.log('Legacy admin user record exists: ' + (adminRecordExists ? 'yes' : 'no'));
             console.log('Legacy admin record has Auth UID: ' + (adminHasAuthUid ? 'yes' : 'no'));
             console.log('Legacy admin record has Auth email: ' + (adminHasAuthEmail ? 'yes' : 'no'));
-            console.log('Admin Authentication account exists: ' + (adminAuthExists ? 'yes' : 'no'));
+            console.log('Configured admin Authentication account exists: ' + (adminAuthExists ? 'yes' : 'no'));
+            console.log('Legacy profile email matches any Firebase Authentication account: ' + (adminProfileEmailsMatchAnyAuth ? 'yes' : 'no'));
+            console.log('Legacy profile UID matches any Firebase Authentication account: ' + (adminProfileUidMatchesAnyAuth ? 'yes' : 'no'));
+            console.log('Legacy profile email matches its known legacy auth candidate: ' + (adminProfileEmailMatchesSendwayoAuth ? 'yes' : 'no'));
+            console.log('Legacy auth candidate exists: ' + (sendwayoAuthExists ? 'yes' : 'no'));
             console.log('Admin Authentication account disabled: ' + (adminAuthDisabled === null ? 'not applicable' : (adminAuthDisabled ? 'yes' : 'no')));
             console.log('Admin profile email matches Authentication email: ' + (adminEmailMatchesAuth ? 'yes' : 'no'));
             console.log('Admin profile UID matches Authentication UID: ' + (adminUidMatchesAuth ? 'yes' : 'no'));
