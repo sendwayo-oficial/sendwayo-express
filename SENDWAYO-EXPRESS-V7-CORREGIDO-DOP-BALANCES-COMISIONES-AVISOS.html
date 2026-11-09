@@ -337,6 +337,29 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="preload" as="image" href="./assets/sendwayo-logo-real.jpg">
+<style id="sendwayo-v7-welcome-only-photo">
+#welcome-landing.sw-home-v7{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
+.sw-home-v7 *{box-sizing:border-box}
+.sw-home-v7-header{width:100%;background:#fff;border-bottom:1px solid #e2e8f0;box-shadow:0 2px 12px rgba(15,36,64,.06)}
+.sw-home-v7-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px clamp(14px,3vw,34px)}
+.sw-home-v7-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.sw-home-v7-brand img{width:auto;height:48px;max-width:145px;object-fit:contain}
+.sw-home-v7-brand strong{display:block;font-weight:900;letter-spacing:.03em;font-size:16px}
+.sw-home-v7-brand span{display:block;color:#64748b;font-size:11px;margin-top:3px}
+.sw-home-v7-actions{display:flex;gap:10px;align-items:center}
+.sw-home-v7-actions button{border:0;border-radius:999px;padding:12px 23px;font-weight:800;font-size:13px;cursor:pointer}
+#sw-home-create{background:#e8eef5;color:#10243d}
+#sw-home-login{background:#102c4c;color:#fff}
+.sw-home-v7-main{width:min(1160px,100%);margin:0 auto;padding:clamp(14px,3vw,28px)}
+.sw-home-v7-photo{margin:0;width:100%;overflow:hidden;border-radius:20px;background:#0c1b2d;box-shadow:0 12px 30px rgba(15,36,64,.14)}
+.sw-home-v7-photo img{display:block;width:100%;height:auto;max-height:clamp(250px,54vh,650px);object-fit:cover;object-position:center 48%}
+.sw-home-v7-purpose{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+.sw-home-v7-purpose article{background:#fff;border:1px solid #e3e9f0;border-radius:14px;padding:18px 20px}
+.sw-home-v7-purpose h2{font-size:16px;font-weight:900;color:#143b60;margin:0 0 8px}
+.sw-home-v7-purpose p{font-size:13px;line-height:1.6;color:#475569;margin:0}
+.sw-home-v7-footer{text-align:center;padding:12px 14px 18px;color:#64748b;font-size:11px}
+@media(max-width:700px){.sw-home-v7-header{gap:8px;padding:10px}.sw-home-v7-brand img{height:40px;max-width:105px}.sw-home-v7-brand strong{font-size:13px}.sw-home-v7-brand span{font-size:9px}.sw-home-v7-actions{gap:6px}.sw-home-v7-actions button{padding:10px 13px;font-size:12px}.sw-home-v7-main{padding:10px}.sw-home-v7-photo{border-radius:12px}.sw-home-v7-photo img{max-height:none}.sw-home-v7-purpose{grid-template-columns:1fr;gap:9px;margin-top:12px}.sw-home-v7-purpose article{padding:13px 15px}.sw-home-v7-purpose h2{font-size:14px}.sw-home-v7-purpose p{font-size:12px}}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -366,12 +389,12 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="space-y-4">
       <div>
         <label class="block text-[11px] font-bold mb-1">Usuario</label>
-        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
+        <input id="login-usuario" type="text" placeholder="Correo electrónico o ID" class="w-full border rounded-lg p-3 text-[13px]">
       </div>
       <div>
         <label class="block text-[11px] font-bold mb-1">Contraseña</label>
         <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
-        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
+        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo electrónico o ID; la contraseña se verifica en Firebase Authentication</div>
       </div>
       <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
       <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
@@ -2486,53 +2509,28 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 .toolbar-round { border-radius: 9999px; }
 </style>
 
-<div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
-  <main class="sendwayo-home">
-    <header class="sendwayo-home-header">
-      <div class="sendwayo-home-header-inner">
-        <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
-      </div>
-    </header>
-    <div class="sendwayo-home-content">
-      <section class="sendwayo-home-hero">
-        <div class="sendwayo-home-gallery">
-          <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
-            <div class="sendwayo-home-photo-shade"></div>
-            <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
-            <div id="v162-dots" class="sendwayo-home-dots"></div>
-            <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
-          </div>
-          <div class="sendwayo-home-thumbs">
-            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
-          </div>
-        </div>
-        <aside class="sendwayo-home-aside">
-          <div class="sendwayo-home-aside-tag">TU CONEXIÓN ENTRE DESTINOS</div>
-          <h2>Todo más fácil, en un solo lugar.</h2>
-          <p>Una plataforma para acompañarte en tus operaciones de República Dominicana, Haití y otros destinos.</p>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Atención organizada</strong><small>Seguimiento de tus solicitudes y operaciones.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Servicios variados</strong><small>Dinero, paquetes, recargas y pagos.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Acceso seguro</strong><small>Tu cuenta personal dentro de SENDWAYO EXPRESS.</small></div></div>
-          <div class="sendwayo-home-aside-photo"><img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS"></div>
-        </aside>
-      </section>
-      <section class="sendwayo-home-services">
-        <div class="sendwayo-home-section-title"><span>NUESTROS SERVICIOS</span><h2>¿Qué necesitas hacer?</h2></div>
-        <div class="sendwayo-home-service-grid">
-          <article><span>💸</span><strong>Envíos de dinero</strong><small>RD · Haití · Estados Unidos y otros destinos</small></article>
-          <article><span>💰</span><strong>Retiros</strong><small>Operaciones de retiro y entrega</small></article>
-          <article><span>📦</span><strong>Paquetes</strong><small>Recepción, seguimiento y distribución</small></article>
-          <article><span>📱</span><strong>Recargas y pagos</strong><small>Recargas telefónicas y pago de servicios</small></article>
-        </div>
-      </section>
-    </div>
-    <footer class="sendwayo-home-footer">© SENDWAYO EXPRESS · Conectamos destinos</footer>
-  </main>
+<div id="welcome-landing" class="sw-home-v7">
+ <header class="sw-home-v7-header">
+  <div class="sw-home-v7-brand">
+   <img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS">
+   <div><strong>SENDWAYO EXPRESS</strong><span>Envíos nacionales e internacionales</span></div>
+  </div>
+  <nav class="sw-home-v7-actions" aria-label="Acceso">
+   <button type="button" id="sw-home-create" onclick="window.sendwayoOpenAccountRequest()">Crear</button>
+   <button type="button" id="sw-home-login" onclick="window.v162_showLogin()">Ingresar</button>
+  </nav>
+ </header>
+ <main class="sw-home-v7-main">
+  <figure class="sw-home-v7-photo">
+   <img src="assets/sendwayo-welcome.webp" alt="Atención y envío de paquetes en SENDWAYO EXPRESS" fetchpriority="high" decoding="async">
+  </figure>
+  <section class="sw-home-v7-purpose" aria-label="Identidad institucional">
+   <article><h2>Misión</h2><p>Brindar servicios de envío, recepción y gestión de dinero y paquetes con atención responsable, cercana y segura.</p></article>
+   <article><h2>Visión</h2><p>Conectar a personas, familias y negocios entre países mediante una red internacional confiable y accesible.</p></article>
+   <article><h2>Objetivo</h2><p>Facilitar operaciones nacionales e internacionales con información clara, seguimiento, control y servicio oportuno.</p></article>
+  </section>
+ </main>
+ <footer class="sw-home-v7-footer">SENDWAYO EXPRESS · Conectamos destinos</footer>
 </div>
 <style id="sendwayo-v7-public-landing-clean">
 #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
@@ -2730,14 +2728,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     lista.classList.remove('hidden');
   };
 
-  function initCarousel(){
-    const imgEl=document.getElementById('v162-car-main');
-    const dotsEl=document.getElementById('v162-dots');
-    if(!imgEl||!dotsEl) return;
-    dotsEl.innerHTML='';
-    carouselImgs.forEach((_,i)=>{ const d=document.createElement('span'); d.className=i===0?'w-7 h-2.5 rounded-full bg-white shadow':'w-2.5 h-2.5 rounded-full bg-white/40'; d.id='v162-dot-'+i; dotsEl.appendChild(d); });
-    setInterval(()=>{ carIdx=(carIdx+1)%carouselImgs.length; imgEl.style.opacity='0'; setTimeout(()=>{ imgEl.src=carouselImgs[carIdx]; imgEl.style.opacity='1'; },250); carouselImgs.forEach((_,i)=>{ const dot=document.getElementById('v162-dot-'+i); if(dot) dot.className=i===carIdx?'w-7 h-2.5 rounded-full bg-white shadow':'w-2.5 h-2.5 rounded-full bg-white/40'; }); },5000);
-  }
+  function initCarousel(){ return; }
   window.v162_setCar=function(i){ carIdx=i%carouselImgs.length; const imgEl=document.getElementById('v162-car-main'); if(imgEl){ imgEl.src=carouselImgs[carIdx]; } };
   window.v162_next=function(){ carIdx=(carIdx+1)%carouselImgs.length; v162_setCar(carIdx); };
   window.v162_prev=function(){ carIdx=(carIdx-1+carouselImgs.length)%carouselImgs.length; v162_setCar(carIdx); };
@@ -2766,7 +2757,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
       <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
-        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
+        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="text" inputmode="email" autocomplete="username" placeholder="Correo electrónico o ID" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
         <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
