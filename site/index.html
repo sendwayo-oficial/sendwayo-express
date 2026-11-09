@@ -8225,35 +8225,40 @@ window.sendwayoShareReceipt=async function(){
 
     try {
       // Esperar el único arranque de Firebase. No ejecutar otro signOut en paralelo.
-      await loginStep(state.authReadyPromise || Promise.reject(new Error('Firebase todavía no terminó de prepararse. Recargue la página e inténtelo otra vez.')), 'La preparación de Firebase', 12000);
+      await loginStep(state.authReadyPromise || Promise.resolve(true), 'La preparación de Firebase', 2000);
 
+      if (button) button.textContent = 'Verificando contraseña…';
       const credential = await loginStep(
         auth.signInWithEmailAndPassword(email, password),
         'Firebase Authentication',
-        18000
+        12000
       );
       const firebaseUser = credential.user;
 
       // Firebase Authentication ya validó la contraseña y emitió este usuario. No bloquear el acceso
       // por una segunda verificación HTTP del Worker, que puede fallar aunque Firebase esté disponible.
-      const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 12000);
+      if (button) button.textContent = 'Buscando tu cuenta…';
+      const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 8000);
 
       if (!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
       const role = canonicalRole(found.data, found.key);
       if (!role) throw new Error('El perfil de Firebase no tiene un rol válido. No se otorgó acceso.');
       if (!isActive(found.data)) throw new Error('La cuenta está inactiva o bloqueada. Consulte al administrador.');
+      if (button) button.textContent = 'Comprobando seguridad…';
       await loginStep(enforceFirstPasswordChange(firebaseUser,found),'El cambio obligatorio de contraseña',300000);
 
       // A los agentes no se les permite entrar sin una activación registrada por Administración.
       if (role === 'AGENTE') {
-        await loginStep(activateAgentMapping(firebaseUser, found, role), 'La validación de activación del agente', 8000);
+        if (button) button.textContent = 'Validando activación…';
+        await loginStep(activateAgentMapping(firebaseUser, found, role), 'La validación de activación del agente', 6000);
       }
 
       // La contraseña Firebase y el correo exacto ya identificaron la cuenta. Si la escritura del UID
       // tarda o las reglas impiden actualizar el enlace antiguo, no se deja el botón bloqueado.
       let linked = found;
       try {
-        linked = await loginStep(bindIdentity(found, firebaseUser, role), 'La vinculación del perfil', 8000);
+        if (button) button.textContent = 'Preparando tu espacio…';
+        linked = await loginStep(bindIdentity(found, firebaseUser, role), 'La vinculación del perfil', 6000);
       } catch (bindingError) {
         console.warn('[SENDWAYO] El acceso fue verificado, pero no se pudo actualizar el vínculo UID:', bindingError);
       }
@@ -8450,7 +8455,9 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+  // El listener se registra de inmediato: el ingreso no debe quedar bloqueado esperando
+  // la migración de persistencia del navegador. Firebase Authentication valida cada credencial.
+  state.authReadyPromise = Promise.resolve(true);
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy||state.sessionEstablished)return;
@@ -8525,7 +8532,6 @@ window.sendwayoShareReceipt=async function(){
       showLogin();loginError(message);
     }finally{state.loginBusy=false;}
   });
-  }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLogin();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
   window.sendwayoCloudStatus='Firebase Authentication y lecturas en tiempo real están conectados. Antes de usar dinero real, todavía deben validarse las reglas de escritura por rol y probarse las operaciones financieras en Firebase.';
   // Liberar el acceso solo cuando el manejador final y el arranque de Firebase ya existen.
   window.__sendwayoFirebaseSecureLoginReady = true;
