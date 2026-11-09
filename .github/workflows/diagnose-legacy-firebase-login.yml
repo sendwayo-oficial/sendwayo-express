@@ -117,7 +117,7 @@ jobs:
                 const userEmail = String(user.email || '').trim().toLowerCase();
                 if (userEmail) authUserEmails.add(userEmail);
                 if (String(user.localId || '').trim()) authUserUids.add(String(user.localId));
-                if (userEmail === 'sendwayoexpress@gmail.com') {
+                if (userEmail === 'ideletteismorin@gmail.com') {
                   adminAuthExists = true;
                   adminAuthDisabled = Boolean(user.disabled);
                   adminAuthUid = String(user.localId || '');
@@ -126,17 +126,37 @@ jobs:
               pageToken = page.nextPageToken || '';
             } while (pageToken);
 
-            const usersValue = await getJson(dbBase + '/sendwayo_express_v2/users.json');
-            const records = usersValue && typeof usersValue === 'object' && !Array.isArray(usersValue)
-              ? Object.entries(usersValue).filter(([, value]) => value && typeof value === 'object')
-              : [];
+            const rootsToInspect = [
+              { name: 'sendwayo_express_v2/users', path: '/sendwayo_express_v2/users.json' },
+              { name: 'users', path: '/users.json' },
+              { name: 'accounts', path: '/accounts.json' }
+            ];
+            const rootRows = [];
+            for (const root of rootsToInspect) {
+              try {
+                const value = await getJson(dbBase + root.path);
+                const rows = value && typeof value === 'object' && !Array.isArray(value)
+                  ? Object.entries(value).filter(([, row]) => row && typeof row === 'object')
+                  : [];
+                rootRows.push({ name: root.name, rows });
+              } catch (error) {
+                rootRows.push({ name: root.name, rows: [], error: error.message });
+              }
+            }
+            const records = rootRows.flatMap(root => root.rows.map(([id, row]) => ({
+              ...row, __diagnosticKey: id, __diagnosticRoot: root.name
+            })));
+            console.log('Read-only profile roots: ' + JSON.stringify(rootRows.map(root => ({
+              path: root.name, records: root.rows.length, readable: !root.error
+            }))));
             const byRole = { admin: 0, agent: 0, remitente: 0, other: 0 };
             let active = 0, withAuthUid = 0, withAuthEmail = 0, withUsername = 0;
             let recordsMatchingAnAuthEmail = 0, recordsWithAuthUidInAuth = 0;
             let adminRecordExists = false, adminHasAuthUid = false, adminHasAuthEmail = false;
             let adminEmailMatchesAuth = false, adminUidMatchesAuth = false, duplicateProfileEmailRecords = 0;
             const profileEmailFrequency = new Map();
-            for (const [id, row] of records) {
+            for (const row of records) {
+              const id = String(row.__diagnosticKey || '');
               const role = normalizeRole(row.role || row.rol || (id.toLowerCase() === 'admin' ? 'admin' : ''));
               byRole[role]++;
               if (row.active !== false && row.disabled !== true && !['inactive', 'disabled', 'inactivo'].includes(String(row.status || '').toLowerCase())) active++;
@@ -152,18 +172,19 @@ jobs:
               const authMatchedEmails = [...new Set(rowEmails.filter(v => authUserEmails.has(v)))];
               if (authMatchedEmails.length) recordsMatchingAnAuthEmail++;
               for (const email of new Set(rowEmails)) profileEmailFrequency.set(email, (profileEmailFrequency.get(email) || 0) + 1);
-              const isAdmin = id.toLowerCase() === 'admin' || role === 'admin' || rowEmails.includes('sendwayoexpress@gmail.com');
+              const isAdmin = id.toLowerCase() === 'admin' || role === 'admin' || rowEmails.includes('ideletteismorin@gmail.com');
               if (isAdmin) {
                 adminRecordExists = true;
                 adminHasAuthUid = Boolean(uid);
                 adminHasAuthEmail = Boolean(rowEmails.some(v => v.includes('@')));
-                adminEmailMatchesAuth = rowEmails.includes('sendwayoexpress@gmail.com') && authUserEmails.has('sendwayoexpress@gmail.com');
+                adminEmailMatchesAuth = rowEmails.includes('ideletteismorin@gmail.com') && authUserEmails.has('ideletteismorin@gmail.com');
                 adminUidMatchesAuth = Boolean(uid && authUserUids.has(uid) && uid === adminAuthUid);
               }
             }
             duplicateProfileEmailRecords = [...profileEmailFrequency.values()].filter(count => count > 1).length;
             console.log('READ-ONLY LEGACY LOGIN DIAGNOSTIC');
             console.log('Legacy Firebase project verified: ' + projectId);
+            console.log('Admin email under check: ideletteismorin@gmail.com');
             console.log('Realtime Database instances found: ' + instances.length);
             console.log('Firebase Authentication users: ' + authUsers);
             console.log('Realtime Database user records: ' + records.length);
