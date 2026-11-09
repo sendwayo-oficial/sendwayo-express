@@ -3698,7 +3698,7 @@ var side=el("sendwayo-main-sidebar");if(side){var out=Array.from(side.querySelec
 var strip=el("sendwayo-v7-user-strip");if(strip)strip.style.setProperty("display","none","important");
 Array.from(document.querySelectorAll("button")).forEach(function(b){if(b!==menu&&/^[☰≡]{1,2}$/.test((b.textContent||"").trim())&&!b.closest("#welcome-landing"))b.remove()});
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",run);else run();window.addEventListener("load",run);window.addEventListener("resize",run);setInterval(tick,1000);
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",run);else run();window.addEventListener("load",run);window.addEventListener("resize",run);var observer=new MutationObserver(function(){run()});observer.observe(document.body,{attributes:true,attributeFilter:["class"]});setInterval(tick,1000);
 })();
 </script>
 </body></html>';
