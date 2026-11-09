@@ -209,7 +209,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
   };
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
   // Allow the welcome screen to render before loading authentication dependencies.
-  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},2200);
+  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},0);
 })();
 </script>
 
@@ -3519,32 +3519,13 @@ window.sendwayoShareReceipt=async function(){
    const m=(b.getAttribute('onclick')||'').match(/showView\(['"]([^'"]+)['"]\)/);if(m)setTimeout(()=>hideNonSelected(m[1]),0);
  },true);
  window.addEventListener('resize',()=>{const v=document.body.dataset.sendwayoActiveView;if(v)hideNonSelected(v);});
- // Inactivity lock: retain login for less than 40 minutes; require credentials after 40 minutes.
- const LIMIT=40*60*1000, KEY='sendwayo_express_oficial_20261029_last_activity_v5';let locking=false;
- function loggedIn(){const u=activeUser();return !!(u&&(u.id||u.codigo||u.email));}
- function touch(){if(loggedIn())try{sessionStorage.setItem(KEY,String(Date.now()));}catch(e){}}
- function forceLock(){if(locking||!loggedIn())return;locking=true;
-   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
-   $('welcome-landing')?.classList.add('hidden');
-   const login=$('login-screen');if(login){login.classList.remove('hidden');login.style.display='flex';}
-   if($('login-usuario'))$('login-usuario').value='';if($('login-password'))$('login-password').value='';
-   if($('login-error')){$('login-error').textContent='Sesión cerrada por 40 minutos de inactividad. Inicie sesión nuevamente.';$('login-error').classList.remove('hidden');}
-   try{const firebaseSession=window.sendwayoFirebase;if(firebaseSession&&typeof firebaseSession.lockForInactivity==='function'){firebaseSession.lockForInactivity();}}catch(e){console.warn('[SENDWAYO] Cierre por inactividad:',e);}
-   try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null}
-   try{sessionStorage.removeItem(KEY)}catch(e){}
-   document.body.dataset.sendwayoActiveView='';locking=false;
- }
- function check(){if(!loggedIn())return;let last=0;try{last=Number(sessionStorage.getItem(KEY)||0)}catch(e){}if(!last){touch();return;}if(Date.now()-last>=LIMIT)forceLock();}
- ['pointerdown','keydown','touchstart','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>{check();touch();},{passive:true,capture:true}));
- window.addEventListener('focus',check);window.addEventListener('pageshow',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
- const oldLogin=window.intentarLogin;if(typeof oldLogin==='function')window.intentarLogin=function(){const r=oldLogin.apply(this,arguments);setTimeout(()=>{if(loggedIn()){try{sessionStorage.setItem(KEY,String(Date.now()))}catch(e){}hideNonSelected('tablero');}},0);return r;};
- const oldLogout=window.cerrarSesion;if(typeof oldLogout==='function')window.cerrarSesion=function(){const r=oldLogout.apply(this,arguments);try{sessionStorage.removeItem(KEY)}catch(e){}document.body.dataset.sendwayoActiveView='';return r;};
+ // A single Firebase-backed inactivity controller below owns session expiry.
  // For remitters, hide dashboard counters that disclose how many agents/remitters exist.
  function applyRemitterPrivacy(){const u=activeUser();if(!u||!MOBILE())return;const role=String(u.role||u.rol||'').toLowerCase();if(!/remitente|remitter/.test(role))return;
    document.querySelectorAll('#view-tablero *').forEach(el=>{if(el.children.length)return;const t=(el.textContent||'').trim();if(/\b(total|cantidad|número|numero)\b.{0,35}\b(agentes|remitentes)\b|\b(agentes|remitentes)\b.{0,35}\b(total|cantidad|número|numero)\b/i.test(t)){const card=el.closest('.rounded-xl,.rounded-2xl,.border,.shadow,article,section')||el;card.style.setProperty('display','none','important');}});
  }
- setInterval(()=>{check();applyRemitterPrivacy();},15000);
- document.addEventListener('DOMContentLoaded',()=>{if(loggedIn()){touch();const v=document.body.dataset.sendwayoActiveView||'tablero';hideNonSelected(v);} });
+ setInterval(applyRemitterPrivacy,60000);
+ document.addEventListener('DOMContentLoaded',()=>{applyRemitterPrivacy();});
 })();
 </script>
 
@@ -3570,7 +3551,7 @@ window.sendwayoShareReceipt=async function(){
    }
    let strip=$('sendwayo-v7-user-strip');
    if(!strip){strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';}
-   if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
+   if(brandBar){const actions=brandBar.querySelector('.sendwayo-brand-actions');if(strip.parentElement!==brandBar)brandBar.insertBefore(strip,actions||null);}
    else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
    const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
    if(strip.dataset.sendwayoHeaderReady!=='1'){
