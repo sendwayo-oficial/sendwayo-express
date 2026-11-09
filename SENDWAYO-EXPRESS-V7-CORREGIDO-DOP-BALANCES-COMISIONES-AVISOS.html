@@ -208,10 +208,8 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     return window.sendwayoFirebaseSdkReady;
   };
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
-  // Start Firebase downloads immediately in the background; dynamic scripts do not block typing.
-  // This removes the artificial 2.2-second wait before the secure login can initialize.
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){window.sendwayoStartFirebaseSdk();},{once:true});
-  else window.sendwayoStartFirebaseSdk();
+  // Allow the welcome screen to render before loading authentication dependencies.
+  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},2200);
 })();
 </script>
 
@@ -337,6 +335,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="preload" as="image" href="./assets/sendwayo-logo-real.jpg">
+<style id="sendwayo-id-only-ui">#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}#v7-admin-code,#v7-admin-code-label{display:none!important}.sendwayo-brand-left{display:flex!important;align-items:center!important;gap:12px!important}</style>
+<style id="sendwayo-id-only-account-style">#v7-admin-code{display:none!important}#sendwayo-admin-account-modal label:has(#v7-admin-code){display:none!important}#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -366,12 +366,12 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="space-y-4">
       <div>
         <label class="block text-[11px] font-bold mb-1">Usuario</label>
-        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
+        <input id="login-usuario" type="text" placeholder="Correo electrónico o ID" class="w-full border rounded-lg p-3 text-[13px]">
       </div>
       <div>
         <label class="block text-[11px] font-bold mb-1">Contraseña</label>
         <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
-        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
+        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo electrónico o ID; la contraseña se verifica en Firebase Authentication</div>
       </div>
       <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
       <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
@@ -382,9 +382,9 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
     <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
+    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
   <div class="sendwayo-brand-actions">
     <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
@@ -403,7 +403,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="sendwayo-workspace-meta">
       <span id="sendwayo-v7-role">—</span>
       <span>ID: <strong id="sendwayo-v7-id">—</strong></span>
-      <span>Código: <strong id="sendwayo-v7-code">—</strong></span>
+      
     </div>
   </div>
   <div class="sendwayo-workspace-time">
@@ -429,6 +429,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button onclick="showView('recepcion')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🎁</span> Recepción envío y distribución</button>
     <button onclick="showView('facturas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🧾</span> Pago de facturas y servicios</button>
     <button onclick="showView('mibanco')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏦</span> Mi banco / Mi cuenta bancaria</button>
+<button onclick="window.sendwayoOpenIdFile()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🗂️</span> Expediente por ID</button>
+<button onclick="window.sendwayoOpenCardPayments()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Pagos con tarjeta / PayPal</button>
     <button onclick="showView('cuentas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏛️</span> Cuentas bancarias y depósitos</button>
     <button onclick="showView('ajustes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>⚙️</span> Ajustes / créditos pendientes 0</button>
     <button onclick="showView('creditos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Créditos pendientes</button>
@@ -841,8 +843,9 @@ function addNotificacion(msg, tipo){
 
 document.getElementById('bell-top').onclick=()=>{ document.getElementById('notif-panel').classList.toggle('hidden'); };
 
-// No renderizar el tablero completo antes de autenticar: evita bloquear la portada y el formulario de acceso.
-// renderPrincipal() se ejecuta después de validar la sesión Firebase.
+setTimeout(()=>{
+  renderPrincipal();
+},500);
 </script>
 
 <!-- MODAL RECARGAS EXACTO FOTO - Recargas - Comisión 5% -->
@@ -2170,9 +2173,9 @@ window.renderSecretas = function(){
       <div class="font-extrabold text-[12px] tracking-widest text-orange-700 mb-3">🔒 INFORMACIONES SECRETAS - SOLO ADMIN - TODOS LOS AGENTES Y ADMIN Y REMITENTES CON CONTRASEÑA</div>
       
       <div class="bg-white rounded-lg p-3 border mb-3">
-        <div class="font-bold text-[11px] mb-2">00 ADMIN: Administrador - ID: ADMINADMIN - Código: ADMIN-000</div>
+        <div class="font-bold text-[11px] mb-2">00 ADMINISTRADOR - ID: ADMIN-ADMINISTRADOR</div>
         <div class="text-[10px] space-y-1">
-          <div>Usuario: ${ADMIN.email} | Celular: ${ADMIN.celular} | ID: ${ADMIN.id} | Código: ${ADMIN.codigo} | Número: ${ADMIN.numero}</div>
+          <div>Usuario: ${ADMIN.email} | Celular: ${ADMIN.celular} | ID: ${ADMIN.id} | Número: ${ADMIN.numero}</div>
           <div>Contraseña: ${ADMIN.password} | Contraseña: ${ADMIN.password} y el celular | Balance: RD$ ${ADMIN.balances.DOP} / HTG ${ADMIN.balances.HTG} | Comisión: RD$ ${ADMIN.commissions.DOP} / HTG ${ADMIN.commissions.HTG}</div>
           <div>Balances y comisiones reales cargados desde Firebase</div>
         </div>
@@ -2188,9 +2191,9 @@ window.renderSecretas = function(){
   AGENTES.forEach(ag=>{
     htmlSecret += `
       <div class="bg-white rounded-lg p-3 border mb-2">
-        <div class="font-bold text-[11px]">${ag.numero} ${ag.nombre} - ID: ${ag.id} - Código: ${ag.codigo} / ${ag.codigo2} - Si agente es ${ag.numero} código ${ag.codigo}</div>
+        <div class="font-bold text-[11px]">${ag.numero} ${ag.nombre} - ID: ${ag.id}</div>
         <div class="text-[10px] space-y-1">
-          <div>Usuario: ${ag.email} | Celular: ${ag.celular} | Número: ${ag.numero} | ID: ${ag.id} | Código: ${ag.codigo} - Si número ${ag.numero} código ${ag.codigo}</div>
+          <div>Usuario: ${ag.email} | Celular: ${ag.celular} | Número: ${ag.numero} | ID: ${ag.id}</div>
           <div>Contraseña: ${ag.password} o el celular ${ag.celular} | Contraseña: correo y contraseña de Firebase Authentication</div>
           <div>Balance: RD$ ${ag.balances.DOP} / HTG ${ag.balances.HTG} | Comisión compartida con Administración</div>
         </div>
@@ -2206,7 +2209,7 @@ window.renderSecretas = function(){
   REMITENTES.forEach(rem=>{
     htmlSecret += `
       <div class="bg-white rounded-lg p-2 border mb-1">
-        <div class="font-bold text-[10px]">${rem.numero} ${rem.nombre} - ID: ${rem.id} - Código: ${rem.codigo} - Si remitente ${rem.numero} REM-${rem.numero.padStart(3,'0')}</div>
+        <div class="font-bold text-[10px]">${rem.numero} ${rem.nombre} - ID: ${rem.id}</div>
         <div class="text-[9px]">Usuario: ${rem.email} / contraseña = número de celular ${rem.celular} | Tel: ${rem.telefono} | Balance RD$ ${rem.balances.DOP} / HTG ${rem.balances.HTG} | Cuando suba persona en plataforma si es agente debe decir su nombre también y su código ${rem.codigo}</div>
         <div class="flex gap-1 mt-1">
           <button onclick="ajustarBalance('${rem.id}')" class="bg-[#1e3a5f] text-white px-2 py-0.5 rounded-full text-[8px]">Ajustar balance - Admin acreditar</button>
@@ -2325,7 +2328,7 @@ setTimeout(()=>{
         <tr class="border-b">
           <td class="p-3">${ag.numero}</td>
           <td class="p-3 font-bold text-blue-800">${ag.id} - ${ag.codigo}</td>
-          <td class="p-3"><div class="font-bold">${ag.nombre}</div><div class="text-[10px] text-gray-500">${ag.email} - Código: ${ag.codigo} si número ${ag.numero} código ${ag.codigo}</div></td>
+          <td class="p-3"><div class="font-bold">${ag.nombre}</div><div class="text-[10px] text-gray-500">${ag.email}</div></td>
           <td class="p-3">${ag.celular}</td>
           <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-[9px]">AGENTE</span></td>
           <td class="p-3"><div class="flex gap-1"><button class="bg-yellow-500 text-white px-3 py-1 rounded-full text-[9px]">Modificar</button><button class="bg-red-600 text-white px-3 py-1 rounded-full text-[9px]">Borrar</button></div><div class="text-[8px] text-gray-500 mt-1">En transacciones: Aprobado/Rechazado/No Coincide</div></td>
@@ -2362,7 +2365,7 @@ window.intentarLogin = function(){
   if(!valids.includes(p)){ if(err){ err.innerText='Contraseña incorrecta'; err.classList.remove('hidden'); } return; }
   window.currentUser = {id:user.id, name:user.nombre, nombre:user.nombre, role:user.role, email:user.usuario, celular:user.celular, codigo:user.codigo};
   document.getElementById('login-screen').classList.add('hidden');
-  const topUser = document.getElementById('user-top'); if(topUser) topUser.innerText = user.nombre + ' ' + user.codigo;
+  const topUser = document.getElementById('user-top'); if(topUser) topUser.innerText = user.nombre + ' — ' + user.id;
   alert('Bienvenido '+user.nombre);
   // habilitar todo
   /* Sin desbloqueo general: cada botón conserva sus permisos. */
@@ -2808,7 +2811,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     window.currentUser={id:user.id, name:user.nombre, nombre:user.nombre, role:user.role, email:user.usuario||user.email, celular:user.celular, codigo:user.codigo};
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('welcome-landing').classList.add('hidden');
-    const topUser=document.getElementById('user-top'); if(topUser) topUser.innerText=user.nombre+' '+user.codigo;
+    const topUser=document.getElementById('user-top'); if(topUser) topUser.innerText=user.nombre+' — '+user.id;
     /* Sin desbloqueo general: cada botón conserva sus permisos. */
     if(typeof renderPrincipal==='function') renderPrincipal();
   };
@@ -3408,112 +3411,6 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
-
-<!-- SENDWAYO V7: idempotencia de aprobaciones, paginación modular y menú móvil -->
-<style id="sendwayo-v7-final-order">
-@media(max-width:1024px){
- #sendwayo-mobile-menu{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
- #sendwayo-main-sidebar{z-index:2147482600!important}
- #sendwayo-menu-shade{z-index:2147482500!important}
-}
-#view-tablero table:has(#tabla-principal-body){display:none!important}
-#view-tablero #tabla-principal-body{display:none!important}
-.sendwayo-generic-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px;font-size:12px;color:#334155}
-.sendwayo-generic-pager button{border:1px solid #cbd5e1;border-radius:999px;padding:9px 14px;font-weight:800;background:#fff;min-height:40px}
-.sendwayo-generic-pager button:disabled{opacity:.45}
-</style>
-<script id="sendwayo-v7-final-integrity">
-(function(){
- 'use strict';
- const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
- const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];
- const approved=t=>['aprobado','approved','pagado'].includes(norm(t&&(t.estado||t.status)));
- const busy=new Set();
- function findTx(id){return txs().find(t=>String(t.id)===String(id));}
- // Protección inmediata del botón y segunda barrera atómica en Firebase durante la sincronización.
- const approveOriginal=window.aprobar;
- if(typeof approveOriginal==='function'&&!approveOriginal.__sendwayoOnce){
-  const guarded=function(id){
-   const t=findTx(id);
-   if(!t){return;}
-   if(approved(t)){alert('Esta transacción ya está aprobada. No se puede aprobar dos veces.');return;}
-   const key=String(id);
-   if(busy.has(key)){return;}
-   busy.add(key);
-   try{return approveOriginal.apply(this,arguments);}
-   finally{window.setTimeout(()=>busy.delete(key),5000);}
-  };
-  guarded.__sendwayoOnce=true;window.aprobar=guarded;
- }
- const genericOriginal=window.sendwayoActionGeneric;
- if(typeof genericOriginal==='function'&&!genericOriginal.__sendwayoOnce){
-  const guardedGeneric=function(view,action,id){
-   if(['aprobar','approve','aceptar'].includes(norm(action))){
-    const t=findTx(id);
-    if(t&&approved(t)){alert('Esta transacción ya está aprobada. No se repetirá.');return;}
-    const k=String(view)+':'+String(id);
-    if(busy.has(k))return;
-    busy.add(k);
-    try{return genericOriginal.apply(this,arguments);}
-    finally{window.setTimeout(()=>busy.delete(k),5000);}
-   }
-   return genericOriginal.apply(this,arguments);
-  };
-  guardedGeneric.__sendwayoOnce=true;window.sendwayoActionGeneric=guardedGeneric;
- }
- // Paginación 10 por página para tablas de los módulos personalizados; no toca el tablero.
- const pages=Object.create(null);
- function applyPager(view){
-  if(!view||view==='tablero')return;
-  const root=document.getElementById('view-'+view);if(!root||root.classList.contains('hidden'))return;
-  const table=root.querySelector('table[id^="tabla-sendwayo-"],table');
-  if(!table||!table.tBodies||!table.tBodies[0])return;
-  if(root.querySelector('[id^="sendwayo-module-pagination-"]'))return;
-  const body=table.tBodies[0],all=[...body.rows];
-  if(!all.length)return;
-  const key=view,st=pages[key]||(pages[key]={page:1,query:''});
-  let pager=root.querySelector('.sendwayo-generic-pager');
-  if(!pager){pager=document.createElement('div');pager.className='sendwayo-generic-pager';pager.id='sendwayo-generic-pager-'+view;table.parentElement.insertAdjacentElement('afterend',pager);}
-  const inputs=[...root.querySelectorAll('input[type="search"],input[placeholder*="Buscador"],input[placeholder*="buscar" i]')];
-  const input=inputs[0];
-  if(input&&!input.dataset.sendwayoPagerBound){
-   input.dataset.sendwayoPagerBound='1';
-   input.addEventListener('input',()=>{st.page=1;window.setTimeout(()=>applyPager(view),0);});
-  }
-  const q=norm(input&&input.value||'');
-  if(st.query!==q){st.query=q;st.page=1;}
-  const filtered=all.filter(row=>!q||norm(row.innerText).includes(q));
-  const count=Math.max(1,Math.ceil(filtered.length/10));st.page=Math.min(Math.max(1,st.page),count);
-  const start=(st.page-1)*10;
-  all.forEach(row=>row.style.display='none');
-  filtered.forEach((row,index)=>{
-   const visible=index>=start&&index<start+10;
-   row.style.display=visible?'':'none';
-   if(visible&&row.cells.length){
-    const first=row.cells[0];
-    if(first.dataset.sendwayoOriginalNumber===undefined)first.dataset.sendwayoOriginalNumber=first.textContent.trim();
-    first.textContent=String(index+1-start).padStart(2,'0');
-   }
-  });
-  const from=filtered.length?start+1:0,to=Math.min(start+10,filtered.length);
-  pager.innerHTML='<span>Registros '+String(from).padStart(2,'0')+'–'+String(to).padStart(2,'0')+' de '+filtered.length+' · Página '+st.page+' de '+count+'</span><div style="display:flex;gap:8px"><button type="button" '+(st.page<=1?'disabled':'')+' data-page="-1">Anterior</button><button type="button" '+(st.page>=count?'disabled':'')+' data-page="1">Siguiente</button></div>';
-  pager.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{st.page=Math.min(count,Math.max(1,st.page+Number(btn.dataset.page)));applyPager(view);}));
- }
- const renderOriginal=window.renderModuloSeparado;
- if(typeof renderOriginal==='function'&&!renderOriginal.__sendwayoPager){
-  const wrapped=function(view){
-   const result=renderOriginal.apply(this,arguments);
-   window.setTimeout(()=>applyPager(view),0);
-   return result;
-  };
-  wrapped.__sendwayoPager=true;window.renderModuloSeparado=wrapped;
- }
- window.addEventListener('sendwayo:transactions-updated',()=>{
-  const active=[...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden'));
-  if(active)window.setTimeout(()=>applyPager(active.id.replace(/^view-/,'')||''),0);
- });
-})();
-</script>
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
@@ -3763,15 +3660,15 @@ window.sendwayoShareReceipt=async function(){
    if(!strip){strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';}
    if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
    else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
-   const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
+   const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—';
    if(strip.dataset.sendwayoHeaderReady!=='1'){
-     strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span>Código: <strong id="sendwayo-v7-code"></strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+     strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
      strip.dataset.sendwayoHeaderReady='1';
    }
    if($('sendwayo-v7-name'))$('sendwayo-v7-name').textContent=nm;
    if($('sendwayo-v7-role'))$('sendwayo-v7-role').textContent=roleName(u);
    if($('sendwayo-v7-id'))$('sendwayo-v7-id').textContent=id;
-   if($('sendwayo-v7-code'))$('sendwayo-v7-code').textContent=code;
+   
    strip.setAttribute('aria-label','Datos de la sesión y cuenta activa');
  }
  window.sendwayoRefreshIdentityHeader=buildIdentityStrip;
@@ -4289,7 +4186,7 @@ window.sendwayoShareReceipt=async function(){
  setupReceiptWatermark();if($('modal-comprobante'))$('modal-comprobante').addEventListener('click',()=>setupReceiptWatermark());
 
  // Mobile hamburger button; use the real sidebar containing the section navigation.
- function installHamburger(){const retirosBtn=document.querySelector('button[onclick*="showView(\'retiros\')"]');if(!retirosBtn)return;let node=retirosBtn;while(node.parentElement&&node.parentElement!==document.body){const parent=node.parentElement;const count=parent.querySelectorAll('button[onclick*="showView"]').length;if(count>=8){node=parent;break;}node=parent;}const sidebar=node;sidebar.id='sendwayo-main-sidebar';let style=$('sendwayo-hamburger-style');if(!style){style=document.createElement('style');style.id='sendwayo-hamburger-style';style.textContent='@media(max-width:1024px){#sendwayo-main-sidebar{position:fixed!important;left:0;top:0;bottom:0;width:260px!important;max-width:88vw;overflow-y:auto;z-index:10001;transform:translateX(-110%);transition:transform .2s ease;background:white;box-shadow:0 8px 30px #0005}#sendwayo-main-sidebar.sendwayo-menu-open{transform:translateX(0)}#sendwayo-menu-shade{display:none;position:fixed;inset:0;background:#0008;z-index:10000}#sendwayo-menu-shade.open{display:block}#sendwayo-mobile-menu{display:block!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;left:12px!important;top:12px!important;z-index:10002!important;width:48px;height:48px;border-radius:12px;background:#0f2440;color:white;font-size:25px;font-weight:bold;box-shadow:0 2px 8px #0003}}@media(min-width:1025px){#sendwayo-mobile-menu,#sendwayo-menu-shade{display:none!important}}';document.head.appendChild(style);}let shade=$('sendwayo-menu-shade');if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}let btn=$('sendwayo-mobile-menu');if(!btn){btn=document.createElement('button');btn.id='sendwayo-mobile-menu';btn.type='button';btn.setAttribute('aria-label','Abrir menú lateral');btn.textContent='☰';document.body.appendChild(btn);}btn.onclick=()=>{sidebar.classList.toggle('sendwayo-menu-open');shade.classList.toggle('open');};shade.onclick=()=>{sidebar.classList.remove('sendwayo-menu-open');shade.classList.remove('open');};sidebar.querySelectorAll('button[onclick*="showView"]').forEach(b=>b.addEventListener('click',()=>{if(innerWidth<=1024){sidebar.classList.remove('sendwayo-menu-open');shade.classList.remove('open');}}));}
+ function installHamburger(){const retirosBtn=document.querySelector('button[onclick*="showView(\'retiros\')"]');if(!retirosBtn)return;let node=retirosBtn;while(node.parentElement&&node.parentElement!==document.body){const parent=node.parentElement;const count=parent.querySelectorAll('button[onclick*="showView"]').length;if(count>=8){node=parent;break;}node=parent;}const sidebar=node;sidebar.id='sendwayo-main-sidebar';let style=$('sendwayo-hamburger-style');if(!style){style=document.createElement('style');style.id='sendwayo-hamburger-style';style.textContent='@media(max-width:1024px){#sendwayo-main-sidebar{position:fixed!important;left:0;top:0;bottom:0;width:260px!important;max-width:88vw;overflow-y:auto;z-index:10001;transform:translateX(-110%);transition:transform .2s ease;background:white;box-shadow:0 8px 30px #0005}#sendwayo-main-sidebar.sendwayo-menu-open{transform:translateX(0)}#sendwayo-menu-shade{display:none;position:fixed;inset:0;background:#0008;z-index:10000}#sendwayo-menu-shade.open{display:block}#sendwayo-mobile-menu{display:block!important;visibility:visible!important;pointer-events:auto!important;position:relative!important;left:auto!important;top:auto!important;z-index:10002!important;width:44px;height:44px;border-radius:12px;background:#0f2440;color:white;font-size:25px;font-weight:bold;box-shadow:0 2px 8px #0003}}@media(min-width:1025px){#sendwayo-mobile-menu,#sendwayo-menu-shade{display:none!important}}';document.head.appendChild(style);}let shade=$('sendwayo-menu-shade');if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}let btn=$('sendwayo-mobile-menu');if(!btn){btn=document.createElement('button');btn.id='sendwayo-mobile-menu';btn.type='button';btn.setAttribute('aria-label','Abrir menú lateral');btn.textContent='☰';document.body.appendChild(btn);}btn.onclick=()=>{sidebar.classList.toggle('sendwayo-menu-open');shade.classList.toggle('open');};shade.onclick=()=>{sidebar.classList.remove('sendwayo-menu-open');shade.classList.remove('open');};sidebar.querySelectorAll('button[onclick*="showView"]').forEach(b=>b.addEventListener('click',()=>{if(innerWidth<=1024){sidebar.classList.remove('sendwayo-menu-open');shade.classList.remove('open');}}));}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installHamburger);else installHamburger();window.addEventListener('resize',installHamburger);
 
  // Mark labels and make sure controls survive subsequent rendering.
@@ -4341,7 +4238,7 @@ window.sendwayoShareReceipt=async function(){
     const valid=[rec.password,rec.password2,rec.celular,rec.telefono,...(rec.allowedPasswords||[])].filter(Boolean).map(String);
     if(!valid.includes(String(p))){fail('Contraseña incorrecta.');return;}
     const uobj={id:rec.id,codigo:rec.codigo,nombre:rec.nombre||acct?.nombre||'',name:rec.nombre||acct?.name||'',role:rec.role,email:rec.email||rec.usuario,usuario:rec.usuario||rec.email,celular:rec.celular,telefono:rec.telefono};
-    window.currentUser=uobj;try{currentUser=uobj;}catch(e){};if(err)err.classList.add('hidden');$('login-screen')?.classList.add('hidden');$('welcome-landing')?.classList.add('hidden');document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));$('view-tablero')?.classList.remove('hidden');if($('user-top'))$('user-top').textContent=(uobj.nombre||'')+' — '+(uobj.codigo||uobj.id);if($('login-usuario'))$('login-usuario').value='';if($('login-password'))$('login-password').value='';window.renderPrincipal?.();
+    window.currentUser=uobj;try{currentUser=uobj;}catch(e){};if(err)err.classList.add('hidden');$('login-screen')?.classList.add('hidden');$('welcome-landing')?.classList.add('hidden');document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));$('view-tablero')?.classList.remove('hidden');if($('user-top'))$('user-top').textContent=(uobj.nombre||'')+' — '+(uobj.id||'');if($('login-usuario'))$('login-usuario').value='';if($('login-password'))$('login-password').value='';window.renderPrincipal?.();
   };
 
   // Create/edit agent and remitter forms, with immutable identifiers and admin status controls.
@@ -4349,7 +4246,7 @@ window.sendwayoShareReceipt=async function(){
     if(!isAdmin()){alert('Solo el administrador puede agregar o modificar agentes y remitentes.');return;}
     const role=view==='agentes'?'AGENTE':'REMITENTE';const a=id?accountById(id):null;
     const name=a?acctName(a):'', email=a?(a.email||a.usuario||''):'', phone=a?(a.celular||a.telefono||''):'', code=a?.codigo||'Se genera automáticamente', ident=a?.id||'Se genera automáticamente';
-    sendwayoModal((a?'Modificar ':'Agregar nuevo ')+(role==='AGENTE'?'agente':'remitente'),`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${inp('v7-ac-name','Nombre y apellido','Nombre completo','text',name)}${inp('v7-ac-email','Correo electrónico','nombre@gmail.com','email',email)}${inp('v7-ac-phone','Celular','Número de celular','tel',phone)}${a?'':inp('v7-ac-password','Contraseña inicial','','text','')}${sel('v7-ac-status','Estado',`<option ${!a||a.activo!==false&&norm(a.estado)!=='inactivo'?'selected':''} value="Activo">Activo</option><option ${a&&(a.activo===false||norm(a.estado)==='inactivo')?'selected':''} value="Inactivo">Inactivo</option>`)}</div><div class="rounded-xl bg-slate-50 border p-3 text-xs"><div><b>ID:</b> ${esc(ident)} <span class="text-gray-500">(no editable)</span></div><div><b>Código:</b> ${esc(code)} <span class="text-gray-500">(no editable)</span></div></div><button type="button" onclick="sendwayoSaveAccountForm('${view}','${esc(id)}')" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Guardar ${role==='AGENTE'?'agente':'remitente'}</button>`);
+    sendwayoModal((a?'Modificar ':'Agregar nuevo ')+(role==='AGENTE'?'agente':'remitente'),`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${inp('v7-ac-name','Nombre y apellido','Nombre completo','text',name)}${inp('v7-ac-email','Correo electrónico','nombre@gmail.com','email',email)}${inp('v7-ac-phone','Celular','Número de celular','tel',phone)}${a?'':inp('v7-ac-password','Contraseña inicial','','text','')}${sel('v7-ac-status','Estado',`<option ${!a||a.activo!==false&&norm(a.estado)!=='inactivo'?'selected':''} value="Activo">Activo</option><option ${a&&(a.activo===false||norm(a.estado)==='inactivo')?'selected':''} value="Inactivo">Inactivo</option>`)}</div><div class="rounded-xl bg-slate-50 border p-3 text-xs"><div><b>ID:</b> ${esc(ident)} <span class="text-gray-500">(no editable)</span></div></div><button type="button" onclick="sendwayoSaveAccountForm('${view}','${esc(id)}')" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Guardar ${role==='AGENTE'?'agente':'remitente'}</button>`);
   };
   window.sendwayoSaveAccountForm=function(view,id=''){
     if(!isAdmin()){alert('Solo el administrador puede guardar cambios de cuentas.');return;}
@@ -4484,7 +4381,7 @@ window.sendwayoShareReceipt=async function(){
       }else r.estado=action==='aprobar'?'Aprobado':'Rechazado';writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);saveAccountValues();renderCustom(view);return;
     }
     if(view==='secretas'&&['modificar','editar'].includes(action)){const a=accountById(id);if(a)window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);return;}
-    if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nCódigo: '+a.codigo+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
+    if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
     return oldActionGeneric?.(view,action,id);
   };
   // Official-bank records cannot be removed; only administrator-created extra accounts can be deleted.
@@ -4873,7 +4770,7 @@ window.sendwayoShareReceipt=async function(){
     const name = txt(a.nombre || a.name || a.email || a.id);
     const id = txt(a.id);
     const code = txt(a.codigo || a.codigo2 || '');
-    return `${name} — ID: ${id}${code ? ` — Código: ${code}` : ''}`;
+    return `${name} — ID: ${id}`;
   };
 
   // El HTML base declaraba currentUser=ADMIN; se invalida en cada visita y se exige inicio de sesión.
@@ -4984,7 +4881,7 @@ window.sendwayoShareReceipt=async function(){
     const id = txt(a.id || u.id || u.uid || '');
     const code = txt(a.codigo || a.codigo2 || u.codigo || '');
     const topUser = $('user-top');
-    if (topUser) { topUser.textContent = `${name} · ID: ${id} · Cód.: ${code}`; topUser.title = `${name} | ID: ${id} | Código: ${code}`; topUser.style.maxWidth = '340px'; topUser.style.whiteSpace = 'normal'; topUser.style.fontSize = '9px'; }
+    if (topUser) { topUser.textContent = `${name} · ID: ${id}`; topUser.title = `${name} | ID: ${id}`; topUser.style.maxWidth = '340px'; topUser.style.whiteSpace = 'normal'; topUser.style.fontSize = '9px'; }
     if ($('sendwayo-v7-name')) $('sendwayo-v7-name').textContent = name;
     if ($('sendwayo-v7-role')) $('sendwayo-v7-role').textContent = roleName(a||u);
     if ($('sendwayo-v7-id')) $('sendwayo-v7-id').textContent = id;
@@ -4998,7 +4895,7 @@ window.sendwayoShareReceipt=async function(){
     const ids = ['modal-envio-v162','modal-retiro-v162','modal-recargas-v162','modal-paquetikos-v162','modal-envio-compacto'];
     const u = current();
     const actor = u ? (accountForUser() || u) : null;
-    const display = actor ? `${txt(actor.nombre || actor.name || 'Usuario')} — ID: ${txt(actor.id || u.id)} — Código: ${txt(actor.codigo || actor.codigo2 || u.codigo || '—')}` : '';
+    const display = actor ? `${txt(actor.nombre || actor.name || 'Usuario')} — ID: ${txt(actor.id || u.id)}` : '';
     ids.forEach(modalId => {
       const modal = $(modalId); if (!modal) return;
       const stripId = 'sendwayo-modal-identity-' + modalId.replace(/[^a-z0-9-]/gi,'-');
@@ -5342,7 +5239,7 @@ window.sendwayoShareReceipt=async function(){
     list.classList.add('sendwayo-account-suggestions');
     filtered.forEach(a => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'sendwayo-account-suggestion';
-      b.innerHTML = `<strong>${safe(a.nombre || a.name || '')}</strong><div style="font-size:10px;color:#64748b">ID: ${safe(a.id)} · Código: ${safe(a.codigo || a.codigo2 || '')} · ${safe(a.role || '')}</div>`;
+      b.innerHTML = `<strong>${safe(a.nombre || a.name || '')}</strong><div style="font-size:10px;color:#64748b">ID: ${safe(a.id)} · ${safe(a.role || '')}</div>`;
       b.addEventListener('click', () => {
         field.dataset.sendwayoAccountId = txt(a.id);
         field.dataset.sendwayoActorId = txt(current()?.id);
@@ -5974,7 +5871,7 @@ window.sendwayoShareReceipt=async function(){
     try{rems=typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:(Array.isArray(window.REMITENTES)?window.REMITENTES:[]);}catch(_){rems=Array.isArray(window.REMITENTES)?window.REMITENTES:[];}
     return [...(a?[a]:[]),...ags,...rems].filter(Boolean);
   };
-  const accountLabel=a=>`${txt(a?.nombre||a?.name||a?.email||a?.id)} — ID: ${txt(a?.id||'—')} — Código: ${txt(a?.codigo||a?.codigo2||'—')}`;
+  const accountLabel=a=>`${txt(a?.nombre||a?.name||a?.email||a?.id)} — ID: ${txt(a?.id||'—')}`;
   const PASSWORD_RESET_KEY='sendwayo_express_oficial_20261029_password_reset_ids_v1';
   const USERNAME_KEY='sendwayo_express_oficial_20261029_remembered_username_v1';
   const ACTIVITY_KEY='sendwayo_express_oficial_20261029_last_activity_v7';
@@ -6054,7 +5951,7 @@ window.sendwayoShareReceipt=async function(){
         filtered.forEach(a=>{
           const b=document.createElement('button');b.type='button';b.className='sendwayo-account-suggestion';b.style.cssText='display:block;width:100%;padding:10px;text-align:left;background:#fff;border-bottom:1px solid #e2e8f0;color:#0f2440;touch-action:manipulation;';
           const strong=document.createElement('strong');strong.textContent=txt(a.nombre||a.name||'');
-          const meta=document.createElement('div');meta.style.cssText='font-size:10px;color:#64748b;';meta.textContent=`${txt(a.role||'')} · ID: ${txt(a.id)} · Código: ${txt(a.codigo||a.codigo2||'—')}`;
+          const meta=document.createElement('div');meta.style.cssText='font-size:10px;color:#64748b;';meta.textContent=`${txt(a.role||'')} · ID: ${txt(a.id)}`;
           b.append(strong,meta);b.addEventListener('click',()=>{field.value=accountLabel(a);field.dataset.sendwayoAccountId=txt(a.id);field.dataset.sendwayoActorId=txt(u.id);list.classList.add('hidden');});list.appendChild(b);
         });
         list.classList.toggle('hidden',!filtered.length);
@@ -7393,7 +7290,7 @@ window.sendwayoShareReceipt=async function(){
       if(!a || typeof a!=='object') return;
       const email=txt(a.email || a.usuario).toLowerCase();
       if(!email.includes('@')) return;
-      const aliases=[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
+      const aliases=[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.legacyId,a.accountId,a.email,a.usuario].filter(Boolean).map(txt);
       rows.push({email, id:txt(a.id), codigo:txt(a.codigo || a.staffId), nombre:txt(a.nombre || a.name), role:role || a.role, aliases});
     };
     try { add(typeof ADMIN!=='undefined'?ADMIN:null,'ADMIN'); } catch(e){}
@@ -7722,14 +7619,21 @@ window.sendwayoShareReceipt=async function(){
     const status=norm(profile.status || profile.accountStatus || profile.estado);
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
+  function humanAccountId(role,name,number) {
+    if(role==='ADMIN') return 'ADMIN-ADMINISTRADOR';
+    const parts=String(name||'Usuario').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\\s+/).filter(Boolean);
+    const first=(parts[0]||'US').slice(0,2).padEnd(2,'X');
+    const last=(parts.length>1?parts[parts.length-1]:parts[0]||'ER').slice(0,2).padEnd(2,'X');
+    return (role==='AGENTE'?'AG':'RE')+first+last+String(Math.max(1,Number(number)||1)).padStart(2,'0');
+  }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN'){const current=txt(profile.id||profile.accountId||profile.code||profile.codigo);return !current||current.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':current;}
-    const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
-    const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
-    let id=supplied || known?.id || key;
-    if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
-    if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
-    return id;
+    if(role==='ADMIN') return 'ADMIN-ADMINISTRADOR';
+    const email=profile.authEmail||profile.email;
+    const name=txt(profile.displayName||profile.name||profile.fullName||profile.nombre||email||'Usuario');
+    const list=role==='AGENTE'?(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:[]):(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:[]);
+    const known=list.find(a=>norm(a.email||a.usuario)===norm(email)||norm(a.nombre||a.name)===norm(name)||norm(a.id)===norm(profile.id||profile.staffId));
+    const number=Number(profile.numero||known?.numero||(known?list.indexOf(known)+1:list.length+1));
+    return humanAccountId(role,name,number);
   }
   function accountMoney(profile) {
     const nestedBalances=profile.balances && typeof profile.balances==='object' ? profile.balances : {};
@@ -7775,8 +7679,8 @@ window.sendwayoShareReceipt=async function(){
     const code=txt(profile.code || profile.staffId || profile.codigo || appId);
     let money=accountMoney(profile);
     if(role==='AGENTE'){try{if(typeof ADMIN!=='undefined'&&ADMIN)money=accountMoney(ADMIN);}catch(e){}}
-    const record={...profile, id:appId, dbUserKey:key, name, nombre:name, email, usuario:email, phone, telefono:phone, celular:phone, codigo:code, role, ...money};
-    if(role==='ADMIN' && typeof ADMIN!=='undefined') Object.assign(ADMIN, record, {id:'ADMINADMIN', role:'ADMIN'});
+    const record={...profile, legacyId:profile.legacyId||profile.id||profile.staffId||profile.code||profile.codigo||'', idAnterior:profile.idAnterior||profile.id||'', idAliases:Array.from(new Set([...(Array.isArray(profile.idAliases)?profile.idAliases:[]),profile.id,profile.staffId,profile.code,profile.codigo].filter(Boolean))), id:appId, dbUserKey:key, name, nombre:name, email, usuario:email, phone, telefono:phone, celular:phone, codigo:code, role, ...money};
+    if(role==='ADMIN' && typeof ADMIN!=='undefined') Object.assign(ADMIN, record, {id:'ADMIN-ADMINISTRADOR', role:'ADMIN'});
     if(role==='AGENTE' && typeof AGENTES!=='undefined' && Array.isArray(AGENTES)){
       let at=AGENTES.findIndex(a=>norm(a.email)===norm(email) || norm(a.nombre||a.name)===norm(name) || norm(a.id)===norm(appId));
       if(at>=0) Object.assign(AGENTES[at], record); else AGENTES.push(record);
@@ -8114,29 +8018,7 @@ window.sendwayoShareReceipt=async function(){
     const accountChanged=(role==='ADMIN'||role==='AGENTE')&&localMoneyChanged;
     if(!changed.length&&!accountChanged&&!deleted.length){return;}
     state.syncBusy=true;
-    const approvalClaims=[];
     try{
-      // Reclamo atómico en Realtime Database: una sola sesión puede obtener el derecho de aprobar.
-      // Si las reglas no permiten el reclamo, la operación falla cerrada y no acredita balances.
-      for(const t of changed){
-        const nextStatus=norm(t.estado||t.status||'');
-        const raw=t._cloudRaw||{};
-        const previousStatus=norm(raw.status||raw.estado||'Pendiente');
-        if(nextStatus!=='aprobado'||['aprobado','approved','pagado'].includes(previousStatus))continue;
-        const category=txt(t.firebaseCategory||categoryForTx(t));
-        const key=safeDbKey(t.firebaseKey||t.id);
-        if(!category)throw new Error('No se pudo identificar la categoría para proteger la aprobación única.');
-        const recordRef=db.ref(ROOT+'/'+category+'/'+key);
-        const currentSnap=await recordRef.once('value');
-        const currentRow=currentSnap.val()||{};
-        const currentStatus=norm(currentRow.status||currentRow.estado||'Pendiente');
-        if(['aprobado','approved','pagado'].includes(currentStatus))throw new Error('Esta transacción ya fue aprobada en otro dispositivo. No se repetirá el crédito ni el pago.');
-        const lockRef=recordRef.child('approvalLock');
-        const lock={authUid:auth.currentUser.uid,userId:state.profileKey,role:role,transactionId:txt(t.id),claimedAtMs:Date.now()};
-        const claim=await lockRef.transaction(value=>value?undefined:lock,undefined,false);
-        if(!claim.committed)throw new Error('Otro usuario ya está procesando la aprobación de esta transacción. No se realizará un segundo pago.');
-        approvalClaims.push({recordRef,lockRef,lock});
-      }
       const packageData=await buildCloudUpdates({current:changed,deleted});
       if(!Object.keys(packageData.updates).length){changed.forEach(t=>state.lastTxSnapshot.set(txt(t.id),transactionSignature(t)));return;}
       await db.ref().update(packageData.updates);
@@ -8155,20 +8037,8 @@ window.sendwayoShareReceipt=async function(){
       if(state.directory.some(r=>r.key===state.profileKey)){try{const currentProfileSnap=await userRoot.child(state.profileKey).once('value');if(currentProfileSnap.exists())state.profile=currentProfileSnap.val();}catch(e){}}
       clearSyncIssue();
     }catch(error){
-      // Liberar un reclamo únicamente si el registro sigue sin aprobarse. Si Firebase ya guardó
-      // la aprobación, el candado se conserva aunque se haya perdido la respuesta de red.
-      for(const claim of approvalClaims){
-        try{
-          const snap=await claim.recordRef.once('value');
-          const row=snap.val()||{};
-          const status=norm(row.status||row.estado||'Pendiente');
-          if(!['aprobado','approved','pagado'].includes(status)){
-            await claim.lockRef.transaction(value=>value&&value.authUid===claim.lock.authUid?null:undefined,undefined,false);
-          }
-        }catch(releaseError){console.warn('[SENDWAYO] No se pudo liberar un reclamo de aprobación fallido:',releaseError?.message||releaseError);}
-      }
       const message=error?.code==='PERMISSION_DENIED'||/permission_denied|permission denied/i.test(error?.message||'')
-        ? 'Firebase rechazó la escritura o el candado de aprobación por sus reglas. La operación no se confirmó; no la repita todavía.'
+        ? 'Firebase rechazó la escritura por sus reglas de seguridad. La operación no se confirmó; no la repita todavía.'
         : (error?.message||'No fue posible confirmar los cambios en Firebase.');
       showSyncIssue(message);
       // Revert the local transaction list to the last known remote baseline for any failed new record/status edit.
@@ -8202,12 +8072,12 @@ window.sendwayoShareReceipt=async function(){
     const input = txt(document.getElementById('login-usuario')?.value);
     const password = String(document.getElementById('login-password')?.value || '');
     if (!input || !password) {
-      loginError('Escriba el correo, código o teléfono y su contraseña.');
+      loginError('Escriba su correo electrónico o ID y su contraseña.');
       return;
     }
     const email = resolveEmail(input);
     if (!email) {
-      loginError('No encontré ese correo, código o teléfono en el directorio SENDWAYO. Compruebe el dato o use el correo registrado en Firebase Authentication.');
+      loginError('No encontré ese correo o ID en el directorio SENDWAYO. Compruebe el dato o use el correo registrado en Firebase Authentication.');
       return;
     }
 
@@ -8560,7 +8430,7 @@ window.sendwayoShareReceipt=async function(){
   const noCoincide=t=>norm(t?.estado||t?.status)==='no coincide';
   const own=t=>{
     const u=current(); if(!u||!t)return false;
-    const ids=[u.id,u.dbUserKey,u.uid,u.email].filter(Boolean).map(String);
+    const ids=[u.id,u.legacyId,u.dbUserKey,u.uid,u.email,...(Array.isArray(u.idAliases)?u.idAliases:[])].filter(Boolean).map(String);
     const raw=t._cloudRaw||{};
     const creators=[t.creadorId,t.creadoPorId,t.usuarioId,t.createdByUserId,t.createdByAuthUid,raw.createdByUserId,raw.createdByAuthUid].filter(Boolean).map(String);
     return creators.some(v=>ids.includes(v));
@@ -9247,7 +9117,7 @@ window.sendwayoShareReceipt=async function(){
    var nextId=function(){return view==='agentes'?prefix+String(num):prefix+String(num).padStart(5,'0');};
    if(!a){while(accounts.some(function(x){return [x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'').toLowerCase()===nextId().toLowerCase();});}))num++;}
    if(view==='agentes'&&!a&&num>9){alert('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');return;}
-   var visibleId=a?String(a.id):nextId();
+   var visibleId=a?String(a.id):'';
    oldOpen(view,id||'');
    var name=$('v7-admin-name'),username=$('v7-admin-username'),code=$('v7-admin-code'),email=$('v7-admin-email'),phone=$('v7-admin-phone');
    var body=$('sendwayo-admin-account-modal');
@@ -9258,6 +9128,13 @@ window.sendwayoShareReceipt=async function(){
     var input=document.createElement('input');input.id='v7-admin-id';input.className='mt-1 w-full border rounded-xl px-3 py-2.5 font-normal';input.value=visibleId;
     label.appendChild(input);var holder=body.querySelector('.p-4.space-y-3');if(holder)holder.insertBefore(label,holder.firstChild);
    }else idInput.value=visibleId;
+   if(!a){
+    var seq=(view==='agentes'?(Array.isArray(AGENTES)?AGENTES.length:0):(Array.isArray(REMITENTES)?REMITENTES.length:0))+1;
+    var makeHuman=function(value){var parts=String(value||'Usuario').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\s+/).filter(Boolean);var first=(parts[0]||'US').slice(0,2).padEnd(2,'X');var last=(parts.length>1?parts[parts.length-1]:parts[0]||'ER').slice(0,2).padEnd(2,'X');return (view==='agentes'?'AG':'RE')+first+last+String(seq).padStart(2,'0');};
+    idInput.value=makeHuman(name&&name.value);
+    if(name&&!name.dataset.sendwayoIdBound){name.dataset.sendwayoIdBound='1';name.addEventListener('input',function(){idInput.value=makeHuman(name.value);});}
+   }
+   if(code&&code.closest('label'))code.closest('label').style.display='none';
    return;
   };
   var originalSave=window.sendwayoSaveAccountForm;
@@ -9272,8 +9149,19 @@ window.sendwayoShareReceipt=async function(){
    var duplicate=accounts.find(function(x){return x!==a&&(String(x.id||'').toLowerCase()===ident.toLowerCase()||(Array.isArray(x.idAliases)&&x.idAliases.some(function(v){return String(v).toLowerCase()===ident.toLowerCase();})));});
    if(duplicate){alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
    if(!a){
-    // Para una cuenta nueva, el formulario de Firebase conserva su flujo de creación y utiliza el ID automático.
-    return originalSave.call(this,view,id||'');
+    const saved=await originalSave.call(this,view,id||'');
+    var refreshed=[];try{refreshed=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
+    var created=refreshed.find(function(x){return norm(x.email||x.usuario)===norm($('v7-admin-email')&&$('v7-admin-email').value||'')||norm(x.username||x.login)===norm($('v7-admin-username')&&$('v7-admin-username').value||'');});
+    if(created){
+      var previous=String(created.id||''),newAliases=Array.from(new Set([...(created.idAliases||[]),previous].filter(Boolean)));
+      created.legacyId=previous;created.idAnterior=previous;created.idAliases=newAliases;created.id=ident;
+      var dbKey=String(created.dbUserKey||created.rtdbUserKey||created.firebaseKey||'');
+      var f=fb(),auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db;
+      if(db&&auth&&dbKey){try{await db.ref('sendwayo_express_v2/users/'+dbKey).update({id:ident,accountId:ident,legacyId:previous,idAnterior:previous,idAliases:newAliases,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid});}catch(error){console.error('[SENDWAYO] No se pudo sincronizar el nuevo ID en Firebase:',error);}}
+      (window.USUARIOS_LOGIN||[]).forEach(function(u){if(norm(u.email||u.usuario)===norm(created.email||created.usuario)){u.id=ident;u.idAliases=newAliases;u.aliases=Array.from(new Set([...(u.aliases||[]),previous,ident].filter(Boolean)));}});
+      if(typeof window.sendwayoNormalizeUserIds==='function')window.sendwayoNormalizeUserIds();
+    }
+    return saved;
    }
    var f=fb(),auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db;
    if(!db||!auth){alert('No hay sesión administrativa confirmada en Firebase.');return false;}
@@ -9283,18 +9171,18 @@ window.sendwayoShareReceipt=async function(){
    var username=String($('v7-admin-username')&&$('v7-admin-username').value||'').trim();
    var code=String($('v7-admin-code')&&$('v7-admin-code').value||'').trim();
    var phone=String($('v7-admin-phone')&&$('v7-admin-phone').value||'').trim();
-   if(!name||!username||!code||!phone){alert('Complete nombre, usuario, código y celular.');return false;}
-   var duplicateLogin=accounts.find(function(x){return x!==a&&(norm(x.username||x.login)===norm(username)||norm(x.codigo||x.code)===norm(code));});
+   if(!name||!username||!phone){alert('Complete nombre, usuario y celular.');return false;}
+   var duplicateLogin=accounts.find(function(x){return x!==a&&norm(x.username||x.login)===norm(username);});
    if(duplicateLogin){alert('Ese usuario o código ya está asignado a otra cuenta.');return false;}
    var oldId=String(a.id||''),oldCode=String(a.codigo||a.code||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
    aliases=[...new Set(aliases)];
    const uniqueCodeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),oldCode].filter(function(v){return v&&norm(v)!==norm(code);} ))];
-   var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,codeAliases:uniqueCodeAliases,name:name,nombre:name,displayName:name,username:username,login:username,code:code,codigo:code,codigo2:code,staffId:code,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
+   var patch={id:ident,legacyId:oldId,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,name:name,nombre:name,displayName:name,username:username,login:username,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
    try{
     await db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
     Object.assign(a,patch);
-    (window.USUARIOS_LOGIN||[]).forEach(function(u){const match=norm(u.email||u.usuario)===norm(a.email||email)||norm(u.id)===norm(oldId)||norm(u.codigo||u.code)===norm(oldCode)||String(u.authUid||'')===String(a.authUid||'');if(match){u.id=ident;u.codigo=code;u.codigo2=code;u.nombre=name;u.name=name;u.username=username;u.login=username;u.idAliases=aliases;u.codeAliases=uniqueCodeAliases;u.aliases=Array.from(new Set([...(u.aliases||[]),oldId,oldCode,ident,code].filter(Boolean)));}});
-    var live=window.currentUser;if(live&&(live.dbUserKey===dbKey||live.rtdbUserKey===dbKey||norm(live.id)===norm(oldId))){Object.assign(live,patch);live.id=ident;live.codigo=code;live.nombre=name;}
+    (window.USUARIOS_LOGIN||[]).forEach(function(u){const match=norm(u.email||u.usuario)===norm(a.email||a.usuario)||norm(u.id)===norm(oldId)||norm(u.codigo||u.code)===norm(oldCode)||String(u.authUid||'')===String(a.authUid||'');if(match){u.id=ident;u.nombre=name;u.name=name;u.username=username;u.login=username;u.idAliases=aliases;u.aliases=Array.from(new Set([...(u.aliases||[]),oldId,ident].filter(Boolean)));}});
+    var live=window.currentUser;if(live&&(live.dbUserKey===dbKey||live.rtdbUserKey===dbKey||norm(live.id)===norm(oldId))){Object.assign(live,patch);live.id=ident;live.nombre=name;}
     $('sendwayo-admin-account-modal')&&$('sendwayo-admin-account-modal').remove();
     alert('ID visible actualizado. La clave interna de Firebase, el UID y los ID anteriores se conservaron como alias.');
     if(window.showView)window.showView(view);
@@ -9402,7 +9290,7 @@ window.sendwayoShareReceipt=async function(){
   const beneficiariesHtml=ben.map((b,i)=>'<tr class="border-t"><td class="p-2">'+String(i+1).padStart(2,'0')+'</td><td class="p-2">'+esc(b.id||b.firebaseKey||'')+'</td><td class="p-2">'+esc(b.nombre||b.name||'')+'</td><td class="p-2">'+esc(b.paisNombre||b.paisIso2||'')+' '+esc(b.codigoPais||'')+'</td><td class="p-2">'+esc(b.telefonoE164||b.telefonoCompleto||b.telefono||b.phone||'')+'</td><td class="p-2">'+esc(b.direccion||'')+'</td><td class="p-2">'+esc(b.estado||(b.active===false?'Inactivo':'Activo'))+'</td></tr>').join('')||'<tr><td colspan="7" class="p-5 text-center text-slate-500">No se encontraron beneficiarios asociados a esta cuenta en el directorio sincronizado.</td></tr>';
   root.innerHTML='<section class="p-3 md:p-5 space-y-4 bg-slate-50 rounded-xl">'+
    '<header class="bg-white border rounded-xl p-4"><div class="font-black text-lg">Expediente por ID</div><p class="text-xs text-slate-500 mt-1">Consulta de datos y movimientos asociados a un único administrador, agente o remitente.</p><form id="sendwayo-investigation-form" class="flex flex-wrap gap-2 mt-3"><input id="sendwayo-investigation-id" value="'+esc(q)+'" type="search" placeholder="Introduzca el ID exacto del remitente o agente" class="border rounded-full px-4 py-3 text-sm flex-1 min-w-[210px]" required><button class="bg-[#0f2440] text-white rounded-full px-5 py-3 text-sm font-bold">Investigar</button></form></header>'+
-   '<section class="bg-white border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-black text-base">'+esc(a.nombre||a.name||'Cuenta')+'</h3><p class="text-xs text-slate-500">'+esc(role(a))+' · '+esc(status)+'</p></div><div class="text-right text-xs"><b>ID: '+esc(userId)+'</b><br><b>Código: '+esc(a.codigo||a.code||'—')+'</b></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 text-xs"><div class="border rounded-lg p-3"><span class="text-slate-500">Correo</span><div class="font-bold break-all">'+esc(a.email||a.usuario||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Celular</span><div class="font-bold">'+esc(a.celular||a.telefono||a.phone||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Clave interna Firebase</span><div class="font-bold break-all">'+esc(accountKey(a)||'No disponible')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">UID de autenticación</span><div class="font-bold break-all">'+esc(a.authUid||'No disponible')+'</div></div></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3"><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance DOP</span><div class="font-black">RD$ '+fmt(m.dop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance HTG</span><div class="font-black">HTG '+fmt(m.htg)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión DOP</span><div class="font-black">RD$ '+fmt(m.cdop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión HTG</span><div class="font-black">HTG '+fmt(m.chtg)+'</div></div></div></section>'+
+   '<section class="bg-white border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-black text-base">'+esc(a.nombre||a.name||'Cuenta')+'</h3><p class="text-xs text-slate-500">'+esc(role(a))+' · '+esc(status)+'</p></div><div class="text-right text-xs"><b>ID: '+esc(userId)+'</b></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 text-xs"><div class="border rounded-lg p-3"><span class="text-slate-500">Correo</span><div class="font-bold break-all">'+esc(a.email||a.usuario||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Celular</span><div class="font-bold">'+esc(a.celular||a.telefono||a.phone||'—')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">Clave interna Firebase</span><div class="font-bold break-all">'+esc(accountKey(a)||'No disponible')+'</div></div><div class="border rounded-lg p-3"><span class="text-slate-500">UID de autenticación</span><div class="font-bold break-all">'+esc(a.authUid||'No disponible')+'</div></div></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3"><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance DOP</span><div class="font-black">RD$ '+fmt(m.dop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Balance HTG</span><div class="font-black">HTG '+fmt(m.htg)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión DOP</span><div class="font-black">RD$ '+fmt(m.cdop)+'</div></div><div class="border rounded-lg p-3"><span class="text-xs text-slate-500">Comisión HTG</span><div class="font-black">HTG '+fmt(m.chtg)+'</div></div></div></section>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Movimientos vinculados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+tx.length+' registros</span></div><div class="overflow-x-auto mt-3 max-h-[520px]"><table class="w-full min-w-[1050px] text-xs"><thead class="bg-slate-100 sticky top-0"><tr><th class="p-2">N°</th><th class="p-2 text-left">Fecha</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-left">Ruta / detalle</th><th class="p-2 text-left">Beneficiario</th><th class="p-2 text-left">Monto</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Registro</th></tr></thead><tbody>'+transactionHtml+'</tbody></table></div></section>'+
    '<section class="bg-white border rounded-xl p-4"><div class="flex justify-between gap-2 items-center"><h3 class="font-black">Beneficiarios asociados</h3><span class="text-xs rounded-full bg-slate-100 px-3 py-1">'+ben.length+' registros</span></div><div class="overflow-x-auto mt-3"><table class="w-full min-w-[850px] text-xs"><thead class="bg-slate-100"><tr><th class="p-2">N°</th><th class="p-2 text-left">ID</th><th class="p-2 text-left">Nombre</th><th class="p-2 text-left">País</th><th class="p-2 text-left">Teléfono</th><th class="p-2 text-left">Dirección</th><th class="p-2 text-left">Estado</th></tr></thead><tbody>'+beneficiariesHtml+'</tbody></table></div></section>'+
    '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">La consulta utiliza la cuenta individual y los movimientos y beneficiarios que Firebase ya sincronizó para esta sesión. No crea datos ni modifica balances.</p></section>';
@@ -10357,7 +10245,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  function headersAndBalances(view,table){
   var head=table.tHead&&table.tHead.rows&&table.tHead.rows[0];if(!head)return;
   var cells=head.cells;if(cells.length<7)return;
-  if(cells[3].textContent!=='ID fijo')cells[3].textContent='ID fijo';if(cells[4].textContent!=='Código fijo')cells[4].textContent='Código fijo';
+  if(cells[3].textContent!=='ID')cells[3].textContent='ID';if(cells[4])cells[4].textContent='';
   if(view==='agentes'){if(cells[5].textContent!=='Balance compartido con administración')cells[5].textContent='Balance compartido con administración';return;}
   if(cells[5].textContent!=='Balance DOP')cells[5].textContent='Balance DOP';
   if(!head.querySelector('th[data-sendwayo-balance-htg]')){
@@ -10375,15 +10263,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  }
  function normalizeRows(view,table){
   var body=table.tBodies&&table.tBodies[0];if(!body)return;
-  var directoryRows=Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;});
-  var sortedRows=directoryRows.slice().sort(function(a,b){
-   var aid=parseInt(String(a.cells[3]&&a.cells[3].textContent||'').replace(/\D/g,''),10)||0;
-   var bid=parseInt(String(b.cells[3]&&b.cells[3].textContent||'').replace(/\D/g,''),10)||0;
-   return aid-bid;
-  });
-  sortedRows.forEach(function(row,index){var current=body.children[index];if(current!==row)body.insertBefore(row,current||null);});
-  directoryRows=sortedRows;
-  directoryRows.forEach(function(row){
+  Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;}).forEach(function(row){
    var account=rowAccount(view,row);
    if(account){
     var code=visibleCode(account,view),codeCell=row.cells[4];
@@ -10419,13 +10299,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
   }
  }
  function enhance(view){if(!pages[view])return;var table=getTable(view);if(!table)return;toolbar(view);headersAndBalances(view,table);normalizeRows(view,table);draw(view);}
- function refresh(){
-  accounts('agentes').forEach(function(account){
-   var code=visibleCode(account,'agentes');
-   if(code)account.aliases=Array.from(new Set([].concat(Array.isArray(account.aliases)?account.aliases:[],[code])));
-  });
-  enhance('agentes');enhance('remitentes');
- }
+ function refresh(){enhance('agentes');enhance('remitentes');}
  window.sendwayoAccountDirectoryPage=function(view,page){if(!pages[view])return;pages[view].page=Math.max(1,Number(page)||1);enhance(view);};
  window.sendwayoSearchAccountDirectory=function(view,value){if(!pages[view])return;pages[view].query=String(value||'');pages[view].page=1;var input=$('sendwayo-search-'+view);if(input)input.value=String(value||'');enhance(view);};
  document.addEventListener('click',function(event){
@@ -10489,49 +10363,41 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  refresh();
 })();
 </script>
-
-<style id="sendwayo-v7-header-one-line-fix">
-#sendwayo-brand-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:nowrap!important;padding:7px 12px!important;min-height:58px!important;overflow-x:auto!important}
-#sendwayo-brand-bar .sendwayo-brand-left,#sendwayo-brand-bar .sendwayo-brand-actions{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important}
-#sendwayo-v7-user-strip{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;padding:4px 8px!important;background:transparent!important;border:0!important;box-shadow:none!important;position:static!important;white-space:nowrap!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-kicker{display:none!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important;white-space:nowrap!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-meta strong{font-weight:800!important}
-#sendwayo-v7-user-strip [id="sendwayo-v7-date"]{display:none!important}
-body:not(.sendwayo-authenticated) #sendwayo-v7-user-strip{display:none!important}
-body.sendwayo-authenticated>#welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
-@media(max-width:760px){
- #sendwayo-brand-bar{gap:5px!important;padding:6px!important}
- #sendwayo-brand-bar .sendwayo-brand-title{display:none!important}
- #sendwayo-v7-user-strip{gap:5px!important;padding:2px!important}
- #sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important}
- #sendwayo-v7-user-strip .sendwayo-workspace-name{max-width:82px!important;overflow:hidden!important;text-overflow:ellipsis!important}
- #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:9px!important}
- #sendwayo-top-logout{padding:7px 9px!important;font-size:10px!important}
+<script id="sendwayo-id-normalization-and-paypal">(function(){
+'use strict';
+function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();}
+function idFor(role,name,n){var p=norm(name).replace(/[^A-Z ]/g,' ').split(/\s+/).filter(Boolean);var a=(p[0]||'US').slice(0,2).padEnd(2,'X');var b=(p.length>1?p[p.length-1]:p[0]||'ER').slice(0,2).padEnd(2,'X');return (role==='AGENTE'?'AG':'RE')+a+b+String(n).padStart(2,'0');}
+function normalizeIds(){
+ try{if(typeof ADMIN!=='undefined'&&ADMIN){ADMIN.id='ADMIN-ADMINISTRADOR';ADMIN.role='ADMIN';}}catch(e){}
+ [['AGENTE',typeof AGENTES!=='undefined'?AGENTES:[]],['REMITENTE',typeof REMITENTES!=='undefined'?REMITENTES:[]]].forEach(function(pair){
+  var role=pair[0],list=Array.isArray(pair[1])?pair[1]:[];
+  list.forEach(function(a,i){if(!a)return;var old=String(a.id||''),next=idFor(role,a.nombre||a.name||a.displayName,i+1);if(old!==next){if(old&&!a.legacyId)a.legacyId=old;if(old){a.idAnterior=old;a.idAliases=Array.from(new Set([...(a.idAliases||[]),old]));}a.id=next;}a.numero=String(i+1).padStart(2,'0');});
+ });
+ try{(window.USUARIOS_LOGIN||[]).forEach(function(u){var all=[...(typeof AGENTES!=='undefined'?AGENTES:[]),...(typeof REMITENTES!=='undefined'?REMITENTES:[])];var a=all.find(function(x){return norm(x.email||x.usuario)===norm(u.email||u.usuario);});if(a){u.id=a.id;u.idAliases=a.idAliases||[];u.aliases=Array.from(new Set([...(u.aliases||[]),a.legacyId,a.idAnterior,a.id].filter(Boolean)));}});}catch(e){}
+ try{if(window.currentUser&&norm(window.currentUser.role).indexOf('ADMIN')>=0)window.currentUser.id='ADMIN-ADMINISTRADOR';}catch(e){}
 }
-</style>
-<script id="sendwayo-v7-header-one-line-runtime">
-(function(){
- const $=id=>document.getElementById(id);
- function placeHeader(){
-  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip');
-  if(bar&&strip&&strip.parentElement!==bar){const actions=bar.querySelector('.sendwayo-brand-actions');bar.insertBefore(strip,actions||null);}
- }
- function authView(){
-  let u=null;try{u=window.currentUser||currentUser||null}catch(e){u=window.currentUser||null}
-  const ok=!!(u&&(u.id||u.uid||u.codigo||u.email));
-  document.body.classList.toggle('sendwayo-authenticated',ok);
-  const w=$('welcome-landing'),l=$('login-screen');
-  if(ok){if(w){w.hidden=true;w.style.setProperty('display','none','important')}if(l){l.classList.add('hidden');l.style.setProperty('display','none','important')}placeHeader();}
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{placeHeader();authView()},{once:true});else{placeHeader();authView()}
- document.addEventListener('click',()=>setTimeout(()=>{placeHeader();authView()},80),true);
- const mo=new MutationObserver(()=>{placeHeader();authView()});
- mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
-})();
-</script>
+window.sendwayoMakeUserId=idFor;window.sendwayoNormalizeUserIds=normalizeIds;normalizeIds();
+window.addEventListener('sendwayo:firebase-ready',function(){setTimeout(normalizeIds,150);});
+window.addEventListener('load',function(){setTimeout(normalizeIds,150);});
+function accounts(){var a=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)a.push(ADMIN);}catch(e){}try{a=a.concat(typeof AGENTES!=='undefined'?AGENTES:[],typeof REMITENTES!=='undefined'?REMITENTES:[]);}catch(e){}return a;}
+window.sendwayoOpenIdFile=function(){
+ var raw=window.prompt('Escriba el ID de la persona para abrir su expediente:');if(!raw)return;var wanted=norm(raw);
+ var a=accounts().find(function(x){return [x.id,x.idAnterior,x.legacyId,x.dbUserKey].concat(x.idAliases||[]).some(function(v){return norm(v)===wanted;});});
+ if(!a){window.alert('No se encontró un expediente con ese ID.');return;}
+ var tx=[];try{tx=Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];}catch(e){}
+ var keys=[a.id,a.legacyId,a.idAnterior,a.dbUserKey,a.uid,a.email,a.usuario].concat(a.idAliases||[]).filter(Boolean).map(norm);
+ var linked=tx.filter(function(t){var vals=[t.creadorId,t.creadoPorId,t.usuarioId,t.userId,t.ownerId,t.remitenteId,t.senderId,t.accountId,t.email,t.dbUserKey].filter(Boolean).map(norm);return vals.some(function(v){return keys.indexOf(v)>=0;});});
+ var b=a.balances||{},c=a.commissions||a.comisiones||{};
+ var esc=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+ var htmlRows=linked.map(function(t){return '<tr><td>'+esc(t.fecha||'')+'</td><td>'+esc(t.tipo||t.type||'')+'</td><td>'+esc(t.id||'')+'</td><td>'+esc(t.monto||t.amount||'')+'</td><td>'+esc(t.estado||t.status||'')+'</td></tr>';}).join('');
+ var modal=document.createElement('div');modal.id='sendwayo-id-file-result-modal';modal.style.cssText='position:fixed;inset:0;z-index:2147482500;background:#07182dcc;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+ modal.innerHTML='<div style="width:min(950px,100%);max-height:94vh;overflow:auto;background:white;border-radius:18px;padding:18px;color:#10243e;font:13px/1.45 Arial,sans-serif"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="font-size:21px;font-weight:900;margin:0">Expediente por ID</h2><button id="sendwayo-id-file-result-close" type="button" style="font-size:25px">×</button></div><h3 style="font-size:19px;font-weight:900;margin-top:12px">'+esc(a.nombre||a.name||'')+'</h3><p><b>ID:</b> '+esc(a.id||'')+' · <b>Rol:</b> '+esc(a.role||a.rol||'')+'</p><p><b>Correo:</b> '+esc(a.email||a.usuario||'—')+' · <b>Teléfono:</b> '+esc(a.telefono||a.celular||'—')+'</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0"><div style="background:#eff6ff;padding:12px;border-radius:10px"><small>Balance DOP</small><h3>RD$ '+Number(b.DOP||0).toFixed(2)+'</h3></div><div style="background:#f0fdf4;padding:12px;border-radius:10px"><small>Balance HTG</small><h3>G '+Number(b.HTG||0).toFixed(2)+'</h3></div><div style="background:#f8fafc;padding:12px;border-radius:10px"><small>Comisión DOP</small><h3>RD$ '+Number(c.DOP||0).toFixed(2)+'</h3></div><div style="background:#f8fafc;padding:12px;border-radius:10px"><small>Comisión HTG</small><h3>G '+Number(c.HTG||0).toFixed(2)+'</h3></div></div><p><b>Movimientos vinculados:</b> '+linked.length+'</p><div style="overflow:auto"><table style="width:100%;min-width:600px;border-collapse:collapse;text-align:left"><thead><tr style="background:#f1f5f9"><th>Fecha</th><th>Módulo</th><th>ID operación</th><th>Monto</th><th>Estado</th></tr></thead><tbody>'+htmlRows+'</tbody></table></div><p style="font-size:11px;color:#64748b;margin-top:10px">Los movimientos mostrados son los registros cargados y vinculados a este ID en la sesión actual.</p></div>';
+ document.body.appendChild(modal);modal.querySelector('#sendwayo-id-file-result-close').onclick=function(){modal.remove();};modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+};
+window.SENDWAYO_PAYMENTS=window.SENDWAYO_PAYMENTS||{provider:'PayPal',status:'PENDING_MERCHANT_ONBOARDING',cardCheckoutEnabled:false,payoutsEnabled:false};
+window.sendwayoOpenCardPayments=function(){
+ window.alert('PAGOS CON TARJETA / PAYPAL\n\nEstado: pendiente de activación oficial.\n\nPayPal permitirá preparar el cobro con tarjetas Visa y Mastercard de débito y crédito, sujeto a la verificación de la cuenta comercial y a la disponibilidad del país.\n\nCrear cuenta PayPal Business: https://www.paypal.com/do/business\nPanel de desarrolladores: https://developer.paypal.com/dashboard/\n\nNo se activarán cobros ni se acreditarán balances hasta configurar las credenciales privadas en el Worker y validar los webhooks.');
+};
+})();</script>
 </body>
 </html>
