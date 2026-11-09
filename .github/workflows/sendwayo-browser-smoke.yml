@@ -189,6 +189,8 @@ jobs:
               }
               if (pageErrors.length || blockingConsoleErrors().length) {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
+                console.error('FAILED SCRIPTS:', JSON.stringify(failedScripts, null, 2));
+                console.error('PARSED SCRIPTS:', JSON.stringify([...parsedScripts.entries()], null, 2));
                 console.error('CONSOLE ERRORS:', JSON.stringify(blockingConsoleErrors(), null, 2));
                 throw new Error('Hay errores JavaScript al abrir el acceso.');
               }
