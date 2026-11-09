@@ -427,6 +427,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button onclick="showView('recepcion')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🎁</span> Recepción envío y distribución</button>
     <button onclick="showView('facturas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🧾</span> Pago de facturas y servicios</button>
     <button onclick="showView('mibanco')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏦</span> Mi banco / Mi cuenta bancaria</button>
+    <button type="button" onclick="window.sendwayoOpenCardPayments()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Pagos con tarjeta / PayPal</button>
     <button onclick="showView('cuentas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏛️</span> Cuentas bancarias y depósitos</button>
     <button onclick="showView('ajustes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>⚙️</span> Ajustes / créditos pendientes 0</button>
     <button onclick="showView('creditos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Créditos pendientes</button>
@@ -8910,8 +8911,30 @@ window.sendwayoShareReceipt=async function(){
    var o=document.createElement('option');o.value=c.alpha2;o.textContent=countryLabel(c);select.appendChild(o);
   });
   if(old&&getCountry(old))select.value=old;
+  mountCountrySearch(select);
  }
- function fillPrefix(select,iso,selected){
+ function mountCountrySearch(select){
+  if(!select||!select.id||select.dataset.sendwayoSearchReady==='1')return;
+  var parent=select.parentNode;if(!parent)return;
+  var wrap=document.createElement('div');wrap.className='sendwayo-country-search-wrap';wrap.style.cssText='position:relative;width:100%;min-width:0';
+  var input=document.createElement('input');input.type='search';input.id=select.id+'-search';input.autocomplete='off';input.placeholder='Escriba país, código ISO o prefijo telefónico…';input.style.cssText='width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:9px 12px;font-size:14px;background:#fff;color:#10243d';
+  var list=document.createElement('div');list.className='sendwayo-country-suggestions';list.style.cssText='display:none;position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:2147482000;max-height:240px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 8px 24px #0f244022';
+  parent.insertBefore(wrap,select);wrap.appendChild(input);wrap.appendChild(list);wrap.appendChild(select);select.style.display='none';select.dataset.sendwayoSearchReady='1';
+  function choose(c){if(!c)return;select.value=c.alpha2;input.value=countryLabel(c);list.style.display='none';select.dispatchEvent(new Event('change',{bubbles:true}));}
+  function render(){
+   var q=norm(input.value),matches=countries.slice();
+   if(q)matches=matches.filter(function(c){var phone=String(c.callingCode||'').replace(/[^0-9]/g,'');var digits=q.replace(/[^0-9]/g,'');return norm(countryName(c)).indexOf(q)>=0||norm(c.alpha2).indexOf(q)===0||(digits&&phone.indexOf(digits)>=0);});
+   matches.sort(function(a,b){var aa=a.alpha2==='DO'?0:a.alpha2==='HT'?1:2,bb=b.alpha2==='DO'?0:b.alpha2==='HT'?1:2;return aa-bb||countryName(a).localeCompare(countryName(b),'es');});
+   list.replaceChildren();
+   matches.slice(0,12).forEach(function(c){var btn=document.createElement('button');btn.type='button';btn.textContent=countryLabel(c);btn.style.cssText='display:block;width:100%;padding:10px 12px;text-align:left;font-size:13px;color:#10243d;background:#fff;border:0;border-bottom:1px solid #eef2f7;cursor:pointer';btn.addEventListener('mousedown',function(e){e.preventDefault();choose(c);});list.appendChild(btn);});
+   if(q&&!matches.length){var empty=document.createElement('div');empty.textContent='No se encontró el país. Revise el nombre o prefijo.';empty.style.cssText='padding:10px;color:#64748b;font-size:12px';list.appendChild(empty);}
+   list.style.display=(document.activeElement===input&&matches.length)?'block':'none';
+  }
+  input.addEventListener('input',render);input.addEventListener('focus',render);input.addEventListener('blur',function(){window.setTimeout(function(){list.style.display='none';},130);});
+  select.addEventListener('change',function(){var c=getCountry(select.value);if(c)input.value=countryLabel(c);});
+  var current=getCountry(select.value);if(current)input.value=countryLabel(current);
+ }
+  function fillPrefix(select,iso,selected){
   if(!select)return;var c=getCountry(iso)||getCountry('HT'),list=prefixes(c);select.replaceChildren();
   if(!list.length){var none=document.createElement('option');none.value='';none.textContent='Sin prefijo telefónico asignado';none.disabled=true;none.selected=true;select.appendChild(none);return;}
   list.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;select.appendChild(o);});
@@ -9075,25 +9098,47 @@ window.sendwayoShareReceipt=async function(){
   var details='País de origen: '+countryName(from)+' ('+from.alpha2+'); país de destino: '+countryName(to)+' ('+to.alpha2+'); proveedor/modalidad: '+prov+(note?'; detalle: '+note:'');
   return {from:from,to:to,provider:prov,note:note,currency:currency,route:route,details:details};
  }
+ function loadFxRates(){
+  const cached=window.SENDWAYO_FX_RATES;
+  if(cached&&cached.rates&&Date.now()-Number(cached.fetchedAt||0)<6*60*60*1000)return Promise.resolve(cached);
+  if(window.__sendwayoFxPromise)return window.__sendwayoFxPromise;
+  window.__sendwayoFxPromise=Promise.all([
+   fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('No se pudo consultar la tasa de cambio');return r.json();}),
+   fetch('https://restcountries.com/v3.1/all?fields=cca2,currencies',{cache:'force-cache'}).then(function(r){if(!r.ok)throw new Error('No se pudo consultar la moneda del país');return r.json();})
+  ]).then(function(results){
+   const data=results[0],rates=data&&data.rates;if(!rates||data.result!=='success')throw new Error('La fuente de tasas no devolvió datos válidos');
+   const map={};(results[1]||[]).forEach(function(c){const keys=c.currencies?Object.keys(c.currencies):[];if(c.cca2&&keys.length)map[String(c.cca2).toUpperCase()]=keys[0];});
+   window.SENDWAYO_FX_RATES={rates:rates,currenciesByCountry:map,source:'open.er-api.com',fetchedAt:Date.now(),updatedAt:data.time_last_update_utc||new Date().toISOString(),nextUpdate:data.time_next_update_utc||''};
+   window.__sendwayoFxPromise=null;window.SENDWAYO_FX_ERROR='';
+   ['envio','retiro'].forEach(function(k){try{updateRouteCalc(k);}catch(e){}});
+   return window.SENDWAYO_FX_RATES;
+  }).catch(function(error){window.__sendwayoFxPromise=null;window.SENDWAYO_FX_ERROR=String(error&&error.message||error);console.warn('[SENDWAYO FX]',error);return null;});
+  return window.__sendwayoFxPromise;
+ }
  function updateRouteCalc(kind){
   var d=routeData(kind),input=$('v162-'+kind+'-monto'),amount=Number(input&&input.value||0);if(!Number.isFinite(amount)||amount<0)amount=0;
-  var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur;
+  var cur=d.currency,fee=0,net=amount,received=0,receivedCur=d.currency,rate=1,ready=true;
   if(d.from.alpha2==='HT'&&d.to.alpha2==='HT'){
-   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';
+   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';rate=1;
   }else{
    fee=Math.round(amount*.08*100)/100;net=amount-fee;
-   if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
-   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur=d.currency;received=net;receivedCur=cur;}
-   else{cur=d.currency;received=net;receivedCur=cur;}
+   if(d.from.alpha2===d.to.alpha2){received=net;receivedCur=cur;rate=1;}
+   else{
+    var fx=window.SENDWAYO_FX_RATES||null;
+    var targetCur=fx&&fx.currenciesByCountry&&fx.currenciesByCountry[d.to.alpha2]||(d.to.alpha2==='HT'?'HTG':d.to.alpha2==='DO'?'DOP':'');
+    var fromRate=fx&&fx.rates&&Number(fx.rates[cur]||0),toRate=fx&&targetCur&&fx.rates&&Number(fx.rates[targetCur]||0);
+    if(fx&&fromRate>0&&toRate>0){rate=toRate/fromRate;received=net*rate;receivedCur=targetCur;}
+    else{ready=false;received=0;receivedCur=targetCur||'moneda destino';if(amount>0)loadFxRates();}
+   }
   }
   var fmt=function(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});};
   var el=$('v162-'+kind+'-neto');if(el)el.textContent=fmt(net)+' '+cur;
   el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
-  el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
-  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Sin conversión automática':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
-  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
+  el=$('v162-'+kind+'-rec');if(el)el.textContent=ready?fmt(received)+' '+receivedCur:'Esperando tasa';
+  el=$('v162-'+kind+'-tasa');if(el)el.textContent=ready?(d.from.alpha2===d.to.alpha2?'Sin conversión · '+cur:'1 '+cur+' = '+Number(rate).toFixed(5)+' '+receivedCur+' · referencia'):'Consultando tasa de cambio del destino…';
+  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.receivedValue=String(received);input.dataset.fxReady=ready?'1':'0';input.dataset.fxRate=String(rate);input.dataset.fxCurrency=receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
  }
- function mountRouteControls(kind){
+  function mountRouteControls(kind){
   var route=$('v162-'+kind+'-ruta'),modal=$('modal-'+kind+'-v162');if(!route||!modal)return;
   var id='sendwayo-v7-route-box-'+kind,box=$(id);
   if(!box){
@@ -9139,6 +9184,8 @@ window.sendwayoShareReceipt=async function(){
   if(!sender){alert('Seleccione un remitente válido.');return false;}
   if(!beneficiary){alert('Seleccione o escriba el beneficiario.');return false;}
   if(!Number.isFinite(amount)||amount<=0){alert('Introduzca un monto mayor que cero.');return false;}
+  var amountField=$('v162-'+kind+'-monto');
+  if(d.from.alpha2!==d.to.alpha2&&(!amountField||amountField.dataset.fxReady!=='1')){loadFxRates();alert('La tasa de cambio para este corredor todavía no está confirmada. Espere a que aparezca la tasa antes de guardar.');return false;}
   if(typeof window.sendwayoBuildMoneyTx!=='function'){alert('El registro financiero de SENDWAYO no está disponible.');return false;}
   try{
    var t=window.sendwayoBuildMoneyTx(kind==='envio'?'Envío':'Retiro',{route:d.route,sender:sender,amount:amount,beneficiary:beneficiary,phone:phone,detail:d.details+'; remitente: '+(sender.nombre||sender.name||sender.id)+'; beneficiario: '+beneficiary,currency:d.currency});
@@ -9148,6 +9195,10 @@ window.sendwayoShareReceipt=async function(){
    t.countryFrom={iso2:d.from.alpha2,name:countryName(d.from),callingCode:d.from.callingCode};
    t.countryTo={iso2:d.to.alpha2,name:countryName(d.to),callingCode:d.to.callingCode};
    t.proveedorDestino=d.provider;t.detalleRutaInternacional=d.note;t.rutaExacta=d.details;
+   t.monedaOrigen=d.currency;t.monedaDestino=amountField&&amountField.dataset.fxCurrency||d.currency;
+   t.tasaCambio=Number(amountField&&amountField.dataset.fxRate||1);t.montoRecibir=Number(amountField&&amountField.dataset.receivedValue||amount);
+   t.fuenteTasa=window.SENDWAYO_FX_RATES&&window.SENDWAYO_FX_RATES.source||'Tasa interna';
+   t.fechaTasa=window.SENDWAYO_FX_RATES&&window.SENDWAYO_FX_RATES.updatedAt||new Date().toISOString();
    if(typeof window.sendwayoPersistTx==='function')window.sendwayoPersistTx();
    if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();
    var m=$('modal-'+kind+'-v162');if(m)m.classList.add('hidden');
@@ -10472,6 +10523,45 @@ body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidd
  window.addEventListener('sendwayo:firebase-ready',()=>window.requestAnimationFrame(()=>{placeHeader();authView();}));
  window.addEventListener('sendwayo:identity-updated',()=>window.requestAnimationFrame(placeHeader));
  window.setTimeout(()=>{placeHeader();authView();},500);
+})();
+</script>
+<script id="sendwayo-v7-registration-country-prefix">(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ function countryList(){return Array.isArray(window.SENDWAYO_V7_COUNTRIES)?window.SENDWAYO_V7_COUNTRIES:[];}
+ function addCountryField(){
+  const modal=$('sendwayo-v7-modal'),phone=$('v7-public-phone');if(!modal||!phone||$('v7-public-country-search'))return;
+  const list=countryList(),wrap=document.createElement('div');wrap.style.cssText='display:grid;gap:5px';
+  const label=document.createElement('label');label.textContent='País y prefijo telefónico';label.style.cssText='font-size:12px;font-weight:800;color:#24364d';
+  const input=document.createElement('input');input.id='v7-public-country-search';input.type='search';input.placeholder='Escriba país o prefijo para ver sugerencias…';input.autocomplete='off';input.style.cssText='width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:12px;font-size:14px';
+  const dl=document.createElement('datalist');dl.id='v7-public-country-list';
+  list.slice().sort((a,b)=>String(a.name||a.alpha2).localeCompare(String(b.name||b.alpha2),'es')).forEach(c=>{const o=document.createElement('option');o.value=(c.name||c.alpha2)+' · '+(c.callingCode||'Sin prefijo')+' · '+c.alpha2;dl.appendChild(o);});
+  input.setAttribute('list',dl.id);wrap.appendChild(label);wrap.appendChild(input);wrap.appendChild(dl);phone.parentNode.insertBefore(wrap,phone);
+  const def=list.find(c=>c.alpha2==='DO');if(def){input.value=def.name+' · '+def.callingCode+' · DO';input.dataset.prefix=def.callingCode||'+1-809';input.dataset.iso2='DO';}
+  input.addEventListener('change',()=>{const v=norm(input.value);const c=list.find(x=>norm(x.alpha2)===v||norm(x.name)===v||norm((x.name||'')+' · '+(x.callingCode||'')+' · '+x.alpha2)===v);if(c){input.dataset.iso2=c.alpha2;input.dataset.prefix=c.callingCode||'';}});
+ }
+ const oldOpen=window.sendwayoOpenPublicRequest;
+ if(typeof oldOpen==='function'&&!oldOpen.__sendwayoCountryWrapped){window.sendwayoOpenPublicRequest=function(){if(window.sendwayoStartFirebaseSdk)window.sendwayoStartFirebaseSdk();const r=oldOpen.apply(this,arguments);window.setTimeout(addCountryField,0);return r;};window.sendwayoOpenPublicRequest.__sendwayoCountryWrapped=true;}
+ document.addEventListener('click',function(ev){
+  const btn=ev.target&&ev.target.closest?ev.target.closest('button[onclick*="sendwayoSavePublicRequest"]'):null;if(!btn)return;
+  const input=$('v7-public-country-search'),phone=$('v7-public-phone');if(!input||!phone)return;
+  const list=countryList(),v=norm(input.value);let c=list.find(x=>norm(x.alpha2)===v||norm(x.name)===v||norm(x.callingCode)===v);
+  if(!c){const match=input.value.match(/(?:·|\()\s*([A-Z]{2})\s*\)?$/i);if(match)c=list.find(x=>x.alpha2===match[1].toUpperCase());}
+  const prefix=c&&c.callingCode||input.dataset.prefix||'';if(prefix&&phone.value&&!phone.value.replace(/\s/g,'').startsWith(prefix.replace(/\s/g,'')))phone.value=prefix+' '+phone.value;
+ },true);
+})();
+</script>
+<script id="sendwayo-v7-paypal-onboarding">
+(function(){
+ 'use strict';const $=id=>document.getElementById(id);
+ window.SENDWAYO_PAYMENTS=window.SENDWAYO_PAYMENTS||{provider:'PayPal',status:'PENDING_MERCHANT_ONBOARDING',cardCheckoutEnabled:false,payoutsEnabled:false};
+ window.sendwayoOpenCardPayments=function(){
+  let modal=$('sendwayo-paypal-onboarding-modal');if(modal)modal.remove();
+  modal=document.createElement('div');modal.id='sendwayo-paypal-onboarding-modal';modal.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#07182ddd;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+  modal.innerHTML='<section style="width:min(680px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;color:#10243e;font:14px/1.5 Arial,sans-serif"><div style="display:flex;justify-content:space-between;gap:10px"><h2 style="font-size:20px;font-weight:900;margin:0">Cobros nacionales e internacionales con tarjeta</h2><button id="sendwayo-paypal-close" type="button" style="font-size:24px">×</button></div><p>PayPal Business queda previsto para recibir pagos con tarjetas de débito y crédito, sujeto a verificación comercial y a la disponibilidad de la cuenta.</p><div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:12px;padding:12px"><b>Estado: pendiente de registro y verificación.</b><p style="margin:5px 0 0">No se activarán cobros reales ni se acreditarán balances hasta verificar la cuenta, guardar credenciales privadas en el Worker y validar los webhooks.</p></div><ol style="padding-left:20px;list-style:decimal;margin:12px 0"><li>Crear una cuenta PayPal Business con los datos legales reales.</li><li>Completar la verificación solicitada por PayPal.</li><li>Obtener credenciales API y guardarlas solo en el servidor/Worker.</li><li>Registrar y comprobar el webhook de pagos.</li></ol><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="https://www.paypal.com/do/business" target="_blank" rel="noopener noreferrer" style="background:#003087;color:#fff;padding:10px 14px;border-radius:999px;text-decoration:none;font-weight:800">Crear PayPal Business</a><a href="https://developer.paypal.com/dashboard/" target="_blank" rel="noopener noreferrer" style="background:#eef2f7;color:#10243e;padding:10px 14px;border-radius:999px;text-decoration:none;font-weight:800">Panel de desarrolladores</a></div><p style="font-size:12px;color:#64748b;margin-top:12px">El pago como invitado con tarjeta dependerá de las opciones habilitadas para la cuenta y cada país. SENDWAYO no almacenará números completos de tarjeta ni CVV. Cobrar y desembolsar al beneficiario son operaciones distintas.</p></section>';
+  document.body.appendChild(modal);modal.querySelector('#sendwayo-paypal-close').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+ };
 })();
 </script>
 </body>
