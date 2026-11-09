@@ -7669,14 +7669,29 @@ window.sendwayoShareReceipt=async function(){
     const status=norm(profile.status || profile.accountStatus || profile.estado);
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
+  function humanAccountId(role,name,sequence){
+    if(role==='ADMIN')return 'ADMIN-ADMINISTRADOR';
+    const words=String(name||'Usuario').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\s+/).filter(Boolean);
+    const first=(words[0]||'US').slice(0,2).padEnd(2,'X');
+    const last=(words.length>1?words[words.length-1]:words[0]||'ER').slice(0,2).padEnd(2,'X');
+    return (role==='AGENTE'?'AG':'RE')+first+last+String(Math.max(1,Number(sequence)||1)).padStart(2,'0');
+  }
+  window.sendwayoBuildHumanId=humanAccountId;
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN'){const current=txt(profile.id||profile.accountId||profile.code||profile.codigo);return !current||current.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':current;}
-    const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
-    const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
-    let id=supplied || known?.id || key;
-    if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
-    if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
-    return id;
+    if(role==='ADMIN')return 'ADMIN-ADMINISTRADOR';
+    const name=txt(profile.displayName||profile.name||profile.fullName||profile.nombre||profile.email||'Usuario');
+    const email=profile.authEmail||profile.email;
+    const list=role==='AGENTE'?(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:[]):(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:[]);
+    const known=list.find(a=>norm(a.email||a.usuario)===norm(email)||norm(a.nombre||a.name)===norm(name)||norm(a.id)===norm(profile.id||profile.staffId));
+    const current=txt(profile.id||known?.id);
+    const pattern=role==='AGENTE'?/^AG[A-Z]{4}\d{2}$/:/^RE[A-Z]{4}\d{2}$/;
+    if(pattern.test(current))return current;
+    if(known&&pattern.test(txt(known.id)))return txt(known.id);
+    let sequence=Number(profile.numero||known?.numero||0);
+    if(!sequence&&known)sequence=list.indexOf(known)+1;
+    if(!sequence){const old=txt(profile.id||profile.staffId||profile.code||profile.codigo);const match=old.match(/(\d{1,2})$/);if(match)sequence=Number(match[1]);}
+    if(!sequence)sequence=list.length+1||1;
+    return humanAccountId(role,name,sequence);
   }
   function accountMoney(profile) {
     const nestedBalances=profile.balances && typeof profile.balances==='object' ? profile.balances : {};
