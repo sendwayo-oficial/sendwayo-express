@@ -10785,11 +10785,13 @@ function mountReconciliation(){
 }
 function mountPeriod(view){
  var root=$('view-'+view),table=$('sendwayo-audit-table'),header=root&&root.querySelector('header');if(!root||!table||!header||$('sw-period-'+view))return;
+ if(!window.__sendwayoFilteredAuditExport&&typeof window.sendwayoExportAudit==='function'){window.__sendwayoFilteredAuditExport=true;var exportOriginal=window.sendwayoExportAudit;window.sendwayoExportAudit=function(format){var tb=$('sendwayo-audit-table')&&$('sendwayo-audit-table').tBodies[0];if(!tb)return exportOriginal.apply(this,arguments);var all=Array.from(tb.rows);all.filter(function(row){return row.hidden;}).forEach(function(row){row.remove();});try{return exportOriginal.apply(this,arguments);}finally{all.forEach(function(row){tb.appendChild(row);});}};}
  var box=document.createElement('div');box.className='flex items-center gap-2 flex-wrap mt-3';box.innerHTML='<label class="text-xs font-bold">Período</label><select id="sw-period-'+view+'" class="border rounded-full px-3 py-2 text-xs"><option value="all">Todos</option><option value="today">Hoy</option><option value="7">7 días</option><option value="15">15 días</option><option value="month">Mes actual</option></select><span id="sw-period-count-'+view+'" class="text-xs text-slate-500"></span>';header.appendChild(box);
  function apply(){var mode=$('sw-period-'+view).value,n=new Date(),start=0;if(mode==='today')start=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();else if(mode==='7'||mode==='15')start=n.getTime()-Number(mode)*86400000;else if(mode==='month')start=new Date(n.getFullYear(),n.getMonth(),1).getTime();var count=0;table.querySelectorAll('tbody tr').forEach(function(tr){var t=Number(tr.getAttribute('data-timestamp')||0),ok=mode==='all'||(t>0&&t>=start);tr.hidden=!ok;if(ok)count++;});$('sw-period-count-'+view).textContent=count+' movimientos';}
  $('sw-period-'+view).addEventListener('change',apply);apply();
 }
 function init(){
+ ensureView('tarjeta');
  var side=$('sendwayo-main-sidebar'),btn=$('sendwayo-mobile-menu');if(!side||!btn)return;
  var shade=$('sendwayo-menu-shade');if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
  document.addEventListener('click',function(ev){var hit=ev.target&&ev.target.closest?ev.target.closest('#sendwayo-mobile-menu'):null;if(hit){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();side.classList.contains('sendwayo-menu-open')?closeMenu():openMenu();return;}if(ev.target===shade){closeMenu();return;}if(ev.target&&ev.target.closest&&ev.target.closest('#sendwayo-main-sidebar button'))closeMenu();},true);
