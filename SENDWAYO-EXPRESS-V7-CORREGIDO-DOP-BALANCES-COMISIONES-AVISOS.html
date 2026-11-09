@@ -4506,7 +4506,7 @@ window.sendwayoShareReceipt=async function(){
       }else r.estado=action==='aprobar'?'Aprobado':'Rechazado';writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);saveAccountValues();renderCustom(view);return;
     }
     if(view==='secretas'&&['modificar','editar'].includes(action)){const a=accountById(id);if(a)window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);return;}
-    if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nCódigo: '+a.codigo+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
+    if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nNombre: '+acctName(a)+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
     return oldActionGeneric?.(view,action,id);
   };
   // Official-bank records cannot be removed; only administrator-created extra accounts can be deleted.
@@ -9027,10 +9027,10 @@ window.sendwayoShareReceipt=async function(){
   if(window.__sendwayoFxPromise)return window.__sendwayoFxPromise;
   window.__sendwayoFxPromise=Promise.all([
    fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('No se pudo consultar la tasa');return r.json();}),
-   fetch('https://restcountries.com/v3.1/all?fields=cca2,currencies',{cache:'force-cache'}).then(function(r){if(!r.ok)throw new Error('No se pudo consultar las monedas de países');return r.json();})
+   fetch('https://restcountries.com/v3.1/all?fields=cca2,currencies',{cache:'force-cache'}).then(function(r){if(!r.ok)throw new Error('No se pudo consultar las monedas de países');return r.json();}).catch(function(){return [];})
   ]).then(function(values){
    var rates=values[0]&&values[0].rates;if(!rates||values[0].result!=='success')throw new Error('Fuente de tasas no disponible');
-   var map={};(values[1]||[]).forEach(function(c){var codes=c.currencies?Object.keys(c.currencies):[];if(c.cca2&&codes.length)map[String(c.cca2).toUpperCase()]=codes[0];}).catch(function(){return [];});
+   var map={};(values[1]||[]).forEach(function(c){var codes=c.currencies?Object.keys(c.currencies):[];if(c.cca2&&codes.length)map[String(c.cca2).toUpperCase()]=codes[0];});
    window.SENDWAYO_FX_RATES={rates:rates,currenciesByCountry:map,updatedAt:values[0].time_last_update_utc||new Date().toISOString(),nextUpdate:values[0].time_next_update_utc||'',source:'ExchangeRate-API'};
    window.__sendwayoFxPromise=null;
    ['envio','retiro'].forEach(function(k){try{updateRouteCalc(k);}catch(e){}});
