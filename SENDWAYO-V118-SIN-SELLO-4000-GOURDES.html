@@ -7496,68 +7496,56 @@ window.sendwayoShareReceipt=async function(){
       { path: 'users', ref: db.ref('users') }
     ];
 
-    for (const candidate of roots) {
-      const root = candidate.ref;
-
-      // El registro administrativo puede estar guardado bajo la clave fija "admin".
-      if (identity.isAdmin) {
-        try {
-          const adminSnap = await root.child('admin').once('value');
-          if (adminSnap.exists()) {
-            const existing = adminSnap.val() || {};
-            const previousId = txt(existing.id || existing.legacyId || 'ADMINADMIN');
-            const previousCode = txt(existing.code || existing.codigo || 'ADMIN-000');
-            const visibleId = !previousId || previousId.toUpperCase() === 'ADMINADMIN' ? 'ADMIN-ADMINISTRADOR' : previousId;
-            const visibleCode = !previousCode || previousCode === 'ADMIN-000' ? visibleId : previousCode;
-            const identityPatch = {
-              id: visibleId, accountId: visibleId, code: visibleCode, codigo: visibleCode, staffId: visibleCode,
-              idAnterior: previousId !== visibleId ? previousId : txt(existing.idAnterior || ''),
-              idAliases: [...new Set([...(Array.isArray(existing.idAliases) ? existing.idAliases : []), previousId, 'ADMINADMIN', 'ADMIN-000'].filter(Boolean))],
-              codeAliases: [...new Set([...(Array.isArray(existing.codeAliases) ? existing.codeAliases : []), previousCode, 'ADMIN-000'].filter(Boolean))]
-            };
-            userRoot = root;
-            try {
-              await root.child('admin').update(identityPatch);
-              Object.assign(existing, identityPatch);
-            } catch (identityError) {
-              console.warn('[SENDWAYO] El perfil admin se leyó, pero no se pudo normalizar su identificador:', identityError?.code || identityError?.message || identityError);
-            }
-            return { key: 'admin', data: existing };
-          }
-        } catch (error) {
-          console.warn('[SENDWAYO] No se pudo leer el registro admin en ' + candidate.path + ':', error?.code || error?.message || error);
-        }
-      }
-
-      // Primero se prueban las claves directas (UID, ID/código registrado). Después,
-      // se consultan campos indexados; si un índice falla, se continúa con el siguiente.
-      const directKeys = [...new Set([uid, known?.id, known?.codigo].filter(Boolean))];
-      for (const key of directKeys) {
-        const direct = await directProfile(root, key, identity);
-        if (direct) {
-          userRoot = root;
-          return direct;
-        }
-      }
-
-      const queries = [
-        ['authUid', uid], ['uid', uid], ['firebaseUid', uid],
-        ['authEmail', email], ['email', email], ['usuario', email],
-        ['correo', email], ['mail', email]
-      ];
-      for (const [field, value] of queries) {
-        const found = await queryOne(root, field, value, identity);
-        if (found) {
-          userRoot = root;
-          return found;
-        }
-      }
-
-      // Último recurso de lectura: los índices de Realtime Database pueden faltar,
-      // y equalTo(email) no encuentra correos guardados con mayúsculas. Leer el
-      // directorio una sola vez y comparar UID/correo normalizados sin alterar datos.
+    // Consultar las rutas candidatas en paralelo: las consultas secuenciales anteriores
+    // podían agotar el límite de 16 segundos y dejar al usuario detenido en "Buscando tu cuenta".
+    const adminRoot = roots[0].ref;
+    if (identity.isAdmin) {
       try {
-        const directorySnap = await root.once('value');
+        const adminSnap = await adminRoot.child('admin').once('value');
+        if (adminSnap.exists()) {
+          const existing = adminSnap.val() || {};
+          const previousId = txt(existing.id || existing.legacyId || 'ADMINADMIN');
+          const previousCode = txt(existing.code || existing.codigo || 'ADMIN-000');
+          const visibleId = !previousId || previousId.toUpperCase() === 'ADMINADMIN' ? 'ADMIN-ADMINISTRADOR' : previousId;
+          const visibleCode = !previousCode || previousCode === 'ADMIN-000' ? visibleId : previousCode;
+          const identityPatch = {
+            id: visibleId, accountId: visibleId, code: visibleCode, codigo: visibleCode, staffId: visibleCode,
+            idAnterior: previousId !== visibleId ? previousId : txt(existing.idAnterior || ''),
+            idAliases: [...new Set([...(Array.isArray(existing.idAliases) ? existing.idAliases : []), previousId, 'ADMINADMIN', 'ADMIN-000'].filter(Boolean))],
+            codeAliases: [...new Set([...(Array.isArray(existing.codeAliases) ? existing.codeAliases : []), previousCode, 'ADMIN-000'].filter(Boolean))]
+          };
+          userRoot = adminRoot;
+          try { await adminRoot.child('admin').update(identityPatch); Object.assign(existing, identityPatch); }
+          catch (identityError) { console.warn('[SENDWAYO] Perfil admin leído; no se pudo normalizar su identificador:', identityError?.code || identityError?.message || identityError); }
+          return { key: 'admin', data: existing };
+        }
+      } catch (error) {
+        console.warn('[SENDWAYO] No se pudo leer el registro admin:', error?.code || error?.message || error);
+      }
+    }
+
+    const directKeys = [...new Set([uid, known?.id, known?.codigo].filter(Boolean))];
+    for (const candidate of roots) {
+      const directResults = await Promise.all(directKeys.map(key => directProfile(candidate.ref, key, identity)));
+      const direct = directResults.find(Boolean);
+      if (direct) { userRoot = candidate.ref; return direct; }
+    }
+
+    const queries = [
+      ['authUid', uid], ['uid', uid], ['firebaseUid', uid],
+      ['authEmail', email], ['email', email], ['usuario', email],
+      ['correo', email], ['mail', email]
+    ];
+    for (const candidate of roots) {
+      const results = await Promise.all(queries.map(([field, value]) => queryOne(candidate.ref, field, value, identity)));
+      const found = results.find(Boolean);
+      if (found) { userRoot = candidate.ref; return found; }
+    }
+
+    // Último recurso solo si fallaron las búsquedas puntuales.
+    for (const candidate of roots) {
+      try {
+        const directorySnap = await candidate.ref.once('value');
         let fallback = null;
         directorySnap.forEach(child => {
           if (fallback) return;
@@ -7566,18 +7554,13 @@ window.sendwayoShareReceipt=async function(){
           const storedUid = txt(data.authUid || data.uid || data.firebaseUid || data.firebase_uid);
           const storedEmail = norm(data.authEmail || data.email || data.usuario || data.correo || data.mail);
           const knownKey = identity.knownKeys.has(safeDbKey(child.key));
-          if ((storedUid && storedUid === uid) ||
-              (storedEmail && storedEmail === email) ||
-              knownKey) {
+          if ((storedUid && storedUid === uid) || (storedEmail && storedEmail === email) || knownKey) {
             fallback = { key: child.key, data };
           }
         });
-        if (fallback) {
-          userRoot = root;
-          return fallback;
-        }
+        if (fallback) { userRoot = candidate.ref; return fallback; }
       } catch (fallbackError) {
-        console.warn('[SENDWAYO] Lectura de respaldo del directorio no disponible en ' + candidate.path + ':', fallbackError?.code || fallbackError?.message || fallbackError);
+        console.warn('[SENDWAYO] Lectura de respaldo no disponible en ' + candidate.path + ':', fallbackError?.code || fallbackError?.message || fallbackError);
       }
     }
     return null;
