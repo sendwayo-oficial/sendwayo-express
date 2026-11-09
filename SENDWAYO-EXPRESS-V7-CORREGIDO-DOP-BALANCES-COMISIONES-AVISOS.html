@@ -5871,7 +5871,7 @@ window.sendwayoShareReceipt=async function(){
     try{rems=typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:(Array.isArray(window.REMITENTES)?window.REMITENTES:[]);}catch(_){rems=Array.isArray(window.REMITENTES)?window.REMITENTES:[];}
     return [...(a?[a]:[]),...ags,...rems].filter(Boolean);
   };
-  const accountLabel=a=>`${txt(a?.nombre||a?.name||a?.email||a?.id)} — ID: ${txt(a?.id||'—')} — Código: ${txt(a?.codigo||a?.codigo2||'—')}`;
+  const accountLabel=a=>`${txt(a?.nombre||a?.name||a?.email||a?.id)} — ID: ${txt(a?.id||'—')}`;
   const PASSWORD_RESET_KEY='sendwayo_express_oficial_20261029_password_reset_ids_v1';
   const USERNAME_KEY='sendwayo_express_oficial_20261029_remembered_username_v1';
   const ACTIVITY_KEY='sendwayo_express_oficial_20261029_last_activity_v7';
