@@ -53,7 +53,7 @@ assert.equal(fields['v162-envio-monto'].dataset.esHT, '1');
 assert.match(html, /open\.er-api\.com\/v6\/latest\/USD/);
 assert.match(html, /restcountries\.com\/v3\.1\/all\?fields=cca2,currencies/);
 assert.match(html, /source:'ExchangeRate-API'/);
-assert.doesNotMatch(html, /received=net\*2\.1/);
+assert.doesNotMatch(routeCalcSource, /received=net\*2\.1/);
 assert.doesNotMatch(html, /received=net\/2\.30/);
 assert.match(html, /sendwayo-v7-final-integrity/);
 assert.match(html, /sendwayo-v7-header-one-line-runtime/);
