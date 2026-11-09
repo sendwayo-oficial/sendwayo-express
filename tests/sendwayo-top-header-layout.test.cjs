@@ -24,7 +24,7 @@ assert.match(html, /id="sendwayo-v7-duration"/, 'la duración de sesión debe mo
 assert.doesNotMatch(html, /Código:|Cód\.:|id="sendwayo-v7-code"/, 'no debe quedar código visible');
 assert.match(html, /function purgeLegacySideIdentity\(/, 'debe limpiarse la identidad lateral antigua');
 assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open/, 'el menú móvil debe deslizarse desde la izquierda');
-assert.match(html, /#sendwayo-v7-user-strip \.sendwayo-workspace-person\s*\{[^}]*flex-direction:row\s*!important/s,
+assert.match(html, /#sendwayo-v7-user-strip \.sendwayo-workspace-person,[^{}]*\{[^}]*flex-direction:row\s*!important/s,
   'nombre, rol e ID deben quedar en una línea');
 assert.match(html, /#sendwayo-v7-user-strip \.sendwayo-workspace-time\s*\{[^}]*flex-direction:row\s*!important/s,
   'fecha, hora y duración deben quedar en una línea');
