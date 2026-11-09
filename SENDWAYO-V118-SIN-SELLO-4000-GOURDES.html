@@ -7617,12 +7617,21 @@ function seedProfileFromAccount(account, role){
         const oldCode=txt(data.code||data.codigo||data.staffId||'');
         const aliases=[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,account.id,account.idAnterior].filter(Boolean))];
         const codeAliases=[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,account.codigoAnterior,account.codigo2].filter(Boolean))];
-        const patch={id:account.id,accountId:account.id,code:account.codigo,codigo:account.codigo,staffId:account.codigo,number:txt(account.numero),idAnterior:oldId!==account.id?oldId:txt(data.idAnterior||''),idAliases:aliases,codeAliases,aliases:[...new Set([...(Array.isArray(data.aliases)?data.aliases:[]),oldId,oldCode,account.id,account.codigo].filter(Boolean))]};
+        const accountName=txt(account.name||account.nombre||data.name||data.nombre||'Usuario SENDWAYO');const accountPhone=txt(account.phone||account.telefono||account.celular||data.phone||data.telefono||data.celular||'');const patch={id:account.id,accountId:account.id,code:account.codigo,codigo:account.codigo,staffId:account.codigo,number:txt(account.numero),name:accountName,nombre:accountName,displayName:accountName,email,authEmail:email,phone:accountPhone,telefono:accountPhone,celular:accountPhone,role:role==='AGENTE'?'agente':'remitente',idAnterior:oldId!==account.id?oldId:txt(data.idAnterior||''),idAliases:aliases,codeAliases,aliases:[...new Set([...(Array.isArray(data.aliases)?data.aliases:[]),oldId,oldCode,account.id,account.codigo].filter(Boolean))]};
         await userRoot.child(previous.key).update(patch);Object.assign(data,patch);knownEmails.add(email);continue;
       }
       const key=safeDbKey(account.id||account.codigo||email);
       const existingKey=await userRoot.child(key).once('value');
-      if(existingKey.exists()){knownEmails.add(email);continue;}
+      if(existingKey.exists()){
+        // Reparar solo la identidad del registro que ya ocupa el ID canónico.
+        // No reemplazar balances, comisiones, movimientos, estado ni otros campos financieros.
+        const current=existingKey.val()||{};
+        const accountName=txt(account.name||account.nombre||current.name||current.nombre||'Usuario SENDWAYO');
+        const accountPhone=txt(account.phone||account.telefono||account.celular||current.phone||current.telefono||current.celular||'');
+        await userRoot.child(key).update({id:account.id,accountId:account.id,staffId:account.codigo,code:account.codigo,codigo:account.codigo,number:txt(account.numero),name:accountName,nombre:accountName,displayName:accountName,email,authEmail:email,phone:accountPhone,telefono:accountPhone,celular:accountPhone,role:role==='AGENTE'?'agente':'remitente'});
+        knownEmails.add(email);
+        continue;
+      }
       await userRoot.child(key).set(seedProfileFromAccount(account,role));
       knownEmails.add(email);
     }
