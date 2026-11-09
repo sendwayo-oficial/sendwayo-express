@@ -405,9 +405,9 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
     <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
+    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
   <div class="sendwayo-brand-actions">
     <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
@@ -8966,6 +8966,37 @@ window.sendwayoShareReceipt=async function(){
    var o=document.createElement('option');o.value=c.alpha2;o.textContent=countryLabel(c);select.appendChild(o);
   });
   if(old&&getCountry(old))select.value=old;
+  attachCountrySearch(select);
+ }
+ function attachCountrySearch(select){
+  if(!select||!select.id||!select.parentNode)return;
+  var list=$('sendwayo-country-suggestions');
+  if(!list){
+   list=document.createElement('datalist');list.id='sendwayo-country-suggestions';
+   countries.slice().sort(function(a,b){return countryName(a).localeCompare(countryName(b),'es');}).forEach(function(c){var op=document.createElement('option');op.value=countryLabel(c);list.appendChild(op);});
+   document.body.appendChild(list);
+  }
+  var id=select.id+'-search',input=$(id);
+  if(!input){
+   input=document.createElement('input');input.id=id;input.type='search';input.setAttribute('list',list.id);input.setAttribute('autocomplete','off');
+   input.setAttribute('aria-label','Buscar país por nombre o prefijo telefónico');input.placeholder='Escriba el país o prefijo (+1, +509…)';
+   input.className='sendwayo-country-search';input.style.cssText='display:block;width:100%;min-width:0;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px 11px;margin:0 0 6px;background:#fff;color:#10243d;font-size:13px';
+   select.parentNode.insertBefore(input,select);
+   input.addEventListener('input',function(){
+    var val=String(input.value||'').trim(),isoMatch=val.match(/\\(([A-Z]{2})\\)/),q=norm(val);
+    var found=isoMatch?getCountry(isoMatch[1]):countries.find(function(c){return norm(countryName(c))===q||norm(c.alpha2)===q||norm(countryLabel(c))===q;});
+    if(!found&&/^\\+/.test(val)){found=countries.find(function(c){return prefixes(c).some(function(p){return norm(p)===q||norm(c.callingCode)===q;});});}
+    if(found&&select.value!==found.alpha2){select.value=found.alpha2;select.dispatchEvent(new Event('change',{bubbles:true}));}
+   });
+   input.addEventListener('change',function(){
+    var val=String(input.value||'').trim(),isoMatch=val.match(/\\(([A-Z]{2})\\)/),q=norm(val);
+    var found=isoMatch?getCountry(isoMatch[1]):countries.find(function(c){return norm(countryName(c))===q||norm(c.alpha2)===q||norm(c.callingCode)===q;});
+    if(found){select.value=found.alpha2;select.dispatchEvent(new Event('change',{bubbles:true}));}
+   });
+  }
+  var sync=function(){var c=getCountry(select.value);if(c)input.value=countryLabel(c);};
+  if(!select.dataset.sendwayoSearchBound){select.dataset.sendwayoSearchBound='1';select.addEventListener('change',sync);}
+  sync();
  }
  function fillPrefix(select,iso,selected){
   if(!select)return;var c=getCountry(iso)||getCountry('HT'),list=prefixes(c);select.replaceChildren();
@@ -8976,6 +9007,21 @@ window.sendwayoShareReceipt=async function(){
  function refreshCountryWidgets(){
   mountBeneficiaryCountryControls();mountRouteControls('envio');mountRouteControls('retiro');
  }
+ function loadFxRates(){
+  var current=window.SENDWAYO_FX_RATES,age=current&&current.fetchedAt?Date.now()-current.fetchedAt:Infinity;
+  if(current&&current.rates&&age<12*60*60*1000)return Promise.resolve(current);
+  if(window.__sendwayoFxPromise)return window.__sendwayoFxPromise;
+  window.__sendwayoFxPromise=fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(data){
+   if(!data||data.result!=='success'||!data.rates)throw new Error('La fuente no devolvió tasas válidas');
+   var map={DO:'DOP',HT:'HTG',US:'USD',CA:'CAD',GB:'GBP',ES:'EUR',FR:'EUR',DE:'EUR',IT:'EUR',PT:'EUR',BE:'EUR',NL:'EUR',IE:'EUR',MX:'MXN',BR:'BRL',JM:'JMD',TT:'TTD',BS:'BSD',BB:'BBD',GY:'GYD',SR:'SRD',CU:'CUP',PR:'USD',VI:'USD',PA:'USD',EC:'USD',SV:'USD',TL:'USD',HN:'HNL',GT:'GTQ',CR:'CRC',NI:'NIO',CO:'COP',VE:'VES',AR:'ARS',CL:'CLP',PE:'PEN',UY:'UYU',PY:'PYG',BO:'BOB',HT:'HTG'};
+   window.SENDWAYO_FX_RATES={rates:data.rates,currenciesByCountry:map,updatedAt:data.time_last_update_utc||new Date().toISOString(),nextUpdate:data.time_next_update_utc||'',source:'ExchangeRate-API',fetchedAt:Date.now()};
+   window.__sendwayoFxPromise=null;
+   ['envio','retiro'].forEach(function(k){try{updateRouteCalc(k);}catch(e){}});
+   return window.SENDWAYO_FX_RATES;
+  }).catch(function(error){window.__sendwayoFxPromise=null;window.SENDWAYO_FX_ERROR=String(error&&error.message||error);console.warn('[SENDWAYO FX]',error);return null;});
+  return window.__sendwayoFxPromise;
+ }
+
  window.SENDWAYO_V7_COUNTRIES=countries;
  // El catálogo íntegro ya está integrado: no se bloquea la pantalla con una descarga ni se usa una caché antigua incompleta.
  window.SENDWAYO_V7_COUNTRIES_READY=Promise.resolve(countries);
@@ -9132,22 +9178,40 @@ window.sendwayoShareReceipt=async function(){
   return {from:from,to:to,provider:prov,note:note,currency:currency,route:route,details:details};
  }
  function updateRouteCalc(kind){
-  var d=routeData(kind),input=$('v162-'+kind+'-monto'),amount=Number(input&&input.value||0);if(!Number.isFinite(amount)||amount<0)amount=0;
-  var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur;
+  var d=routeData(kind),input=$('v162-'+kind+'-monto'),amount=Number(input&&input.value||0);
+  if(!Number.isFinite(amount)||amount<0)amount=0;
+  var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur,fxRate=1,sameCountry=d.from.alpha2===d.to.alpha2;
   if(d.from.alpha2==='HT'&&d.to.alpha2==='HT'){
-   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';
+   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;
+   fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';if(input)input.dataset.fxReady='1';
   }else{
    fee=Math.round(amount*.08*100)/100;net=amount-fee;
-   if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
-   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur=d.currency;received=net;receivedCur=cur;}
-   else{cur=d.currency;received=net;receivedCur=cur;}
+   if(sameCountry){received=net;receivedCur=cur;if(input)input.dataset.fxReady='1';}
+   else{
+    var fx=window.SENDWAYO_FX_RATES||null;
+    var targetCurrency=fx&&fx.currenciesByCountry&&fx.currenciesByCountry[d.to.alpha2]||'';
+    var sourceRate=fx&&fx.rates&&Number(fx.rates[cur]),targetRate=fx&&fx.rates&&Number(fx.rates[targetCurrency]);
+    if(fx&&targetCurrency&&sourceRate>0&&targetRate>0){
+     fxRate=targetRate/sourceRate;received=net*fxRate;receivedCur=targetCurrency;
+     if(input){input.dataset.fxReady='1';input.dataset.fxRate=String(fxRate);input.dataset.fxCurrency=targetCurrency;}
+    }else{
+     received=0;receivedCur=targetCurrency||'—';
+     if(input)input.dataset.fxReady='0';
+     if(amount>0)loadFxRates().then(function(data){if(data)updateRouteCalc(kind);});
+    }
+   }
   }
   var fmt=function(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});};
   var el=$('v162-'+kind+'-neto');if(el)el.textContent=fmt(net)+' '+cur;
   el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
-  el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
-  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Sin conversión automática':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
-  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
+  el=$('v162-'+kind+'-rec');if(el)el.textContent=received>0?fmt(received)+' '+receivedCur:'Tasa de cambio pendiente';
+  el=$('v162-'+kind+'-tasa');
+  if(el){
+   if(d.from.alpha2===d.to.alpha2)el.textContent='Sin conversión · '+cur;
+   else if(received>0)el.textContent='1 '+cur+' = '+Number(fxRate).toFixed(5)+' '+receivedCur+' · tasa indicativa';
+   else el.textContent='Consultando tasa · no registre hasta confirmar';
+  }
+  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.recValue=String(received);input.dataset.esHT=receivedCur==='HTG'?'1':'0';}
  }
  function mountRouteControls(kind){
   var route=$('v162-'+kind+'-ruta'),modal=$('modal-'+kind+'-v162');if(!route||!modal)return;
@@ -9195,12 +9259,14 @@ window.sendwayoShareReceipt=async function(){
   if(!sender){alert('Seleccione un remitente válido.');return false;}
   if(!beneficiary){alert('Seleccione o escriba el beneficiario.');return false;}
   if(!Number.isFinite(amount)||amount<=0){alert('Introduzca un monto mayor que cero.');return false;}
+  if(d.from.alpha2!==d.to.alpha2&&$('v162-'+kind+'-monto').dataset.fxReady!=='1'){loadFxRates();alert('La tasa de cambio para esta ruta todavía no está disponible. No se registró la operación.');return false;}
   if(typeof window.sendwayoBuildMoneyTx!=='function'){alert('El registro financiero de SENDWAYO no está disponible.');return false;}
   try{
    var t=window.sendwayoBuildMoneyTx(kind==='envio'?'Envío':'Retiro',{route:d.route,sender:sender,amount:amount,beneficiary:beneficiary,phone:phone,detail:d.details+'; remitente: '+(sender.nombre||sender.name||sender.id)+'; beneficiario: '+beneficiary,currency:d.currency});
    if(!t)return false;
    t.paisOrigen=countryName(d.from);t.paisOrigenISO2=d.from.alpha2;t.codigoPaisOrigen=d.from.callingCode;
    t.paisDestino=countryName(d.to);t.paisDestinoISO2=d.to.alpha2;t.codigoPaisDestino=d.to.callingCode;
+   t.monedaOrigen=d.currency;t.monedaDestino=$('v162-'+kind+'-monto').dataset.fxCurrency||d.currency;t.tasaCambio=Number($('v162-'+kind+'-monto').dataset.fxRate||1);t.montoRecibir=Number($('v162-'+kind+'-monto').dataset.recValue||amount);t.fuenteTasa='ExchangeRate-API';t.fechaTasa=window.SENDWAYO_FX_RATES&&window.SENDWAYO_FX_RATES.updatedAt||null;
    t.countryFrom={iso2:d.from.alpha2,name:countryName(d.from),callingCode:d.from.callingCode};
    t.countryTo={iso2:d.to.alpha2,name:countryName(d.to),callingCode:d.to.callingCode};
    t.proveedorDestino=d.provider;t.detalleRutaInternacional=d.note;t.rutaExacta=d.details;
