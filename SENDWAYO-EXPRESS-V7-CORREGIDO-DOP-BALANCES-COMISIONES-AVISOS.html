@@ -9147,8 +9147,19 @@ window.sendwayoShareReceipt=async function(){
    var duplicate=accounts.find(function(x){return x!==a&&(String(x.id||'').toLowerCase()===ident.toLowerCase()||(Array.isArray(x.idAliases)&&x.idAliases.some(function(v){return String(v).toLowerCase()===ident.toLowerCase();})));});
    if(duplicate){alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
    if(!a){
-    // Para una cuenta nueva, el formulario de Firebase conserva su flujo de creación y utiliza el ID automático.
-    return originalSave.call(this,view,id||'');
+    const saved=await originalSave.call(this,view,id||'');
+    var refreshed=[];try{refreshed=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
+    var created=refreshed.find(function(x){return norm(x.email||x.usuario)===norm($('v7-admin-email')&&$('v7-admin-email').value||'')||norm(x.username||x.login)===norm($('v7-admin-username')&&$('v7-admin-username').value||'');});
+    if(created){
+      var previous=String(created.id||''),newAliases=Array.from(new Set([...(created.idAliases||[]),previous].filter(Boolean)));
+      created.legacyId=previous;created.idAnterior=previous;created.idAliases=newAliases;created.id=ident;
+      var dbKey=String(created.dbUserKey||created.rtdbUserKey||created.firebaseKey||'');
+      var f=fb(),auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db;
+      if(db&&auth&&dbKey){try{await db.ref('sendwayo_express_v2/users/'+dbKey).update({id:ident,accountId:ident,legacyId:previous,idAnterior:previous,idAliases:newAliases,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid});}catch(error){console.error('[SENDWAYO] No se pudo sincronizar el nuevo ID en Firebase:',error);}}
+      (window.USUARIOS_LOGIN||[]).forEach(function(u){if(norm(u.email||u.usuario)===norm(created.email||created.usuario)){u.id=ident;u.idAliases=newAliases;u.aliases=Array.from(new Set([...(u.aliases||[]),previous,ident].filter(Boolean)));}});
+      if(typeof window.sendwayoNormalizeUserIds==='function')window.sendwayoNormalizeUserIds();
+    }
+    return saved;
    }
    var f=fb(),auth=f&&f.auth&&f.auth.currentUser,db=f&&f.db;
    if(!db||!auth){alert('No hay sesión administrativa confirmada en Firebase.');return false;}
