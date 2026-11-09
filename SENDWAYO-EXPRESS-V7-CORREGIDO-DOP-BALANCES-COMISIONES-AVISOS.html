@@ -2522,7 +2522,6 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 <div id="welcome-landing" class="sendwayo-welcome-minimal">
   <main class="sendwayo-welcome-card">
     <header class="sendwayo-welcome-brand">
-      <img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" loading="eager" decoding="async">
       <strong>SENDWAYO EXPRESS</strong>
     </header>
     <figure class="sendwayo-welcome-photo">
@@ -7633,13 +7632,14 @@ window.sendwayoShareReceipt=async function(){
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN'){const current=txt(profile.id||profile.accountId||profile.code||profile.codigo);return !current||current.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':current;}
-    const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
-    const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
-    let id=supplied || known?.id || key;
-    if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
-    if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
-    return id;
+    if(role==='ADMIN')return 'ADMIN-ADMINISTRADOR';
+    const list=role==='AGENTE'?(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:[]):(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:[]);
+    const email=profile.authEmail||profile.email||'',known=list.find(a=>norm(a.email||a.usuario)===norm(email)||norm(a.dbUserKey)===norm(key));
+    const name=String(profile.displayName||profile.name||profile.nombre||known?.nombre||known?.name||'Usuario');
+    const words=name.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\\s+/).filter(Boolean);
+    const first=(words[0]||'US').slice(0,2).padEnd(2,'X'),last=(words.length>1?words[words.length-1]:words[0]||'ER').slice(0,2).padEnd(2,'X');
+    const sequence=Number(profile.numero||known?.numero||(known?list.indexOf(known)+1:0))||Math.max(1,list.length+1);
+    return (role==='AGENTE'?'AG':'RE')+first+last+String(sequence).padStart(2,'0');
   }
   function accountMoney(profile) {
     const nestedBalances=profile.balances && typeof profile.balances==='object' ? profile.balances : {};
@@ -10374,40 +10374,38 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  window.addEventListener('load',function(){window.setTimeout(refresh,120);});
  window.addEventListener('pageshow',function(){window.setTimeout(refresh,120);});
  if(typeof window.sendwayoOpenAccountForm==='function'){
-  var oldOpen=window.sendwayoOpenAccountForm;
+  var previousOpen=window.sendwayoOpenAccountForm;
   window.sendwayoOpenAccountForm=function(view,id){
-   var result=oldOpen.apply(this,arguments);
+   var result=previousOpen.apply(this,arguments);
    window.setTimeout(function(){
-    var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name');
+    var nameInput=$('v7-admin-name'),idInput=$('v7-admin-id'),codeInput=$('v7-admin-code');
     if(!idInput||!codeInput)return;
-    idInput.readOnly=true;codeInput.readOnly=true;codeInput.setAttribute('aria-readonly','true');
-    var list=accounts(view),existing=id?list.find(function(a){return String(a.id||'')===String(id);}):null,prefix=view==='agentes'?'AGE':'REM';
-    if(existing){idInput.value=String(existing.id||'');codeInput.value=visibleCode(existing,view);return;}
-    var max=0;list.forEach(function(a){var match=String(a.id||'').match(new RegExp('^'+prefix+'(\\d{5})$','i'));if(match)max=Math.max(max,Number(match[1]));});
-    idInput.value=prefix+String(max+1).padStart(5,'0');
-    var makeCode=function(value){var p=String(value||'').trim().split(/\s+/).filter(Boolean);var clean=function(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/gi,'').slice(0,3).toUpperCase();};return prefix+'-'+clean(p[0]||'USR')+clean(p.length>1?p[p.length-1]:p[0]||'USR');};
-    codeInput.value=makeCode(nameInput&&nameInput.value);
-    if(nameInput&&!nameInput.dataset.sendwayoFixedCodeBound){nameInput.dataset.sendwayoFixedCodeBound='1';nameInput.addEventListener('input',function(){codeInput.value=makeCode(nameInput.value);});}
+    var list=view==='agentes'?(Array.isArray(AGENTES)?AGENTES:[]):(Array.isArray(REMITENTES)?REMITENTES:[]);
+    var existing=id?list.find(function(a){return String(a.id||'')===String(id)||String(a.dbUserKey||'')===String(id);}):null;
+    var seq=list.length+1;
+    var human=function(value){var p=String(value||'Usuario').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\\s+/).filter(Boolean);var f=(p[0]||'US').slice(0,2).padEnd(2,'X');var l=(p.length>1?p[p.length-1]:p[0]||'ER').slice(0,2).padEnd(2,'X');return (view==='agentes'?'AG':'RE')+f+l+String(seq).padStart(2,'0');};
+    idInput.readOnly=false;idInput.value=existing?String(existing.id||''):human(nameInput&&nameInput.value);
+    codeInput.readOnly=true;codeInput.value=existing?String(existing.codigo||existing.code||''):'INT-'+idInput.value;
+    var codeLabel=codeInput.closest('label');if(codeLabel)codeLabel.style.display='none';
+    if(nameInput&&!nameInput.dataset.sendwayoHumanIdBound){nameInput.dataset.sendwayoHumanIdBound='1';nameInput.addEventListener('input',function(){if(!existing&&!idInput.dataset.sendwayoManual){idInput.value=human(nameInput.value);codeInput.value='INT-'+idInput.value;}});}
+    if(!idInput.dataset.sendwayoManualBound){idInput.dataset.sendwayoManualBound='1';idInput.addEventListener('input',function(){idInput.dataset.sendwayoManual='1';});}
    },0);
    return result;
   };
  }
  if(typeof window.sendwayoSaveAccountForm==='function'){
-  var oldSave=window.sendwayoSaveAccountForm;
+  var previousSave=window.sendwayoSaveAccountForm;
   window.sendwayoSaveAccountForm=async function(view,id){
-   var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name'),existing=id?allAccounts().find(function(a){return String(a.id||'')===String(id)||String(a.dbUserKey||'')===String(id);}):null;
-   if(id){
-    if(!existing){window.alert('No se encontró la cuenta original; no se modificó.');return false;}
-    if(idInput&&String(idInput.value||'')!==String(existing.id||'')){window.alert('El ID es fijo y no se puede cambiar.');return false;}
-    if(codeInput&&String(codeInput.value||'')!==visibleCode(existing,view)){window.alert('El código es fijo y no se puede cambiar.');return false;}
-   }else{
-    var ident=String(idInput&&idInput.value||''),prefix=view==='agentes'?'AGE':'REM',code=String(codeInput&&codeInput.value||'').trim();
-    if(!(new RegExp('^'+prefix+'\\d{5}$','i')).test(ident)){window.alert('ID inválido. Debe usar '+prefix+' seguido de cinco dígitos.');return false;}
-    var duplicate=allAccounts().find(function(a){return canonicalCode(a.codigo||a.code)===canonicalCode(code);});
-    if(duplicate){window.alert('Ese código ya pertenece a otra cuenta. No se creará una cuenta duplicada.');return false;}
-    if(!String(nameInput&&nameInput.value||'').trim()){window.alert('Escriba el nombre completo.');return false;}
-   }
-   return oldSave.apply(this,arguments);
+   var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),ident=String(idInput&&idInput.value||'').trim();
+   if(!/^[A-Z0-9_-]{5,32}$/i.test(ident)){window.alert('ID inválido.');return false;}
+   var list=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)list.push(ADMIN);}catch(e){}
+   try{list=list.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
+   var existing=id?list.find(function(a){return String(a.id||'')===String(id)||String(a.dbUserKey||'')===String(id);}):null;
+   var duplicate=list.find(function(a){return a!==existing&&(String(a.id||'').toUpperCase()===ident.toUpperCase()||(Array.isArray(a.idAliases)&&a.idAliases.some(function(v){return String(v).toUpperCase()===ident.toUpperCase();}));});
+   if(duplicate){window.alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
+   if(codeInput&&!codeInput.value)codeInput.value='INT-'+ident;
+   if(codeInput&&codeInput.closest('label'))codeInput.closest('label').style.display='none';
+   return previousSave.apply(this,arguments);
   };
  }
  refresh();
