@@ -391,7 +391,6 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="sendwayo-workspace-meta">
       <span id="sendwayo-v7-role">—</span>
       <span>ID: <strong id="sendwayo-v7-id">—</strong></span>
-      <span>Código: <strong id="sendwayo-v7-code">—</strong></span>
     </div>
   </div>
   <div class="sendwayo-workspace-time">
@@ -6141,34 +6140,15 @@ window.sendwayoShareReceipt=async function(){
     installHamburger();
   };
 
-  function lockForInactivity(){
-    if(!logged())return;
-    try{window.currentUser=null;if(typeof currentUser!=='undefined')currentUser=null}catch(_){window.currentUser=null}
-    try{sessionStorage.removeItem(ACTIVITY_KEY);sessionStorage.removeItem('sendwayo_express_oficial_20261029_last_activity_v5')}catch(_){ }
-    document.body.classList.remove('sendwayo-authenticated');document.body.classList.add('sendwayo-login-open');
-    document.querySelectorAll('.view').forEach(el=>{el.classList.add('hidden');el.style.removeProperty('display');});
-    document.querySelectorAll('[id^="modal-"]').forEach(el=>el.classList.add('hidden'));
-    $('welcome-landing')?.classList.add('hidden');
-    const login=$('login-screen');if(login){login.classList.remove('hidden');login.style.display='flex';login.style.visibility='visible';}
-    const err=$('login-error');if(err){err.textContent='Sesión cerrada tras 40 minutos de inactividad. Introduzca usuario y contraseña para continuar.';err.classList.remove('hidden');}
-    if($('login-password'))$('login-password').value='';
-    installHamburger();
-  }
   function activityCheck(update){
-    if(!logged()){
-      if(document.body.classList.contains('sendwayo-authenticated')&&$('login-screen')&&!$('login-screen').classList.contains('hidden')){
-        document.body.classList.remove('sendwayo-authenticated');document.body.classList.add('sendwayo-login-open');
-      }
-      return;
-    }
-    let last=0;try{last=Number(sessionStorage.getItem(ACTIVITY_KEY)||0)}catch(_){ }
-    if(last&&Date.now()-last>=IDLE_LIMIT){lockForInactivity();return;}
-    if(update||!last){try{sessionStorage.setItem(ACTIVITY_KEY,String(Date.now()))}catch(_){ }}
+    if(!logged())return;
+    if(update){try{sessionStorage.setItem(ACTIVITY_KEY,String(Date.now()))}catch(_){ }}
   }
   ['pointerdown','keydown','touchstart','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>activityCheck(true),{passive:true,capture:true}));
-  window.addEventListener('focus',()=>activityCheck(false));window.addEventListener('pageshow',()=>activityCheck(false));
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)activityCheck(false)});
-  setInterval(()=>activityCheck(false),10000);
+  window.addEventListener('focus',()=>activityCheck(true));
+  window.addEventListener('pageshow',()=>activityCheck(true));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)activityCheck(true)});
+
 
   // Admin review panel is added only inside the existing admin-only Secret information page.
   const oldRender=window.renderModuloSeparado;
