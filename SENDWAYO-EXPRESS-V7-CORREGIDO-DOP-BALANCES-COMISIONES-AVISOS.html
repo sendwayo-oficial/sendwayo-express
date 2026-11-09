@@ -4012,7 +4012,7 @@ window.sendwayoShareReceipt=async function(){
  function searchModule(view,q){const tbody=$('tabla-sendwayo-'+view+'-body');if(!tbody)return;const needle=norm(q);tbody.querySelectorAll('tr').forEach(tr=>tr.style.display=norm(tr.innerText).includes(needle)?'':'none');}
  window.sendwayoExportModule=exportTable;window.sendwayoSearchModule=searchModule;
  window.sendwayoActionGeneric=function(view,action,id){
-  if(view==='bienvenida'){const rows=extraRows('bienvenida');const requests=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);const r=requests.find(x=>String(x.id)===String(id));if(!r)return;if(action==='aprobar'){if(!isAdmin()){alert('Solo el administrador puede aprobar registros.');return;}r.estado='Aprobado';r.aprobadoPor=user()?.id;const next=senders().length+1;const nom=r.nombre||r.name||'';const p=nom.trim().split(/\s+/);const a={id:'REM'+String(next).padStart(5,'0'),codigo:'REM-'+(p[0]||'REM').slice(0,3).toUpperCase()+(p.length>1?p[p.length-1]:p[0]).slice(0,3).toUpperCase(),nombre:nom,name:nom,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password,password2:r.celular,role:'REMITENTE',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};REMITENTES.push(a);writeJSON('sendwayo_express_oficial_20261029_registered_accounts_v5',[...readJSON('sendwayo_express_oficial_20261029_registered_accounts_v5',[]),a]);saveAccountValues();window.USUARIOS_LOGIN.push({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.id,a.codigo],celular:a.celular,telefono:a.telefono,password:a.password,password2:a.celular,nombre:a.nombre,role:a.role});}else if(action==='rechazar'){if(!isAdmin()){alert('Solo el administrador puede rechazar registros.');return;}r.estado='Rechazado';}writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',requests);renderCustom(view);return;}
+  if(view==='bienvenida'){const rows=extraRows('bienvenida');const requests=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);const r=requests.find(x=>String(x.id)===String(id));if(!r)return;if(action==='aprobar'){if(!isAdmin()){alert('Solo el administrador puede aprobar registros.');return;}r.estado='Aprobado';r.aprobadoPor=user()?.id;const next=senders().length+1;const nom=r.nombre||r.name||'';const p=nom.trim().split(/\s+/);const role=String(r.role||'REMITENTE').toUpperCase().includes('AGENTE')?'AGENTE':'REMITENTE';const parts=nom.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\\s+/).filter(Boolean);const first=(parts[0]||'US').slice(0,2).padEnd(2,'X'),last=(parts.length>1?parts[parts.length-1]:parts[0]||'ER').slice(0,2).padEnd(2,'X');const seq=role==='AGENTE'?agents().length+1:senders().length+1;const a={id:(role==='AGENTE'?'AG':'RE')+first+last+String(seq).padStart(2,'0'),numero:String(seq).padStart(2,'0'),codigo:(role==='AGENTE'?'AG-':'RE-')+first+last+String(seq).padStart(2,'0'),nombre:nom,name:nom,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password,password2:r.celular,role,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};(role==='AGENTE'?AGENTES:REMITENTES).push(a);writeJSON('sendwayo_express_oficial_20261029_registered_accounts_v5',[...readJSON('sendwayo_express_oficial_20261029_registered_accounts_v5',[]),a]);saveAccountValues();window.USUARIOS_LOGIN.push({usuario:a.email,email:a.email,id:a.id,codigo:a.codigo,aliases:[a.id,a.codigo],celular:a.celular,telefono:a.telefono,password:a.password,password2:a.celular,nombre:a.nombre,role:a.role});}else if(action==='rechazar'){if(!isAdmin()){alert('Solo el administrador puede rechazar registros.');return;}r.estado='Rechazado';}writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',requests);renderCustom(view);return;}
   if(view==='cuentas'&&action==='borrar'){if(!isAdmin()){alert('Solo el administrador puede administrar cuentas bancarias.');return;}if(confirm('¿Eliminar esta cuenta bancaria?')){window.SENDWAYO_BANKS=window.SENDWAYO_BANKS.filter(x=>x.id!==id);renderCustom(view);}return;}
   if(view==='perfil'){if(action==='password'){const a=currentAccount();if(!a)return;const old=prompt('Contraseña actual:');if(old===null)return;if(![a.password,a.contrasena,a.celular,a.telefono].filter(Boolean).includes(old)){alert('La contraseña actual no coincide.');return;}const np=prompt('Nueva contraseña (mínimo 8 caracteres):');if(!np||np.length<8){alert('La contraseña debe tener al menos 8 caracteres.');return;}a.password=np;a.contrasena=np;const lu=(window.USUARIOS_LOGIN||[]).find(x=>x.id===a.id);if(lu){lu.password=np;lu.password2=a.celular||a.telefono;}saveAccountValues();alert('Contraseña actualizada en este navegador.');}return;}
   if(mapTypes[view]){const t=txs().find(x=>String(x.id)===String(id));if(!t)return;if(action==='ver'){alert('ID: '+t.id+'\nFecha: '+t.fecha+'\nTipo: '+t.tipo+'\nRuta: '+t.ruta+'\nMonto: '+t.monto+'\nBeneficiario: '+t.beneficiario+'\nEstado: '+t.estado);return;}if(action==='comprobante'){if(t.estado==='Aprobado'&&window.verComprobante)window.verComprobante(t.id);else alert('El comprobante estará disponible solo después de la aprobación.');return;}if(action==='aprobar'){window.aprobar(t.id);return;}if(action==='rechazar'){window.rechazar(t.id);return;}if(action==='nocoincide'){window.noCoincide(t.id);return;}if(action==='modificar'){if(!isAdmin()&&t.estado==='Aprobado'){alert('Solo el administrador puede modificar una operación aprobada.');return;}const n=prompt('Nuevo monto:',String(t.montoValue||''));if(n===null)return;const m=Number(n);if(!Number.isFinite(m)||m<=0){alert('El monto debe ser mayor que cero.');return;}t.montoValue=m;t.monto=m+' '+currencyFor(t);t.actualizadoEn=new Date().toLocaleString('es-DO');refreshTx();renderCustom(view);return;}if(action==='borrar'){if(!isAdmin()&&t.estado==='Aprobado'){alert('Solo el administrador puede borrar una operación aprobada.');return;}if(confirm('¿Borrar '+t.id+'?')){const arr=txs();const idx=arr.indexOf(t);if(idx>=0)arr.splice(idx,1);refreshTx();renderCustom(view);}return;}}
@@ -4272,12 +4272,13 @@ window.sendwayoShareReceipt=async function(){
     if(!name||!email||!phone){alert('Complete nombre, correo y celular.');return;}if(!/^\S+@\S+\.\S+$/.test(email)){alert('Introduzca un correo válido.');return;}
     let a=id?accountById(id):null;const role=view==='agentes'?'AGENTE':'REMITENTE';
     if(!a){const arr=role==='AGENTE'?agents():senders();if(allAccounts().some(x=>norm(x.email||x.usuario)===norm(email))){alert('Ese correo ya está registrado.');return;}
-      let num=1;const prefix=role==='AGENTE'?'AGE400I':'REM';
-      const nextId=()=>role==='AGENTE'?prefix+String(num):prefix+String(num).padStart(5,'0');
-      const reserved=value=>allAccounts().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>String(v||'').toUpperCase()===String(value).toUpperCase()));
+      let num=1;
+      const parts=name.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\\s+/).filter(Boolean);
+      const first=(parts[0]||'US').slice(0,2).padEnd(2,'X'),last=(parts.length>1?parts[parts.length-1]:parts[0]||'ER').slice(0,2).padEnd(2,'X');
+      const nextId=()=> (role==='AGENTE'?'AG':'RE')+first+last+String(num).padStart(2,'0');
+      const reserved=value=>allAccounts().some(x=>String(x.id||'').toUpperCase()===String(value).toUpperCase()||(x.idAliases||[]).some(v=>String(v||'').toUpperCase()===String(value).toUpperCase()));
       while(reserved(nextId()))num++;
-      if(role==='AGENTE'&&num>9)throw new Error('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');
-      const parts=name.split(/\s+/);const idNew=nextId();const code=(role==='AGENTE'?'AG-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
+      const idNew=nextId();const code=(role==='AGENTE'?'AG-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
       a={id:idNew,codigo:code,codigo2:code,numero:String((role==='AGENTE'?agents():senders()).length+1).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
     } else {a.nombre=a.name=name;a.email=a.usuario=email;a.celular=a.telefono=phone;a.estado=state;a.activo=state==='Activo';}
     a.estado=state;a.activo=state==='Activo';writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
@@ -4399,7 +4400,7 @@ window.sendwayoShareReceipt=async function(){
       }else r.estado=action==='aprobar'?'Aprobado':'Rechazado';writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);saveAccountValues();renderCustom(view);return;
     }
     if(view==='secretas'&&['modificar','editar'].includes(action)){const a=accountById(id);if(a)window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);return;}
-    if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nCódigo: '+a.codigo+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
+    if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\\nNombre: '+acctName(a)+'\\nCorreo: '+(a.email||'')+'\\nCelular: '+(a.celular||'')+'\\nEstado: '+(a.estado||'Activo'));return;}
     return oldActionGeneric?.(view,action,id);
   };
   // Official-bank records cannot be removed; only administrator-created extra accounts can be deleted.
@@ -7638,13 +7639,17 @@ window.sendwayoShareReceipt=async function(){
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN'){const current=txt(profile.id||profile.accountId||profile.code||profile.codigo);return !current||current.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':current;}
-    const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
-    const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
-    let id=supplied || known?.id || key;
-    if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
-    if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
-    return id;
+    if(role==='ADMIN')return 'ADMIN-ADMINISTRADOR';
+    const name=txt(profile.displayName||profile.name||profile.fullName||profile.nombre||'Usuario');
+    const list=role==='AGENTE'?(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:[]):(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:[]);
+    const known=collectAliases().find(a=>norm(a.email)===norm(profile.authEmail||profile.email)||norm(a.nombre||a.name)===norm(name)||norm(a.id)===norm(profile.id||profile.staffId||profile.code));
+    const current=txt(profile.id||profile.accountId||'');
+    if(/^(?:AG|RE)[A-Z]{4}\\d{2}$/i.test(current))return current.toUpperCase();
+    const parts=name.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\\s+/).filter(Boolean);
+    const first=(parts[0]||'US').slice(0,2).padEnd(2,'X');
+    const last=(parts.length>1?parts[parts.length-1]:parts[0]||'ER').slice(0,2).padEnd(2,'X');
+    const sequence=Number(profile.numero||known?.numero||(known?list.indexOf(known)+1:list.length+1))||1;
+    return (role==='AGENTE'?'AG':'RE')+first+last+String(sequence).padStart(2,'0');
   }
   function accountMoney(profile) {
     const nestedBalances=profile.balances && typeof profile.balances==='object' ? profile.balances : {};
@@ -7690,8 +7695,8 @@ window.sendwayoShareReceipt=async function(){
     const code=txt(profile.code || profile.staffId || profile.codigo || appId);
     let money=accountMoney(profile);
     if(role==='AGENTE'){try{if(typeof ADMIN!=='undefined'&&ADMIN)money=accountMoney(ADMIN);}catch(e){}}
-    const record={...profile, id:appId, dbUserKey:key, name, nombre:name, email, usuario:email, phone, telefono:phone, celular:phone, codigo:code, role, ...money};
-    if(role==='ADMIN' && typeof ADMIN!=='undefined') Object.assign(ADMIN, record, {id:'ADMINADMIN', role:'ADMIN'});
+    const record={...profile, legacyId:profile.legacyId||profile.id||profile.staffId||profile.code||profile.codigo||'', idAnterior:profile.idAnterior||profile.id||'', idAliases:Array.from(new Set([...(Array.isArray(profile.idAliases)?profile.idAliases:[]),profile.id,profile.staffId,profile.code,profile.codigo].filter(Boolean))), id:appId, dbUserKey:key, name, nombre:name, email, usuario:email, phone, telefono:phone, celular:phone, codigo:code, role, ...money};
+    if(role==='ADMIN' && typeof ADMIN!=='undefined') Object.assign(ADMIN, record, {id:'ADMIN-ADMINISTRADOR', role:'ADMIN'});
     if(role==='AGENTE' && typeof AGENTES!=='undefined' && Array.isArray(AGENTES)){
       let at=AGENTES.findIndex(a=>norm(a.email)===norm(email) || norm(a.nombre||a.name)===norm(name) || norm(a.id)===norm(appId));
       if(at>=0) Object.assign(AGENTES[at], record); else AGENTES.push(record);
