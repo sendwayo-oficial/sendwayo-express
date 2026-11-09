@@ -336,6 +336,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="preload" as="image" href="./assets/sendwayo-logo-real.jpg">
 <style id="sendwayo-id-only-ui">#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}#v7-admin-code,#v7-admin-code-label{display:none!important}.sendwayo-brand-left{display:flex!important;align-items:center!important;gap:12px!important}</style>
+<style id="sendwayo-id-only-account-style">#v7-admin-code{display:none!important}#sendwayo-admin-account-modal label:has(#v7-admin-code){display:none!important}#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -9150,18 +9151,18 @@ window.sendwayoShareReceipt=async function(){
    var username=String($('v7-admin-username')&&$('v7-admin-username').value||'').trim();
    var code=String($('v7-admin-code')&&$('v7-admin-code').value||'').trim();
    var phone=String($('v7-admin-phone')&&$('v7-admin-phone').value||'').trim();
-   if(!name||!username||!code||!phone){alert('Complete nombre, usuario, código y celular.');return false;}
-   var duplicateLogin=accounts.find(function(x){return x!==a&&(norm(x.username||x.login)===norm(username)||norm(x.codigo||x.code)===norm(code));});
+   if(!name||!username||!phone){alert('Complete nombre, usuario y celular.');return false;}
+   var duplicateLogin=accounts.find(function(x){return x!==a&&norm(x.username||x.login)===norm(username);});
    if(duplicateLogin){alert('Ese usuario o código ya está asignado a otra cuenta.');return false;}
    var oldId=String(a.id||''),oldCode=String(a.codigo||a.code||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
    aliases=[...new Set(aliases)];
    const uniqueCodeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),oldCode].filter(function(v){return v&&norm(v)!==norm(code);} ))];
-   var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,codeAliases:uniqueCodeAliases,name:name,nombre:name,displayName:name,username:username,login:username,code:code,codigo:code,codigo2:code,staffId:code,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
+   var patch={id:ident,legacyId:oldId,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,name:name,nombre:name,displayName:name,username:username,login:username,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
    try{
     await db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
     Object.assign(a,patch);
-    (window.USUARIOS_LOGIN||[]).forEach(function(u){const match=norm(u.email||u.usuario)===norm(a.email||email)||norm(u.id)===norm(oldId)||norm(u.codigo||u.code)===norm(oldCode)||String(u.authUid||'')===String(a.authUid||'');if(match){u.id=ident;u.codigo=code;u.codigo2=code;u.nombre=name;u.name=name;u.username=username;u.login=username;u.idAliases=aliases;u.codeAliases=uniqueCodeAliases;u.aliases=Array.from(new Set([...(u.aliases||[]),oldId,oldCode,ident,code].filter(Boolean)));}});
-    var live=window.currentUser;if(live&&(live.dbUserKey===dbKey||live.rtdbUserKey===dbKey||norm(live.id)===norm(oldId))){Object.assign(live,patch);live.id=ident;live.codigo=code;live.nombre=name;}
+    (window.USUARIOS_LOGIN||[]).forEach(function(u){const match=norm(u.email||u.usuario)===norm(a.email||a.usuario)||norm(u.id)===norm(oldId)||norm(u.codigo||u.code)===norm(oldCode)||String(u.authUid||'')===String(a.authUid||'');if(match){u.id=ident;u.nombre=name;u.name=name;u.username=username;u.login=username;u.idAliases=aliases;u.aliases=Array.from(new Set([...(u.aliases||[]),oldId,ident].filter(Boolean)));}});
+    var live=window.currentUser;if(live&&(live.dbUserKey===dbKey||live.rtdbUserKey===dbKey||norm(live.id)===norm(oldId))){Object.assign(live,patch);live.id=ident;live.nombre=name;}
     $('sendwayo-admin-account-modal')&&$('sendwayo-admin-account-modal').remove();
     alert('ID visible actualizado. La clave interna de Firebase, el UID y los ID anteriores se conservaron como alias.');
     if(window.showView)window.showView(view);
