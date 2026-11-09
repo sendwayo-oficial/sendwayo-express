@@ -10720,3 +10720,192 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 #sendwayo-main-content .view.hidden{display:none!important}
 #sendwayo-main-content .view:not(.hidden){display:block!important}
 </style>
+
+<!-- SENDWAYO V7 CORRECCION DE MENU, CABECERA Y PAGINACION 2026-11-08 -->
+<style id="sendwayo-v7-navigation-header-pagination-correction">
+/* Menú flotante: siempre cerrado inicialmente, anclado arriba a la izquierda. */
+#sendwayo-mobile-menu.sendwayo-top-menu-toggle,
+body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{
+ display:inline-flex!important;visibility:visible!important;opacity:1!important;
+ position:relative!important;inset:auto!important;z-index:2147482701!important;
+ width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;
+ align-items:center!important;justify-content:center!important;
+ font-size:0!important;line-height:1!important;
+}
+#sendwayo-mobile-menu.sendwayo-top-menu-toggle::before{
+ content:"☰"!important;font-family:Arial,sans-serif!important;font-size:27px!important;
+ font-weight:900!important;line-height:1!important;color:#fff!important;
+}
+#sendwayo-main-sidebar{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ position:fixed!important;left:0!important;top:62px!important;right:auto!important;bottom:0!important;
+ width:min(300px,88vw)!important;min-width:0!important;max-width:88vw!important;
+ height:calc(100dvh - 62px)!important;max-height:calc(100dvh - 62px)!important;
+ overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
+ padding:12px 9px 20px!important;box-sizing:border-box!important;
+ background:#0f2440!important;color:#fff!important;z-index:2147482600!important;
+ border-radius:0 14px 14px 0!important;box-shadow:10px 0 30px rgba(0,0,0,.28)!important;
+ transform:translateX(-110%)!important;visibility:hidden!important;opacity:0!important;
+ pointer-events:none!important;transition:transform .2s ease,opacity .2s ease!important;
+}
+#sendwayo-main-sidebar.sendwayo-menu-open{
+ transform:translateX(0)!important;visibility:visible!important;opacity:1!important;
+ pointer-events:auto!important;
+}
+#sendwayo-main-sidebar button[onclick*="showView"]{
+ display:flex!important;width:100%!important;min-height:46px!important;height:auto!important;
+ align-items:center!important;justify-content:flex-start!important;gap:10px!important;
+ padding:11px 13px!important;margin:2px 0!important;border-radius:9px!important;
+ color:#fff!important;text-align:left!important;white-space:normal!important;
+ font-size:13px!important;line-height:1.35!important;
+}
+#sendwayo-menu-shade{
+ display:block!important;position:fixed!important;inset:62px 0 0 0!important;
+ background:rgba(3,12,26,.48)!important;z-index:2147482590!important;
+ opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+}
+#sendwayo-menu-shade.open{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+#sendwayo-main-content{
+ display:block!important;float:none!important;flex:none!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ margin:0!important;padding:clamp(10px,1.5vw,22px)!important;box-sizing:border-box!important;
+}
+#sendwayo-workspace-shell{display:block!important;width:100%!important;max-width:100%!important}
+#sendwayo-v7-user-strip{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ justify-content:flex-start!important;gap:8px!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ margin:0!important;padding:9px 14px!important;box-sizing:border-box!important;
+ position:relative!important;top:auto!important;left:auto!important;
+}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;gap:6px 12px!important;
+ width:100%!important;min-width:0!important;overflow-x:auto!important;
+ white-space:nowrap!important;scrollbar-width:thin!important;
+}
+#sendwayo-v7-user-strip .sendwayo-workspace-name,
+#sendwayo-v7-user-strip .sendwayo-workspace-meta,
+#sendwayo-v7-user-strip .sendwayo-workspace-time{
+ display:inline-flex!important;flex:0 0 auto!important;flex-direction:row!important;
+ align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;
+ gap:6px 10px!important;white-space:nowrap!important;width:auto!important;
+}
+#sendwayo-v7-user-strip .sendwayo-v7-top-finances{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ width:100%!important;gap:7px!important;
+}
+#sendwayo-main-content .view.hidden{display:none!important}
+#sendwayo-main-content .view:not(.hidden){display:block!important}
+/* Ocultar solo paneles/cadenas de diagnóstico técnico, no los datos de identidad. */
+#sendwayo-debug,#sendwayo-debug-panel,#sendwayo-diagnostics,
+.sendwayo-debug-panel,.sendwayo-code-debug,[data-debug="true"]{display:none!important;visibility:hidden!important}
+.sendwayo-table-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 4px;color:#334155;font-size:12px}
+.sendwayo-table-pagination .sendwayo-pager-actions{display:flex;align-items:center;gap:8px}
+.sendwayo-table-pagination button{min-height:38px;padding:8px 15px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#102b4e;font-weight:800}
+.sendwayo-table-pagination button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:1024px){
+ #sendwayo-main-sidebar{top:0!important;height:100dvh!important;max-height:100dvh!important}
+ #sendwayo-menu-shade{inset:0!important}
+ #sendwayo-v7-user-strip{padding:8px 10px!important}
+ #sendwayo-v7-user-strip .sendwayo-v7-top-finances{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #sendwayo-main-content{padding:10px!important}
+}
+</style>
+<script id="sendwayo-v7-navigation-header-pagination-controller">
+(function(){
+ 'use strict';
+ var $=function(id){return document.getElementById(id);};
+ function init(){
+  var side=$('sendwayo-main-sidebar'),btn=$('sendwayo-mobile-menu'),shade=$('sendwayo-menu-shade');
+  if(!side||!btn)return;
+  if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
+  function close(){
+   side.classList.remove('sendwayo-menu-open');shade.classList.remove('open');
+   btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label','Abrir menú de navegación');
+   btn.textContent='☰';
+  }
+  function open(){
+   side.classList.add('sendwayo-menu-open');shade.classList.add('open');
+   btn.setAttribute('aria-expanded','true');btn.setAttribute('aria-label','Menú de navegación abierto');
+   btn.textContent='☰';
+  }
+  /* Delegación en captura: impide que manejadores antiguos sustituyan ☰ por una X. */
+  document.addEventListener('click',function(ev){
+   var target=ev.target&&ev.target.closest?ev.target.closest('#sendwayo-mobile-menu'):null;
+   if(!target)return;
+   ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+   if(side.classList.contains('sendwayo-menu-open'))close();else open();
+  },true);
+  shade.addEventListener('click',close);
+  side.addEventListener('click',function(ev){
+   var item=ev.target&&ev.target.closest?ev.target.closest('button[onclick*="showView"]'):null;
+   if(item)close();
+  });
+  document.addEventListener('keydown',function(ev){if(ev.key==='Escape')close();});
+  btn.textContent='☰';btn.setAttribute('aria-expanded','false');
+  close();
+  /* Al cambiar de módulo, deja visible solamente la vista seleccionada. */
+  var oldShow=window.showView;
+  if(typeof oldShow==='function'&&!window.__sendwayoV7SingleViewFinal){
+   window.__sendwayoV7SingleViewFinal=true;
+   window.showView=function(route){
+    var result=oldShow.apply(this,arguments);
+    window.setTimeout(function(){
+     document.querySelectorAll('.view').forEach(function(v){v.classList.add('hidden');});
+     var selected=$('view-'+route);
+     if(selected)selected.classList.remove('hidden');
+     else if($('view-tablero'))$('view-tablero').classList.remove('hidden');
+     close();
+    },50);
+    return result;
+   };
+  }
+ }
+ /* Paginación uniforme: máximo 10 filas visibles por página en cada tabla de módulo. */
+ var pageState=window.__sendwayoV7TablePages||(window.__sendwayoV7TablePages=new WeakMap());
+ function enhanceTables(root){
+  (root||document).querySelectorAll('.view:not(.hidden) table').forEach(function(table){
+   if(table.closest('#view-agentes,#view-remitentes'))return;
+   var body=table.tBodies&&table.tBodies[0];if(!body)return;
+   var rows=Array.from(body.rows).filter(function(r){return r.cells.length>1&&!r.querySelector('td[colspan]');});
+   if(rows.length<=10)return;
+   var state=pageState.get(table)||{page:1};pageState.set(table,state);
+   var count=Math.max(1,Math.ceil(rows.length/10));state.page=Math.min(state.page,count);
+   var first=(state.page-1)*10,last=Math.min(first+10,rows.length);
+   rows.forEach(function(row,i){
+    row.style.display=i>=first&&i<last?'':'none';
+    if(i>=first&&i<last&&row.cells[0]&&/^\d+$/.test((row.cells[0].textContent||'').trim())){
+     row.cells[0].textContent=String(i-first+1).padStart(2,'0');
+    }
+   });
+   var pager=table.nextElementSibling;
+   if(!pager||!pager.classList.contains('sendwayo-table-pagination')){
+    pager=document.createElement('div');pager.className='sendwayo-table-pagination';
+    table.insertAdjacentElement('afterend',pager);
+   }
+   pager.innerHTML='<span>Registros '+String(first+1).padStart(2,'0')+'–'+String(last).padStart(2,'0')+' de '+rows.length+'</span><div class="sendwayo-pager-actions"><button type="button" data-v7-page="prev">Anterior</button><button type="button" data-v7-page="next">Siguiente</button></div>';
+   var prev=pager.querySelector('[data-v7-page="prev"]'),next=pager.querySelector('[data-v7-page="next"]');
+   prev.disabled=state.page<=1;next.disabled=state.page>=count;
+   pager.onclick=function(ev){
+    var b=ev.target.closest('[data-v7-page]');if(!b)return;
+    state.page=b.dataset.v7Page==='prev'?Math.max(1,state.page-1):Math.min(count,state.page+1);
+    enhanceTables(table.closest('.view'));
+   };
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ window.addEventListener('load',function(){init();enhanceTables(document);});
+ document.addEventListener('click',function(ev){
+  if(ev.target.closest('#sendwayo-main-sidebar button[onclick*="showView"]'))window.setTimeout(function(){enhanceTables(document);},100);
+ });
+ var pending=false;
+ if(document.body&&typeof MutationObserver!=='undefined'){
+  new MutationObserver(function(){
+   if(pending)return;pending=true;
+   window.setTimeout(function(){pending=false;enhanceTables(document);},120);
+  }).observe(document.body,{childList:true,subtree:true});
+ }
+})();
+</script>
