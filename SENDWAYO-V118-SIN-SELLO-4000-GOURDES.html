@@ -326,9 +326,9 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="p-3 text-[9px] tracking-widest text-white/60 font-bold">MENU PRINCIPAL</div>
     <button onclick="showView('tablero')" class="w-full text-left px-3 py-2.5 bg-white/10 flex items-center gap-2 border-l-4 border-green-400"><span>📊</span> Tableau de bord principal</button>
     <button onclick="showView('tarifas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>📈</span> Tarifas locales Haití</button>
-    <button onclick="showView('envios')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2 border-l-2 border-blue-400"><span>✈️</span> Envíos - SEPARADO</button>
-    <button type="button" onclick="window.showView('retiros')" aria-label="Abrir página de retiros" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2 border-l-2 border-green-400"><span>💸</span> Retiros - SEPARADO - NO CON ENVIOS</button>
-    <button onclick="showView('depositos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2 border-l-2 border-orange-400"><span>🏦</span> Depósitos - SEPARADO - NO CON ENVIOS</button>
+    <button onclick="showView('envios')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2 border-l-2 border-blue-400"><span>✈️</span> Envíos</button>
+    <button type="button" onclick="window.showView('retiros')" aria-label="Abrir página de retiros" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2 border-l-2 border-green-400"><span>💸</span> Retiros</button>
+    <button onclick="showView('depositos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2 border-l-2 border-orange-400"><span>🏦</span> Depósitos</button>
     <button onclick="showView('beneficiarios')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>👥</span> Beneficiaires</button>
     <button onclick="showView('remitentes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>👤</span> Expéditeurs (15 Remitentes)</button>
     <button onclick="showView('agentes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>👔</span> Agentes</button>
@@ -2400,7 +2400,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
     <header class="sendwayo-home-header">
       <div class="sendwayo-home-header-inner">
         <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
+        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ingresar</button>
       </div>
     </header>
     <div class="sendwayo-home-content">
@@ -2606,11 +2606,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros real ventanilla + beneficiario restaurado + recargas paquetikos esquina redondo sugerencias numeros');
 (function(){
   const carouselImgs = [
-    "assets/ca43ab0c2b8e924cfacc.webp",
-    "assets/2fdc9be46456ec238812.webp",
-    "assets/d6ce41174c8bf68a01de.webp",
-    "assets/d0a323d74b9c3176a044.webp",
-    "assets/165bf5cfd643e8b3c495.webp"
+    "assets/ca43ab0c2b8e924cfacc.webp"
   ];
   let carIdx=0;
   window.v162_bal={rd:0, htg:0, comRD:0, comHTG:0};
@@ -2644,6 +2640,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     const dotsEl=document.getElementById('v162-dots');
     if(!imgEl||!dotsEl) return;
     dotsEl.innerHTML='';
+    if(carouselImgs.length<=1)return;
     carouselImgs.forEach((_,i)=>{ const d=document.createElement('span'); d.className=i===0?'w-7 h-2.5 rounded-full bg-white shadow':'w-2.5 h-2.5 rounded-full bg-white/40'; d.id='v162-dot-'+i; dotsEl.appendChild(d); });
     setInterval(()=>{ carIdx=(carIdx+1)%carouselImgs.length; imgEl.style.opacity='0'; setTimeout(()=>{ imgEl.src=carouselImgs[carIdx]; imgEl.style.opacity='1'; },250); carouselImgs.forEach((_,i)=>{ const dot=document.getElementById('v162-dot-'+i); if(dot) dot.className=i===carIdx?'w-7 h-2.5 rounded-full bg-white shadow':'w-2.5 h-2.5 rounded-full bg-white/40'; }); },5000);
   }
@@ -7858,7 +7855,7 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut()).then(()=>{
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy || state.sessionEstablished) return;
