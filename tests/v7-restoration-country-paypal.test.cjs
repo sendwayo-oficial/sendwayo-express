@@ -1,0 +1,23 @@
+const fs = require('fs');
+const assert = require('assert');
+const html = fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html', 'utf8');
+assert.strictEqual((html.match(/"alpha2":"/g) || []).length, 250, '250 países');
+assert.strictEqual((html.match(/id="sendwayo-mobile-menu"/g) || []).length, 1, 'un solo menú');
+assert(!/Código:|Cód\.:/.test(html), 'sin códigos visibles');
+assert(html.includes('ADMIN-ADMINISTRADOR'), 'ID administrador');
+assert(html.includes("rolePrefix=view==='agentes'?'AG':'RE'"), 'generador AG/RE');
+assert(html.includes('makeHumanId(name.value)'), 'ID basado en nombre');
+assert(html.includes('attachCountrySearch(select)'), 'búsqueda de país');
+assert(html.includes('open.er-api.com/v6/latest/USD'), 'tasa de cambio');
+assert(html.includes('restcountries.com/v3.1/all?fields=cca2,currencies'), 'moneda por país');
+assert(html.includes('sendwayoOpenIdFile'), 'expediente por ID');
+assert(html.includes('sendwayoOpenCardPayments'), 'PayPal');
+assert(html.includes('sendwayo-v7-final-integrity'), 'aprobación única preservada');
+assert(html.includes('sendwayo-v7-header-one-line-runtime'), 'header runtime preservado');
+assert(!html.includes('2200'), 'sin espera artificial de Firebase');
+assert(!html.includes('renderPrincipal(); },500'), 'sin render temprano del tablero');
+const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
+const targets=blocks.filter(code=>code.includes('function attachCountrySearch')||code.includes('makeHumanId=function')||code.includes('window.sendwayoOpenCardPayments'));
+assert(targets.length>=3, 'se encuentran los tres bloques nuevos');
+for(let i=0;i<targets.length;i++){try{new Function(targets[i]);}catch(e){throw new Error('Bloque modificado '+(i+1)+' inválido: '+e.message);}}
+console.log('V7: países, IDs, header, expediente, FX, PayPal y scripts nuevos comprobados.');
