@@ -7316,7 +7316,7 @@ window.sendwayoShareReceipt=async function(){
       console.warn('[SENDWAYO] No se pudo comprobar la ruta alternativa users:', error);
     }
   }
-  const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
+  const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, preserveLoginOnSignout: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
   window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, updateProfileByKey:(key,patch)=>userRoot.child(safeDbKey(key)).update(patch), lockForInactivity: async function(){ state.sessionEstablished=false; state.loginBusy=false; state.readReady=false; state.profile=null; state.profileKey=null; state.remoteTransactions={}; state.lastTxSnapshot=new Map(); state.lastAccountSnapshot=new Map(); state.lastAccountValues=new Map(); stopListeners(); if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;} try{await auth.signOut();}catch(error){console.warn('[SENDWAYO] No se pudo cerrar Firebase al vencer la inactividad:',error);} } };
 
   const norm = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -7347,6 +7347,12 @@ window.sendwayoShareReceipt=async function(){
     else window.alert(message);
   }
   function clearLoginError(){ const el=document.getElementById('login-error'); if(el) el.classList.add('hidden'); }
+  function keepLoginModalOpen(){
+    const login=document.getElementById('login-screen');
+    const welcome=document.getElementById('welcome-landing');
+    if(welcome){welcome.classList.add('hidden');welcome.style.setProperty('display','none','important');welcome.style.setProperty('visibility','hidden','important');welcome.style.setProperty('pointer-events','none','important');}
+    if(login){login.classList.remove('hidden');login.classList.add('sendwayo-login-visible');login.style.setProperty('display','flex','important');login.style.setProperty('visibility','visible','important');login.style.setProperty('pointer-events','auto','important');}
+  }
   async function enforceFirstPasswordChange(firebaseUser, profileRow){
     const data=profileRow&&profileRow.data||{};
     if(!(data.mustChangePassword===true||data.passwordChangeRequired===true||data.forcePasswordChange===true))return;
@@ -7438,47 +7444,118 @@ window.sendwayoShareReceipt=async function(){
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
     return match ? match.email : '';
   }
-  async function queryOne(field, value) {
+  function profileMatchesIdentity(data, key, identity) {
+    if (!data || typeof data !== 'object') return false;
+    if (identity.isAdmin && key === 'admin') return true;
+    if ((identity.uid && key === identity.uid) || (identity.knownKeys && identity.knownKeys.has(key))) return true;
+    const storedUid = txt(data.authUid || data.uid || data.firebaseUid || data.firebase_uid);
+    const storedEmail = norm(data.authEmail || data.email || data.usuario || data.correo || data.mail);
+    return (!!identity.uid && storedUid === identity.uid) || (!!identity.email && storedEmail === identity.email);
+  }
+  async function directProfile(root, key, identity) {
+    if (!key) return null;
+    try {
+      const safeKey = safeDbKey(key);
+      const snap = await root.child(safeKey).once('value');
+      if (!snap.exists()) return null;
+      const data = snap.val();
+      return profileMatchesIdentity(data, snap.key, identity) ? { key: snap.key, data } : null;
+    } catch (error) {
+      console.warn('[SENDWAYO] No se pudo comprobar la clave de perfil:', error?.code || error?.message || error);
+      return null;
+    }
+  }
+  async function queryOne(root, field, value, identity) {
     if (!value) return null;
-    const snap = await userRoot.orderByChild(field).equalTo(value).once('value');
-    let found = null;
-    snap.forEach(child => {
-      if (!found && child.val() && typeof child.val()==='object') found={key:child.key, data:child.val()};
-    });
-    return found;
+    try {
+      const snap = await root.orderByChild(field).equalTo(value).once('value');
+      let found = null;
+      snap.forEach(child => {
+        const data = child.val();
+        if (!found && profileMatchesIdentity(data, child.key, identity)) found = { key: child.key, data };
+      });
+      return found;
+    } catch (error) {
+      // Un índice o una regla ausente en un campo no debe impedir probar las demás
+      // formas de identificar la misma cuenta.
+      console.warn('[SENDWAYO] Consulta de perfil no disponible (' + field + '):', error?.code || error?.message || error);
+      return null;
+    }
   }
   async function readProfile(firebaseUser) {
-    await selectExistingUserRoot();
-    const email=norm(firebaseUser.email);
-    if(email===ADMIN_EMAIL){
-      const adminSnap=await userRoot.child('admin').once('value');
-      if(adminSnap.exists()){
-        const existing=adminSnap.val()||{};
-        const previousId=txt(existing.id||existing.legacyId||'ADMINADMIN'),previousCode=txt(existing.code||existing.codigo||'ADMIN-000');const visibleId=!previousId||previousId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':previousId,visibleCode=!previousCode||previousCode==='ADMIN-000'?visibleId:previousCode;const identity={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:previousId!==visibleId?previousId:txt(existing.idAnterior||''),idAliases:[...new Set([...(Array.isArray(existing.idAliases)?existing.idAliases:[]),previousId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(existing.codeAliases)?existing.codeAliases:[]),previousCode,'ADMIN-000'].filter(Boolean))]};
-        await userRoot.child('admin').update(identity);Object.assign(existing,identity);return {key:'admin',data:existing};
+    const email = norm(firebaseUser && firebaseUser.email);
+    const uid = txt(firebaseUser && firebaseUser.uid);
+    if (!email || !uid) throw new Error('Firebase no devolvió el correo y el identificador de esta cuenta.');
+    const known = collectAliases().find(a => norm(a.email) === email);
+    const identity = {
+      email, uid, isAdmin: email === ADMIN_EMAIL,
+      knownKeys: new Set([known?.id, known?.codigo].filter(Boolean).map(key => safeDbKey(key)))
+    };
+    const roots = [
+      { path: userRootPath, ref: db.ref(userRootPath) },
+      { path: 'users', ref: db.ref('users') }
+    ];
+
+    for (const candidate of roots) {
+      const root = candidate.ref;
+
+      // El registro administrativo puede estar guardado bajo la clave fija "admin".
+      if (identity.isAdmin) {
+        try {
+          const adminSnap = await root.child('admin').once('value');
+          if (adminSnap.exists()) {
+            const existing = adminSnap.val() || {};
+            const previousId = txt(existing.id || existing.legacyId || 'ADMINADMIN');
+            const previousCode = txt(existing.code || existing.codigo || 'ADMIN-000');
+            const visibleId = !previousId || previousId.toUpperCase() === 'ADMINADMIN' ? 'ADMIN-ADMINISTRADOR' : previousId;
+            const visibleCode = !previousCode || previousCode === 'ADMIN-000' ? visibleId : previousCode;
+            const identityPatch = {
+              id: visibleId, accountId: visibleId, code: visibleCode, codigo: visibleCode, staffId: visibleCode,
+              idAnterior: previousId !== visibleId ? previousId : txt(existing.idAnterior || ''),
+              idAliases: [...new Set([...(Array.isArray(existing.idAliases) ? existing.idAliases : []), previousId, 'ADMINADMIN', 'ADMIN-000'].filter(Boolean))],
+              codeAliases: [...new Set([...(Array.isArray(existing.codeAliases) ? existing.codeAliases : []), previousCode, 'ADMIN-000'].filter(Boolean))]
+            };
+            userRoot = root;
+            try {
+              await root.child('admin').update(identityPatch);
+              Object.assign(existing, identityPatch);
+            } catch (identityError) {
+              console.warn('[SENDWAYO] El perfil admin se leyó, pero no se pudo normalizar su identificador:', identityError?.code || identityError?.message || identityError);
+            }
+            return { key: 'admin', data: existing };
+          }
+        } catch (error) {
+          console.warn('[SENDWAYO] No se pudo leer el registro admin en ' + candidate.path + ':', error?.code || error?.message || error);
+        }
       }
-      const adminSeed=seedProfileFromAccount(typeof ADMIN!=='undefined'?ADMIN:{},'ADMIN');
-      adminSeed.id='ADMIN-ADMINISTRADOR';adminSeed.accountId='ADMIN-ADMINISTRADOR';adminSeed.legacyId='ADMINADMIN';adminSeed.code='ADMIN-ADMINISTRADOR';adminSeed.codigo='ADMIN-ADMINISTRADOR';adminSeed.staffId='ADMIN-ADMINISTRADOR';adminSeed.idAnterior='ADMINADMIN';adminSeed.idAliases=['ADMINADMIN','ADMIN-000'];adminSeed.codeAliases=['ADMIN-000'];
-      adminSeed.authEmail=ADMIN_EMAIL;adminSeed.email=ADMIN_EMAIL;adminSeed.authUid=firebaseUser.uid;
-      await userRoot.child('admin').set(adminSeed);
-      return {key:'admin',data:adminSeed};
-    }
-    let found=await queryOne('authUid', firebaseUser.uid);
-    if(found) return found;
-    if(email){
-      found=await queryOne('authEmail', email);
-      if(found) return found;
-      found=await queryOne('email', email);
-      if(found) return found;
-      const known=collectAliases().find(a=>norm(a.email)===email);
-      if(known&&known.id){
-        const exact=await userRoot.child(safeDbKey(known.id)).once('value');
-        if(exact.exists()) return {key:safeDbKey(known.id),data:exact.val()};
+
+      // Primero se prueban las claves directas (UID, ID/código registrado). Después,
+      // se consultan campos indexados; si un índice falla, se continúa con el siguiente.
+      const directKeys = [...new Set([uid, known?.id, known?.codigo].filter(Boolean))];
+      for (const key of directKeys) {
+        const direct = await directProfile(root, key, identity);
+        if (direct) {
+          userRoot = root;
+          return direct;
+        }
+      }
+
+      const queries = [
+        ['authUid', uid], ['uid', uid], ['firebaseUid', uid],
+        ['authEmail', email], ['email', email], ['usuario', email],
+        ['correo', email], ['mail', email]
+      ];
+      for (const [field, value] of queries) {
+        const found = await queryOne(root, field, value, identity);
+        if (found) {
+          userRoot = root;
+          return found;
+        }
       }
     }
     return null;
   }
-  function seedProfileFromAccount(account, role){
+function seedProfileFromAccount(account, role){
     const email=txt(account.email||account.usuario).toLowerCase();
     const name=txt(account.name||account.nombre||'Usuario SENDWAYO');
     const id=txt(account.id||account.codigo||email);
@@ -8239,6 +8316,7 @@ window.sendwayoShareReceipt=async function(){
       return;
     }
 
+    state.preserveLoginOnSignout = false;
     state.loginBusy = true;
     clearLoginError();
     stopListeners();
@@ -8266,7 +8344,7 @@ window.sendwayoShareReceipt=async function(){
       // Firebase Authentication ya validó la contraseña y emitió este usuario. No bloquear el acceso
       // por una segunda verificación HTTP del Worker, que puede fallar aunque Firebase esté disponible.
       if (button) button.textContent = 'Buscando tu cuenta…';
-      const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 8000);
+      const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 16000);
 
       if (!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
       const role = canonicalRole(found.data, found.key);
@@ -8378,8 +8456,12 @@ window.sendwayoShareReceipt=async function(){
       state.readReady = false;
       state.directory = [];
       state.remoteTransactions = {};
-      // No esperar signOut aquí: no debe impedir que finally reactive el botón.
-      try { auth.signOut().catch(signOutError => console.warn('[SENDWAYO] Limpieza de sesión:', signOutError)); } catch (_) {}
+      // Mantener abierto el formulario: el evento de Firebase al cerrar la sesión fallida
+      // no debe devolver al usuario a la portada pública.
+      state.preserveLoginOnSignout = true;
+      keepLoginModalOpen();
+      try { await auth.signOut(); }
+      catch (signOutError) { state.preserveLoginOnSignout = false; console.warn('[SENDWAYO] Limpieza de sesión:', signOutError); }
       stopListeners();
 
       const code = error?.code;
@@ -8488,6 +8570,7 @@ window.sendwayoShareReceipt=async function(){
   state.authReadyPromise = Promise.resolve(true);
   auth.onAuthStateChanged(async user=>{
     if(!user){
+      if(state.preserveLoginOnSignout){state.preserveLoginOnSignout=false;return;}
       if(state.loginBusy||state.sessionEstablished)return;
       state.sessionEstablished=false;state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
       stopListeners();if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;}
@@ -8498,7 +8581,7 @@ window.sendwayoShareReceipt=async function(){
     state.loginBusy=true;
     try{
       // Validar identidad, rol y activación del agente antes de abrir el área privada.
-      const found=await loginStep(readProfile(user),'La lectura del perfil en Firebase',12000);
+      const found=await loginStep(readProfile(user),'La lectura del perfil en Firebase',18000);
       if(!found)throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise su cuenta.');
       const role=canonicalRole(found.data,found.key);
       if(!role||!isActive(found.data))throw new Error('El perfil no tiene un rol válido o está inactivo.');
