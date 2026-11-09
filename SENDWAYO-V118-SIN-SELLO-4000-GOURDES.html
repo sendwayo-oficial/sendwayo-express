@@ -7552,6 +7552,33 @@ window.sendwayoShareReceipt=async function(){
           return found;
         }
       }
+
+      // Último recurso de lectura: los índices de Realtime Database pueden faltar,
+      // y equalTo(email) no encuentra correos guardados con mayúsculas. Leer el
+      // directorio una sola vez y comparar UID/correo normalizados sin alterar datos.
+      try {
+        const directorySnap = await root.once('value');
+        let fallback = null;
+        directorySnap.forEach(child => {
+          if (fallback) return;
+          const data = child.val();
+          if (!data || typeof data !== 'object') return;
+          const storedUid = txt(data.authUid || data.uid || data.firebaseUid || data.firebase_uid);
+          const storedEmail = norm(data.authEmail || data.email || data.usuario || data.correo || data.mail);
+          const knownKey = identity.knownKeys.has(safeDbKey(child.key));
+          if ((storedUid && storedUid === uid) ||
+              (storedEmail && storedEmail === email) ||
+              knownKey) {
+            fallback = { key: child.key, data };
+          }
+        });
+        if (fallback) {
+          userRoot = root;
+          return fallback;
+        }
+      } catch (fallbackError) {
+        console.warn('[SENDWAYO] Lectura de respaldo del directorio no disponible en ' + candidate.path + ':', fallbackError?.code || fallbackError?.message || fallbackError);
+      }
     }
     return null;
   }
