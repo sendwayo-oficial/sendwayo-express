@@ -351,6 +351,13 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 @media(max-width:1024px){#sendwayo-v7-user-strip{gap:5px!important;overflow-x:auto!important}#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:5px!important}}
 body:not(.sendwayo-authenticated) #sendwayo-id-dossier-modal,body:not(.sendwayo-authenticated) #sendwayo-paypal-onboarding-modal{display:none!important}
 </style>
+<style id="sendwayo-v7-auth-cleanup">
+body:not(.sendwayo-authenticated) #sendwayo-workspace-shell,
+body:not(.sendwayo-authenticated) #sendwayo-v7-user-strip,
+body:not(.sendwayo-authenticated) #sendwayo-brand-bar .sendwayo-brand-actions{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body.sendwayo-authenticated #sendwayo-workspace-shell{display:flex!important;visibility:visible!important}
+#sendwayo-v7-code{display:none!important}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -3780,7 +3787,7 @@ window.sendwayoShareReceipt=async function(){
    else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
    const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
    if(strip.dataset.sendwayoHeaderReady!=='1'){
-     strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span>Código: <strong id="sendwayo-v7-code"></strong></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+     strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
      strip.dataset.sendwayoHeaderReady='1';
    }
    if($('sendwayo-v7-name'))$('sendwayo-v7-name').textContent=nm;
@@ -9023,7 +9030,7 @@ window.sendwayoShareReceipt=async function(){
    fetch('https://restcountries.com/v3.1/all?fields=cca2,currencies',{cache:'force-cache'}).then(function(r){if(!r.ok)throw new Error('No se pudo consultar las monedas de países');return r.json();})
   ]).then(function(values){
    var rates=values[0]&&values[0].rates;if(!rates||values[0].result!=='success')throw new Error('Fuente de tasas no disponible');
-   var map={};(values[1]||[]).forEach(function(c){var codes=c.currencies?Object.keys(c.currencies):[];if(c.cca2&&codes.length)map[String(c.cca2).toUpperCase()]=codes[0];});
+   var map={};(values[1]||[]).forEach(function(c){var codes=c.currencies?Object.keys(c.currencies):[];if(c.cca2&&codes.length)map[String(c.cca2).toUpperCase()]=codes[0];}).catch(function(){return [];});
    window.SENDWAYO_FX_RATES={rates:rates,currenciesByCountry:map,updatedAt:values[0].time_last_update_utc||new Date().toISOString(),nextUpdate:values[0].time_next_update_utc||'',source:'ExchangeRate-API'};
    window.__sendwayoFxPromise=null;
    ['envio','retiro'].forEach(function(k){try{updateRouteCalc(k);}catch(e){}});
@@ -9189,7 +9196,7 @@ window.sendwayoShareReceipt=async function(){
  }
  function updateRouteCalc(kind){
   var d=routeData(kind),input=$('v162-'+kind+'-monto'),amount=Number(input&&input.value||0);if(!Number.isFinite(amount)||amount<0)amount=0;
-  var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur;
+  var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur;if(input){delete input.dataset.fxRate;delete input.dataset.fxCurrency;input.dataset.fxReady='0';}
   if(d.from.alpha2==='HT'&&d.to.alpha2==='HT'){
    cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';
   }else{
@@ -9205,7 +9212,7 @@ window.sendwayoShareReceipt=async function(){
   el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
   el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
   el=$('v162-'+kind+'-tasa');if(el){var rateText=input&&input.dataset.fxRate?('Tasa de referencia: 1 '+cur+' = '+Number(input.dataset.fxRate).toFixed(5)+' '+receivedCur):d.from.alpha2===d.to.alpha2?'Sin conversión entre países':'Consultando tasa / moneda del destino…';el.textContent=rateText+' · tipo indicativo';}
-  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
+  if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.recAmount=String(received);input.dataset.esHT=cur==='HTG'?'1':'0';}
  }
  function mountRouteControls(kind){
   var route=$('v162-'+kind+'-ruta'),modal=$('modal-'+kind+'-v162');if(!route||!modal)return;
@@ -9260,7 +9267,7 @@ window.sendwayoShareReceipt=async function(){
    if(!t)return false;
    t.paisOrigen=countryName(d.from);t.paisOrigenISO2=d.from.alpha2;t.codigoPaisOrigen=d.from.callingCode;
    t.paisDestino=countryName(d.to);t.paisDestinoISO2=d.to.alpha2;t.codigoPaisDestino=d.to.callingCode;
-   t.monedaOrigen=d.currency;t.monedaDestino=$('v162-'+kind+'-monto').dataset.fxCurrency||d.currency;t.tasaCambio=Number($('v162-'+kind+'-monto').dataset.fxRate||1);t.montoRecibir=Number($('v162-'+kind+'-monto').dataset.rec||0);t.fuenteTasa='ExchangeRate-API';t.fechaTasa=window.SENDWAYO_FX_RATES&&window.SENDWAYO_FX_RATES.updatedAt||null;
+   t.monedaOrigen=d.currency;t.monedaDestino=$('v162-'+kind+'-monto').dataset.fxCurrency||d.currency;t.tasaCambio=Number($('v162-'+kind+'-monto').dataset.fxRate||1);t.montoRecibir=Number($('v162-'+kind+'-monto').dataset.recAmount||0);t.fuenteTasa='ExchangeRate-API';t.fechaTasa=window.SENDWAYO_FX_RATES&&window.SENDWAYO_FX_RATES.updatedAt||null;
    t.countryFrom={iso2:d.from.alpha2,name:countryName(d.from),callingCode:d.from.callingCode};
    t.countryTo={iso2:d.to.alpha2,name:countryName(d.to),callingCode:d.to.callingCode};
    t.proveedorDestino=d.provider;t.detalleRutaInternacional=d.note;t.rutaExacta=d.details;
