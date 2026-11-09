@@ -1,0 +1,21 @@
+const fs = require('fs');
+const assert = require('assert');
+const path = 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html';
+const html = fs.readFileSync(path, 'utf8');
+assert(html.includes('ADMIN-ADMINISTRADOR'), 'Administrator ID must be fixed');
+assert(html.includes('function humanAccountId'), 'Firebase profile ID generator must use human IDs');
+assert(html.includes('sendwayoOpenIdFile'), 'ID dossier lookup must be present');
+assert(html.includes('sendwayoOpenCardPayments'), 'PayPal/card onboarding must be present');
+assert(html.includes('sendwayoNormalizeUserIds'), 'Existing IDs must be normalized');
+assert(html.includes('legacyId:oldId'), 'Previous IDs must be retained');
+assert(!html.includes('Código:'), 'Visible code labels must be removed');
+assert(html.includes('Correo electrónico o ID'), 'Login must use email or ID');
+assert(html.includes('Pagos con tarjeta / PayPal'), 'Card payment module must be in the menu');
+const brandStart = html.indexOf('id="sendwayo-brand-bar"');
+const brand = html.slice(brandStart, brandStart + 1200);
+assert(brand.indexOf('sendwayo-brand-logo') < brand.indexOf('sendwayo-mobile-menu'), 'Logo/name must precede hamburger');
+assert((html.match(/id="sendwayo-mobile-menu"/g) || []).length === 1, 'Only one hamburger control');
+const blocks = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m => m[1]).filter(Boolean);
+let checked = 0;
+for (const code of blocks) { checked++; try { new Function(code); } catch (e) { console.error('Inline script #' + checked + ':', e.message); process.exit(1); } }
+console.log('V7 ID and PayPal tests passed; inline scripts checked:', checked);
