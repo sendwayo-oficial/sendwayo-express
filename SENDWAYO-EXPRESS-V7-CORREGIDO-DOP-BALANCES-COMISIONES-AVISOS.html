@@ -341,7 +341,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 #v7-admin-code{display:none!important}
 #sendwayo-admin-account-modal label:has(#v7-admin-code){display:none!important}
 #sendwayo-v7-code{display:none!important}
-#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}
+#view-agentes table th:nth-child(4),#view-agentes table td:nth-child(4),#view-remitentes table th:nth-child(4),#view-remitentes table td:nth-child(4){display:none!important}
 #sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;gap:10px!important;flex:0 0 auto!important;white-space:nowrap!important}
 #sendwayo-brand-bar .sendwayo-brand-title{white-space:nowrap!important}
 #sendwayo-mobile-menu{position:relative!important;left:auto!important;top:auto!important;flex:0 0 42px!important;margin:0!important}
@@ -388,12 +388,12 @@ body.sendwayo-authenticated #sendwayo-workspace-shell{display:flex!important;vis
     <div class="space-y-4">
       <div>
         <label class="block text-[11px] font-bold mb-1">Usuario</label>
-        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
+        <input id="login-usuario" type="text" placeholder="Correo electrónico o ID" class="w-full border rounded-lg p-3 text-[13px]">
       </div>
       <div>
         <label class="block text-[11px] font-bold mb-1">Contraseña</label>
         <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
-        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
+        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo electrónico o ID; la contraseña se verifica en Firebase Authentication</div>
       </div>
       <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
       <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
@@ -4447,14 +4447,14 @@ window.sendwayoShareReceipt=async function(){
     const add=view==='secretas'?`<button type="button" onclick="sendwayoAdminAddAccount()" class="bg-green-700 text-white font-bold text-sm px-4 py-3 rounded-full min-h-[44px]">＋ Agregar usuario</button>`:view==='cuentas'?`${isAdmin()?`<button type="button" onclick="sendwayoAgregarModulo('cuentas')" class="bg-[#0f2440] text-white font-bold text-xs px-4 py-2.5 rounded-full">＋ Agregar cuenta bancaria</button>`:''}<button type="button" onclick="sendwayoAgregarModulo('depositos')" class="bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-full">＋ Agregar depósito</button>`:`<button type="button" onclick="sendwayoAgregarModulo('${view}')" class="bg-[#0f2440] text-white font-bold text-xs px-4 py-2.5 rounded-full">${view==='depositos'?'＋ Agregar depósito':'＋ Agregar nuevo'}</button>`;
     let extra='';
     if(view==='perfil'){
-      const a=currentAccount()||admin();extra=`<section class="border rounded-xl p-4 space-y-3"><h3 class="font-bold">Mi perfil — datos de acceso</h3><div class="flex items-center gap-3">${a?.profilePhoto?`<img loading="lazy" decoding="async" src="${a.profilePhoto}" class="w-16 h-16 rounded-full object-cover border">`:'<div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">👤</div>'}<label class="text-xs">Foto de perfil<input type="file" accept="image/*" onchange="sendwayoProfilePhoto(this)" class="block mt-1"></label></div><div class="grid sm:grid-cols-3 gap-2">${inp('v7-prof-old','Contraseña actual','','password')}${inp('v7-prof-new','Nueva contraseña (8+ caracteres)','','password')}${inp('v7-prof-confirm','Confirmar nueva contraseña','','password')}</div><button onclick="sendwayoSaveProfile()" class="bg-green-600 text-white rounded-full px-4 py-2 font-bold">Guardar contraseña</button><p class="text-xs text-gray-500">ID y código de acceso son inmodificables.</p></section>`;
+      const a=currentAccount()||admin();extra=`<section class="border rounded-xl p-4 space-y-3"><h3 class="font-bold">Mi perfil — datos de acceso</h3><div class="flex items-center gap-3">${a?.profilePhoto?`<img loading="lazy" decoding="async" src="${a.profilePhoto}" class="w-16 h-16 rounded-full object-cover border">`:'<div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">👤</div>'}<label class="text-xs">Foto de perfil<input type="file" accept="image/*" onchange="sendwayoProfilePhoto(this)" class="block mt-1"></label></div><div class="grid sm:grid-cols-3 gap-2">${inp('v7-prof-old','Contraseña actual','','password')}${inp('v7-prof-new','Nueva contraseña (8+ caracteres)','','password')}${inp('v7-prof-confirm','Confirmar nueva contraseña','','password')}</div><button onclick="sendwayoSaveProfile()" class="bg-green-600 text-white rounded-full px-4 py-2 font-bold">Guardar contraseña</button><p class="text-xs text-gray-500">El ID de usuario puede ser modificado únicamente por Administración.</p></section>`;
     }
     if(view==='mibanco'){
       const a=currentAccount()||admin(),d=a?.bankDetails||{};extra=`<section class="border rounded-xl p-4 space-y-3"><h3 class="font-bold">Datos de mi cuenta bancaria</h3><div class="grid sm:grid-cols-2 gap-3">${inp('v7-bank-name','Banco','Nombre del banco','text',d.banco||'')}${inp('v7-bank-account','Número de cuenta','Número de cuenta','text',d.cuenta||'')}${inp('v7-bank-holder','Titular','Nombre del titular','text',d.titular||acctName(a))}${inp('v7-bank-doc','Cédula / pasaporte','Documento','text',d.documento||'')}${sel('v7-bank-currency','Moneda',curOptions(d.moneda||'DOP'))}</div><button onclick="sendwayoSaveMyBank()" class="bg-green-600 text-white rounded-full px-4 py-2 font-bold">Guardar datos bancarios</button><p class="text-xs text-gray-500">Estos datos son de tu perfil; las cuentas bancarias oficiales se administran en su módulo separado.</p></section>`;
     }
     let actions='',heading='';
     if(view==='agentes'||view==='remitentes'){
-      heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (editable por Administración)</th><th class="p-3 text-left">Código (editable por Administración)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
+      heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (editable por Administración)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
       if(!isAdmin()) { el.innerHTML='<div class="p-8 text-center font-bold">Este directorio está disponible para el administrador.</div>';return; }
     } else if(view==='cuentas') heading=`<th class="p-3">Banco / número</th><th class="p-3">Titular / documento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th>`;
     else heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Beneficiario / titular</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
@@ -7414,14 +7414,14 @@ window.sendwayoShareReceipt=async function(){
     const rows=[];
     const add=(a, role)=>{
       if(!a || typeof a!=='object') return;
-      const email=txt(a.email || a.usuario).toLowerCase();
+      const email=txt(a.email || (String(a.usuario||'').includes('@')?a.usuario:'')).toLowerCase();
       if(!email.includes('@')) return;
-      const aliases=[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.codigo,a.codigo2,a.staffId,a.legacyId,a.accountId,a.username,a.userName,a.login,a.celular,a.telefono,a.usuario,a.email,a.name,a.nombre,...(Array.isArray(a.aliases)?a.aliases:[])].filter(Boolean).map(txt);
-      rows.push({email, id:txt(a.id), codigo:txt(a.codigo || a.staffId), nombre:txt(a.nombre || a.name), role:role || a.role, aliases});
+      const aliases=[a.id,a.idAnterior,a.legacyId,a.accountId,a.email,(String(a.usuario||'').includes('@')?a.usuario:'')].filter(Boolean).map(txt);
+      rows.push({email,id:txt(a.id),nombre:txt(a.nombre||a.name),role:role||a.role,aliases});
     };
     try { add(typeof ADMIN!=='undefined'?ADMIN:null,'ADMIN'); } catch(e){}
-    try { (typeof AGENTES!=='undefined' && Array.isArray(AGENTES)?AGENTES:[]).forEach(a=>add(a,'AGENTE')); } catch(e){}
-    try { (typeof REMITENTES!=='undefined' && Array.isArray(REMITENTES)?REMITENTES:[]).forEach(a=>add(a,'REMITENTE')); } catch(e){}
+    try { (typeof AGENTES!=='undefined'&&Array.isArray(AGENTES)?AGENTES:[]).forEach(a=>add(a,'AGENTE')); } catch(e){}
+    try { (typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:[]).forEach(a=>add(a,'REMITENTE')); } catch(e){}
     try { (Array.isArray(window.USUARIOS_LOGIN)?window.USUARIOS_LOGIN:[]).forEach(a=>add(a,a.role)); } catch(e){}
     const seen=new Set();
     return rows.filter(r=>{const k=r.email+'|'+r.id;if(seen.has(k))return false;seen.add(k);return true;});
@@ -8225,12 +8225,12 @@ window.sendwayoShareReceipt=async function(){
     const input = txt(document.getElementById('login-usuario')?.value);
     const password = String(document.getElementById('login-password')?.value || '');
     if (!input || !password) {
-      loginError('Escriba el correo, código o teléfono y su contraseña.');
+      loginError('Escriba el correo electrónico o ID y su contraseña.');
       return;
     }
     const email = resolveEmail(input);
     if (!email) {
-      loginError('No encontré ese correo, código o teléfono en el directorio SENDWAYO. Compruebe el dato o use el correo registrado en Firebase Authentication.');
+      loginError('No encontré ese correo electrónico o ID en el directorio SENDWAYO. Compruebe el dato o use el correo registrado en Firebase Authentication.');
       return;
     }
 
@@ -10556,7 +10556,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 #sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important;white-space:nowrap!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
 #sendwayo-v7-user-strip .sendwayo-workspace-meta strong{font-weight:800!important}
-#sendwayo-v7-user-strip [id="sendwayo-v7-date"]{display:none!important}
+
 body:not(.sendwayo-authenticated) #sendwayo-v7-user-strip{display:none!important}
 body.sendwayo-authenticated>#welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
 body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
