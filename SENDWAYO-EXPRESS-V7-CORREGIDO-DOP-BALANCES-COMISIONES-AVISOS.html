@@ -10516,14 +10516,14 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
    window.setTimeout(function(){
     var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name');
     if(!idInput||!codeInput)return;
-    idInput.readOnly=true;codeInput.readOnly=true;codeInput.setAttribute('aria-readonly','true');
-    var list=accounts(view),existing=id?list.find(function(a){return String(a.id||'')===String(id);}):null,prefix=view==='agentes'?'AGE':'REM';
-    if(existing){idInput.value=String(existing.id||'');codeInput.value=visibleCode(existing,view);return;}
-    var max=0;list.forEach(function(a){var match=String(a.id||'').match(new RegExp('^'+prefix+'(\\d{5})$','i'));if(match)max=Math.max(max,Number(match[1]));});
-    idInput.value=prefix+String(max+1).padStart(5,'0');
-    var makeCode=function(value){var p=String(value||'').trim().split(/\s+/).filter(Boolean);var clean=function(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/gi,'').slice(0,3).toUpperCase();};return prefix+'-'+clean(p[0]||'USR')+clean(p.length>1?p[p.length-1]:p[0]||'USR');};
-    codeInput.value=makeCode(nameInput&&nameInput.value);
-    if(nameInput&&!nameInput.dataset.sendwayoFixedCodeBound){nameInput.dataset.sendwayoFixedCodeBound='1';nameInput.addEventListener('input',function(){codeInput.value=makeCode(nameInput.value);});}
+    idInput.readOnly=false;codeInput.readOnly=true;codeInput.setAttribute('aria-readonly','true');
+    var list=accounts(view),existing=id?list.find(function(a){return String(a.id||'')===String(id);}):null,rolePrefix=view==='agentes'?'AG':'RE',seq=list.length+1;
+    var makeHumanId=function(value){var p=String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\s+/).filter(Boolean);var first=(p[0]||'US').slice(0,2).padEnd(2,'X');var last=(p.length>1?p[p.length-1]:p[0]||'ER').slice(0,2).padEnd(2,'X');return rolePrefix+first+last+String(seq).padStart(2,'0');};
+    if(existing){idInput.value=String(existing.id||'');return;}
+    idInput.value=makeHumanId(nameInput&&nameInput.value);
+    codeInput.value='';
+    if(idInput&&!idInput.dataset.sendwayoManualBound){idInput.dataset.sendwayoManualBound='1';idInput.addEventListener('input',function(){idInput.dataset.sendwayoManual='1';});}
+    if(nameInput&&!nameInput.dataset.sendwayoHumanIdBound){nameInput.dataset.sendwayoHumanIdBound='1';nameInput.addEventListener('input',function(){if(idInput.dataset.sendwayoManual!=='1')idInput.value=makeHumanId(nameInput.value);});}
    },0);
    return result;
   };
@@ -10538,8 +10538,6 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
    }else{
     var ident=String(idInput&&idInput.value||'').trim(),code=String(codeInput&&codeInput.value||'').trim();
     if(!/^[A-Za-z0-9_-]{3,32}$/.test(ident)){window.alert('ID inválido.');return false;}
-    var duplicate=allAccounts().find(function(a){return canonicalCode(a.codigo||a.code)===canonicalCode(code);});
-    if(duplicate){window.alert('Ese código ya pertenece a otra cuenta. No se creará una cuenta duplicada.');return false;}
     if(!String(nameInput&&nameInput.value||'').trim()){window.alert('Escriba el nombre completo.');return false;}
    }
    return oldSave.apply(this,arguments);
