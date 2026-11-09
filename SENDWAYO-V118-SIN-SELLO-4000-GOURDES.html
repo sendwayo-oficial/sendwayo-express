@@ -337,7 +337,35 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="preload" as="image" href="./assets/sendwayo-logo-real.jpg">
-</head>
+<style id="sendwayo-v7-single-welcome">
+#welcome-landing{background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
+.sendwayo-home-header{background:#fff;border-bottom:1px solid #e6ebf2}
+.sendwayo-home-header-inner{max-width:1100px;margin:auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.sendwayo-home-brand{display:flex;align-items:center;gap:10px}.sendwayo-home-brand img{height:42px;width:auto;max-width:130px;object-fit:contain}
+.sendwayo-home-brand strong{display:block;font-size:14px;font-weight:900}.sendwayo-home-brand span{font-size:10px;color:#64748b}
+.sendwayo-home-actions{display:flex;flex-wrap:wrap;gap:9px}
+.sendwayo-home-login,.sendwayo-home-register{border:0;border-radius:999px;padding:12px 20px;font-weight:800;cursor:pointer}
+.sendwayo-home-login{background:#102c4c;color:white}.sendwayo-home-register{background:#0782b8;color:white}
+.sendwayo-home-content{max-width:1100px;margin:auto;padding:22px 18px}
+.sendwayo-home-single{position:relative;min-height:360px;height:min(56vw,510px);max-height:510px;overflow:hidden;border-radius:20px;background:#0b1c31}
+.sendwayo-home-photo{width:100%;height:100%;object-fit:cover;display:block}
+.sendwayo-home-copy{position:absolute;inset:auto 0 0;padding:28px;color:#fff;background:linear-gradient(0deg,rgba(0,0,0,.78),transparent)}
+.sendwayo-home-copy>span{font-size:10px;letter-spacing:.12em;font-weight:800}.sendwayo-home-copy h1{font-size:clamp(28px,4vw,44px);font-weight:900;margin:8px 0}.sendwayo-home-copy p{max-width:600px;font-size:14px;line-height:1.5;margin-bottom:16px}
+.sendwayo-home-purpose{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+.sendwayo-home-purpose article{background:#fff;border:1px solid #e4eaf1;border-radius:15px;padding:18px}
+.sendwayo-home-purpose h2{font-size:18px;font-weight:900;color:#102c4c;margin:0 0 7px}.sendwayo-home-purpose p{font-size:13px;line-height:1.55;color:#52657b;margin:0}
+.sendwayo-home-footer{text-align:center;padding:15px;color:#64748b;font-size:11px}
+.sendwayo-register-panel{position:fixed;inset:0;z-index:30000;background:rgba(7,20,38,.96);overflow:auto;padding:20px;display:grid;place-items:center}
+.sendwayo-register-panel[hidden]{display:none!important}.sendwayo-register-card{width:min(100%,480px);background:#fff;border-radius:18px;padding:22px;display:grid;gap:11px}
+.sendwayo-register-card h2{font-size:24px;font-weight:900;color:#102c4c}.sendwayo-register-card p{font-size:13px;color:#64748b}
+.sendwayo-register-card label{display:grid;gap:5px;font-size:12px;font-weight:700;color:#334155}
+.sendwayo-register-card input,.sendwayo-register-card select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#10243d}
+@media(max-width:650px){.sendwayo-home-header-inner{padding:10px}.sendwayo-home-brand img{height:35px}.sendwayo-home-brand span{display:none}.sendwayo-home-login,.sendwayo-home-register{padding:10px 13px;font-size:11px}.sendwayo-home-content{padding:12px}.sendwayo-home-single{height:390px;min-height:340px}.sendwayo-home-copy{padding:18px}.sendwayo-home-purpose{grid-template-columns:1fr}.sendwayo-register-card{padding:17px}}
+</style>
+<script id="sendwayo-v7-register-panel">
+window.v162_showRegister=function(){const p=document.getElementById('v162-register-panel');if(p)p.hidden=false;};
+window.v162_closeRegister=function(){const p=document.getElementById('v162-register-panel');if(p)p.hidden=true;};
+</script></head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
   // Available before any older form handler can request a notice.
@@ -2495,51 +2523,34 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 
 <div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
   <main class="sendwayo-home">
-    <header class="sendwayo-home-header">
-      <div class="sendwayo-home-header-inner">
-        <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ingresar</button>
-      </div>
-    </header>
+    <header class="sendwayo-home-header"><div class="sendwayo-home-header-inner">
+      <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
+      <div class="sendwayo-home-actions"><button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ingresar</button><button type="button" class="sendwayo-home-register" onclick="v162_showRegister()">Crear cuenta</button></div>
+    </div></header>
     <div class="sendwayo-home-content">
-      <section class="sendwayo-home-hero">
-        <div class="sendwayo-home-gallery">
-          <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
-            <div class="sendwayo-home-photo-shade"></div>
-            <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
-            <div id="v162-dots" class="sendwayo-home-dots"></div>
-            <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
-          </div>
-          <div class="sendwayo-home-thumbs">
-            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
-          </div>
-        </div>
-        <aside class="sendwayo-home-aside">
-          <div class="sendwayo-home-aside-tag">TU CONEXIÓN ENTRE DESTINOS</div>
-          <h2>Todo más fácil, en un solo lugar.</h2>
-          <p>Una plataforma para acompañarte en tus operaciones de República Dominicana, Haití y otros destinos.</p>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Atención organizada</strong><small>Seguimiento de tus solicitudes y operaciones.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Servicios variados</strong><small>Dinero, paquetes, recargas y pagos.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Acceso seguro</strong><small>Tu cuenta personal dentro de SENDWAYO EXPRESS.</small></div></div>
-          <div class="sendwayo-home-aside-photo"><img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS"></div>
-        </aside>
-      </section>
-      <section class="sendwayo-home-services">
-        <div class="sendwayo-home-section-title"><span>NUESTROS SERVICIOS</span><h2>¿Qué necesitas hacer?</h2></div>
-        <div class="sendwayo-home-service-grid">
-          <article><span>💸</span><strong>Envíos de dinero</strong><small>RD · Haití · Estados Unidos y otros destinos</small></article>
-          <article><span>💰</span><strong>Retiros</strong><small>Operaciones de retiro y entrega</small></article>
-          <article><span>📦</span><strong>Paquetes</strong><small>Recepción, seguimiento y distribución</small></article>
-          <article><span>📱</span><strong>Recargas y pagos</strong><small>Recargas telefónicas y pago de servicios</small></article>
+      <section class="sendwayo-home-single">
+        <img class="sendwayo-home-photo" src="assets/ca43ab0c2b8e924cfacc.webp" alt="SENDWAYO EXPRESS">
+        <div class="sendwayo-home-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>SENDWAYO EXPRESS</h1><p>Envía y recibe donde estés. Dinero, paquetes y servicios con atención cercana y organizada.</p>
+          <div class="sendwayo-home-actions"><button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ingresar</button><button type="button" class="sendwayo-home-register" onclick="v162_showRegister()">Crear cuenta</button></div>
         </div>
       </section>
+      <section class="sendwayo-home-purpose"><article><h2>Visión</h2><p>Conectar personas y destinos mediante servicios accesibles, confiables y eficientes.</p></article><article><h2>Misión</h2><p>Facilitar envíos, retiros y servicios con atención responsable, transparencia y seguimiento.</p></article><article><h2>Objetivo</h2><p>Ofrecer una plataforma organizada y segura para gestionar las operaciones de nuestros clientes.</p></article></section>
     </div>
     <footer class="sendwayo-home-footer">© SENDWAYO EXPRESS · Conectamos destinos</footer>
   </main>
+  <section id="v162-register-panel" class="sendwayo-register-panel" hidden>
+    <form class="sendwayo-register-card" onsubmit="event.preventDefault();v162_registrar()">
+      <h2>Crear cuenta</h2><p>Complete sus datos. La solicitud requiere aprobación del administrador.</p>
+      <label>Nombre<input id="v162-reg-nombre" autocomplete="given-name" required></label>
+      <label>Apellido<input id="v162-reg-apellido" autocomplete="family-name" required></label>
+      <label>Celular<input id="v162-reg-celular" type="tel" autocomplete="tel" required></label>
+      <label>Correo electrónico<input id="v162-reg-email" type="email" autocomplete="email" required></label>
+      <label>Contraseña<input id="v162-reg-pass" type="password" autocomplete="new-password" required></label>
+      <label>Repita la contraseña<input id="v162-reg-pass2" type="password" autocomplete="new-password" required></label>
+      <label>Tipo de cuenta<select id="v162-reg-tipo"><option value="REMITENTE">Remitente</option><option value="AGENTE">Agente</option></select></label>
+      <div class="sendwayo-home-actions"><button class="sendwayo-home-register" type="submit">Enviar solicitud</button><button class="sendwayo-home-login" type="button" onclick="v162_closeRegister()">Volver</button></div>
+    </form>
+  </section>
 </div>
 <style id="sendwayo-v7-public-landing-clean">
 #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
