@@ -367,6 +367,12 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 #sendwayo-admin-account-modal label:has(#v7-admin-code){display:none!important}
 @media(min-width:1025px){#sendwayo-mobile-menu,#sendwayo-menu-shade{display:none!important}#sendwayo-main-sidebar{display:block!important;position:relative!important;left:auto!important;transform:none!important;flex:0 0 220px!important;min-height:100vh!important}}
 @media(max-width:1024px){#sendwayo-brand-bar{gap:5px!important;padding:5px!important}#sendwayo-v7-user-strip{gap:5px!important}#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important}#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:9px!important}}
+</style><style id="sendwayo-v7-code-only-header-and-sidebar">
+#sendwayo-main-sidebar .sendwayo-debug-code,#sendwayo-main-sidebar [data-code-column]{display:none!important}
+#sendwayo-v7-code{display:inline!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip [id="sendwayo-v7-date"]{display:inline-flex!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;gap:8px!important}
+#sendwayo-id-dossier{font-family:Arial,sans-serif}
 </style></head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -5539,8 +5545,7 @@ window.sendwayoShareReceipt=async function(){
 
   function boot() {
     installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors();
-    // Siempre iniciar sin sesión, incluso si la versión anterior dejó ADMIN precargado en memoria.
-    showWelcome();
+    // La portada HTML ya es visible; Firebase decide si hay una sesión restaurada o si corresponde mostrar el acceso.
     document.querySelectorAll('#welcome-landing button[onclick*="v162_showLogin"]').forEach(btn => btn.addEventListener('click', event => { event.preventDefault(); openLogin(); }, true));
     const logoutButtons = document.querySelectorAll('button[onclick*="cerrarSesion"],button[onclick*="CerrarSesion"]');
     logoutButtons.forEach(btn => { btn.onclick = event => { event?.preventDefault?.(); window.cerrarSesion(); }; });
@@ -5551,7 +5556,7 @@ window.sendwayoShareReceipt=async function(){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
-  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage) showWelcome(); else { updateIdentity(); applyIdentityDefaults(false); } });
+  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); const active=current(); if(active&&(active.id||active.uid||active.email)){successfulLoginThisPage=true;updateIdentity();applyIdentityDefaults(false);} });
   document.addEventListener('click', event => {
     const trigger = event.target && event.target.closest
       ? event.target.closest('button[onclick*="modal-"],button[onclick*="v162_abrir"],button[onclick*="sendwayoOpen"],[data-sendwayo-open-modal]')
@@ -10494,6 +10499,53 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
   modal.innerHTML='<section style="width:min(680px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;color:#10243d;font:14px/1.5 Arial,sans-serif"><div style="display:flex;justify-content:space-between;gap:10px"><h2 style="font-size:20px;font-weight:900;margin:0">Cobros con tarjetas nacionales e internacionales</h2><button id="sw-paypal-close" type="button" style="font-size:25px">×</button></div><p>PayPal Business queda como pasarela prevista para recibir tarjetas de débito y crédito, sujeto a verificación y disponibilidad del país y de cada producto.</p><div style="padding:12px;border:1px solid #f59e0b;background:#fffbeb;border-radius:12px"><b>Estado: pendiente de crear y verificar la cuenta comercial.</b><p style="margin:5px 0 0">No se procesarán cobros reales hasta completar el onboarding, configurar credenciales privadas en el Worker y validar los webhooks.</p></div><ol style="padding-left:20px;list-style:decimal;margin:14px 0"><li>Crear la cuenta Business con el país y datos legales reales.</li><li>Completar verificación de identidad y método bancario disponible.</li><li>Obtener Client ID y Secret en el panel de desarrolladores.</li><li>Guardar el Secret exclusivamente en el Worker y validar la captura y webhook.</li></ol><div style="display:flex;flex-wrap:wrap;gap:9px"><a target="_blank" rel="noopener noreferrer" href="https://www.paypal.com/do/business" style="background:#003087;color:#fff;padding:11px 15px;border-radius:999px;text-decoration:none;font-weight:800">Crear PayPal Business</a><a target="_blank" rel="noopener noreferrer" href="https://developer.paypal.com/dashboard/" style="background:#eef2f7;color:#10243d;padding:11px 15px;border-radius:999px;text-decoration:none;font-weight:800">Panel de desarrolladores</a></div><p style="font-size:11px;color:#64748b;margin-top:12px">El pago con tarjeta y el envío/desembolso a un beneficiario son operaciones distintas. SENDWAYO no almacenará números completos de tarjetas ni CVV. Pago con tarjeta sin cuenta PayPal solo se ofrecerá si la cuenta y la transacción tienen habilitado el pago como invitado.</p></section>';
   document.body.appendChild(modal);modal.querySelector('#sw-paypal-close').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
  };
+})();
+</script>
+<script id="sendwayo-v7-id-file-and-code-display">
+(function(){
+ 'use strict';
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+ const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ function allAccounts(){
+  var rows=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)rows.push(ADMIN);}catch(e){}
+  try{if(Array.isArray(AGENTES))rows=rows.concat(AGENTES);}catch(e){}
+  try{if(Array.isArray(REMITENTES))rows=rows.concat(REMITENTES);}catch(e){}
+  return rows;
+ }
+ function accountByID(id){
+  var key=norm(id);return allAccounts().find(a=>[a.id,a.idAnterior,a.legacyId,a.accountId,a.dbUserKey,a.rtdbUserKey].concat(a.idAliases||[]).some(x=>norm(x)===key))||null;
+ }
+ function movementsFor(a){
+  var rows=[];try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))rows=TRANSACCIONES;else if(Array.isArray(window.TRANSACCIONES))rows=window.TRANSACCIONES;}catch(e){}
+  const keys=[a.id,a.idAnterior,a.legacyId,a.dbUserKey,a.rtdbUserKey,a.uid,a.authUid,a.email,a.usuario].concat(a.idAliases||[]).filter(Boolean).map(norm);
+  return rows.filter(t=>[t.creadorId,t.creadoPorId,t.usuarioId,t.userId,t.ownerId,t.remitenteId,t.senderId,t.accountId,t.accountKey,t.dbUserKey,t.email,t.createdByAuthUid].filter(Boolean).map(norm).some(v=>keys.includes(v)));
+ }
+ function beneficiariesFor(a){
+  var rows=[];try{if(typeof BENEFICIARIOS!=='undefined'&&Array.isArray(BENEFICIARIOS))rows=BENEFICIARIOS;else if(Array.isArray(window.BENEFICIARIOS))rows=window.BENEFICIARIOS;}catch(e){}
+  return rows.filter(b=>[b.userId,b.ownerId,b.remitenteId,b.accountId,b.email,b.dbUserKey,b.creadorId].filter(Boolean).map(norm).includes(norm(a.id))||norm(b.userId)===norm(a.dbUserKey));
+ }
+ window.sendwayoOpenIdFile=function(){
+  const q=window.prompt('Escriba el ID exacto de la cuenta:');if(!q)return;
+  const a=accountByID(q);if(!a){window.alert('No se encontró una cuenta con ese ID.');return;}
+  const tx=movementsFor(a),ben=beneficiariesFor(a),balances=a.balances||{},comm=a.commissions||a.comisiones||{};
+  const safeNum=v=>(Number(v)||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rows=tx.map(t=>'<tr><td>'+esc(t.fecha||t.createdAt||'')+'</td><td>'+esc(t.tipo||t.type||'')+'</td><td>'+esc(t.id||'')+'</td><td>'+esc(t.monto||t.amount||'')+'</td><td>'+esc(t.estado||t.status||'')+'</td></tr>').join('');
+  const br=ben.map(b=>'<tr><td>'+esc(b.nombre||b.name||'')+'</td><td>'+esc(b.paisNombre||b.paisIso2||b.country||'')+'</td><td>'+esc(b.codigoPais||b.callingCode||'')+' '+esc(b.telefonoE164||b.telefono||b.phone||'')+'</td><td>'+esc(b.estado||b.status||'')+'</td></tr>').join('');
+  document.getElementById('sendwayo-id-dossier')?.remove();
+  const modal=document.createElement('div');modal.id='sendwayo-id-dossier';modal.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#07182ddd;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto';
+  modal.innerHTML='<section style="width:min(1000px,100%);max-height:95vh;overflow:auto;background:#fff;border-radius:18px;padding:18px;color:#142b43;font:13px/1.45 Arial,sans-serif"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="font-size:21px;font-weight:900;margin:0">Expediente por ID</h2><button id="sendwayo-id-close" type="button" style="font-size:25px">×</button></div><h3 style="font-size:18px;font-weight:900;margin:12px 0 3px">'+esc(a.nombre||a.name||'')+'</h3><p><b>ID:</b> '+esc(a.id||'')+' · <b>Rol:</b> '+esc(a.role||a.rol||'')+' · <b>Estado:</b> '+esc(a.estado||a.status||'Activo')+'</p><p><b>Correo:</b> '+esc(a.email||a.usuario||'—')+' · <b>Celular:</b> '+esc(a.celular||a.telefono||'—')+'</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0"><div style="background:#eff6ff;padding:11px;border-radius:10px"><small>Balance DOP</small><h3>RD$ '+safeNum(balances.DOP??a.balanceDOP??a.balance)+'</h3></div><div style="background:#f0fdf4;padding:11px;border-radius:10px"><small>Balance HTG</small><h3>G '+safeNum(balances.HTG??a.balanceHTG)+'</h3></div><div style="background:#f8fafc;padding:11px;border-radius:10px"><small>Comisión DOP</small><h3>RD$ '+safeNum(comm.DOP??a.commissionDOP??a.commission)+'</h3></div><div style="background:#f8fafc;padding:11px;border-radius:10px"><small>Comisión HTG</small><h3>G '+safeNum(comm.HTG??a.commissionHTG)+'</h3></div></div><h3 style="font-weight:900;margin:16px 0 7px">Movimientos vinculados ('+tx.length+')</h3><div style="overflow:auto;max-height:360px"><table style="width:100%;min-width:650px;border-collapse:collapse;text-align:left"><thead><tr style="background:#eef2f7"><th>Fecha</th><th>Módulo</th><th>ID</th><th>Monto</th><th>Estado</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" style="padding:12px">No hay movimientos vinculados cargados en esta sesión.</td></tr>')+'</tbody></table></div><h3 style="font-weight:900;margin:16px 0 7px">Beneficiarios asociados ('+ben.length+')</h3><div style="overflow:auto"><table style="width:100%;min-width:550px;border-collapse:collapse;text-align:left"><thead><tr style="background:#eef2f7"><th>Nombre</th><th>País</th><th>Teléfono</th><th>Estado</th></tr></thead><tbody>'+(br||'<tr><td colspan="4" style="padding:12px">No hay beneficiarios vinculados cargados.</td></tr>')+'</tbody></table></div><p style="font-size:11px;color:#64748b;margin-top:12px">Consulta de los registros sincronizados para esta sesión. No modifica balances ni transacciones.</p></section>';
+  document.body.appendChild(modal);modal.querySelector('#sendwayo-id-close').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+ };
+ function hideCodeLabels(){
+  const root=document.body,header=document.getElementById('sendwayo-v7-user-strip');
+  if(!root||!document.createTreeWalker)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];let n;
+  while((n=walker.nextNode())){if(header&&header.contains(n.parentNode))continue;if(n.parentNode&&/^(SCRIPT|STYLE|INPUT|TEXTAREA|OPTION)$/.test(n.parentNode.tagName))continue;if(/Código\s*:/i.test(n.nodeValue||''))nodes.push(n);}
+  nodes.forEach(node=>{node.nodeValue=String(node.nodeValue||'').replace(/(?:\s*[·|–-]\s*)?Código\s*:\s*[^|·\n\r]+/gi,'').trim();});
+ }
+ window.addEventListener('DOMContentLoaded',hideCodeLabels,{once:true});window.addEventListener('load',hideCodeLabels);
+ document.addEventListener('click',e=>{if(e.target.closest('button[onclick*="showView"]'))window.setTimeout(hideCodeLabels,100);},true);
 })();
 </script>
 </body>
