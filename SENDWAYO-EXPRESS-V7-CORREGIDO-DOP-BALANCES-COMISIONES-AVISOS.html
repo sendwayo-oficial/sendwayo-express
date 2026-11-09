@@ -401,7 +401,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="sendwayo-workspace-meta">
       <span id="sendwayo-v7-role">—</span>
       <span>ID: <strong id="sendwayo-v7-id">—</strong></span>
-      <span>Código: <strong id="sendwayo-v7-code">—</strong></span>
+      <span> <strong id="sendwayo-v7-code">—</strong></span>
     </div>
   </div>
   <div class="sendwayo-workspace-time">
@@ -427,6 +427,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button onclick="showView('recepcion')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🎁</span> Recepción envío y distribución</button>
     <button onclick="showView('facturas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🧾</span> Pago de facturas y servicios</button>
     <button onclick="showView('mibanco')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏦</span> Mi banco / Mi cuenta bancaria</button>
+    <button type="button" onclick="window.sendwayoOpenCardPayments()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Pagos con tarjeta / PayPal</button>
     <button onclick="showView('cuentas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏛️</span> Cuentas bancarias y depósitos</button>
     <button onclick="showView('ajustes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>⚙️</span> Ajustes / créditos pendientes 0</button>
     <button onclick="showView('creditos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Créditos pendientes</button>
@@ -2681,10 +2682,10 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
       <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
-        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
+        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico o ID</label><input id="login-usuario" type="text" autocomplete="username" autocapitalize="none" placeholder="Correo electrónico o ID" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
-        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
+        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Ingresar</button>
         <p class="text-center text-[11px] text-slate-500 mt-3">¿Necesita acceso? Comuníquese con el administrador.</p>
       </div>
     </div>`;
@@ -4774,7 +4775,7 @@ window.sendwayoShareReceipt=async function(){
     const id = txt(a.id || u.id || u.uid || '');
     const code = txt(a.codigo || a.codigo2 || u.codigo || '');
     const topUser = $('user-top');
-    if (topUser) { topUser.textContent = `${name} · ID: ${id} · Cód.: ${code}`; topUser.title = `${name} | ID: ${id} | Código: ${code}`; topUser.style.maxWidth = '340px'; topUser.style.whiteSpace = 'normal'; topUser.style.fontSize = '9px'; }
+    if (topUser) { topUser.textContent = `${name} · ID: ${id} ·  ${code}`; topUser.title = `${name} | ID: ${id} | Código: ${code}`; topUser.style.maxWidth = '340px'; topUser.style.whiteSpace = 'normal'; topUser.style.fontSize = '9px'; }
     if ($('sendwayo-v7-name')) $('sendwayo-v7-name').textContent = name;
     if ($('sendwayo-v7-role')) $('sendwayo-v7-role').textContent = roleName(a||u);
     if ($('sendwayo-v7-id')) $('sendwayo-v7-id').textContent = id;
@@ -10338,6 +10339,37 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  document.addEventListener('DOMContentLoaded',function(){window.sendwayoLoadWelcomePhoto();finalHeaderAndMenu();installRegistrationCountries();},{once:true});
  window.addEventListener('load',function(){finalHeaderAndMenu();installRegistrationCountries();});
  if(document.readyState!=='loading'){window.sendwayoLoadWelcomePhoto();finalHeaderAndMenu();}
+})();
+</script>
+<style id="sendwayo-v7-final-one-line-header">
+#sendwayo-brand-bar{display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px!important;min-height:58px!important;white-space:nowrap!important;overflow-x:auto!important;padding:6px 10px!important}
+#sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;white-space:nowrap!important}
+#sendwayo-brand-bar .sendwayo-brand-logo{width:42px!important;height:42px!important;object-fit:contain!important;flex:0 0 42px!important}
+#sendwayo-brand-bar .sendwayo-brand-title{white-space:nowrap!important;flex:0 0 auto!important;font-size:12px!important}
+#sendwayo-mobile-menu{position:relative!important;left:auto!important;top:auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 40px!important;width:40px!important;height:40px!important;margin:0!important}
+#sendwayo-v7-user-strip{display:flex!important;position:static!important;align-items:center!important;justify-content:flex-start!important;flex:1 1 auto!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0 4px!important;gap:8px!important;white-space:nowrap!important;overflow:visible!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:6px!important;min-width:0!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-kicker{display:none!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:11px!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
+#sendwayo-v7-code{display:inline!important;visibility:visible!important}
+#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}
+#v7-admin-code{display:none!important}#sendwayo-admin-account-modal label:has(#v7-admin-code){display:none!important}
+@media(min-width:1025px){#sendwayo-main-sidebar{display:block!important;position:relative!important;left:auto!important;top:auto!important;transform:none!important;flex:0 0 220px!important;width:220px!important;min-height:100vh!important}#sendwayo-mobile-menu,#sendwayo-menu-shade{display:none!important}#sendwayo-workspace-shell{display:flex!important;align-items:stretch!important}#sendwayo-main-content{min-width:0!important;flex:1 1 auto!important}}
+@media(max-width:1024px){#sendwayo-v7-user-strip{gap:4px!important;padding:0 2px!important}#sendwayo-v7-user-strip .sendwayo-workspace-name{max-width:88px!important;font-size:10px!important}#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important;font-size:9px!important}}
+@media(max-width:600px){#sendwayo-brand-bar{gap:4px!important;padding:4px!important}#sendwayo-brand-bar .sendwayo-brand-logo{width:34px!important;height:34px!important;flex-basis:34px!important}#sendwayo-brand-bar .sendwayo-brand-title{font-size:9px!important}#sendwayo-mobile-menu{width:34px!important;height:34px!important;flex-basis:34px!important;font-size:19px!important}#sendwayo-v7-user-strip .sendwayo-workspace-name{max-width:66px!important}#sendwayo-v7-user-strip .sendwayo-workspace-time{display:none!important}}
+</style>
+<script id="sendwayo-v7-one-menu-final">
+(function(){
+ const $=id=>document.getElementById(id);
+ function place(){
+  const bar=$('sendwayo-brand-bar'),left=bar&&bar.querySelector('.sendwayo-brand-left'),title=$('sendwayo-v7-business-name');
+  const arr=Array.from(document.querySelectorAll('#sendwayo-mobile-menu'));let btn=arr.shift()||null;arr.forEach(x=>x.remove());
+  if(left&&title){if(!btn){btn=document.createElement('button');btn.id='sendwayo-mobile-menu';btn.type='button';btn.textContent='☰';}title.insertAdjacentElement('afterend',btn);}
+  const strip=$('sendwayo-v7-user-strip');if(bar&&strip){const actions=bar.querySelector('.sendwayo-brand-actions');if(strip.parentElement!==bar)bar.insertBefore(strip,actions||null);}
+  if(btn)btn.onclick=function(e){e.preventDefault();if(innerWidth>1024)return;const side=$('sendwayo-main-sidebar'),shade=$('sendwayo-menu-shade');if(!side)return;const open=!side.classList.contains('sendwayo-menu-open');side.classList.toggle('sendwayo-menu-open',open);if(shade)shade.classList.toggle('open',open);btn.setAttribute('aria-expanded',open?'true':'false');};
+ }
+ document.addEventListener('DOMContentLoaded',place,{once:true});window.addEventListener('load',place);if(document.readyState!=='loading')place();
 })();
 </script>
 </body>
