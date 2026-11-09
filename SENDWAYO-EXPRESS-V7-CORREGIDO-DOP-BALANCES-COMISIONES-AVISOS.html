@@ -3786,7 +3786,7 @@ window.sendwayoShareReceipt=async function(){
    if(!strip){strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';}
    if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
    else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
-   const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
+   const u=getUser()||{},isAdmin=String(u.role||u.rol||'').toUpperCase().includes('ADMIN'),nm=isAdmin?'ADMINISTRADOR':(u.nombre||u.name||u.email||'Usuario'),id=isAdmin?'ADMIN-ADMINISTRADOR':(u.id||u.uid||'—');
    if(strip.dataset.sendwayoHeaderReady!=='1'){
      strip.innerHTML='<div class="sendwayo-workspace-person"><div class="sendwayo-workspace-kicker">CUENTA ACTIVA</div><div class="sendwayo-workspace-name" id="sendwayo-v7-name"></div><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role"></span><span>ID: <strong id="sendwayo-v7-id"></strong></span><span></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
      strip.dataset.sendwayoHeaderReady='1';
@@ -3794,7 +3794,7 @@ window.sendwayoShareReceipt=async function(){
    if($('sendwayo-v7-name'))$('sendwayo-v7-name').textContent=nm;
    if($('sendwayo-v7-role'))$('sendwayo-v7-role').textContent=roleName(u);
    if($('sendwayo-v7-id'))$('sendwayo-v7-id').textContent=id;
-   if($('sendwayo-v7-code'))$('sendwayo-v7-code').textContent=code;
+
    strip.setAttribute('aria-label','Datos de la sesión y cuenta activa');
  }
  window.sendwayoRefreshIdentityHeader=buildIdentityStrip;
@@ -5108,7 +5108,7 @@ window.sendwayoShareReceipt=async function(){
     ['Recargas y pagos','Top-ups and payments','Recharges et paiements','Rechaj ak peman','Recargas e pagamentos'],
     ['Movemos lo que importa.','We move what matters.','Nous transportons ce qui compte.','Nou deplase sa ki enpòtan.','Movemos o que importa.'],
     ['¿Necesita acceso? Comuníquese con el administrador.','Need access? Contact the administrator.','Besoin d’accès ? Contactez l’administrateur.','Ou bezwen aksè? Kontakte administratè a.','Precisa de acesso? Entre em contato com o administrador.'],
-    ['Correo, código o teléfono','Email, code or phone','E-mail, code ou téléphone','Imèl, kòd oswa telefòn','E-mail, código ou telefone'],
+    ['Correo electrónico o ID','Email or ID','E-mail ou identifiant','Imèl oswa ID','E-mail ou ID'],
     ['Contraseña','Password','Mot de passe','Modpas','Senha'],
     ['Es obligatorio introducir usuario/correo e contraseña.','Username/email and password are required.','Le nom d’utilisateur/e-mail et le mot de passe sont obligatoires.','Ou dwe antre non itilizatè/imèl ak modpas.','É obrigatório informar usuário/e-mail e senha.'],
     ['Verificando acceso…','Verifying access…','Vérification de l’accès…','Ap verifye aksè…','Verificando acesso…'],
@@ -9920,15 +9920,15 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   const u=current(),strip=$('sendwayo-v7-user-strip'),brand=$('sendwayo-v7-business-name');
   if(!strip)return;
   if(brand)brand.textContent='SENDWAYO EXPRESS';
+  const isAdmin=String(u&&(u.role||u.rol)||'').toUpperCase().includes('ADMIN');
   const values={
-   'sendwayo-v7-name':txt(u&&(u.nombre||u.name||u.email)||'Usuario'),
-   'sendwayo-v7-role':u?roleLabel(u):'',
-   'sendwayo-v7-id':txt(u&&(u.id||u.accountId)||'—'),
-   'sendwayo-v7-code':txt(u&&(u.codigo||u.code||u.codigo2)||'—')
+   'sendwayo-v7-name':isAdmin?'ADMINISTRADOR':txt(u&&(u.nombre||u.name||u.email)||'Usuario'),
+   'sendwayo-v7-role':isAdmin?'ADMINISTRADOR':(u?roleLabel(u):''),
+   'sendwayo-v7-id':isAdmin?'ADMIN-ADMINISTRADOR':txt(u&&(u.id||u.accountId)||'—')
   };
   Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el)el.textContent=value;});
   refreshClock();updateMenuPosition();
-  strip.setAttribute('aria-label','Cuenta activa: '+values['sendwayo-v7-role']+'; ID '+values['sendwayo-v7-id']+'; código '+values['sendwayo-v7-code']);
+  strip.setAttribute('aria-label','Cuenta activa: '+values['sendwayo-v7-role']+'; ID '+values['sendwayo-v7-id']);
  }
  window.sendwayoRefreshIdentityHeader=refreshIdentity;
  function ensureMenu(){
