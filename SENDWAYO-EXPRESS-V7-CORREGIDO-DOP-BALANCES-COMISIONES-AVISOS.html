@@ -208,8 +208,10 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     return window.sendwayoFirebaseSdkReady;
   };
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
-  // Allow the welcome screen to render before loading authentication dependencies.
-  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},2200);
+  // Start Firebase downloads immediately in the background; dynamic scripts do not block typing.
+  // This removes the artificial 2.2-second wait before the secure login can initialize.
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){window.sendwayoStartFirebaseSdk();},{once:true});
+  else window.sendwayoStartFirebaseSdk();
 })();
 </script>
 
@@ -839,9 +841,8 @@ function addNotificacion(msg, tipo){
 
 document.getElementById('bell-top').onclick=()=>{ document.getElementById('notif-panel').classList.toggle('hidden'); };
 
-setTimeout(()=>{
-  renderPrincipal();
-},500);
+// No renderizar el tablero completo antes de autenticar: evita bloquear la portada y el formulario de acceso.
+// renderPrincipal() se ejecuta después de validar la sesión Firebase.
 </script>
 
 <!-- MODAL RECARGAS EXACTO FOTO - Recargas - Comisión 5% -->
@@ -3407,6 +3408,112 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
+
+<!-- SENDWAYO V7: idempotencia de aprobaciones, paginación modular y menú móvil -->
+<style id="sendwayo-v7-final-order">
+@media(max-width:1024px){
+ #sendwayo-mobile-menu{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+ #sendwayo-main-sidebar{z-index:2147482600!important}
+ #sendwayo-menu-shade{z-index:2147482500!important}
+}
+#view-tablero table:has(#tabla-principal-body){display:none!important}
+#view-tablero #tabla-principal-body{display:none!important}
+.sendwayo-generic-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px;font-size:12px;color:#334155}
+.sendwayo-generic-pager button{border:1px solid #cbd5e1;border-radius:999px;padding:9px 14px;font-weight:800;background:#fff;min-height:40px}
+.sendwayo-generic-pager button:disabled{opacity:.45}
+</style>
+<script id="sendwayo-v7-final-integrity">
+(function(){
+ 'use strict';
+ const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];
+ const approved=t=>['aprobado','approved','pagado'].includes(norm(t&&(t.estado||t.status)));
+ const busy=new Set();
+ function findTx(id){return txs().find(t=>String(t.id)===String(id));}
+ // Protección inmediata del botón y segunda barrera atómica en Firebase durante la sincronización.
+ const approveOriginal=window.aprobar;
+ if(typeof approveOriginal==='function'&&!approveOriginal.__sendwayoOnce){
+  const guarded=function(id){
+   const t=findTx(id);
+   if(!t){return;}
+   if(approved(t)){alert('Esta transacción ya está aprobada. No se puede aprobar dos veces.');return;}
+   const key=String(id);
+   if(busy.has(key)){return;}
+   busy.add(key);
+   try{return approveOriginal.apply(this,arguments);}
+   finally{window.setTimeout(()=>busy.delete(key),5000);}
+  };
+  guarded.__sendwayoOnce=true;window.aprobar=guarded;
+ }
+ const genericOriginal=window.sendwayoActionGeneric;
+ if(typeof genericOriginal==='function'&&!genericOriginal.__sendwayoOnce){
+  const guardedGeneric=function(view,action,id){
+   if(['aprobar','approve','aceptar'].includes(norm(action))){
+    const t=findTx(id);
+    if(t&&approved(t)){alert('Esta transacción ya está aprobada. No se repetirá.');return;}
+    const k=String(view)+':'+String(id);
+    if(busy.has(k))return;
+    busy.add(k);
+    try{return genericOriginal.apply(this,arguments);}
+    finally{window.setTimeout(()=>busy.delete(k),5000);}
+   }
+   return genericOriginal.apply(this,arguments);
+  };
+  guardedGeneric.__sendwayoOnce=true;window.sendwayoActionGeneric=guardedGeneric;
+ }
+ // Paginación 10 por página para tablas de los módulos personalizados; no toca el tablero.
+ const pages=Object.create(null);
+ function applyPager(view){
+  if(!view||view==='tablero')return;
+  const root=document.getElementById('view-'+view);if(!root||root.classList.contains('hidden'))return;
+  const table=root.querySelector('table[id^="tabla-sendwayo-"],table');
+  if(!table||!table.tBodies||!table.tBodies[0])return;
+  if(root.querySelector('[id^="sendwayo-module-pagination-"]'))return;
+  const body=table.tBodies[0],all=[...body.rows];
+  if(!all.length)return;
+  const key=view,st=pages[key]||(pages[key]={page:1,query:''});
+  let pager=root.querySelector('.sendwayo-generic-pager');
+  if(!pager){pager=document.createElement('div');pager.className='sendwayo-generic-pager';pager.id='sendwayo-generic-pager-'+view;table.parentElement.insertAdjacentElement('afterend',pager);}
+  const inputs=[...root.querySelectorAll('input[type="search"],input[placeholder*="Buscador"],input[placeholder*="buscar" i]')];
+  const input=inputs[0];
+  if(input&&!input.dataset.sendwayoPagerBound){
+   input.dataset.sendwayoPagerBound='1';
+   input.addEventListener('input',()=>{st.page=1;window.setTimeout(()=>applyPager(view),0);});
+  }
+  const q=norm(input&&input.value||'');
+  if(st.query!==q){st.query=q;st.page=1;}
+  const filtered=all.filter(row=>!q||norm(row.innerText).includes(q));
+  const count=Math.max(1,Math.ceil(filtered.length/10));st.page=Math.min(Math.max(1,st.page),count);
+  const start=(st.page-1)*10;
+  all.forEach(row=>row.style.display='none');
+  filtered.forEach((row,index)=>{
+   const visible=index>=start&&index<start+10;
+   row.style.display=visible?'':'none';
+   if(visible&&row.cells.length){
+    const first=row.cells[0];
+    if(first.dataset.sendwayoOriginalNumber===undefined)first.dataset.sendwayoOriginalNumber=first.textContent.trim();
+    first.textContent=String(index+1-start).padStart(2,'0');
+   }
+  });
+  const from=filtered.length?start+1:0,to=Math.min(start+10,filtered.length);
+  pager.innerHTML='<span>Registros '+String(from).padStart(2,'0')+'–'+String(to).padStart(2,'0')+' de '+filtered.length+' · Página '+st.page+' de '+count+'</span><div style="display:flex;gap:8px"><button type="button" '+(st.page<=1?'disabled':'')+' data-page="-1">Anterior</button><button type="button" '+(st.page>=count?'disabled':'')+' data-page="1">Siguiente</button></div>';
+  pager.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{st.page=Math.min(count,Math.max(1,st.page+Number(btn.dataset.page)));applyPager(view);}));
+ }
+ const renderOriginal=window.renderModuloSeparado;
+ if(typeof renderOriginal==='function'&&!renderOriginal.__sendwayoPager){
+  const wrapped=function(view){
+   const result=renderOriginal.apply(this,arguments);
+   window.setTimeout(()=>applyPager(view),0);
+   return result;
+  };
+  wrapped.__sendwayoPager=true;window.renderModuloSeparado=wrapped;
+ }
+ window.addEventListener('sendwayo:transactions-updated',()=>{
+  const active=[...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden'));
+  if(active)window.setTimeout(()=>applyPager(active.id.replace(/^view-/,'')||''),0);
+ });
+})();
+</script>
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
@@ -8007,7 +8114,29 @@ window.sendwayoShareReceipt=async function(){
     const accountChanged=(role==='ADMIN'||role==='AGENTE')&&localMoneyChanged;
     if(!changed.length&&!accountChanged&&!deleted.length){return;}
     state.syncBusy=true;
+    const approvalClaims=[];
     try{
+      // Reclamo atómico en Realtime Database: una sola sesión puede obtener el derecho de aprobar.
+      // Si las reglas no permiten el reclamo, la operación falla cerrada y no acredita balances.
+      for(const t of changed){
+        const nextStatus=norm(t.estado||t.status||'');
+        const raw=t._cloudRaw||{};
+        const previousStatus=norm(raw.status||raw.estado||'Pendiente');
+        if(nextStatus!=='aprobado'||['aprobado','approved','pagado'].includes(previousStatus))continue;
+        const category=txt(t.firebaseCategory||categoryForTx(t));
+        const key=safeDbKey(t.firebaseKey||t.id);
+        if(!category)throw new Error('No se pudo identificar la categoría para proteger la aprobación única.');
+        const recordRef=db.ref(ROOT+'/'+category+'/'+key);
+        const currentSnap=await recordRef.once('value');
+        const currentRow=currentSnap.val()||{};
+        const currentStatus=norm(currentRow.status||currentRow.estado||'Pendiente');
+        if(['aprobado','approved','pagado'].includes(currentStatus))throw new Error('Esta transacción ya fue aprobada en otro dispositivo. No se repetirá el crédito ni el pago.');
+        const lockRef=recordRef.child('approvalLock');
+        const lock={authUid:auth.currentUser.uid,userId:state.profileKey,role:role,transactionId:txt(t.id),claimedAtMs:Date.now()};
+        const claim=await lockRef.transaction(value=>value?undefined:lock,undefined,false);
+        if(!claim.committed)throw new Error('Otro usuario ya está procesando la aprobación de esta transacción. No se realizará un segundo pago.');
+        approvalClaims.push({recordRef,lockRef,lock});
+      }
       const packageData=await buildCloudUpdates({current:changed,deleted});
       if(!Object.keys(packageData.updates).length){changed.forEach(t=>state.lastTxSnapshot.set(txt(t.id),transactionSignature(t)));return;}
       await db.ref().update(packageData.updates);
@@ -8026,8 +8155,20 @@ window.sendwayoShareReceipt=async function(){
       if(state.directory.some(r=>r.key===state.profileKey)){try{const currentProfileSnap=await userRoot.child(state.profileKey).once('value');if(currentProfileSnap.exists())state.profile=currentProfileSnap.val();}catch(e){}}
       clearSyncIssue();
     }catch(error){
+      // Liberar un reclamo únicamente si el registro sigue sin aprobarse. Si Firebase ya guardó
+      // la aprobación, el candado se conserva aunque se haya perdido la respuesta de red.
+      for(const claim of approvalClaims){
+        try{
+          const snap=await claim.recordRef.once('value');
+          const row=snap.val()||{};
+          const status=norm(row.status||row.estado||'Pendiente');
+          if(!['aprobado','approved','pagado'].includes(status)){
+            await claim.lockRef.transaction(value=>value&&value.authUid===claim.lock.authUid?null:undefined,undefined,false);
+          }
+        }catch(releaseError){console.warn('[SENDWAYO] No se pudo liberar un reclamo de aprobación fallido:',releaseError?.message||releaseError);}
+      }
       const message=error?.code==='PERMISSION_DENIED'||/permission_denied|permission denied/i.test(error?.message||'')
-        ? 'Firebase rechazó la escritura por sus reglas de seguridad. La operación no se confirmó; no la repita todavía.'
+        ? 'Firebase rechazó la escritura o el candado de aprobación por sus reglas. La operación no se confirmó; no la repita todavía.'
         : (error?.message||'No fue posible confirmar los cambios en Firebase.');
       showSyncIssue(message);
       // Revert the local transaction list to the last known remote baseline for any failed new record/status edit.
@@ -10234,7 +10375,15 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  }
  function normalizeRows(view,table){
   var body=table.tBodies&&table.tBodies[0];if(!body)return;
-  Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;}).forEach(function(row){
+  var directoryRows=Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;});
+  var sortedRows=directoryRows.slice().sort(function(a,b){
+   var aid=parseInt(String(a.cells[3]&&a.cells[3].textContent||'').replace(/\D/g,''),10)||0;
+   var bid=parseInt(String(b.cells[3]&&b.cells[3].textContent||'').replace(/\D/g,''),10)||0;
+   return aid-bid;
+  });
+  sortedRows.forEach(function(row,index){var current=body.children[index];if(current!==row)body.insertBefore(row,current||null);});
+  directoryRows=sortedRows;
+  directoryRows.forEach(function(row){
    var account=rowAccount(view,row);
    if(account){
     var code=visibleCode(account,view),codeCell=row.cells[4];
@@ -10270,7 +10419,13 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
   }
  }
  function enhance(view){if(!pages[view])return;var table=getTable(view);if(!table)return;toolbar(view);headersAndBalances(view,table);normalizeRows(view,table);draw(view);}
- function refresh(){enhance('agentes');enhance('remitentes');}
+ function refresh(){
+  accounts('agentes').forEach(function(account){
+   var code=visibleCode(account,'agentes');
+   if(code)account.aliases=Array.from(new Set([].concat(Array.isArray(account.aliases)?account.aliases:[],[code])));
+  });
+  enhance('agentes');enhance('remitentes');
+ }
  window.sendwayoAccountDirectoryPage=function(view,page){if(!pages[view])return;pages[view].page=Math.max(1,Number(page)||1);enhance(view);};
  window.sendwayoSearchAccountDirectory=function(view,value){if(!pages[view])return;pages[view].query=String(value||'');pages[view].page=1;var input=$('sendwayo-search-'+view);if(input)input.value=String(value||'');enhance(view);};
  document.addEventListener('click',function(event){
@@ -10332,6 +10487,50 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
   };
  }
  refresh();
+})();
+</script>
+
+<style id="sendwayo-v7-header-one-line-fix">
+#sendwayo-brand-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:nowrap!important;padding:7px 12px!important;min-height:58px!important;overflow-x:auto!important}
+#sendwayo-brand-bar .sendwayo-brand-left,#sendwayo-brand-bar .sendwayo-brand-actions{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important}
+#sendwayo-v7-user-strip{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;padding:4px 8px!important;background:transparent!important;border:0!important;box-shadow:none!important;position:static!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-kicker{display:none!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important;white-space:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta strong{font-weight:800!important}
+#sendwayo-v7-user-strip [id="sendwayo-v7-date"]{display:none!important}
+body:not(.sendwayo-authenticated) #sendwayo-v7-user-strip{display:none!important}
+body.sendwayo-authenticated>#welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
+@media(max-width:760px){
+ #sendwayo-brand-bar{gap:5px!important;padding:6px!important}
+ #sendwayo-brand-bar .sendwayo-brand-title{display:none!important}
+ #sendwayo-v7-user-strip{gap:5px!important;padding:2px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-name{max-width:82px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:9px!important}
+ #sendwayo-top-logout{padding:7px 9px!important;font-size:10px!important}
+}
+</style>
+<script id="sendwayo-v7-header-one-line-runtime">
+(function(){
+ const $=id=>document.getElementById(id);
+ function placeHeader(){
+  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip');
+  if(bar&&strip&&strip.parentElement!==bar){const actions=bar.querySelector('.sendwayo-brand-actions');bar.insertBefore(strip,actions||null);}
+ }
+ function authView(){
+  let u=null;try{u=window.currentUser||currentUser||null}catch(e){u=window.currentUser||null}
+  const ok=!!(u&&(u.id||u.uid||u.codigo||u.email));
+  document.body.classList.toggle('sendwayo-authenticated',ok);
+  const w=$('welcome-landing'),l=$('login-screen');
+  if(ok){if(w){w.hidden=true;w.style.setProperty('display','none','important')}if(l){l.classList.add('hidden');l.style.setProperty('display','none','important')}placeHeader();}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{placeHeader();authView()},{once:true});else{placeHeader();authView()}
+ document.addEventListener('click',()=>setTimeout(()=>{placeHeader();authView()},80),true);
+ const mo=new MutationObserver(()=>{placeHeader();authView()});
+ mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
 })();
 </script>
 </body>
