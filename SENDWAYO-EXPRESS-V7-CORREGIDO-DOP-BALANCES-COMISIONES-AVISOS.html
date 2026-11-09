@@ -9115,7 +9115,7 @@ window.sendwayoShareReceipt=async function(){
    var nextId=function(){return view==='agentes'?prefix+String(num):prefix+String(num).padStart(5,'0');};
    if(!a){while(accounts.some(function(x){return [x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'').toLowerCase()===nextId().toLowerCase();});}))num++;}
    if(view==='agentes'&&!a&&num>9){alert('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');return;}
-   var visibleId=a?String(a.id):nextId();
+   var visibleId=a?String(a.id):'';
    oldOpen(view,id||'');
    var name=$('v7-admin-name'),username=$('v7-admin-username'),code=$('v7-admin-code'),email=$('v7-admin-email'),phone=$('v7-admin-phone');
    var body=$('sendwayo-admin-account-modal');
@@ -9126,6 +9126,13 @@ window.sendwayoShareReceipt=async function(){
     var input=document.createElement('input');input.id='v7-admin-id';input.className='mt-1 w-full border rounded-xl px-3 py-2.5 font-normal';input.value=visibleId;
     label.appendChild(input);var holder=body.querySelector('.p-4.space-y-3');if(holder)holder.insertBefore(label,holder.firstChild);
    }else idInput.value=visibleId;
+   if(!a){
+    var seq=(view==='agentes'?(Array.isArray(AGENTES)?AGENTES.length:0):(Array.isArray(REMITENTES)?REMITENTES.length:0))+1;
+    var makeHuman=function(value){var parts=String(value||'Usuario').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().split(/\s+/).filter(Boolean);var first=(parts[0]||'US').slice(0,2).padEnd(2,'X');var last=(parts.length>1?parts[parts.length-1]:parts[0]||'ER').slice(0,2).padEnd(2,'X');return (view==='agentes'?'AG':'RE')+first+last+String(seq).padStart(2,'0');};
+    idInput.value=makeHuman(name&&name.value);
+    if(name&&!name.dataset.sendwayoIdBound){name.dataset.sendwayoIdBound='1';name.addEventListener('input',function(){idInput.value=makeHuman(name.value);});}
+   }
+   if(code&&code.closest('label'))code.closest('label').style.display='none';
    return;
   };
   var originalSave=window.sendwayoSaveAccountForm;
