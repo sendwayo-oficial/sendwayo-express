@@ -382,18 +382,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
   <div class="sendwayo-brand-left">
     <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
-  </div>
-  <div class="sendwayo-brand-actions">
     <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
-    <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
-    <button id="sendwayo-top-logout" type="button" onclick="window.cerrarSesion()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Salir</button>
   </div>
-  <div class="sendwayo-legacy-header-values" hidden aria-hidden="true">
-    <span id="user-top"></span><span id="hora-top"></span>
-    <span id="top-bal-rd">0.00</span><span id="top-bal-htg">0.00</span>
-    <span id="top-com-rd">0.00</span><span id="top-com-htg">0.00</span>
-  </div>
-</div>
 <section id="sendwayo-v7-user-strip" class="sendwayo-workspace-identity" data-sendwayo-header-ready="1" aria-label="Identidad y horario de la cuenta activa">
   <div class="sendwayo-workspace-person">
     <span class="sendwayo-workspace-kicker">CUENTA ACTIVA</span>
@@ -410,6 +400,18 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <span id="sendwayo-v7-duration">Tiempo: 00:00</span>
   </div>
 </section>
+  <div class="sendwayo-brand-actions">
+    
+    <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
+    <button id="sendwayo-top-logout" type="button" onclick="window.cerrarSesion()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold">Salir</button>
+  </div>
+  <div class="sendwayo-legacy-header-values" hidden aria-hidden="true">
+    <span id="user-top"></span><span id="hora-top"></span>
+    <span id="top-bal-rd">0.00</span><span id="top-bal-htg">0.00</span>
+    <span id="top-com-rd">0.00</span><span id="top-com-htg">0.00</span>
+  </div>
+</div>
+
 
 <div id="sendwayo-workspace-shell" class="sendwayo-workspace-shell flex">
   <div id="sendwayo-main-sidebar" class="w-[220px] bg-[#0f2440] text-white min-h-screen p-0 text-[11px]">
@@ -3676,7 +3678,7 @@ window.sendwayoShareReceipt=async function(){
    }
    let strip=$('sendwayo-v7-user-strip');
    if(!strip){strip=document.createElement('section');strip.id='sendwayo-v7-user-strip';strip.className='sendwayo-workspace-identity';}
-   if(brandBar){if(strip.parentElement!==document.body||strip.previousElementSibling!==brandBar)brandBar.insertAdjacentElement('afterend',strip);}
+   if(brandBar){const actions=brandBar.querySelector('.sendwayo-brand-actions');if(actions&&strip.parentElement!==brandBar)brandBar.insertBefore(strip,actions);else if(!actions&&strip.parentElement!==brandBar)brandBar.appendChild(strip);}
    else if(strip.parentElement!==document.body)document.body.insertBefore(strip,root);
    const u=getUser()||{},nm=u.nombre||u.name||u.email||'Usuario',id=u.id||u.uid||'—',code=u.codigo||u.codigo2||'—';
    if(strip.dataset.sendwayoHeaderReady!=='1'){
