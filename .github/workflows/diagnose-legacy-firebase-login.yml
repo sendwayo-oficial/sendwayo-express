@@ -4,6 +4,7 @@ name: SENDWAYO — Diagnose legacy login data (read only)
 # Re-run read-only audit after reported production login failure; no account or financial writes.
 # 2026-11-09: trigger the existing read-only audit after the latest login report.
 # 2026-11-09: repeat the read-only audit after repairing profile identity synchronization.
+# 2026-11-09: user explicitly authorized another automatic read-only diagnostic run.
 
 on:
   push:
@@ -120,7 +121,7 @@ jobs:
                 if (userEmail) authUserEmails.add(userEmail);
                 if (String(user.localId || '').trim()) authUserUids.add(String(user.localId));
                 if (userEmail === 'sendwayoexpress@gmail.com') sendwayoAuthExists = true;
-              if (userEmail === 'ideletteismorin@gmail.com') {
+                if (userEmail === 'ideletteismorin@gmail.com') {
                   adminAuthExists = true;
                   adminAuthDisabled = Boolean(user.disabled);
                   adminAuthUid = String(user.localId || '');
@@ -182,9 +183,9 @@ jobs:
                 adminHasAuthEmail = Boolean(rowEmails.some(v => v.includes('@')));
                 adminEmailMatchesAuth = rowEmails.includes('ideletteismorin@gmail.com') && authUserEmails.has('ideletteismorin@gmail.com');
                 adminUidMatchesAuth = Boolean(uid && authUserUids.has(uid) && uid === adminAuthUid);
-              adminProfileEmailsMatchAnyAuth = rowEmails.some(value => authUserEmails.has(value));
-              adminProfileUidMatchesAnyAuth = Boolean(uid && authUserUids.has(uid));
-              adminProfileEmailMatchesSendwayoAuth = rowEmails.includes('sendwayoexpress@gmail.com') && authUserEmails.has('sendwayoexpress@gmail.com');
+                adminProfileEmailsMatchAnyAuth = rowEmails.some(value => authUserEmails.has(value));
+                adminProfileUidMatchesAnyAuth = Boolean(uid && authUserUids.has(uid));
+                adminProfileEmailMatchesSendwayoAuth = rowEmails.includes('sendwayoexpress@gmail.com') && authUserEmails.has('sendwayoexpress@gmail.com');
               }
             }
             duplicateProfileEmailRecords = [...profileEmailFrequency.values()].filter(count => count > 1).length;
