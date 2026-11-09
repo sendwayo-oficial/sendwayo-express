@@ -429,6 +429,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button onclick="showView('recepcion')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🎁</span> Recepción envío y distribución</button>
     <button onclick="showView('facturas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🧾</span> Pago de facturas y servicios</button>
     <button onclick="showView('mibanco')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏦</span> Mi banco / Mi cuenta bancaria</button>
+<button onclick="window.sendwayoOpenIdFile()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🗂️</span> Expediente por ID</button>
+<button onclick="window.sendwayoOpenCardPayments()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Pagos con tarjeta / PayPal</button>
     <button onclick="showView('cuentas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏛️</span> Cuentas bancarias y depósitos</button>
     <button onclick="showView('ajustes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>⚙️</span> Ajustes / créditos pendientes 0</button>
     <button onclick="showView('creditos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Créditos pendientes</button>
@@ -10361,5 +10363,37 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
  refresh();
 })();
 </script>
+<script id="sendwayo-id-normalization-and-paypal">(function(){
+'use strict';
+function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();}
+function idFor(role,name,n){var p=norm(name).replace(/[^A-Z ]/g,' ').split(/\s+/).filter(Boolean);var a=(p[0]||'US').slice(0,2).padEnd(2,'X');var b=(p.length>1?p[p.length-1]:p[0]||'ER').slice(0,2).padEnd(2,'X');return (role==='AGENTE'?'AG':'RE')+a+b+String(n).padStart(2,'0');}
+function normalizeIds(){
+ try{if(typeof ADMIN!=='undefined'&&ADMIN){ADMIN.id='ADMIN-ADMINISTRADOR';ADMIN.role='ADMIN';}}catch(e){}
+ [['AGENTE',typeof AGENTES!=='undefined'?AGENTES:[]],['REMITENTE',typeof REMITENTES!=='undefined'?REMITENTES:[]]].forEach(function(pair){
+  var role=pair[0],list=Array.isArray(pair[1])?pair[1]:[];
+  list.forEach(function(a,i){if(!a)return;var old=String(a.id||''),next=idFor(role,a.nombre||a.name||a.displayName,i+1);if(old!==next){if(old&&!a.legacyId)a.legacyId=old;if(old){a.idAnterior=old;a.idAliases=Array.from(new Set([...(a.idAliases||[]),old]));}a.id=next;}a.numero=String(i+1).padStart(2,'0');});
+ });
+ try{(window.USUARIOS_LOGIN||[]).forEach(function(u){var all=[...(typeof AGENTES!=='undefined'?AGENTES:[]),...(typeof REMITENTES!=='undefined'?REMITENTES:[])];var a=all.find(function(x){return norm(x.email||x.usuario)===norm(u.email||u.usuario);});if(a){u.id=a.id;u.idAliases=a.idAliases||[];u.aliases=Array.from(new Set([...(u.aliases||[]),a.legacyId,a.idAnterior,a.id].filter(Boolean)));}});}catch(e){}
+ try{if(window.currentUser&&norm(window.currentUser.role).indexOf('ADMIN')>=0)window.currentUser.id='ADMIN-ADMINISTRADOR';}catch(e){}
+}
+window.sendwayoMakeUserId=idFor;window.sendwayoNormalizeUserIds=normalizeIds;normalizeIds();
+window.addEventListener('sendwayo:firebase-ready',function(){setTimeout(normalizeIds,150);});
+window.addEventListener('load',function(){setTimeout(normalizeIds,150);});
+function accounts(){var a=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)a.push(ADMIN);}catch(e){}try{a=a.concat(typeof AGENTES!=='undefined'?AGENTES:[],typeof REMITENTES!=='undefined'?REMITENTES:[]);}catch(e){}return a;}
+window.sendwayoOpenIdFile=function(){
+ var raw=window.prompt('Escriba el ID de la persona para abrir su expediente:');if(!raw)return;var wanted=norm(raw);
+ var a=accounts().find(function(x){return [x.id,x.idAnterior,x.legacyId,x.dbUserKey].concat(x.idAliases||[]).some(function(v){return norm(v)===wanted;});});
+ if(!a){window.alert('No se encontró un expediente con ese ID.');return;}
+ var tx=[];try{tx=Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];}catch(e){}
+ var keys=[a.id,a.legacyId,a.idAnterior,a.dbUserKey,a.uid,a.email,a.usuario].concat(a.idAliases||[]).filter(Boolean).map(norm);
+ var linked=tx.filter(function(t){var vals=[t.creadorId,t.creadoPorId,t.usuarioId,t.userId,t.ownerId,t.remitenteId,t.senderId,t.accountId,t.email,t.dbUserKey].filter(Boolean).map(norm);return vals.some(function(v){return keys.indexOf(v)>=0;});});
+ var b=a.balances||{},c=a.commissions||a.comisiones||{};
+ window.alert('EXPEDIENTE POR ID\n\nNombre: '+(a.nombre||a.name||'')+'\nID: '+(a.id||'')+'\nRol: '+(a.role||a.rol||'')+'\nBalance DOP: RD$ '+Number(b.DOP||0).toFixed(2)+'\nBalance HTG: G '+Number(b.HTG||0).toFixed(2)+'\nComisión DOP: RD$ '+Number(c.DOP||0).toFixed(2)+'\nComisión HTG: G '+Number(c.HTG||0).toFixed(2)+'\nMovimientos vinculados cargados: '+linked.length+'\n\nConsulte los módulos y reportes para ver los detalles de cada movimiento.');
+};
+window.SENDWAYO_PAYMENTS=window.SENDWAYO_PAYMENTS||{provider:'PayPal',status:'PENDING_MERCHANT_ONBOARDING',cardCheckoutEnabled:false,payoutsEnabled:false};
+window.sendwayoOpenCardPayments=function(){
+ window.alert('PAGOS CON TARJETA / PAYPAL\n\nEstado: pendiente de activación oficial.\n\nPayPal permitirá preparar el cobro con tarjetas Visa y Mastercard de débito y crédito, sujeto a la verificación de la cuenta comercial y a la disponibilidad del país.\n\nCrear cuenta PayPal Business: https://www.paypal.com/do/business\nPanel de desarrolladores: https://developer.paypal.com/dashboard/\n\nNo se activarán cobros ni se acreditarán balances hasta configurar las credenciales privadas en el Worker y validar los webhooks.');
+};
+})();</script>
 </body>
 </html>
