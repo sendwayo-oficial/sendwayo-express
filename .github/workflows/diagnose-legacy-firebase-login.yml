@@ -2,6 +2,7 @@
 name: SENDWAYO — Diagnose legacy login data (read only)
 # Forced read-only login audit requested on 2026-10-16; inspect account/profile alignment only, never write credentials or financial data.
 # Re-run read-only audit after reported production login failure; no account or financial writes.
+# 2026-11-09: trigger the existing read-only audit after the latest login report.
 
 on:
   push:
