@@ -209,7 +209,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
   };
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
   // Allow the welcome screen to render before loading authentication dependencies.
-  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},2200);
+  window.setTimeout(function(){window.sendwayoStartFirebaseSdk();},650);
 })();
 </script>
 
@@ -335,7 +335,39 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="preload" as="image" href="./assets/sendwayo-logo-real.jpg">
-</head>
+<style id="sendwayo-v7-owner-welcome-layout">
+#welcome-landing.sendwayo-welcome-minimal{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;overflow-y:auto!important;background:#f2f5f9!important;color:#10243d!important;font-family:Arial,sans-serif!important;padding:clamp(12px,2.4vw,28px)!important}
+.sendwayo-welcome-card{width:min(1120px,100%)!important;margin:0 auto!important;background:#fff!important;border:1px solid #e0e7ef!important;border-radius:22px!important;overflow:hidden!important;box-shadow:0 12px 34px rgba(15,36,64,.10)!important}
+.sendwayo-welcome-brand{display:flex!important;align-items:center!important;gap:12px!important;padding:12px 20px!important;border-bottom:1px solid #e6edf4!important}
+.sendwayo-welcome-brand img{width:52px!important;height:46px!important;object-fit:contain!important}
+.sendwayo-welcome-brand strong{font-size:17px!important;letter-spacing:.04em!important;font-weight:900!important;color:#102c4c!important}
+.sendwayo-welcome-photo{margin:0!important;width:100%!important;background:#dbe4ed!important;aspect-ratio:16/8.4!important;max-height:490px!important;overflow:hidden!important}
+.sendwayo-welcome-photo img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 48%!important}
+.sendwayo-vmo{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;padding:18px 20px 8px!important}
+.sendwayo-vmo article{padding:13px 14px!important;border:1px solid #e5ebf2!important;border-radius:13px!important;background:#fbfcfe!important}
+.sendwayo-vmo h2{font-size:15px!important;font-weight:900!important;color:#0f3d65!important;margin:0 0 6px!important}
+.sendwayo-vmo p{font-size:12px!important;line-height:1.5!important;color:#526477!important;margin:0!important}
+.sendwayo-welcome-actions{display:flex!important;justify-content:center!important;gap:12px!important;padding:14px 20px 22px!important}
+.sendwayo-welcome-actions button{min-width:170px!important;border:0!important;border-radius:999px!important;padding:13px 22px!important;font-size:13px!important;font-weight:900!important;cursor:pointer!important;background:#12365b!important;color:#fff!important;touch-action:manipulation!important}
+.sendwayo-welcome-actions button:first-child{background:#0e8c70!important}
+@media(max-width:700px){#welcome-landing.sendwayo-welcome-minimal{padding:0!important}.sendwayo-welcome-card{min-height:100vh!important;border:0!important;border-radius:0!important}.sendwayo-welcome-photo{aspect-ratio:4/3!important;max-height:360px!important}.sendwayo-vmo{grid-template-columns:1fr!important;padding:13px!important;gap:8px!important}.sendwayo-vmo article{padding:11px!important}.sendwayo-welcome-actions{padding:12px 13px 22px!important}.sendwayo-welcome-actions button{min-width:0!important;flex:1!important}.sendwayo-welcome-brand{padding:10px 14px!important}}
+</style><style id="sendwayo-v7-final-layout-performance">
+#sendwayo-brand-bar{display:flex!important;align-items:center!important;gap:12px!important;flex-wrap:nowrap!important;min-height:60px!important;padding:6px 12px!important;overflow-x:auto!important}
+#sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;gap:9px!important;flex:0 0 auto!important;white-space:nowrap!important}
+#sendwayo-brand-bar .sendwayo-brand-title{white-space:nowrap!important}
+#sendwayo-v7-user-strip{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;padding:3px 8px!important;border:0!important;background:transparent!important;box-shadow:none!important;white-space:nowrap!important;position:static!important;overflow-x:auto!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-kicker{display:none!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-name{white-space:nowrap!important;font-size:12px!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
+#sendwayo-mobile-menu{position:relative!important;left:auto!important;top:auto!important;flex:0 0 42px!important;width:42px!important;height:42px!important;align-items:center!important;justify-content:center!important}
+#sendwayo-v7-code{display:inline!important}
+#view-agentes table th:nth-child(5),#view-agentes table td:nth-child(5),#view-remitentes table th:nth-child(5),#view-remitentes table td:nth-child(5){display:none!important}
+#v7-admin-code{display:none!important}
+#sendwayo-admin-account-modal label:has(#v7-admin-code){display:none!important}
+@media(min-width:1025px){#sendwayo-mobile-menu,#sendwayo-menu-shade{display:none!important}#sendwayo-main-sidebar{display:block!important;position:relative!important;left:auto!important;transform:none!important;flex:0 0 220px!important;min-height:100vh!important}}
+@media(max-width:1024px){#sendwayo-brand-bar{gap:5px!important;padding:5px!important}#sendwayo-v7-user-strip{gap:5px!important}#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important}#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:9px!important}}
+</style></head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
   // Available before any older form handler can request a notice.
@@ -380,9 +412,9 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
     <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
+    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
   <div class="sendwayo-brand-actions">
     <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
@@ -427,6 +459,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <button onclick="showView('recepcion')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🎁</span> Recepción envío y distribución</button>
     <button onclick="showView('facturas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🧾</span> Pago de facturas y servicios</button>
     <button onclick="showView('mibanco')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏦</span> Mi banco / Mi cuenta bancaria</button>
+    <button type="button" onclick="window.sendwayoOpenIdFile && window.sendwayoOpenIdFile()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🗂️</span> Expediente por ID</button>
+    <button type="button" onclick="window.sendwayoOpenCardPayments && window.sendwayoOpenCardPayments()" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Pagos con tarjeta / PayPal</button>
     <button onclick="showView('cuentas')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>🏛️</span> Cuentas bancarias y depósitos</button>
     <button onclick="showView('ajustes')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>⚙️</span> Ajustes / créditos pendientes 0</button>
     <button onclick="showView('creditos')" class="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center gap-2"><span>💳</span> Créditos pendientes</button>
@@ -2485,52 +2519,24 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 .toolbar-round { border-radius: 9999px; }
 </style>
 
-<div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
-  <main class="sendwayo-home">
-    <header class="sendwayo-home-header">
-      <div class="sendwayo-home-header-inner">
-        <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
-      </div>
+<div id="welcome-landing" class="sendwayo-welcome-minimal">
+  <main class="sendwayo-welcome-card">
+    <header class="sendwayo-welcome-brand">
+      <img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" loading="eager" decoding="async">
+      <strong>SENDWAYO EXPRESS</strong>
     </header>
-    <div class="sendwayo-home-content">
-      <section class="sendwayo-home-hero">
-        <div class="sendwayo-home-gallery">
-          <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
-            <div class="sendwayo-home-photo-shade"></div>
-            <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
-            <div id="v162-dots" class="sendwayo-home-dots"></div>
-            <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
-          </div>
-          <div class="sendwayo-home-thumbs">
-            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
-          </div>
-        </div>
-        <aside class="sendwayo-home-aside">
-          <div class="sendwayo-home-aside-tag">TU CONEXIÓN ENTRE DESTINOS</div>
-          <h2>Todo más fácil, en un solo lugar.</h2>
-          <p>Una plataforma para acompañarte en tus operaciones de República Dominicana, Haití y otros destinos.</p>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Atención organizada</strong><small>Seguimiento de tus solicitudes y operaciones.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Servicios variados</strong><small>Dinero, paquetes, recargas y pagos.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Acceso seguro</strong><small>Tu cuenta personal dentro de SENDWAYO EXPRESS.</small></div></div>
-          <div class="sendwayo-home-aside-photo"><img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS"></div>
-        </aside>
-      </section>
-      <section class="sendwayo-home-services">
-        <div class="sendwayo-home-section-title"><span>NUESTROS SERVICIOS</span><h2>¿Qué necesitas hacer?</h2></div>
-        <div class="sendwayo-home-service-grid">
-          <article><span>💸</span><strong>Envíos de dinero</strong><small>RD · Haití · Estados Unidos y otros destinos</small></article>
-          <article><span>💰</span><strong>Retiros</strong><small>Operaciones de retiro y entrega</small></article>
-          <article><span>📦</span><strong>Paquetes</strong><small>Recepción, seguimiento y distribución</small></article>
-          <article><span>📱</span><strong>Recargas y pagos</strong><small>Recargas telefónicas y pago de servicios</small></article>
-        </div>
-      </section>
-    </div>
-    <footer class="sendwayo-home-footer">© SENDWAYO EXPRESS · Conectamos destinos</footer>
+    <figure class="sendwayo-welcome-photo">
+      <img src="assets/sendwayo-welcome.webp" alt="Atención y envíos SENDWAYO EXPRESS" fetchpriority="high" decoding="async">
+    </figure>
+    <section class="sendwayo-vmo">
+      <article><h2>Visión</h2><p>Conectar personas, familias y negocios de distintos países mediante servicios de envío, recepción y distribución confiables.</p></article>
+      <article><h2>Misión</h2><p>Ofrecer operaciones claras, seguras y accesibles, con seguimiento y atención responsable en cada destino.</p></article>
+      <article><h2>Objetivo</h2><p>Construir una red internacional de servicios y sucursales, con procesos transparentes, control financiero y atención cercana.</p></article>
+    </section>
+    <nav class="sendwayo-welcome-actions" aria-label="Acceso a SENDWAYO EXPRESS">
+      <button type="button" onclick="window.sendwayoShowCreateAccount()">Crear cuenta</button>
+      <button type="button" onclick="window.v162_showLogin()">Ingresar</button>
+    </nav>
   </main>
 </div>
 <style id="sendwayo-v7-public-landing-clean">
@@ -2742,14 +2748,25 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
   window.v162_prev=function(){ carIdx=(carIdx-1+carouselImgs.length)%carouselImgs.length; v162_setCar(carIdx); };
 
   window.v162_showLogin=function(){
-    document.body.classList.remove('sendwayo-authenticated');
-    document.body.classList.add('sendwayo-login-open');
-    const welcome=document.getElementById('welcome-landing');
-    if(welcome){welcome.classList.add('hidden');welcome.style.setProperty('display','none','important');}
-    const login=document.getElementById('login-screen');
-    if(login){v162_fixLogin();login.classList.remove('hidden');login.classList.add('sendwayo-login-visible');login.style.setProperty('display','flex','important');login.style.setProperty('visibility','visible','important');}
-    setTimeout(()=>document.getElementById('login-usuario')?.focus(),50);
-  };
+  document.body.classList.remove('sendwayo-authenticated');
+  document.body.classList.add('sendwayo-login-open');
+  const welcome=document.getElementById('welcome-landing');
+  if(welcome){welcome.classList.add('hidden');welcome.style.setProperty('display','none','important');}
+  const login=document.getElementById('login-screen');
+  if(login){
+    login.classList.remove('hidden');
+    login.classList.add('sendwayo-login-visible');
+    login.style.setProperty('display','flex','important');
+    login.style.setProperty('visibility','visible','important');
+    let input=document.getElementById('login-usuario');
+    if(input){input.type='text';input.placeholder='Correo electrónico o ID';input.setAttribute('autocomplete','username');input.setAttribute('autocapitalize','none');}
+    const label=login.querySelector('label');
+    if(label)label.textContent='Correo electrónico o ID';
+    const hint=login.querySelector('.text-[9px].text-gray-500');
+    if(hint)hint.textContent='Inicie sesión con su correo electrónico o ID y contraseña.';
+  }
+  setTimeout(()=>document.getElementById('login-usuario')?.focus(),40);
+};
   window.v162_goWelcome=function(){
     document.body.classList.remove('sendwayo-login-open');
     const login=document.getElementById('login-screen');
@@ -8834,6 +8851,35 @@ window.sendwayoShareReceipt=async function(){
    var o=document.createElement('option');o.value=c.alpha2;o.textContent=countryLabel(c);select.appendChild(o);
   });
   if(old&&getCountry(old))select.value=old;
+  attachCountrySearch(select);
+ }
+ function attachCountrySearch(select){
+  if(!select||!select.id||select.dataset.sendwayoSearchReady==='1')return;
+  var input=$(select.id+'-search');
+  var dl=$('sendwayo-v7-country-suggestions');
+  if(!dl){
+   dl=document.createElement('datalist');dl.id='sendwayo-v7-country-suggestions';
+   countries.slice().sort(function(a,b){return countryName(a).localeCompare(countryName(b),'es');}).forEach(function(c){var o=document.createElement('option');o.value=countryLabel(c);dl.appendChild(o);});
+   document.body.appendChild(dl);
+  }
+  if(!input){
+   input=document.createElement('input');input.type='search';input.id=select.id+'-search';input.className='sendwayo-country-search';
+   input.setAttribute('list',dl.id);input.setAttribute('autocomplete','off');input.placeholder='Escriba país, ISO o prefijo…';
+   input.style.cssText='display:block;width:100%;min-height:40px;margin:0 0 5px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#10243d;font-size:12px;box-sizing:border-box';
+   select.parentNode.insertBefore(input,select);
+  }
+  select.style.display='none';
+  function resolve(){
+   var q=String(input.value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+   var code=(String(input.value||'').match(/\(([A-Z]{2})\)/)||[])[1];
+   var found=code?getCountry(code):countries.find(function(c){return [countryName(c),c.name,c.alpha2,c.callingCode].some(function(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()===q;});});
+   if(!found&&q){var hits=countries.filter(function(c){return [countryName(c),c.name,c.alpha2,c.callingCode].some(function(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().indexOf(q)===0;});});if(hits.length===1)found=hits[0];}
+   if(found&&select.value!==found.alpha2){select.value=found.alpha2;select.dispatchEvent(new Event('change',{bubbles:true}));}
+  }
+  input.addEventListener('input',resolve);input.addEventListener('change',resolve);
+  select.addEventListener('change',function(){var c=getCountry(select.value);if(c)input.value=countryLabel(c);});
+  var current=getCountry(select.value);if(current)input.value=countryLabel(current);
+  select.dataset.sendwayoSearchReady='1';
  }
  function fillPrefix(select,iso,selected){
   if(!select)return;var c=getCountry(iso)||getCountry('HT'),list=prefixes(c);select.replaceChildren();
@@ -8844,6 +8890,26 @@ window.sendwayoShareReceipt=async function(){
  function refreshCountryWidgets(){
   mountBeneficiaryCountryControls();mountRouteControls('envio');mountRouteControls('retiro');
  }
+ function loadSendwayoFxRates(){
+  if(window.SENDWAYO_FX_RATES&&window.SENDWAYO_FX_RATES.rates)return Promise.resolve(window.SENDWAYO_FX_RATES);
+  if(window.__sendwayoFxRequest)return window.__sendwayoFxRequest;
+  window.__sendwayoFxRequest=fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'})
+   .then(function(response){if(!response.ok)throw new Error('No se pudo consultar el tipo de cambio.');return response.json();})
+   .then(function(result){
+    if(result.result!=='success'||!result.rates)throw new Error('La fuente de tasas no respondió correctamente.');
+    return fetch('https://restcountries.com/v3.1/all?fields=cca2,currencies',{cache:'force-cache'})
+     .then(function(response){if(!response.ok)throw new Error('No se pudo consultar la moneda de destino.');return response.json();})
+     .then(function(rows){
+      var map={};(rows||[]).forEach(function(row){var codes=row.currencies?Object.keys(row.currencies):[];if(row.cca2&&codes.length)map[String(row.cca2).toUpperCase()]=codes[0];});
+      window.SENDWAYO_FX_RATES={rates:result.rates,currenciesByCountry:map,updatedAt:result.time_last_update_utc||new Date().toISOString(),nextUpdate:result.time_next_update_utc||'',source:'ExchangeRate-API',indicative:true};
+      window.__sendwayoFxRequest=null;
+      ['envio','retiro'].forEach(function(kind){try{updateRouteCalc(kind);}catch(e){}});
+      return window.SENDWAYO_FX_RATES;
+     });
+   }).catch(function(error){window.__sendwayoFxRequest=null;window.SENDWAYO_FX_ERROR=String(error.message||error);console.warn('[SENDWAYO FX]',error);return null;});
+  return window.__sendwayoFxRequest;
+ }
+
  window.SENDWAYO_V7_COUNTRIES=countries;
  // El catálogo íntegro ya está integrado: no se bloquea la pantalla con una descarga ni se usa una caché antigua incompleta.
  window.SENDWAYO_V7_COUNTRIES_READY=Promise.resolve(countries);
@@ -9006,15 +9072,26 @@ window.sendwayoShareReceipt=async function(){
    cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';
   }else{
    fee=Math.round(amount*.08*100)/100;net=amount-fee;
-   if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
-   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur=d.currency;received=net;receivedCur=cur;}
-   else{cur=d.currency;received=net;receivedCur=cur;}
+   if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';if(input)input.dataset.fxReady='1';}
+   else if(d.from.alpha2==='HT'&&d.to.alpha2==='DO'){cur=d.currency;received=net;receivedCur=cur;if(input)input.dataset.fxReady='1';}
+   else if(d.from.alpha2===d.to.alpha2){cur=d.currency;received=net;receivedCur=cur;if(input)input.dataset.fxReady='1';}
+   else{
+    cur=d.currency;
+    var fx=window.SENDWAYO_FX_RATES,target=fx&&fx.currenciesByCountry&&fx.currenciesByCountry[d.to.alpha2];
+    if(fx&&fx.rates&&target&&Number(fx.rates[cur])>0&&Number(fx.rates[target])>0){
+      var dynamicRate=Number(fx.rates[target])/Number(fx.rates[cur]);received=net*dynamicRate;receivedCur=target;
+      if(input){input.dataset.fxReady='1';input.dataset.fxRate=String(dynamicRate);input.dataset.fxCurrency=target;}
+    }else{
+      received=0;receivedCur=target||'—';if(input)input.dataset.fxReady='0';
+      if(input&&amount>0)loadSendwayoFxRates();
+    }
+   }
   }
   var fmt=function(v){return Number(v||0).toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});};
   var el=$('v162-'+kind+'-neto');if(el)el.textContent=fmt(net)+' '+cur;
   el=$('v162-'+kind+'-com');if(el)el.textContent=fmt(fee)+' '+cur;
   el=$('v162-'+kind+'-rec');if(el)el.textContent=fmt(received)+' '+receivedCur;
-  el=$('v162-'+kind+'-tasa');if(el)el.textContent=d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='DO'?'Sin conversión automática':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Sin conversión automática';
+  el=$('v162-'+kind+'-tasa');if(el){var fxText=input&&input.dataset.fxRate?'Tasa indicativa: 1 '+cur+' = '+Number(input.dataset.fxRate).toFixed(5)+' '+receivedCur:d.from.alpha2==='DO'&&d.to.alpha2==='HT'?'Tasa pactada: 2.10':d.from.alpha2==='HT'&&d.to.alpha2==='HT'?'Tarifa HTG':'Consultando tasa de cambio…';el.textContent=fxText;}
   if(input){input.dataset.neto=net;input.dataset.fee=fee;input.dataset.rec=fmt(received)+' '+receivedCur;input.dataset.esHT=cur==='HTG'?'1':'0';}
  }
  function mountRouteControls(kind){
@@ -9063,6 +9140,7 @@ window.sendwayoShareReceipt=async function(){
   if(!sender){alert('Seleccione un remitente válido.');return false;}
   if(!beneficiary){alert('Seleccione o escriba el beneficiario.');return false;}
   if(!Number.isFinite(amount)||amount<=0){alert('Introduzca un monto mayor que cero.');return false;}
+  if(d.from.alpha2!==d.to.alpha2&&!(d.from.alpha2==='DO'&&d.to.alpha2==='HT')&&!(d.from.alpha2==='HT'&&d.to.alpha2==='DO')&&$('v162-'+kind+'-monto')?.dataset.fxReady!=='1'){loadSendwayoFxRates();alert('La tasa de cambio para esta ruta todavía no está disponible. No se registró ni descontó dinero.');return false;}
   if(typeof window.sendwayoBuildMoneyTx!=='function'){alert('El registro financiero de SENDWAYO no está disponible.');return false;}
   try{
    var t=window.sendwayoBuildMoneyTx(kind==='envio'?'Envío':'Retiro',{route:d.route,sender:sender,amount:amount,beneficiary:beneficiary,phone:phone,detail:d.details+'; remitente: '+(sender.nombre||sender.name||sender.id)+'; beneficiario: '+beneficiary,currency:d.currency});
@@ -9072,6 +9150,7 @@ window.sendwayoShareReceipt=async function(){
    t.countryFrom={iso2:d.from.alpha2,name:countryName(d.from),callingCode:d.from.callingCode};
    t.countryTo={iso2:d.to.alpha2,name:countryName(d.to),callingCode:d.to.callingCode};
    t.proveedorDestino=d.provider;t.detalleRutaInternacional=d.note;t.rutaExacta=d.details;
+   t.monedaOrigen=d.currency;t.monedaDestino=$('v162-'+kind+'-monto')?.dataset.fxCurrency||d.currency;t.tasaCambio=Number($('v162-'+kind+'-monto')?.dataset.fxRate||((d.from.alpha2==='DO'&&d.to.alpha2==='HT')?2.1:1));t.montoRecibido=Number(($('v162-'+kind+'-monto')?.dataset.rec||'').split(' ')[0].replace(/,/g,''))||amount;t.fuenteTasa=window.SENDWAYO_FX_RATES?.source||'Tarifa SENDWAYO';t.fechaTasa=window.SENDWAYO_FX_RATES?.updatedAt||null;
    if(typeof window.sendwayoPersistTx==='function')window.sendwayoPersistTx();
    if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();
    var m=$('modal-'+kind+'-v162');if(m)m.classList.add('hidden');
@@ -10332,6 +10411,91 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
   };
  }
  refresh();
+})();
+</script>
+<script id="sendwayo-v7-welcome-account-actions">
+(function(){
+ 'use strict';
+ function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+ window.sendwayoShowCreateAccount=function(){
+  document.getElementById('sendwayo-create-account-modal')?.remove();
+  const modal=document.createElement('div');modal.id='sendwayo-create-account-modal';modal.style.cssText='position:fixed;inset:0;z-index:2147483500;background:#07182ddd;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+  modal.innerHTML='<section style="width:min(520px,100%);max-height:94vh;overflow:auto;background:#fff;color:#10243d;border-radius:20px;padding:20px;font:14px/1.45 Arial,sans-serif"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="font-size:20px;font-weight:900;margin:0">Crear cuenta SENDWAYO</h2><button id="sendwayo-create-close" type="button" aria-label="Cerrar" style="font-size:25px">×</button></div><p style="font-size:12px;color:#64748b;margin:8px 0 14px">Complete sus datos. La solicitud será revisada por Administración antes de activar la cuenta.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label style="font-size:12px;font-weight:700">Nombre<input id="v162-reg-nombre" type="text" autocomplete="given-name" style="display:block;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;margin-top:5px"></label><label style="font-size:12px;font-weight:700">Apellido<input id="v162-reg-apellido" type="text" autocomplete="family-name" style="display:block;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;margin-top:5px"></label></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"><label style="font-size:12px;font-weight:700">Buscar país<input id="sendwayo-reg-country-search" list="sendwayo-reg-country-list" placeholder="Escriba país o prefijo" autocomplete="off" style="display:block;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;margin-top:5px"></label><label style="font-size:12px;font-weight:700">Prefijo<select id="sendwayo-reg-country" style="display:block;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;margin-top:5px"></select></label></div><datalist id="sendwayo-reg-country-list"></datalist><label style="display:block;font-size:12px;font-weight:700;margin-top:10px">Celular<input id="v162-reg-celular" type="tel" autocomplete="tel" placeholder="+1 809 000 0000" style="display:block;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;margin-top:5px"></label><label style="display:block;font-size:12px;font-weight:700;margin-top:10px">Correo electrónico<input id="v162-reg-email" type="email" autocomplete="email" style="display:block;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;margin-top:5px"></label><input id="v162-reg-tipo" type="hidden" value="REMITENTE"><button id="sendwayo-create-submit" type="button" style="width:100%;margin-top:16px;background:#0e8c70;color:white;padding:13px;border-radius:999px;font-weight:900">Enviar solicitud</button><p style="font-size:11px;color:#64748b;margin:10px 0 0">No se crea una cuenta activa ni se modifica ningún balance desde este formulario.</p></section>';
+  document.body.appendChild(modal);
+  modal.querySelector('#sendwayo-create-close').onclick=()=>modal.remove();
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  const list=window.SENDWAYO_V7_COUNTRIES||[];
+  const select=modal.querySelector('#sendwayo-reg-country'),search=modal.querySelector('#sendwayo-reg-country-search'),dl=modal.querySelector('#sendwayo-reg-country-list');
+  function countryLabel(c){return (c.flag||'🌐')+' '+(c.name||c.alpha2)+' ('+c.alpha2+') · '+(c.callingCode||'');}
+  list.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'es')).forEach(c=>{
+   const option=document.createElement('option');option.value=c.alpha2;option.textContent=countryLabel(c);option.dataset.prefix=c.callingCode||'';select.appendChild(option);
+   const suggest=document.createElement('option');suggest.value=countryLabel(c);dl.appendChild(suggest);
+  });
+  select.value='DO';search.value=countryLabel(list.find(c=>c.alpha2==='DO')||{alpha2:'DO',name:'República Dominicana',callingCode:'+1'});
+  function syncPhone(){
+   const option=select.options[select.selectedIndex],prefix=option&&option.dataset.prefix||'';
+   search.value=option?option.textContent:'';
+   const phone=modal.querySelector('#v162-reg-celular');
+   if(phone&&!phone.value.trim()&&prefix)phone.value=prefix+' ';
+  }
+  search.addEventListener('input',()=>{
+   const q=search.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+   const found=list.find(c=>[c.name,c.alpha2,c.callingCode].some(v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()===q));
+   if(found)select.value=found.alpha2;
+  });
+  search.addEventListener('change',()=>{
+   const q=search.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+   const found=list.find(c=>[c.name,c.alpha2,c.callingCode].some(v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()===q));
+   if(found)select.value=found.alpha2;
+   syncPhone();
+  });
+  select.addEventListener('change',syncPhone);
+  syncPhone();
+  modal.querySelector('#sendwayo-create-submit').onclick=function(){
+   if(typeof window.v162_registrar!=='function'){alert('El registro no está disponible ahora.');return;}
+   const phone=modal.querySelector('#v162-reg-celular'),option=select.options[select.selectedIndex],prefix=option&&option.dataset.prefix||'';
+   if(phone&&prefix&&!phone.value.trim().startsWith(prefix))phone.value=prefix+' '+phone.value.trim();
+   window.v162_registrar();
+   setTimeout(()=>{const msg=document.querySelector('.sw-registration-success');if(msg)modal.remove();},100);
+  };
+ };
+})();
+</script>
+<script id="sendwayo-v7-final-header-id-paypal">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ function placeHeader(){
+  const bar=$('sendwayo-brand-bar'),left=bar&&bar.querySelector('.sendwayo-brand-left'),strip=$('sendwayo-v7-user-strip'),actions=bar&&bar.querySelector('.sendwayo-brand-actions');
+  const button=$('sendwayo-mobile-menu');
+  if(left&&button&&button.parentElement!==left){left.appendChild(button);}
+  if(bar&&strip&&strip.parentElement!==bar){bar.insertBefore(strip,actions||null);}
+  if(bar&&strip&&actions&&strip.nextElementSibling!==actions)bar.insertBefore(strip,actions);
+  if(strip){strip.style.setProperty('display',document.body.classList.contains('sendwayo-authenticated')?'flex':'none','important');}
+  if(button){
+   const mobile=window.matchMedia('(max-width:1024px)').matches;
+   button.style.setProperty('position','relative','important');button.style.setProperty('left','auto','important');button.style.setProperty('top','auto','important');button.style.setProperty('margin','0','important');
+   button.style.setProperty('display',document.body.classList.contains('sendwayo-authenticated')&&mobile?'inline-flex':'none','important');
+  }
+  const side=$('sendwayo-main-sidebar');
+  if(side&&!window.matchMedia('(max-width:1024px)').matches){side.style.setProperty('position','relative','important');side.style.setProperty('transform','none','important');side.style.setProperty('left','auto','important');side.style.setProperty('display','block','important');}
+ }
+ function hidePostLogout(){
+  const sidebar=$('sendwayo-main-sidebar');if(!sidebar)return;
+  const logout=Array.from(sidebar.querySelectorAll('button')).find(b=>/cerrar sesión|salir/i.test(b.textContent||''));
+  if(logout){let n=logout.nextElementSibling;while(n){n.style.setProperty('display','none','important');n=n.nextElementSibling;} }
+ }
+ function refresh(){placeHeader();hidePostLogout();}
+ window.addEventListener('DOMContentLoaded',refresh,{once:true});window.addEventListener('load',refresh);window.addEventListener('resize',refresh,{passive:true});window.addEventListener('sendwayo:firebase-ready',refresh);
+ document.addEventListener('click',()=>window.setTimeout(refresh,100),true);
+ const bar=$('sendwayo-brand-bar');if(bar&&window.MutationObserver){const observer=new MutationObserver(()=>{if(!bar.contains($('sendwayo-v7-user-strip')))placeHeader();});observer.observe(bar,{childList:true,subtree:true});}
+ window.SENDWAYO_PAYMENTS=window.SENDWAYO_PAYMENTS||{provider:'PayPal',status:'PENDING_MERCHANT_ONBOARDING',cardCheckoutEnabled:false,payoutsEnabled:false};
+ window.sendwayoOpenCardPayments=function(){
+  const old=$('sendwayo-paypal-onboarding-modal');if(old)old.remove();
+  const modal=document.createElement('div');modal.id='sendwayo-paypal-onboarding-modal';modal.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#07182ddd;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+  modal.innerHTML='<section style="width:min(680px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;color:#10243d;font:14px/1.5 Arial,sans-serif"><div style="display:flex;justify-content:space-between;gap:10px"><h2 style="font-size:20px;font-weight:900;margin:0">Cobros con tarjetas nacionales e internacionales</h2><button id="sw-paypal-close" type="button" style="font-size:25px">×</button></div><p>PayPal Business queda como pasarela prevista para recibir tarjetas de débito y crédito, sujeto a verificación y disponibilidad del país y de cada producto.</p><div style="padding:12px;border:1px solid #f59e0b;background:#fffbeb;border-radius:12px"><b>Estado: pendiente de crear y verificar la cuenta comercial.</b><p style="margin:5px 0 0">No se procesarán cobros reales hasta completar el onboarding, configurar credenciales privadas en el Worker y validar los webhooks.</p></div><ol style="padding-left:20px;list-style:decimal;margin:14px 0"><li>Crear la cuenta Business con el país y datos legales reales.</li><li>Completar verificación de identidad y método bancario disponible.</li><li>Obtener Client ID y Secret en el panel de desarrolladores.</li><li>Guardar el Secret exclusivamente en el Worker y validar la captura y webhook.</li></ol><div style="display:flex;flex-wrap:wrap;gap:9px"><a target="_blank" rel="noopener noreferrer" href="https://www.paypal.com/do/business" style="background:#003087;color:#fff;padding:11px 15px;border-radius:999px;text-decoration:none;font-weight:800">Crear PayPal Business</a><a target="_blank" rel="noopener noreferrer" href="https://developer.paypal.com/dashboard/" style="background:#eef2f7;color:#10243d;padding:11px 15px;border-radius:999px;text-decoration:none;font-weight:800">Panel de desarrolladores</a></div><p style="font-size:11px;color:#64748b;margin-top:12px">El pago con tarjeta y el envío/desembolso a un beneficiario son operaciones distintas. SENDWAYO no almacenará números completos de tarjetas ni CVV. Pago con tarjeta sin cuenta PayPal solo se ofrecerá si la cuenta y la transacción tienen habilitado el pago como invitado.</p></section>';
+  document.body.appendChild(modal);modal.querySelector('#sw-paypal-close').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+ };
 })();
 </script>
 </body>
