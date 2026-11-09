@@ -8458,10 +8458,12 @@ function seedProfileFromAccount(account, role){
       state.remoteTransactions = {};
       // Mantener abierto el formulario: el evento de Firebase al cerrar la sesión fallida
       // no debe devolver al usuario a la portada pública.
-      state.preserveLoginOnSignout = true;
+      state.preserveLoginOnSignout = !!auth.currentUser;
       keepLoginModalOpen();
-      try { await auth.signOut(); }
-      catch (signOutError) { state.preserveLoginOnSignout = false; console.warn('[SENDWAYO] Limpieza de sesión:', signOutError); }
+      if (state.preserveLoginOnSignout) {
+        try { await auth.signOut(); }
+        catch (signOutError) { state.preserveLoginOnSignout = false; console.warn('[SENDWAYO] Limpieza de sesión:', signOutError); }
+      }
       stopListeners();
 
       const code = error?.code;
