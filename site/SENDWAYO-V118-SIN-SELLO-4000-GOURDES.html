@@ -3296,21 +3296,7 @@ document.addEventListener('DOMContentLoaded', function(){
       if(!w){window.alert('Permita las ventanas emergentes para imprimir el PDF.');return false;}
       const doc=w.document;
       doc.open();
-      doc.write('<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'<style id="sendwayo-v7-brand-and-login-performance-fix">
-.sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-.sendwayo-home-brand{gap:17px!important}
-.sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-.sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-.sendwayo-home-brand span{font-size:12px!important}
-.sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-.sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-.sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-.sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-.sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-.sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-@media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
-</style>
-</body></html>');
+      doc.write('<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'</body></html>');
       doc.close();
       w.focus();
       w.setTimeout(()=>w.print(),300);
@@ -3318,21 +3304,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     let content='',type='',extension='';
     if(formato==='excel'){
-      content='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'<style id="sendwayo-v7-brand-and-login-performance-fix">
-.sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-.sendwayo-home-brand{gap:17px!important}
-.sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-.sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-.sendwayo-home-brand span{font-size:12px!important}
-.sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-.sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-.sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-.sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-.sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-.sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-@media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
-</style>
-</body></html>';
+      content='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'</body></html>';
       type='application/vnd.ms-excel;charset=utf-8';extension='.xls';
     }else{
       const rows=[...tabla.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+String(td.innerText||td.textContent||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));
@@ -3569,20 +3541,6 @@ document.addEventListener('DOMContentLoaded', function(){
  });
 })();
 </script>
-<style id="sendwayo-v7-brand-and-login-performance-fix">
-.sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-.sendwayo-home-brand{gap:17px!important}
-.sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-.sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-.sendwayo-home-brand span{font-size:12px!important}
-.sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-.sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-.sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-.sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-.sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-.sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-@media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
-</style>
 </body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
@@ -4162,21 +4120,7 @@ window.sendwayoShareReceipt=async function(){
  const saveExtra=(view,rows)=>writeJSON(extraStoreKey(view),rows);
  const mapTypes={depositos:['Depósito','Deposito','Depósitos','Depositos'],creditos:['Creditos','Créditos','Crédito','Credito'],ajustes:['Ajuste','Ajustes'],envios:['Envío','Envio','Envíos','Envios'],retiros:['Retiro','Retiros'],recargas:['Recargas','Recarga'],paquetikos:['Paquetikos','Paquetiko','Paquetico','Paqueticos'],facturas:['Facturas','Factura','Servicios','Servicio','Pago de servicios','Pago de servicio'],recepcion:['Paquetes'],comisiones:['Comisiones','Comisión','Retiro de comisión','Pago y retiro de comisiones','Pago de comisión']};
  function moduleRows(view){if(mapTypes[view])return txs().filter(t=>mapTypes[view].includes(t.tipo)).slice().sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));if(['conciliacion','referencia','reportes','informes'].includes(view))return extraRows(view);if(view==='bienvenida')return readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);if(view==='cuentas')return window.SENDWAYO_BANKS;if(view==='secretas')return isAdmin()?(window.USUARIOS_LOGIN||[]):[];if(view==='mibanco'){const a=currentAccount()||admin();return a?[{id:a.id,fecha:'',tipo:'Mi banco',ruta:a.codigo||'',rutaExacta:a.nombre||a.name||'',monto:'DOP '+formatMoney(balanceObject(a)?.DOP)+' / HTG '+formatMoney(balanceObject(a)?.HTG),estado:'Activo',beneficiario:acctName(a)}]:[];}if(view==='perfil'){const a=currentAccount()||admin();return a?[{id:a.id,fecha:'',tipo:'Perfil',ruta:a.codigo,rutaExacta:acctName(a),monto:'DOP '+formatMoney(balanceObject(a)?.DOP)+' / HTG '+formatMoney(balanceObject(a)?.HTG),estado:'Activo',beneficiario:a.email||''}]:[];}return txs().filter(t=>t.tipo&&text(t.tipo).toLowerCase().includes(view.replace(/s$/,'').toLowerCase())).slice().sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));}
- function exportTable(view,format){const table=$('tabla-sendwayo-'+view)||$('tabla-'+view+'-body')?.closest('table')||document.querySelector('#view-'+view+' table');if(!table){alert('No hay tabla que exportar en esta página.');return;}const name='Sendwayo-'+view+'-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){alert('Permite las ventanas emergentes para imprimir/guardar PDF.');return;}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(name)+'</title><style>body{font-family:Arial;padding:16px}table{border-collapse:collapse;width:100%;font-size:11px}td,th{border:1px solid #aaa;padding:5px;text-align:left}</style></head><body><h2>'+esc(name)+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script><style id="sendwayo-v7-brand-and-login-performance-fix">
-.sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-.sendwayo-home-brand{gap:17px!important}
-.sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-.sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-.sendwayo-home-brand span{font-size:12px!important}
-.sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-.sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-.sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-.sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-.sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-.sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-@media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
-</style>
-</body></html>');w.document.close();return;}const rows=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+td.innerText.replace(/\s+/g,' ').trim().replace(/"/g,'""')+'"').join(','));const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:format==='excel'?'application/vnd.ms-excel;charset=utf-8':'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name+(format==='excel'?'.xls':'.csv');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ function exportTable(view,format){const table=$('tabla-sendwayo-'+view)||$('tabla-'+view+'-body')?.closest('table')||document.querySelector('#view-'+view+' table');if(!table){alert('No hay tabla que exportar en esta página.');return;}const name='Sendwayo-'+view+'-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){alert('Permite las ventanas emergentes para imprimir/guardar PDF.');return;}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(name)+'</title><style>body{font-family:Arial;padding:16px}table{border-collapse:collapse;width:100%;font-size:11px}td,th{border:1px solid #aaa;padding:5px;text-align:left}</style></head><body><h2>'+esc(name)+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();return;}const rows=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+td.innerText.replace(/\s+/g,' ').trim().replace(/"/g,'""')+'"').join(','));const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:format==='excel'?'application/vnd.ms-excel;charset=utf-8':'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name+(format==='excel'?'.xls':'.csv');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  function searchModule(view,q){const tbody=$('tabla-sendwayo-'+view+'-body');if(!tbody)return;const needle=norm(q);tbody.querySelectorAll('tr').forEach(tr=>tr.style.display=norm(tr.innerText).includes(needle)?'':'none');}
  window.sendwayoExportModule=exportTable;window.sendwayoSearchModule=searchModule;
  window.sendwayoActionGeneric=function(view,action,id){
@@ -6944,21 +6888,7 @@ window.sendwayoShareReceipt=async function(){
       if(!popup){alert('Permita las ventanas emergentes para imprimir el listado en PDF.');return;}
       const clone=table.cloneNode(true);clone.querySelectorAll('button').forEach(b=>b.remove());
       const title=(root.querySelector('h1,h2,h3')?.innerText||viewKey(root)||'SENDWAYO EXPRESS').replace(/</g,'&lt;');
-      popup.document.open();popup.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{font-size:18px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #aaa;padding:6px;text-align:left;word-break:break-word}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>'+title+'</h1>'+clone.outerHTML+'<style id="sendwayo-v7-brand-and-login-performance-fix">
-.sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-.sendwayo-home-brand{gap:17px!important}
-.sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-.sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-.sendwayo-home-brand span{font-size:12px!important}
-.sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-.sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-.sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-.sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-.sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-.sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-@media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
-</style>
-</body></html>');popup.document.close();popup.focus();setTimeout(()=>{try{popup.print()}catch(_){}},200);return;
+      popup.document.open();popup.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{font-size:18px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #aaa;padding:6px;text-align:left;word-break:break-word}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>'+title+'</h1>'+clone.outerHTML+'</body></html>');popup.document.close();popup.focus();setTimeout(()=>{try{popup.print()}catch(_){}},200);return;
     }
     const rows=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+String(td.innerText||td.textContent||'').replace(/\s+/g,' ').trim().replace(/"/g,'""')+'"'));
     const csv='\ufeff'+rows.map(row=>row.join(',')).join('\r\n');const mime=format==='excel'?'application/vnd.ms-excel;charset=utf-8':'text/csv;charset=utf-8';
@@ -9170,20 +9100,6 @@ function seedProfileFromAccount(account, role){
 #sendwayo-module-list header .flex.flex-wrap.items-center.gap-2{justify-content:flex-start!important}
 #sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>button{order:1!important}
 #sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>input{order:2!important;flex:0 1 220px!important;min-width:140px!important}
-</style>
-<style id="sendwayo-v7-brand-and-login-performance-fix">
-.sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-.sendwayo-home-brand{gap:17px!important}
-.sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-.sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-.sendwayo-home-brand span{font-size:12px!important}
-.sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-.sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-.sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-.sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-.sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-.sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-@media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
 </style>
 </body></html>`;const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   const priorShow=window.showView;
