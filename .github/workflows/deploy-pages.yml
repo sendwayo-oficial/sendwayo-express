@@ -58,9 +58,13 @@ jobs:
           if "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" not in base_html:
               raise SystemExit('El correo Firebase del administrador no quedó configurado correctamente.')
           base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
-          if 'sendwayo-v7-brand-and-login-performance-fix' not in base_html:
-              if '</body>' not in base_html: raise SystemExit('No se encontró </body> en el HTML V7')
-              base_html = base_html.replace('</body>', css + '\n</body>')
+          # Remove prior copies first: a '</body>' string also appears inside the PDF export script.
+          base_html = base_html.replace(css + '\n', '')
+          if 'sendwayo-v7-brand-and-login-performance-fix' in base_html:
+              raise SystemExit('La limpieza del CSS duplicado no terminó correctamente.')
+          body_close = base_html.rfind('</body>')
+          if body_close < 0: raise SystemExit('No se encontró el cierre real </body> del HTML V7')
+          base_html = base_html[:body_close] + css + '\n' + base_html[body_close:]
           paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
           for path in paths:
               path.write_text(base_html, encoding='utf-8')
@@ -81,6 +85,8 @@ jobs:
           assert re.search(r'<title>SENDWAYO EXPRESS - V7[^<]*</title>', html), 'Título V7 ausente'
           assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" in html, 'El usuario de acceso SENDWAYO no está configurado'
           assert "username:'Sendwayoexpress'" in html, 'El nombre de usuario Sendwayoexpress no está configurado'
+          assert html.count('sendwayo-v7-brand-and-login-performance-fix') == 1, 'El CSS de bienvenida debe aparecer una sola vez'
+          assert html.rfind('</body>') > html.rfind('</script>'), 'El CSS final debe estar fuera de los scripts'
           assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in html, 'El correo GitHub no debe sustituir al usuario SENDWAYO'
           assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
           assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
