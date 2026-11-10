@@ -79,7 +79,7 @@ jobs:
                   message,
                   url:d.url || frame?.url || '',
                   line:lineNumber ?? null,
-        sourceLineIndex: Number.isInteger(lineNumber) ? Math.max(0,lineNumber-(parsedScripts.get(scriptId)?.startLine || 0)) : null,
+                  sourceLineIndex: Number.isInteger(lineNumber) ? Math.max(0,lineNumber-(parsedScripts.get(scriptId)?.startLine || 0)) : null,
                   column:columnNumber ?? null,
                   scriptId,
                   script:parsedScripts.get(scriptId) || null
