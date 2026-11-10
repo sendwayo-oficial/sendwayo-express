@@ -5203,7 +5203,7 @@ window.sendwayoShareReceipt=async function(){
     const right = top?.children?.[1];
     if (right && !$('sendwayo-language-private-wrap')) {
       const wrap = makeLanguageControl('sendwayo-language-private', 'sendwayo-language-private-wrap');
-      const bell = $('bell-top'); if (wrap) right.insertBefore(wrap, bell || right.lastElementChild);
+      const bell = $('bell-top'); if (wrap) right.insertBefore(wrap, bell && bell.parentElement === right ? bell : right.lastElementChild);
     }
     setLanguage(languageValue());
   }
@@ -8791,7 +8791,7 @@ window.sendwayoShareReceipt=async function(){
   }
   window.sendwayoBuildFinancialAudit=()=>({rows:auditRows(),totals:auditTotals(auditRows())});
   window.sendwayoFilterAudit=function(value){const q=norm(value);const table=$('sendwayo-audit-table');if(!table)return;table.querySelectorAll('tbody tr').forEach(tr=>{tr.hidden=!!q&&!norm(tr.innerText||tr.textContent).includes(q);});};
-  window.sendwayoExportAudit=function(format){const table=$('sendwayo-audit-table');if(!table)return;const name='SENDWAYO-Auditoria-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){window.alert('Permita ventanas emergentes para imprimir el PDF.');return false;}w.document.write('<!doctype html><html><meta charset="utf-8"><title>'+name+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:10px}td,th{border:1px solid #aaa;padding:4px}</style><h2>'+name+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></html>');w.document.close();return;}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+name+'</h2>'+table.outerHTML+'<style id="sendwayo-v7-left-aligned-admin-toolbars">
+  window.sendwayoExportAudit=function(format){const table=$('sendwayo-audit-table');if(!table)return;const name='SENDWAYO-Auditoria-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){window.alert('Permita ventanas emergentes para imprimir el PDF.');return false;}w.document.write('<!doctype html><html><meta charset="utf-8"><title>'+name+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:10px}td,th{border:1px solid #aaa;padding:4px}</style><h2>'+name+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></html>');w.document.close();return;}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+name+'</h2>'+table.outerHTML+String.raw`<style id="sendwayo-v7-left-aligned-admin-toolbars">
 #view-agentes>div:first-child,#view-remitentes>div:first-child{justify-content:flex-start!important;gap:10px!important;flex-wrap:wrap!important}
 #view-agentes>div:first-child>div,#view-remitentes>div:first-child>div{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;flex-wrap:wrap!important;width:auto!important}
 #view-agentes>div:first-child>div>button,#view-remitentes>div:first-child>div>button{order:1!important;flex:0 0 auto!important}
@@ -8800,7 +8800,7 @@ window.sendwayoShareReceipt=async function(){
 #sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>button{order:1!important}
 #sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>input{order:2!important;flex:0 1 220px!important;min-width:140px!important}
 </style>
-</body></html>';const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+</body></html>`;const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   const priorShow=window.showView;
   if(typeof priorShow==='function')window.showView=function(view){const r=priorShow.apply(this,arguments);if(['conciliacion','reportes','informes'].includes(view))setTimeout(()=>renderAudit(view),0);return r;};
   window.addEventListener('sendwayo:firebase-ready',()=>{const active=document.body.dataset.sendwayoActiveView||'';if(['conciliacion','reportes','informes'].includes(active))renderAudit(active);});
