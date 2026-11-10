@@ -3224,7 +3224,6 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
-<script>
 /* V7: correcciones puntuales solicitadas, conservando estructura y bienvenida. */
 
 (function(){
@@ -3283,17 +3282,9 @@ document.addEventListener('DOMContentLoaded', function(){
     if(typeof abrirOriginal==='function') return abrirOriginal(ruta,tipo);
     if(String(tipo||'').toLowerCase()==='retiro') window.v162_setRetiro(ruta);
   };
+})();
+</script>
 
-  // Exportación limpia: no insertar etiquetas <script> dentro del HTML del PDF.
-  function tablaActual(view){ return document.querySelector('#tabla-'+view+'-body')?.closest('table') || document.querySelector('#view-'+view+' table'); }
-  function exportar(view, formato){
-    const tabla=tablaActual(view);
-    if(!tabla){ alert('No hay tabla para exportar.'); return; }
-    const nombre='Sendwayo-'+view+'-'+new Date().toISOString().slice(0,10);
-    if(formato==='pdf'){
-      const w=window.open('','_blank');
-      if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
-      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+ '\\n\\n
 <style id="sendwayo-v7-approved-desktop-left-sidebar">
 /* Menú lateral vertical en escritorio y desplegable en móvil/tableta. */
 @media(min-width:1025px){
@@ -3367,6 +3358,7 @@ document.addEventListener('DOMContentLoaded', function(){
 }
 #sendwayo-main-content .view.hidden{display:none!important}
 </style>
+
 <script id="sendwayo-v7-approved-left-sidebar-controller">
 (function(){
  'use strict';
@@ -3406,113 +3398,6 @@ document.addEventListener('DOMContentLoaded', function(){
   syncLayout();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-})();
-</script>
-
-
-<!-- SENDWAYO V7: idempotencia de aprobaciones, paginación modular y menú móvil -->
-<style id="sendwayo-v7-final-order">
-@media(max-width:1024px){
- #sendwayo-mobile-menu{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
- #sendwayo-main-sidebar{z-index:2147482600!important}
- #sendwayo-menu-shade{z-index:2147482500!important}
-}
-#view-tablero table:has(#tabla-principal-body){display:none!important}
-#view-tablero #tabla-principal-body{display:none!important}
-.sendwayo-generic-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px;font-size:12px;color:#334155}
-.sendwayo-generic-pager button{border:1px solid #cbd5e1;border-radius:999px;padding:9px 14px;font-weight:800;background:#fff;min-height:40px}
-.sendwayo-generic-pager button:disabled{opacity:.45}
-</style>
-<script id="sendwayo-v7-final-integrity">
-(function(){
- 'use strict';
- const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
- const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:[];
- const approved=t=>['aprobado','approved','pagado'].includes(norm(t&&(t.estado||t.status)));
- const busy=new Set();
- function findTx(id){return txs().find(t=>String(t.id)===String(id));}
- // Protección inmediata del botón y segunda barrera atómica en Firebase durante la sincronización.
- const approveOriginal=window.aprobar;
- if(typeof approveOriginal==='function'&&!approveOriginal.__sendwayoOnce){
-  const guarded=function(id){
-   const t=findTx(id);
-   if(!t){return;}
-   if(approved(t)){alert('Esta transacción ya está aprobada. No se puede aprobar dos veces.');return;}
-   const key=String(id);
-   if(busy.has(key)){return;}
-   busy.add(key);
-   try{return approveOriginal.apply(this,arguments);}
-   finally{window.setTimeout(()=>busy.delete(key),5000);}
-  };
-  guarded.__sendwayoOnce=true;window.aprobar=guarded;
- }
- const genericOriginal=window.sendwayoActionGeneric;
- if(typeof genericOriginal==='function'&&!genericOriginal.__sendwayoOnce){
-  const guardedGeneric=function(view,action,id){
-   if(['aprobar','approve','aceptar'].includes(norm(action))){
-    const t=findTx(id);
-    if(t&&approved(t)){alert('Esta transacción ya está aprobada. No se repetirá.');return;}
-    const k=String(view)+':'+String(id);
-    if(busy.has(k))return;
-    busy.add(k);
-    try{return genericOriginal.apply(this,arguments);}
-    finally{window.setTimeout(()=>busy.delete(k),5000);}
-   }
-   return genericOriginal.apply(this,arguments);
-  };
-  guardedGeneric.__sendwayoOnce=true;window.sendwayoActionGeneric=guardedGeneric;
- }
- // Paginación 10 por página para tablas de los módulos personalizados; no toca el tablero.
- const pages=Object.create(null);
- function applyPager(view){
-  if(!view||view==='tablero')return;
-  const root=document.getElementById('view-'+view);if(!root||root.classList.contains('hidden'))return;
-  const table=root.querySelector('table[id^="tabla-sendwayo-"],table');
-  if(!table||!table.tBodies||!table.tBodies[0])return;
-  if(root.querySelector('[id^="sendwayo-module-pagination-"]'))return;
-  const body=table.tBodies[0],all=[...body.rows];
-  if(!all.length)return;
-  const key=view,st=pages[key]||(pages[key]={page:1,query:''});
-  let pager=root.querySelector('.sendwayo-generic-pager');
-  if(!pager){pager=document.createElement('div');pager.className='sendwayo-generic-pager';pager.id='sendwayo-generic-pager-'+view;table.parentElement.insertAdjacentElement('afterend',pager);}
-  const inputs=[...root.querySelectorAll('input[type="search"],input[placeholder*="Buscador"],input[placeholder*="buscar" i]')];
-  const input=inputs[0];
-  if(input&&!input.dataset.sendwayoPagerBound){
-   input.dataset.sendwayoPagerBound='1';
-   input.addEventListener('input',()=>{st.page=1;window.setTimeout(()=>applyPager(view),0);});
-  }
-  const q=norm(input&&input.value||'');
-  if(st.query!==q){st.query=q;st.page=1;}
-  const filtered=all.filter(row=>!q||norm(row.innerText).includes(q));
-  const count=Math.max(1,Math.ceil(filtered.length/10));st.page=Math.min(Math.max(1,st.page),count);
-  const start=(st.page-1)*10;
-  all.forEach(row=>row.style.display='none');
-  filtered.forEach((row,index)=>{
-   const visible=index>=start&&index<start+10;
-   row.style.display=visible?'':'none';
-   if(visible&&row.cells.length){
-    const first=row.cells[0];
-    if(first.dataset.sendwayoOriginalNumber===undefined)first.dataset.sendwayoOriginalNumber=first.textContent.trim();
-    first.textContent=String(index+1-start).padStart(2,'0');
-   }
-  });
-  const from=filtered.length?start+1:0,to=Math.min(start+10,filtered.length);
-  pager.innerHTML='<span>Registros '+String(from).padStart(2,'0')+'–'+String(to).padStart(2,'0')+' de '+filtered.length+' · Página '+st.page+' de '+count+'</span><div style="display:flex;gap:8px"><button type="button" '+(st.page<=1?'disabled':'')+' data-page="-1">Anterior</button><button type="button" '+(st.page>=count?'disabled':'')+' data-page="1">Siguiente</button></div>';
-  pager.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{st.page=Math.min(count,Math.max(1,st.page+Number(btn.dataset.page)));applyPager(view);}));
- }
- const renderOriginal=window.renderModuloSeparado;
- if(typeof renderOriginal==='function'&&!renderOriginal.__sendwayoPager){
-  const wrapped=function(view){
-   const result=renderOriginal.apply(this,arguments);
-   window.setTimeout(()=>applyPager(view),0);
-   return result;
-  };
-  wrapped.__sendwayoPager=true;window.renderModuloSeparado=wrapped;
- }
- window.addEventListener('sendwayo:transactions-updated',()=>{
-  const active=[...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden'));
-  if(active)window.setTimeout(()=>applyPager(active.id.replace(/^view-/,'')||''),0);
- });
 })();
 </script>
 </body></html>';
