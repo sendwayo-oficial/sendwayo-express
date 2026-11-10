@@ -366,7 +366,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="space-y-4">
       <div>
         <label class="block text-[11px] font-bold mb-1">Usuario</label>
-        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
+        <input id="login-usuario" type="text" autocomplete="username" placeholder="Usuario SENDWAYO, correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
       </div>
       <div>
         <label class="block text-[11px] font-bold mb-1">Contraseña</label>
@@ -577,8 +577,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 // DATOS CORREGIDOS - 5 AGENTES + ADMIN CON CODIGO - RECUERDA QUE ESTOS SON LOS 5 AGENTES, TIENES QUE PONERLO CON SU CODIGO
 let ADMIN = {
   id:'ADMIN-ADMINISTRADOR', idAnterior:'ADMINADMIN',
-  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','Sendwayoexpress'],
-  username:'Sendwayoexpress', login:'Sendwayoexpress',
+  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','Sendwayoexpress','sendwayoexpress@gmail.com'],
+  username:'sendwayoexpress@gmail.com', login:'sendwayoexpress@gmail.com',
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
@@ -7469,10 +7469,13 @@ window.sendwayoShareReceipt=async function(){
   }
   function resolveEmail(identifier) {
     const entered=txt(identifier);
-    if(entered.includes('@')) return entered.toLowerCase();
     const key=norm(entered);
+    // El usuario público SENDWAYO es distinto del correo propietario usado por Firebase.
+    // Resolver alias antes de aceptar cualquier texto con @ como correo de Authentication.
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
-    return match ? match.email : '';
+    if(match) return match.email;
+    if(entered.includes('@')) return entered.toLowerCase();
+    return '';
   }
   function profileMatchesIdentity(data, key, identity) {
     if (!data || typeof data !== 'object') return false;
