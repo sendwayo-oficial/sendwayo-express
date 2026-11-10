@@ -12,7 +12,7 @@ on:
 
 permissions:
   actions: read
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -50,20 +50,20 @@ jobs:
           .sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
           @media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
           </style>'''
+          source = Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html')
+          base_html = source.read_text(encoding='utf-8')
+          if "username:'Sendwayoexpress'" not in base_html:
+              raise SystemExit('No se encontró el nombre de usuario administrativo Sendwayoexpress en el archivo V7.')
+          base_html = base_html.replace('ideletteismorin@gmail.com', 'sendwayoexpress@gmail.com')
+          if "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" not in base_html:
+              raise SystemExit('El correo Firebase del administrador no quedó configurado correctamente.')
+          base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
+          if 'sendwayo-v7-brand-and-login-performance-fix' not in base_html:
+              if '</body>' not in base_html: raise SystemExit('No se encontró </body> en el HTML V7')
+              base_html = base_html.replace('</body>', css + '\n</body>')
           paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
           for path in paths:
-              html = path.read_text(encoding='utf-8')
-              legacy_admin = "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';"
-              wrong_admin = "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';"
-              if wrong_admin in html:
-                  html = html.replace(wrong_admin, legacy_admin)
-              if legacy_admin not in html:
-                  raise SystemExit(f'No se pudo confirmar el usuario administrativo SENDWAYO en {path}')
-              html = html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
-              if 'sendwayo-v7-brand-and-login-performance-fix' not in html:
-                  if '</body>' not in html: raise SystemExit(f'No se encontró </body> en {path}')
-                  html = html.replace('</body>', css + '\n</body>')
-              path.write_text(html, encoding='utf-8')
+              path.write_text(base_html, encoding='utf-8')
           print('PASS: correo administrador, limpieza no repetitiva y logo/diseño V7 aplicados.')
           PY
 
@@ -80,6 +80,7 @@ jobs:
           html = Path('site/index.html').read_text(encoding='utf-8')
           assert re.search(r'<title>SENDWAYO EXPRESS - V7[^<]*</title>', html), 'Título V7 ausente'
           assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" in html, 'El usuario de acceso SENDWAYO no está configurado'
+          assert "username:'Sendwayoexpress'" in html, 'El nombre de usuario Sendwayoexpress no está configurado'
           assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in html, 'El correo GitHub no debe sustituir al usuario SENDWAYO'
           assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
           assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
@@ -107,6 +108,19 @@ jobs:
           print('PASS: V7, 5 agentes, 15 remitentes, cabecera superior, paginación de 10 y tesorería.')
           PY
 
+      - name: Persist the verified SENDWAYO login in the Pages source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html
+          if git diff --cached --quiet; then
+            echo "The published V7 source already contains the verified SENDWAYO login."
+          else
+            git commit -m "Persist SENDWAYO username and Firebase login in V7"
+            git push origin HEAD:main
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
