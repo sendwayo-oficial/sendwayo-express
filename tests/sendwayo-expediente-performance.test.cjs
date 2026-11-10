@@ -147,11 +147,13 @@ assert.match(html, /fallbackCountriesData=\[/, 'el catálogo internacional compl
 assert.doesNotMatch(html, /AGE40001/, 'no debe sustituir la letra I del ID por el número uno');
 
 // Contrato de preservación: estas pantallas y entradas existentes no pueden desaparecer durante una optimización.
-const preservedViews = ['tablero','envios','retiros','tarifas','beneficiarios','remitentes','agentes','recargas','paquetikos','recepcion','facturas','mibanco','cuentas','ajustes','comisiones','conciliacion','reportes','informes','secretas','perfil'];
+const preservedViews = ['tablero','envios','retiros','beneficiarios','remitentes','agentes','recargas','paquetikos','recepcion','facturas','mibanco','cuentas','ajustes','comisiones','conciliacion','reportes','informes','secretas','perfil'];
 for (const view of preservedViews) assert.ok(html.includes('id="view-' + view + '"'), 'no se debe eliminar el módulo ' + view);
 // Depósitos se crea como vista independiente al abrirla; debe permanecer su fábrica y renderizado.
 assert.match(html, /el\.id='view-depositos'/, 'no se debe quitar la vista dinámica de depósitos');
 assert.match(html, /renderModuloSeparado\('depositos'\)/, 'no se debe quitar el renderizado de depósitos');
+assert.match(html, /el.id='view-tarifas'/, 'la vista de tarifas se debe seguir creando al abrir el módulo');
+assert.match(html, /function renderTariffPage\(/, 'no se debe quitar el módulo de tarifas locales');
 
 const preservedFields = ['login-usuario','login-password','v162-envio-monto','v162-retiro-monto','v162-dep-monto','v162-ben-nom','v162-ben-tel','v162-rem-nom','v162-rec-num','v162-pkt-rec','v162-fac-num','aj171-cantidad','sendwayo-wallet-method','sendwayo-wallet-amount','sw-rate-min','sw-rate-max','sw-rate-envio','sw-rate-retiro'];
 for (const field of preservedFields) assert.ok(html.includes('id="' + field + '"'), 'no se debe eliminar el campo ' + field);
