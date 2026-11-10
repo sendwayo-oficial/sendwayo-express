@@ -1,4 +1,4 @@
-# Publish with SENDWAYO username Sendwayoexpress mapped to Firebase admin email ideletteismorin@gmail.com.
+# Publish V7 using the existing SENDWAYO administrator Firebase identity.
 # Re-run the approved V7 static publication and URL hash verification.
 name: Publish approved SENDWAYO EXPRESS - shared balances
 
@@ -54,8 +54,7 @@ jobs:
           base_html = source.read_text(encoding='utf-8')
           if "username:'Sendwayoexpress'" not in base_html:
               raise SystemExit('No se encontró el nombre de usuario administrativo Sendwayoexpress en el archivo V7.')
-          base_html = base_html.replace('sendwayoexpress@gmail.com', 'ideletteismorin@gmail.com')
-          if "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in base_html:
+          if "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" not in base_html:
               raise SystemExit('El correo Firebase del administrador no quedó configurado correctamente.')
           base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
           # Remove prior copies first: a '</body>' string also appears inside the PDF export script.
@@ -83,11 +82,11 @@ jobs:
           from pathlib import Path
           html = Path('site/index.html').read_text(encoding='utf-8')
           assert re.search(r'<title>SENDWAYO EXPRESS - V7[^<]*</title>', html), 'Título V7 ausente'
-          assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" in html, 'El correo de acceso Firebase del administrador no está configurado'
+          assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" in html, 'El correo de acceso Firebase del administrador no está configurado'
           assert "username:'Sendwayoexpress'" in html, 'El nombre de usuario Sendwayoexpress no está configurado'
           assert html.count('sendwayo-v7-brand-and-login-performance-fix') == 1, 'El CSS de bienvenida debe aparecer una sola vez'
           assert html.rfind('</body>') > html.rfind('</script>'), 'El CSS final debe estar fuera de los scripts'
-          assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" not in html, 'El identificador SENDWAYO no debe usarse como correo Firebase'
+          assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in html, 'No debe sustituirse la cuenta Firebase administrativa existente'
           assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
           assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
           assert "function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
