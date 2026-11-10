@@ -53,11 +53,12 @@ jobs:
           paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
           for path in paths:
               html = path.read_text(encoding='utf-8')
-              old = "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';"
-              if old in html:
-                  html = html.replace(old, "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';")
-              if "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in html:
-                  raise SystemExit(f'No se pudo confirmar el correo administrativo correcto en {path}')
+              legacy_admin = "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';"
+              wrong_admin = "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';"
+              if wrong_admin in html:
+                  html = html.replace(wrong_admin, legacy_admin)
+              if legacy_admin not in html:
+                  raise SystemExit(f'No se pudo confirmar el usuario administrativo SENDWAYO en {path}')
               html = html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
               if 'sendwayo-v7-brand-and-login-performance-fix' not in html:
                   if '</body>' not in html: raise SystemExit(f'No se encontró </body> en {path}')
@@ -78,6 +79,8 @@ jobs:
           from pathlib import Path
           html = Path('site/index.html').read_text(encoding='utf-8')
           assert re.search(r'<title>SENDWAYO EXPRESS - V7[^<]*</title>', html), 'Título V7 ausente'
+          assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" in html, 'El usuario de acceso SENDWAYO no está configurado'
+          assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in html, 'El correo GitHub no debe sustituir al usuario SENDWAYO'
           assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
           assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
           assert "function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
