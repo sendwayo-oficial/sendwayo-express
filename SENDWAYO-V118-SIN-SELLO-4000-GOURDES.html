@@ -2491,24 +2491,16 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
     <header class="sendwayo-home-header">
       <div class="sendwayo-home-header-inner">
         <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
+        <div class="sendwayo-home-entry-actions"><button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ingresar</button><button type="button" class="sendwayo-home-register" onclick="sendwayoOpenPublicRegistration()">Crear cuenta / Registrarse</button></div>
       </div>
     </header>
     <div class="sendwayo-home-content">
       <section class="sendwayo-home-hero">
         <div class="sendwayo-home-gallery">
           <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
+            <img id="v162-car-main" src="assets/sendwayo-servicios.jpg" alt="La imagen oficial de bienvenida de SENDWAYO EXPRESS">
             <div class="sendwayo-home-photo-shade"></div>
             <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
-            <div id="v162-dots" class="sendwayo-home-dots"></div>
-            <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
-          </div>
-          <div class="sendwayo-home-thumbs">
-            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
           </div>
         </div>
         <aside class="sendwayo-home-aside">
@@ -2518,8 +2510,12 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
           <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Atención organizada</strong><small>Seguimiento de tus solicitudes y operaciones.</small></div></div>
           <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Servicios variados</strong><small>Dinero, paquetes, recargas y pagos.</small></div></div>
           <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Acceso seguro</strong><small>Tu cuenta personal dentro de SENDWAYO EXPRESS.</small></div></div>
-          <div class="sendwayo-home-aside-photo"><img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS"></div>
         </aside>
+      </section>
+      <section class="sendwayo-home-values" aria-label="Visión, misión y objetivo">
+        <article><span>VISIÓN</span><h2>Conectar destinos</h2><p>Ser una plataforma confiable que acerque a las personas, familias y negocios entre países.</p></article>
+        <article><span>MISIÓN</span><h2>Atención cercana</h2><p>Ofrecer servicios organizados, comunicación clara y seguimiento responsable de cada solicitud.</p></article>
+        <article><span>OBJETIVO</span><h2>Facilitar tus gestiones</h2><p>Reunir envíos, retiros, paquetes, recargas y pagos en una sola plataforma accesible.</p></article>
       </section>
       <section class="sendwayo-home-services">
         <div class="sendwayo-home-section-title"><span>NUESTROS SERVICIOS</span><h2>¿Qué necesitas hacer?</h2></div>
@@ -2583,7 +2579,14 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 .sendwayo-home-footer{background:#fff!important;border-top:1px solid #e4eaf1!important;padding:17px 24px!important;text-align:center!important;color:#64748b!important;font-size:11px!important}
 #login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:20000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;background:rgba(7,20,38,.96)!important}
 #login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important}
-@media(max-width:900px){.sendwayo-home-hero{grid-template-columns:1fr!important}.sendwayo-home-aside{display:grid!important;grid-template-columns:1fr 1fr!important}.sendwayo-home-aside-photo{grid-column:1/-1;height:150px!important}.sendwayo-home-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+.sendwayo-home-entry-actions{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;justify-content:flex-end!important}
+.sendwayo-home-register{display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #0f7490!important;border-radius:999px!important;padding:13px 20px!important;background:#fff!important;color:#0f5274!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important}
+.sendwayo-home-values{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important;margin:28px 0!important}
+.sendwayo-home-values article{background:#fff!important;border:1px solid #e4eaf1!important;border-radius:17px!important;padding:20px!important;box-shadow:0 5px 18px rgba(15,36,64,.05)!important}
+.sendwayo-home-values article>span{font-size:10px!important;letter-spacing:.15em!important;font-weight:900!important;color:#0782b8!important}
+.sendwayo-home-values h2{font-size:18px!important;font-weight:900!important;color:#102c4c!important;margin:9px 0 7px!important}
+.sendwayo-home-values p{font-size:12px!important;line-height:1.55!important;color:#64748b!important;margin:0!important}
+@media(max-width:900px){.sendwayo-home-values{grid-template-columns:1fr!important}.sendwayo-home-hero{grid-template-columns:1fr!important}.sendwayo-home-aside{display:grid!important;grid-template-columns:1fr 1fr!important}.sendwayo-home-aside-photo{grid-column:1/-1;height:150px!important}.sendwayo-home-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:560px){.sendwayo-home-header-inner{padding:11px 14px!important}.sendwayo-home-brand img{height:40px!important}.sendwayo-home-brand strong{font-size:12px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important}.sendwayo-home-content{padding:16px 13px 24px!important}.sendwayo-home-main-photo{height:360px!important}.sendwayo-home-photo-copy{padding:19px!important}.sendwayo-home-photo-copy h1{font-size:32px!important}.sendwayo-home-aside{display:flex!important;padding:18px!important}.sendwayo-home-aside-photo{height:120px!important}.sendwayo-home-service-grid{gap:8px!important}.sendwayo-home-service-grid article{padding:12px!important}}
 </style>
 <!-- MODAL ENVIO EXACTO CAPTURA - NO TOCAR -->
@@ -2696,13 +2699,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 <script>
 console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros real ventanilla + beneficiario restaurado + recargas paquetikos esquina redondo sugerencias numeros');
 (function(){
-  const carouselImgs = [
-    "assets/ca43ab0c2b8e924cfacc.webp",
-    "assets/2fdc9be46456ec238812.webp",
-    "assets/d6ce41174c8bf68a01de.webp",
-    "assets/d0a323d74b9c3176a044.webp",
-    "assets/165bf5cfd643e8b3c495.webp"
-  ];
+  const carouselImgs = ["assets/sendwayo-servicios.jpg"];
   let carIdx=0;
   window.v162_bal={rd:0, htg:0, comRD:0, comHTG:0};
   try{ const s=localStorage.getItem('sendwayo_express_oficial_20261029_bal_v162'); if(s) Object.assign(window.v162_bal, JSON.parse(s)); }catch(e){}
@@ -2766,10 +2763,10 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
       <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
-        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
+        <div><label class="block text-[11px] font-bold mb-1">Correo, ID o código</label><input id="login-usuario" type="text" autocomplete="username" placeholder="Correo o identificador" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
-        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
+        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Ingresar</button>
         <p class="text-center text-[11px] text-slate-500 mt-3">¿Necesita acceso? Comuníquese con el administrador.</p>
       </div>
     </div>`;
@@ -8443,7 +8440,10 @@ function seedProfileFromAccount(account, role){
       const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 16000);
 
       if (!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
-      const role = canonicalRole(found.data, found.key);
+      const role = norm(firebaseUser.email) === ADMIN_EMAIL ? 'ADMIN' : canonicalRole(found.data, found.key);
+      // El correo administrativo autenticado es la referencia autorizada de Administración.
+      // Este ajuste es temporal y en memoria: no reinicia saldos, comisiones ni registros.
+      if (role === 'ADMIN') found.data = {...found.data, role:'admin', rol:'admin', email:found.data.email || ADMIN_EMAIL, authEmail:found.data.authEmail || ADMIN_EMAIL};
       if (!role) throw new Error('El perfil de Firebase no tiene un rol válido. No se otorgó acceso.');
       if (!isActive(found.data)) throw new Error('La cuenta está inactiva o bloqueada. Consulte al administrador.');
       if (button) button.textContent = 'Comprobando seguridad…';
@@ -8615,6 +8615,41 @@ function seedProfileFromAccount(account, role){
       const modal=document.getElementById('modal-beneficiario-v162');if(modal){modal.classList.add('hidden');modal.style.removeProperty('display');}
       window.alert('Beneficiario guardado en Firebase y disponible en los demás dispositivos.');return true;
     }catch(error){showSyncIssue('No se guardó el beneficiario en Firebase: '+(error?.message||'permiso o conexión'));return false;}
+  };
+
+
+  // Registro público: solicitud pendiente de revisión administrativa.
+  // No crea contraseñas ni cuentas de acceso desde el navegador.
+  window.sendwayoOpenPublicRegistration=function(){
+    sendwayoModal('Crear cuenta / Registrarse',`<div class="space-y-3">
+      ${inp('sendwayo-reg-name','Nombre y apellido','Nombre completo')}
+      ${inp('sendwayo-reg-phone','WhatsApp / celular','Número de teléfono','tel')}
+      ${inp('sendwayo-reg-email','Correo electrónico','correo@gmail.com','email')}
+      ${sel('sendwayo-reg-role','Tipo de cuenta',`<option value="REMITENTE" selected>Remitente</option><option value="AGENTE">Agente (sujeto a aprobación)</option>`)}
+      <p class="text-xs text-slate-500">Administración revisará la solicitud. La cuenta se habilitará después de su aprobación.</p>
+    </div><button type="button" onclick="sendwayoSubmitPublicRegistration()" class="w-full bg-[#0f2440] text-white rounded-full py-3 font-bold">Enviar solicitud de registro</button>`);
+  };
+  window.sendwayoSubmitPublicRegistration=async function(){
+    const name=document.getElementById('sendwayo-reg-name')?.value.trim()||'';
+    const phone=document.getElementById('sendwayo-reg-phone')?.value.trim()||'';
+    const email=document.getElementById('sendwayo-reg-email')?.value.trim().toLowerCase()||'';
+    const role=document.getElementById('sendwayo-reg-role')?.value||'REMITENTE';
+    if(!name||!phone||!email){window.alert('Complete nombre, celular y correo electrónico.');return false;}
+    if(!email.includes('@')||!email.includes('.')){window.alert('El correo electrónico no es válido.');return false;}
+    const firebase=window.sendwayoFirebase;
+    if(!firebase?.db){window.alert('La conexión segura todavía se está preparando. Espere unos segundos e inténtelo nuevamente.');return false;}
+    const id='SOL-REG-'+Date.now();
+    const row={id,type:'REGISTRO_CUENTA',requestType:'REGISTRO_CUENTA',name,phone,email,role,status:'Pendiente',estado:'Pendiente',fecha:new Date().toLocaleString('es-DO'),createdAtMs:Date.now()};
+    try{
+      await firebase.db.ref('sendwayo_express_v2/requests/'+id).set(row);
+      document.getElementById('sendwayo-v7-modal')?.classList.add('hidden');
+      window.alert('Solicitud enviada. Administración revisará sus datos y, después de aprobarla, le indicará cómo activar su cuenta SENDWAYO EXPRESS.');
+      return true;
+    }catch(error){
+      window.alert('No se pudo enviar la solicitud por el momento. Compruebe su conexión e inténtelo nuevamente.');
+      console.error('[SENDWAYO] Error al registrar solicitud pública:',error);
+      return false;
+    }
   };
 
   // Sincronizar la cuenta bancaria guardada por el formulario administrativo.
