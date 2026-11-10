@@ -34,10 +34,12 @@ for (const id of ['sendwayo-v7-bal-dop','sendwayo-v7-bal-htg','sendwayo-v7-com-d
 }
 assert.match(legacyUrlHtml, /pairs\.forEach/,
   'los cuatro indicadores del tablero deben actualizarse desde los valores financieros existentes');
-assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \.sendwayo-workspace-person\s*\{[^}]*flex-direction:column\s*!important/s,
-  'la identidad activa debe conservar sus filas verticales completas');
-assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \.sendwayo-workspace-time\s*\{[^}]*flex-direction:column\s*!important/s,
-  'fecha, hora y duración deben conservar sus filas verticales');
+assert.match(legacyUrlHtml, /sendwayo-v7-header-one-line-fix/,
+  'el encabezado final debe conservar la versión de una sola línea');
+assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \.sendwayo-workspace-person,#sendwayo-v7-user-strip \.sendwayo-workspace-meta,#sendwayo-v7-user-strip \.sendwayo-workspace-time\{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important\}/,
+  'nombre, rol, ID, código, hora y duración deben permanecer alineados en la cabecera superior');
+assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \[id="sendwayo-v7-date"\]\{display:none!important\}/,
+  'el encabezado compacto debe evitar duplicar la fecha y conservar el reloj');
 assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/,
   'los campos antiguos no deben duplicar la identidad ni la hora');
 
