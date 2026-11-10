@@ -616,7 +616,8 @@ let REMITENTES = [
 let ADMIN_BAL = {DOP:0,HTG:0};
 let ADMIN_COM = {DOP:0,HTG:0};
 let TRANSACCIONES = [];
-let currentUser=ADMIN;
+let currentUser=null;
+window.currentUser=null;
 let currentFilter='TODOS';
 let notificaciones=[];
 
@@ -10812,7 +10813,8 @@ body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidd
  }
  function authView(){
   let u=null;try{u=window.currentUser||currentUser||null}catch(e){u=window.currentUser||null}
-  const ok=!!(u&&(u.id||u.uid||u.codigo||u.email));
+  const authUser=window.sendwayoFirebase&&window.sendwayoFirebase.auth&&window.sendwayoFirebase.auth.currentUser;
+  const ok=!!(authUser&&u&&u.uid&&u.uid===authUser.uid&&String(u.email||'').trim().toLowerCase()===String(authUser.email||'').trim().toLowerCase());
   document.body.classList.toggle('sendwayo-authenticated',ok);
   const w=$('welcome-landing'),l=$('login-screen');
   if(ok){if(w){w.hidden=true;w.style.setProperty('display','none','important')}if(l){l.classList.add('hidden');l.style.setProperty('display','none','important')}placeHeader();}
