@@ -221,3 +221,5 @@ jobs:
             process.exit(1);
           });
           NODE
+
+# 2026-11-09: fresh read-only check after the owner's latest failed login attempt; no data or credentials are changed.
