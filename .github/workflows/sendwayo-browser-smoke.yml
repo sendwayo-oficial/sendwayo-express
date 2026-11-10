@@ -36,7 +36,7 @@ jobs:
       - name: Open the published site and press the login button
         env:
           PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
-          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           if [ -n "$DEPLOYED_SHA" ]; then export PAGE_URL="${PAGE_URL}?sendwayo_release=${DEPLOYED_SHA}"; fi
           echo "Smoke test URL: $PAGE_URL"
@@ -79,6 +79,7 @@ jobs:
                   message,
                   url:d.url || frame?.url || '',
                   line:lineNumber ?? null,
+        sourceLineIndex: Number.isInteger(lineNumber) ? Math.max(0,lineNumber-(parsedScripts.get(scriptId)?.startLine || 0)) : null,
                   column:columnNumber ?? null,
                   scriptId,
                   script:parsedScripts.get(scriptId) || null
@@ -86,8 +87,10 @@ jobs:
                 if (scriptId && Number.isInteger(lineNumber)) {
                   try {
                     const source = await cdp.send('Debugger.getScriptSource', {scriptId});
-                    const lines = (source.scriptSource || '').split('\\n');
-                    const line = lines[lineNumber] || '';
+                    const scriptMeta = parsedScripts.get(scriptId) || {startLine:0};
+                    const sourceLineIndex = Math.max(0, lineNumber - (scriptMeta.startLine || 0));
+                    const lines = (source.scriptSource || '').split(/\r?\n/);
+                    const line = lines[sourceLineIndex] || '';
                     const col = Number.isInteger(columnNumber) ? columnNumber : 0;
                     detail.sourceLine = line.slice(Math.max(0,col-160),Math.min(line.length,col+220));
                     detail.sourceLineLength = line.length;
