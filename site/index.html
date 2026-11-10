@@ -6008,6 +6008,15 @@ window.sendwayoShareReceipt=async function(){
   const IDLE_LIMIT=40*60*1000;
   function findLoginRecord(identifier){
     const q=norm(identifier),digits=txt(identifier).replace(/\D/g,'');
+    let adminAccount=null;
+    try{if(typeof ADMIN!=='undefined'&&ADMIN)adminAccount=ADMIN;}catch(_){}
+    if(adminAccount){
+      const adminAliases=['Sendwayoexpress',adminAccount.username,adminAccount.login,adminAccount.email,adminAccount.usuario,'ADMIN-ADMINISTRADOR','ADMINADMIN','ADMIN-000'];
+      if(adminAliases.some(value=>value&&norm(value)===q)){
+        const adminEmail=txt(adminAccount.email||adminAccount.usuario||'ideletteismorin@gmail.com');
+        return {...adminAccount,id:adminAccount.id||'ADMIN-ADMINISTRADOR',codigo:adminAccount.codigo||'ADMIN-ADMINISTRADOR',email:adminEmail,usuario:adminEmail,username:'Sendwayoexpress',login:'Sendwayoexpress',role:'ADMIN'};
+      }
+    }
     return (window.USUARIOS_LOGIN||[]).find(a=>[a.usuario,a.email,a.id,a.codigo,...(Array.isArray(a.aliases)?a.aliases:[])].some(v=>norm(v)===q)||norm(a.celular||'')===q||norm(a.telefono||'')===q||(digits&&[a.celular,a.telefono].some(v=>txt(v).replace(/\D/g,'')===digits)))||null;
   }
   function applyStoredPasswordResets(){
@@ -6146,18 +6155,21 @@ window.sendwayoShareReceipt=async function(){
     const recovery=$('sendwayo-recover-button');if(recovery)recovery.onclick=requestRecovery;
     restoreRememberedUsername();applyStoredPasswordResets();
   }
-  function requestRecovery(){
-    const identifier=window.prompt('Escriba el correo, ID, código o celular de la cuenta:');if(!identifier||!identifier.trim())return;
+  async function requestRecovery(){
+    const identifier=window.prompt('Escriba su usuario SENDWAYO o el correo de la cuenta:');if(!identifier||!identifier.trim())return;
     const found=findLoginRecord(identifier);
-    if(!found){window.alert('No se pudo verificar la cuenta con los datos indicados.');return;}
-    const registeredPhone=txt(found.celular||found.telefono).replace(/\D/g,'');
-    if(!registeredPhone){window.alert('Esta cuenta no tiene un celular registrado para verificar la recuperación. Solicite ayuda a Administración.');return;}
-    const phone=window.prompt('Escriba el celular registrado en la cuenta para verificarla:');if(!phone)return;
-    if(txt(phone).replace(/\D/g,'')!==registeredPhone){window.alert('No se pudo verificar la cuenta con esos datos.');return;}
-    const newPassword=window.prompt('Escriba la nueva contraseña (mínimo 8 caracteres):');if(!newPassword||newPassword.length<8){window.alert('La nueva contraseña debe tener al menos 8 caracteres.');return;}
-    const confirmPassword=window.prompt('Repita la nueva contraseña para confirmarla:');if(newPassword!==confirmPassword){window.alert('Las contraseñas no coinciden. No se hizo ningún cambio.');return;}
-    saveResetPassword(found,newPassword);
-    window.alert('La contraseña se cambió en este navegador. Desde ahora se exige la nueva contraseña para esta cuenta aquí. Este HTML no está conectado a un servicio de recuperación por correo ni sincroniza el cambio con otros dispositivos.');
+    if(!found){window.alert('No se encontró ese usuario. Revise el dato e inténtelo otra vez.');return;}
+    const recoveryEmail=norm(found.email||found.usuario);
+    const recoveryAuth=window.sendwayoFirebase&&window.sendwayoFirebase.auth;
+    if(!recoveryEmail.includes('@')){window.alert('La cuenta no tiene un correo válido para recuperar el acceso.');return;}
+    if(!recoveryAuth||typeof recoveryAuth.sendPasswordResetEmail!=='function'){window.alert('El servicio seguro de recuperación no está disponible. Recargue la página y vuelva a intentarlo.');return;}
+    try{
+      await recoveryAuth.sendPasswordResetEmail(recoveryEmail);
+      window.alert('Firebase envió el enlace seguro para crear una contraseña nueva a '+recoveryEmail+'. Revise también la carpeta de correo no deseado.');
+    }catch(error){
+      console.error('[SENDWAYO password recovery]',error);
+      window.alert('Firebase no pudo enviar el enlace de recuperación. Compruebe que el correo esté registrado y vuelva a intentarlo.');
+    }
   }
 
   // Keep login/logout, activity tracking, and account-choice UI in the final state despite earlier script overrides.
@@ -6166,7 +6178,7 @@ window.sendwayoShareReceipt=async function(){
     const wrappedLogin=function(){
       const username=txt($('login-usuario')?.value).trim();const password=txt($('login-password')?.value);const remember=!!$('sendwayo-remember-credentials')?.checked;
       applyStoredPasswordResets();
-      const resetRows=loadArray(PASSWORD_RESET_KEY);const resetLogin=findLoginRecord(username);const resetRow=resetLogin&&resetRows.find(x=>String(x.id)===String(resetLogin.id));
+      const resetRows=loadArray(PASSWORD_RESET_KEY);const resetLogin=findLoginRecord(username);const resetRow=resetLogin&&norm(resetLogin.role)!=='admin'&&resetRows.find(x=>String(x.id)===String(resetLogin.id));
       let result;
       if(resetRow){
         if(password!==String(resetRow.password||'')){
