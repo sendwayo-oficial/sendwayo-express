@@ -561,7 +561,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
       <div class="flex justify-center"><div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-6 py-2 rounded-full font-bold text-[12px] flex items-center gap-2"><span class="w-5 h-5 bg-emerald-600 text-white rounded-full flex items-center justify-center text-[10px]">✓</span> APROBADO</div></div>
       <div class="space-y-1 text-[10px] pt-3 border-t"><div class="flex justify-between"><span class="text-gray-500">EMITIDO POR (ID):</span><span id="comp-creador" class="font-bold">ADMINADMIN</span></div><div class="flex justify-between"><span class="text-gray-500">AUTORIZADO POR (ID):</span><span id="comp-autorizado" class="font-bold">ADMINADMIN</span></div></div>
       <div class="text-center text-[11px]"><p>Gracias por confiar en <span class="font-bold">SENDWAYO EXPRESS.</span></p></div>
-      <div class="bg-slate-900 text-white rounded-xl p-3 text-[11px] space-y-1 text-center"><div class="flex justify-center items-center gap-2">✦ WhatsApp / Celular: <strong>8297676665</strong></div><div class="flex justify-center items-center gap-2">@ Email: sendwayoexpress@gmail.com</div></div>
+      <div class="bg-slate-900 text-white rounded-xl p-3 text-[11px] space-y-1 text-center"><div class="flex justify-center items-center gap-2">✦ WhatsApp / Celular: <strong>8297676665</strong></div><div class="flex justify-center items-center gap-2">@ Email: ideletteismorin@gmail.com</div></div>
     </div>
     <div class="flex gap-2 p-3 bg-gray-50"><button onclick="document.getElementById('modal-comprobante').classList.add('hidden')" class="w-1/3 bg-gray-200 font-bold py-3 rounded-xl">Cerrar</button><button onclick="window.sendwayoShareReceipt()" class="w-1/3 bg-emerald-600 text-white font-bold py-3 rounded-xl">Compartir</button><button onclick="window.print()" class="w-1/3 bg-blue-900 text-white font-bold py-3 rounded-xl">Imprimir</button></div>
   </div>
@@ -582,7 +582,7 @@ let ADMIN = {
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
-  email:'sendwayoexpress@gmail.com',
+  email:'ideletteismorin@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
   balances:{DOP:0,HTG:0},
@@ -6013,7 +6013,7 @@ window.sendwayoShareReceipt=async function(){
     if(adminAccount){
       const adminAliases=['Sendwayoexpress',adminAccount.username,adminAccount.login,adminAccount.email,adminAccount.usuario,'ADMIN-ADMINISTRADOR','ADMINADMIN','ADMIN-000'];
       if(adminAliases.some(value=>value&&norm(value)===q)){
-        const adminEmail=txt(adminAccount.email||adminAccount.usuario||'sendwayoexpress@gmail.com');
+        const adminEmail=txt(adminAccount.email||adminAccount.usuario||'ideletteismorin@gmail.com');
         return {...adminAccount,id:adminAccount.id||'ADMIN-ADMINISTRADOR',codigo:adminAccount.codigo||'ADMIN-ADMINISTRADOR',email:adminEmail,usuario:adminEmail,username:'Sendwayoexpress',login:'Sendwayoexpress',role:'ADMIN'};
       }
     }
@@ -6051,7 +6051,7 @@ window.sendwayoShareReceipt=async function(){
     try{
       const a=allAccounts().find(x=>String(x.role||'').toUpperCase().includes('ADMIN')||String(x.id||'').toUpperCase()==='ADMINADMIN');
       if(a){const previousId=String(a.id||'');const previousCode=String(a.codigo||'');if(!a.id||['ADMINADMIN'].includes(previousId.toUpperCase()))a.id='ADMIN-ADMINISTRADOR';if(!a.codigo||previousCode.toUpperCase()==='ADMIN-000')a.codigo=a.id;a.codigo2=a.codigo;if(previousId&&previousId!==a.id){a.idAnterior=a.idAnterior||previousId;a.idAliases=[...new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),previousId].filter(Boolean))];}if(previousCode&&previousCode!==a.codigo)a.codeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),previousCode].filter(Boolean))];a.role='ADMIN';}
-      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='sendwayoexpress@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
+      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='ideletteismorin@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
     }catch(_){ }
   }
 
@@ -7270,7 +7270,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -7933,7 +7933,7 @@ function seedProfileFromAccount(account, role){
     const {key, data}=profileRow;
     const currentUid=txt(data.authUid);
     const loginEmail=norm(firebaseUser.email);
-    // Cuenta administrativa confirmada: sendwayoexpress@gmail.com.
+    // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && profileRow.virtualProfile && loginEmail===ADMIN_EMAIL){
       Object.assign(data,{role:'admin',email:ADMIN_EMAIL,authEmail:ADMIN_EMAIL});
@@ -8443,7 +8443,7 @@ function seedProfileFromAccount(account, role){
             if (createError?.code === 'auth/email-already-in-use') {
               await loginStep(auth.sendPasswordResetEmail(email), 'El envío de recuperación de contraseña', 12000);
               keepLoginModalOpen();
-              loginError('La cuenta administrativa ya existe. Firebase envió un enlace de recuperación a sendwayoexpress@gmail.com. Abra ese correo y después vuelva a ingresar aquí.');
+              loginError('La cuenta administrativa ya existe. Firebase envió un enlace de recuperación a ideletteismorin@gmail.com. Abra ese correo y después vuelva a ingresar aquí.');
               return;
             }
             throw createError;
@@ -8461,7 +8461,7 @@ function seedProfileFromAccount(account, role){
             state.preserveLoginOnSignout = false;
             console.warn('[SENDWAYO] No se pudo cerrar la sesión de verificación:', signOutError?.code || signOutError?.message || signOutError);
           }
-          loginError('Se creó la cuenta administrativa con el correo correcto. Firebase envió un mensaje de verificación a sendwayoexpress@gmail.com. Confirme ese correo y luego ingrese aquí con la misma contraseña que acaba de escribir.');
+          loginError('Se creó la cuenta administrativa con el correo correcto. Firebase envió un mensaje de verificación a ideletteismorin@gmail.com. Confirme ese correo y luego ingrese aquí con la misma contraseña que acaba de escribir.');
           return;
         }
         throw authError;
@@ -8481,7 +8481,7 @@ function seedProfileFromAccount(account, role){
           state.preserveLoginOnSignout = false;
           console.warn('[SENDWAYO] No se pudo cerrar la sesión pendiente de verificación:', signOutError?.code || signOutError?.message || signOutError);
         }
-        loginError('La cuenta administrativa todavía no está verificada. Firebase volvió a enviar el mensaje a sendwayoexpress@gmail.com. Confirme el correo y vuelva a ingresar.');
+        loginError('La cuenta administrativa todavía no está verificada. Firebase volvió a enviar el mensaje a ideletteismorin@gmail.com. Confirme el correo y vuelva a ingresar.');
         return;
       }
 
@@ -9630,7 +9630,7 @@ function seedProfileFromAccount(account, role){
  function senderAccounts(){try{return typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:(window.REMITENTES||[]);}catch(e){return window.REMITENTES||[];}}
  function accounts(){return [adminAccount(),...agentAccounts(),...senderAccounts()].filter(Boolean);}
  function current(){return window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();}
- function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
+ function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
  function role(a){return txt(a&&(a.role||a.rol)).toUpperCase();}
  function identityValues(a){
   return [a.id,a.idAnterior,a.legacyId,a.accountId,a.codigo,a.codigo2,a.codigoAnterior,a.code,a.staffId,a.username,a.login,a.usuario,a.email,a.authEmail,a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid,a.phone,a.telefono,a.celular]
@@ -9750,7 +9750,7 @@ function seedProfileFromAccount(account, role){
   const a=adminAccount();if(!a)return alert('No se encontró el perfil de Administración.');
   let modal=$('sendwayo-admin-profile-editor');
   if(!modal){modal=document.createElement('div');modal.id='sendwayo-admin-profile-editor';modal.className='fixed inset-0 z-[40000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(modal);}
-  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'sendwayoexpress@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
+  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'ideletteismorin@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
   $('sendwayo-admin-profile-close').onclick=()=>modal.remove();
   $('sendwayo-admin-profile-save').onclick=saveAdminProfile;
  }
@@ -9873,7 +9873,7 @@ function seedProfileFromAccount(account, role){
  const readRows=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
  const writeRows=rows=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO registration approval]',e);}};
  const user=()=>window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();
- const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
+ const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
  const allAccounts=()=>{let rows=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)rows.push(ADMIN);}catch(e){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))rows=rows.concat(AGENTES);}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))rows=rows.concat(REMITENTES);}catch(e){}return rows;};
  const priorAction=window.sendwayoActionGeneric;
  const priorSave=window.sendwayoSaveAccountForm;
