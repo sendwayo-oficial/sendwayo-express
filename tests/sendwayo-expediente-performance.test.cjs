@@ -157,7 +157,7 @@ assert.match(html, /function renderTariffPage\(/, 'no se debe quitar el módulo 
 
 const preservedFields = ['login-usuario','login-password','v162-envio-monto','v162-retiro-monto','v162-dep-monto','v162-ben-nom','v162-ben-tel','v162-rem-nom','v162-rec-num','v162-pkt-rec','v162-fac-num','aj171-cantidad','sendwayo-wallet-method','sendwayo-wallet-amount','sw-rate-min','sw-rate-max','sw-rate-envio','sw-rate-retiro'];
 for (const field of preservedFields) assert.ok(html.includes('id="' + field + '"'), 'no se debe eliminar el campo ' + field);
-assert.match(html, /id="sendwayo-v7-daily-gains"/, 'debe conservarse la ganancia diaria por moneda');
+assert.match(html, /panel\.id='sendwayo-v7-daily-gains'/, 'debe conservarse la ganancia diaria por moneda');
 assert.match(html, /Balance en Gourdes Haitianos \(HTG\)/);
 assert.match(html, /Balance en Pesos Dominicanos \(DOP\)/);
 assert.match(html, /Comisión en Gourdes Haitianos \(HTG\)/);
