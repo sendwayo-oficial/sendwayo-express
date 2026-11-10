@@ -8586,9 +8586,12 @@ function seedProfileFromAccount(account, role){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  // El listener se registra de inmediato: el ingreso no debe quedar bloqueado esperando
-  // la migración de persistencia del navegador. Firebase Authentication valida cada credencial.
-  state.authReadyPromise = Promise.resolve(true);
+  // Guardar la sesión dentro de la pestaña y permitir una recuperación limpia si el navegador la rechaza.
+  // El rechazo de persistencia no bloquea el acceso: la contraseña sigue validándose en Firebase.
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(error => {
+    console.warn('[SENDWAYO] No se pudo fijar la persistencia de sesión; se continuará con la sesión actual:', error?.code || error?.message || error);
+    return true;
+  });
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.preserveLoginOnSignout){state.preserveLoginOnSignout=false;return;}
