@@ -2491,24 +2491,16 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
     <header class="sendwayo-home-header">
       <div class="sendwayo-home-header-inner">
         <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
+        <div class="sendwayo-home-entry-actions"><button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ingresar</button><button type="button" class="sendwayo-home-register" onclick="sendwayoOpenPublicRegistration()">Crear cuenta / Registrarse</button></div>
       </div>
     </header>
     <div class="sendwayo-home-content">
       <section class="sendwayo-home-hero">
         <div class="sendwayo-home-gallery">
           <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
+            <img id="v162-car-main" src="assets/sendwayo-servicios.jpg" alt="La imagen oficial de bienvenida de SENDWAYO EXPRESS">
             <div class="sendwayo-home-photo-shade"></div>
             <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
-            <div id="v162-dots" class="sendwayo-home-dots"></div>
-            <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
-          </div>
-          <div class="sendwayo-home-thumbs">
-            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
           </div>
         </div>
         <aside class="sendwayo-home-aside">
@@ -2518,8 +2510,12 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
           <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Atención organizada</strong><small>Seguimiento de tus solicitudes y operaciones.</small></div></div>
           <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Servicios variados</strong><small>Dinero, paquetes, recargas y pagos.</small></div></div>
           <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Acceso seguro</strong><small>Tu cuenta personal dentro de SENDWAYO EXPRESS.</small></div></div>
-          <div class="sendwayo-home-aside-photo"><img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS"></div>
         </aside>
+      </section>
+      <section class="sendwayo-home-values" aria-label="Visión, misión y objetivo">
+        <article><span>VISIÓN</span><h2>Conectar destinos</h2><p>Ser una plataforma confiable que acerque a las personas, familias y negocios entre países.</p></article>
+        <article><span>MISIÓN</span><h2>Atención cercana</h2><p>Ofrecer servicios organizados, comunicación clara y seguimiento responsable de cada solicitud.</p></article>
+        <article><span>OBJETIVO</span><h2>Facilitar tus gestiones</h2><p>Reunir envíos, retiros, paquetes, recargas y pagos en una sola plataforma accesible.</p></article>
       </section>
       <section class="sendwayo-home-services">
         <div class="sendwayo-home-section-title"><span>NUESTROS SERVICIOS</span><h2>¿Qué necesitas hacer?</h2></div>
@@ -2583,7 +2579,14 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 .sendwayo-home-footer{background:#fff!important;border-top:1px solid #e4eaf1!important;padding:17px 24px!important;text-align:center!important;color:#64748b!important;font-size:11px!important}
 #login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:20000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;background:rgba(7,20,38,.96)!important}
 #login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important}
-@media(max-width:900px){.sendwayo-home-hero{grid-template-columns:1fr!important}.sendwayo-home-aside{display:grid!important;grid-template-columns:1fr 1fr!important}.sendwayo-home-aside-photo{grid-column:1/-1;height:150px!important}.sendwayo-home-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+.sendwayo-home-entry-actions{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;justify-content:flex-end!important}
+.sendwayo-home-register{display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #0f7490!important;border-radius:999px!important;padding:13px 20px!important;background:#fff!important;color:#0f5274!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important}
+.sendwayo-home-values{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important;margin:28px 0!important}
+.sendwayo-home-values article{background:#fff!important;border:1px solid #e4eaf1!important;border-radius:17px!important;padding:20px!important;box-shadow:0 5px 18px rgba(15,36,64,.05)!important}
+.sendwayo-home-values article>span{font-size:10px!important;letter-spacing:.15em!important;font-weight:900!important;color:#0782b8!important}
+.sendwayo-home-values h2{font-size:18px!important;font-weight:900!important;color:#102c4c!important;margin:9px 0 7px!important}
+.sendwayo-home-values p{font-size:12px!important;line-height:1.55!important;color:#64748b!important;margin:0!important}
+@media(max-width:900px){.sendwayo-home-values{grid-template-columns:1fr!important}.sendwayo-home-hero{grid-template-columns:1fr!important}.sendwayo-home-aside{display:grid!important;grid-template-columns:1fr 1fr!important}.sendwayo-home-aside-photo{grid-column:1/-1;height:150px!important}.sendwayo-home-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:560px){.sendwayo-home-header-inner{padding:11px 14px!important}.sendwayo-home-brand img{height:40px!important}.sendwayo-home-brand strong{font-size:12px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important}.sendwayo-home-content{padding:16px 13px 24px!important}.sendwayo-home-main-photo{height:360px!important}.sendwayo-home-photo-copy{padding:19px!important}.sendwayo-home-photo-copy h1{font-size:32px!important}.sendwayo-home-aside{display:flex!important;padding:18px!important}.sendwayo-home-aside-photo{height:120px!important}.sendwayo-home-service-grid{gap:8px!important}.sendwayo-home-service-grid article{padding:12px!important}}
 </style>
 <!-- MODAL ENVIO EXACTO CAPTURA - NO TOCAR -->
@@ -2696,13 +2699,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 <script>
 console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros real ventanilla + beneficiario restaurado + recargas paquetikos esquina redondo sugerencias numeros');
 (function(){
-  const carouselImgs = [
-    "assets/ca43ab0c2b8e924cfacc.webp",
-    "assets/2fdc9be46456ec238812.webp",
-    "assets/d6ce41174c8bf68a01de.webp",
-    "assets/d0a323d74b9c3176a044.webp",
-    "assets/165bf5cfd643e8b3c495.webp"
-  ];
+  const carouselImgs = ["assets/sendwayo-servicios.jpg"];
   let carIdx=0;
   window.v162_bal={rd:0, htg:0, comRD:0, comHTG:0};
   try{ const s=localStorage.getItem('sendwayo_express_oficial_20261029_bal_v162'); if(s) Object.assign(window.v162_bal, JSON.parse(s)); }catch(e){}
@@ -2766,10 +2763,10 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
       <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
-        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
+        <div><label class="block text-[11px] font-bold mb-1">Correo, ID o código</label><input id="login-usuario" type="text" autocomplete="username" placeholder="Correo o identificador" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
-        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
+        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Ingresar</button>
         <p class="text-center text-[11px] text-slate-500 mt-3">¿Necesita acceso? Comuníquese con el administrador.</p>
       </div>
     </div>`;
@@ -7400,26 +7397,45 @@ window.sendwayoShareReceipt=async function(){
     document.getElementById('view-tablero')?.classList.remove('hidden');
   }
   function showLogin() {
-    document.body.classList.remove('sendwayo-authenticated', 'sendwayo-login-open');
+    const login = document.getElementById('login-screen');
+    const welcome = document.getElementById('welcome-landing');
+
+    // Si la persona ya abrió el formulario, una sesión Firebase nula no debe
+    // expulsarla a la portada mientras está intentando autenticarse.
+    if (document.body.classList.contains('sendwayo-login-open')) {
+      if (welcome) {
+        welcome.classList.add('hidden');
+        welcome.style.setProperty('display', 'none', 'important');
+        welcome.style.setProperty('visibility', 'hidden', 'important');
+        welcome.style.setProperty('pointer-events', 'none', 'important');
+      }
+      if (login) {
+        login.classList.remove('hidden');
+        login.classList.add('sendwayo-login-visible');
+        login.style.setProperty('display', 'flex', 'important');
+        login.style.setProperty('visibility', 'visible', 'important');
+        login.style.setProperty('pointer-events', 'auto', 'important');
+      }
+      return;
+    }
+
+    document.body.classList.remove('sendwayo-authenticated');
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-tablero')?.classList.add('hidden');
-    // En una sesión cerrada se muestra primero la portada pública. El formulario
-    // solo se abre cuando el visitante pulsa "Ya tengo una cuenta".
-    const login=document.getElementById('login-screen');
-    if(login){
+    if (login) {
       login.classList.add('hidden');
-      login.style.setProperty('display','none','important');
-      login.style.setProperty('visibility','hidden','important');
-      login.style.setProperty('pointer-events','none','important');
+      login.style.setProperty('display', 'none', 'important');
+      login.style.setProperty('visibility', 'hidden', 'important');
+      login.style.setProperty('pointer-events', 'none', 'important');
     }
-    const welcome=document.getElementById('welcome-landing');
-    if(welcome){
+    if (welcome) {
       welcome.classList.remove('hidden');
-      welcome.style.setProperty('display','block','important');
-      welcome.style.setProperty('visibility','visible','important');
-      welcome.style.setProperty('pointer-events','auto','important');
+      welcome.style.setProperty('display', 'block', 'important');
+      welcome.style.setProperty('visibility', 'visible', 'important');
+      welcome.style.setProperty('pointer-events', 'auto', 'important');
     }
-    const top=document.getElementById('user-top'); if(top) top.textContent='';
+    const top = document.getElementById('user-top');
+    if (top) top.textContent = '';
   }
   function collectAliases() {
     const rows=[];
@@ -7496,61 +7512,71 @@ window.sendwayoShareReceipt=async function(){
       { path: 'users', ref: db.ref('users') }
     ];
 
+    // Consultar las rutas candidatas en paralelo: las consultas secuenciales anteriores
+    // podían agotar el límite de 16 segundos y dejar al usuario detenido en "Buscando tu cuenta".
+    const adminRoot = roots[0].ref;
+    if (identity.isAdmin) {
+      try {
+        const adminSnap = await adminRoot.child('admin').once('value');
+        if (adminSnap.exists()) {
+          const existing = adminSnap.val() || {};
+          const previousId = txt(existing.id || existing.legacyId || 'ADMINADMIN');
+          const previousCode = txt(existing.code || existing.codigo || 'ADMIN-000');
+          const visibleId = !previousId || previousId.toUpperCase() === 'ADMINADMIN' ? 'ADMIN-ADMINISTRADOR' : previousId;
+          const visibleCode = !previousCode || previousCode === 'ADMIN-000' ? visibleId : previousCode;
+          const identityPatch = {
+            id: visibleId, accountId: visibleId, code: visibleCode, codigo: visibleCode, staffId: visibleCode,
+            idAnterior: previousId !== visibleId ? previousId : txt(existing.idAnterior || ''),
+            idAliases: [...new Set([...(Array.isArray(existing.idAliases) ? existing.idAliases : []), previousId, 'ADMINADMIN', 'ADMIN-000'].filter(Boolean))],
+            codeAliases: [...new Set([...(Array.isArray(existing.codeAliases) ? existing.codeAliases : []), previousCode, 'ADMIN-000'].filter(Boolean))]
+          };
+          userRoot = adminRoot;
+          try { await adminRoot.child('admin').update(identityPatch); Object.assign(existing, identityPatch); }
+          catch (identityError) { console.warn('[SENDWAYO] Perfil admin leído; no se pudo normalizar su identificador:', identityError?.code || identityError?.message || identityError); }
+          return { key: 'admin', data: existing };
+        }
+      } catch (error) {
+        console.warn('[SENDWAYO] No se pudo leer el registro admin:', error?.code || error?.message || error);
+      }
+    }
+
+    const directKeys = [...new Set([uid, known?.id, known?.codigo].filter(Boolean))];
     for (const candidate of roots) {
-      const root = candidate.ref;
+      const directResults = await Promise.all(directKeys.map(key => directProfile(candidate.ref, key, identity)));
+      const direct = directResults.find(Boolean);
+      if (direct) { userRoot = candidate.ref; return direct; }
+    }
 
-      // El registro administrativo puede estar guardado bajo la clave fija "admin".
-      if (identity.isAdmin) {
-        try {
-          const adminSnap = await root.child('admin').once('value');
-          if (adminSnap.exists()) {
-            const existing = adminSnap.val() || {};
-            const previousId = txt(existing.id || existing.legacyId || 'ADMINADMIN');
-            const previousCode = txt(existing.code || existing.codigo || 'ADMIN-000');
-            const visibleId = !previousId || previousId.toUpperCase() === 'ADMINADMIN' ? 'ADMIN-ADMINISTRADOR' : previousId;
-            const visibleCode = !previousCode || previousCode === 'ADMIN-000' ? visibleId : previousCode;
-            const identityPatch = {
-              id: visibleId, accountId: visibleId, code: visibleCode, codigo: visibleCode, staffId: visibleCode,
-              idAnterior: previousId !== visibleId ? previousId : txt(existing.idAnterior || ''),
-              idAliases: [...new Set([...(Array.isArray(existing.idAliases) ? existing.idAliases : []), previousId, 'ADMINADMIN', 'ADMIN-000'].filter(Boolean))],
-              codeAliases: [...new Set([...(Array.isArray(existing.codeAliases) ? existing.codeAliases : []), previousCode, 'ADMIN-000'].filter(Boolean))]
-            };
-            userRoot = root;
-            try {
-              await root.child('admin').update(identityPatch);
-              Object.assign(existing, identityPatch);
-            } catch (identityError) {
-              console.warn('[SENDWAYO] El perfil admin se leyó, pero no se pudo normalizar su identificador:', identityError?.code || identityError?.message || identityError);
-            }
-            return { key: 'admin', data: existing };
+    const queries = [
+      ['authUid', uid], ['uid', uid], ['firebaseUid', uid],
+      ['authEmail', email], ['email', email], ['usuario', email],
+      ['correo', email], ['mail', email]
+    ];
+    for (const candidate of roots) {
+      const results = await Promise.all(queries.map(([field, value]) => queryOne(candidate.ref, field, value, identity)));
+      const found = results.find(Boolean);
+      if (found) { userRoot = candidate.ref; return found; }
+    }
+
+    // Último recurso solo si fallaron las búsquedas puntuales.
+    for (const candidate of roots) {
+      try {
+        const directorySnap = await candidate.ref.once('value');
+        let fallback = null;
+        directorySnap.forEach(child => {
+          if (fallback) return;
+          const data = child.val();
+          if (!data || typeof data !== 'object') return;
+          const storedUid = txt(data.authUid || data.uid || data.firebaseUid || data.firebase_uid);
+          const storedEmail = norm(data.authEmail || data.email || data.usuario || data.correo || data.mail);
+          const knownKey = identity.knownKeys.has(safeDbKey(child.key));
+          if ((storedUid && storedUid === uid) || (storedEmail && storedEmail === email) || knownKey) {
+            fallback = { key: child.key, data };
           }
-        } catch (error) {
-          console.warn('[SENDWAYO] No se pudo leer el registro admin en ' + candidate.path + ':', error?.code || error?.message || error);
-        }
-      }
-
-      // Primero se prueban las claves directas (UID, ID/código registrado). Después,
-      // se consultan campos indexados; si un índice falla, se continúa con el siguiente.
-      const directKeys = [...new Set([uid, known?.id, known?.codigo].filter(Boolean))];
-      for (const key of directKeys) {
-        const direct = await directProfile(root, key, identity);
-        if (direct) {
-          userRoot = root;
-          return direct;
-        }
-      }
-
-      const queries = [
-        ['authUid', uid], ['uid', uid], ['firebaseUid', uid],
-        ['authEmail', email], ['email', email], ['usuario', email],
-        ['correo', email], ['mail', email]
-      ];
-      for (const [field, value] of queries) {
-        const found = await queryOne(root, field, value, identity);
-        if (found) {
-          userRoot = root;
-          return found;
-        }
+        });
+        if (fallback) { userRoot = candidate.ref; return fallback; }
+      } catch (fallbackError) {
+        console.warn('[SENDWAYO] Lectura de respaldo no disponible en ' + candidate.path + ':', fallbackError?.code || fallbackError?.message || fallbackError);
       }
     }
     return null;
@@ -7590,12 +7616,21 @@ function seedProfileFromAccount(account, role){
         const oldCode=txt(data.code||data.codigo||data.staffId||'');
         const aliases=[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,account.id,account.idAnterior].filter(Boolean))];
         const codeAliases=[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,account.codigoAnterior,account.codigo2].filter(Boolean))];
-        const patch={id:account.id,accountId:account.id,code:account.codigo,codigo:account.codigo,staffId:account.codigo,number:txt(account.numero),idAnterior:oldId!==account.id?oldId:txt(data.idAnterior||''),idAliases:aliases,codeAliases,aliases:[...new Set([...(Array.isArray(data.aliases)?data.aliases:[]),oldId,oldCode,account.id,account.codigo].filter(Boolean))]};
+        const accountName=txt(account.name||account.nombre||data.name||data.nombre||'Usuario SENDWAYO');const accountPhone=txt(account.phone||account.telefono||account.celular||data.phone||data.telefono||data.celular||'');const patch={id:account.id,accountId:account.id,code:account.codigo,codigo:account.codigo,staffId:account.codigo,number:txt(account.numero),name:accountName,nombre:accountName,displayName:accountName,email,authEmail:email,phone:accountPhone,telefono:accountPhone,celular:accountPhone,role:role==='AGENTE'?'agente':'remitente',idAnterior:oldId!==account.id?oldId:txt(data.idAnterior||''),idAliases:aliases,codeAliases,aliases:[...new Set([...(Array.isArray(data.aliases)?data.aliases:[]),oldId,oldCode,account.id,account.codigo].filter(Boolean))]};
         await userRoot.child(previous.key).update(patch);Object.assign(data,patch);knownEmails.add(email);continue;
       }
       const key=safeDbKey(account.id||account.codigo||email);
       const existingKey=await userRoot.child(key).once('value');
-      if(existingKey.exists()){knownEmails.add(email);continue;}
+      if(existingKey.exists()){
+        // Reparar solo la identidad del registro que ya ocupa el ID canónico.
+        // No reemplazar balances, comisiones, movimientos, estado ni otros campos financieros.
+        const current=existingKey.val()||{};
+        const accountName=txt(account.name||account.nombre||current.name||current.nombre||'Usuario SENDWAYO');
+        const accountPhone=txt(account.phone||account.telefono||account.celular||current.phone||current.telefono||current.celular||'');
+        await userRoot.child(key).update({id:account.id,accountId:account.id,staffId:account.codigo,code:account.codigo,codigo:account.codigo,number:txt(account.numero),name:accountName,nombre:accountName,displayName:accountName,email,authEmail:email,phone:accountPhone,telefono:accountPhone,celular:accountPhone,role:role==='AGENTE'?'agente':'remitente'});
+        knownEmails.add(email);
+        continue;
+      }
       await userRoot.child(key).set(seedProfileFromAccount(account,role));
       knownEmails.add(email);
     }
@@ -7856,7 +7891,7 @@ function seedProfileFromAccount(account, role){
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
       const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
       if(currentUid!==firebaseUser.uid) updates.authUid=firebaseUser.uid;
-      if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;
+      if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;if(norm(data.email)!==ADMIN_EMAIL) updates.email=ADMIN_EMAIL;
       if(Object.keys(updates).length){
         await userRoot.child('admin').update(updates);
         Object.assign(data,updates);
@@ -8334,12 +8369,70 @@ function seedProfileFromAccount(account, role){
       await loginStep(state.authReadyPromise || Promise.resolve(true), 'La preparación de Firebase', 2000);
 
       if (button) button.textContent = 'Verificando contraseña…';
-      const credential = await loginStep(
-        auth.signInWithEmailAndPassword(email, password),
-        'Firebase Authentication',
-        12000
-      );
+      let credential;
+      try {
+        credential = await loginStep(
+          auth.signInWithEmailAndPassword(email, password),
+          'Firebase Authentication',
+          12000
+        );
+      } catch (authError) {
+        // One-time setup for the verified administrator address only.
+        // The password typed by the owner is used to create the missing Firebase identity;
+        // access is withheld until the mailbox owner confirms the email.
+        if (email === ADMIN_EMAIL && ['auth/user-not-found', 'auth/invalid-credential'].includes(authError?.code)) {
+          let createdCredential = null;
+          try {
+            createdCredential = await loginStep(
+              auth.createUserWithEmailAndPassword(email, password),
+              'La creación segura de la cuenta administrativa',
+              15000
+            );
+          } catch (createError) {
+            if (createError?.code === 'auth/email-already-in-use') {
+              await loginStep(auth.sendPasswordResetEmail(email), 'El envío de recuperación de contraseña', 12000);
+              keepLoginModalOpen();
+              loginError('La cuenta administrativa ya existe. Firebase envió un enlace de recuperación a ideletteismorin@gmail.com. Abra ese correo y después vuelva a ingresar aquí.');
+              return;
+            }
+            throw createError;
+          }
+
+          await loginStep(
+            createdCredential.user.sendEmailVerification(),
+            'El envío de verificación del correo administrativo',
+            12000
+          );
+          state.preserveLoginOnSignout = !!auth.currentUser;
+          keepLoginModalOpen();
+          try { await auth.signOut(); }
+          catch (signOutError) {
+            state.preserveLoginOnSignout = false;
+            console.warn('[SENDWAYO] No se pudo cerrar la sesión de verificación:', signOutError?.code || signOutError?.message || signOutError);
+          }
+          loginError('Se creó la cuenta administrativa con el correo correcto. Firebase envió un mensaje de verificación a ideletteismorin@gmail.com. Confirme ese correo y luego ingrese aquí con la misma contraseña que acaba de escribir.');
+          return;
+        }
+        throw authError;
+      }
+
       const firebaseUser = credential.user;
+      if (email === ADMIN_EMAIL && !firebaseUser.emailVerified) {
+        await loginStep(
+          firebaseUser.sendEmailVerification(),
+          'El reenvío de verificación del correo administrativo',
+          12000
+        );
+        state.preserveLoginOnSignout = !!auth.currentUser;
+        keepLoginModalOpen();
+        try { await auth.signOut(); }
+        catch (signOutError) {
+          state.preserveLoginOnSignout = false;
+          console.warn('[SENDWAYO] No se pudo cerrar la sesión pendiente de verificación:', signOutError?.code || signOutError?.message || signOutError);
+        }
+        loginError('La cuenta administrativa todavía no está verificada. Firebase volvió a enviar el mensaje a ideletteismorin@gmail.com. Confirme el correo y vuelva a ingresar.');
+        return;
+      }
 
       // Firebase Authentication ya validó la contraseña y emitió este usuario. No bloquear el acceso
       // por una segunda verificación HTTP del Worker, que puede fallar aunque Firebase esté disponible.
@@ -8347,7 +8440,10 @@ function seedProfileFromAccount(account, role){
       const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 16000);
 
       if (!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
-      const role = canonicalRole(found.data, found.key);
+      const role = norm(firebaseUser.email) === ADMIN_EMAIL ? 'ADMIN' : canonicalRole(found.data, found.key);
+      // El correo administrativo autenticado es la referencia autorizada de Administración.
+      // Este ajuste es temporal y en memoria: no reinicia saldos, comisiones ni registros.
+      if (role === 'ADMIN') found.data = {...found.data, role:'admin', rol:'admin', email:found.data.email || ADMIN_EMAIL, authEmail:found.data.authEmail || ADMIN_EMAIL};
       if (!role) throw new Error('El perfil de Firebase no tiene un rol válido. No se otorgó acceso.');
       if (!isActive(found.data)) throw new Error('La cuenta está inactiva o bloqueada. Consulte al administrador.');
       if (button) button.textContent = 'Comprobando seguridad…';
@@ -8521,6 +8617,41 @@ function seedProfileFromAccount(account, role){
     }catch(error){showSyncIssue('No se guardó el beneficiario en Firebase: '+(error?.message||'permiso o conexión'));return false;}
   };
 
+
+  // Registro público: solicitud pendiente de revisión administrativa.
+  // No crea contraseñas ni cuentas de acceso desde el navegador.
+  window.sendwayoOpenPublicRegistration=function(){
+    sendwayoModal('Crear cuenta / Registrarse',`<div class="space-y-3">
+      ${inp('sendwayo-reg-name','Nombre y apellido','Nombre completo')}
+      ${inp('sendwayo-reg-phone','WhatsApp / celular','Número de teléfono','tel')}
+      ${inp('sendwayo-reg-email','Correo electrónico','correo@gmail.com','email')}
+      ${sel('sendwayo-reg-role','Tipo de cuenta',`<option value="REMITENTE" selected>Remitente</option><option value="AGENTE">Agente (sujeto a aprobación)</option>`)}
+      <p class="text-xs text-slate-500">Administración revisará la solicitud. La cuenta se habilitará después de su aprobación.</p>
+    </div><button type="button" onclick="sendwayoSubmitPublicRegistration()" class="w-full bg-[#0f2440] text-white rounded-full py-3 font-bold">Enviar solicitud de registro</button>`);
+  };
+  window.sendwayoSubmitPublicRegistration=async function(){
+    const name=document.getElementById('sendwayo-reg-name')?.value.trim()||'';
+    const phone=document.getElementById('sendwayo-reg-phone')?.value.trim()||'';
+    const email=document.getElementById('sendwayo-reg-email')?.value.trim().toLowerCase()||'';
+    const role=document.getElementById('sendwayo-reg-role')?.value||'REMITENTE';
+    if(!name||!phone||!email){window.alert('Complete nombre, celular y correo electrónico.');return false;}
+    if(!email.includes('@')||!email.includes('.')){window.alert('El correo electrónico no es válido.');return false;}
+    const firebase=window.sendwayoFirebase;
+    if(!firebase?.db){window.alert('La conexión segura todavía se está preparando. Espere unos segundos e inténtelo nuevamente.');return false;}
+    const id='SOL-REG-'+Date.now();
+    const row={id,type:'REGISTRO_CUENTA',requestType:'REGISTRO_CUENTA',name,phone,email,role,status:'Pendiente',estado:'Pendiente',fecha:new Date().toLocaleString('es-DO'),createdAtMs:Date.now()};
+    try{
+      await firebase.db.ref('sendwayo_express_v2/requests/'+id).set(row);
+      document.getElementById('sendwayo-v7-modal')?.classList.add('hidden');
+      window.alert('Solicitud enviada. Administración revisará sus datos y, después de aprobarla, le indicará cómo activar su cuenta SENDWAYO EXPRESS.');
+      return true;
+    }catch(error){
+      window.alert('No se pudo enviar la solicitud por el momento. Compruebe su conexión e inténtelo nuevamente.');
+      console.error('[SENDWAYO] Error al registrar solicitud pública:',error);
+      return false;
+    }
+  };
+
   // Sincronizar la cuenta bancaria guardada por el formulario administrativo.
   const oldSaveBank=window.sendwayoSaveBankForm;
   if(typeof oldSaveBank==='function'){
@@ -8567,9 +8698,12 @@ function seedProfileFromAccount(account, role){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  // El listener se registra de inmediato: el ingreso no debe quedar bloqueado esperando
-  // la migración de persistencia del navegador. Firebase Authentication valida cada credencial.
-  state.authReadyPromise = Promise.resolve(true);
+  // Guardar la sesión dentro de la pestaña y permitir una recuperación limpia si el navegador la rechaza.
+  // El rechazo de persistencia no bloquea el acceso: la contraseña sigue validándose en Firebase.
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(error => {
+    console.warn('[SENDWAYO] No se pudo fijar la persistencia de sesión; se continuará con la sesión actual:', error?.code || error?.message || error);
+    return true;
+  });
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.preserveLoginOnSignout){state.preserveLoginOnSignout=false;return;}
