@@ -577,7 +577,8 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 // DATOS CORREGIDOS - 5 AGENTES + ADMIN CON CODIGO - RECUERDA QUE ESTOS SON LOS 5 AGENTES, TIENES QUE PONERLO CON SU CODIGO
 let ADMIN = {
   id:'ADMIN-ADMINISTRADOR', idAnterior:'ADMINADMIN',
-  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN'],
+  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','Sendwayoexpress'],
+  username:'Sendwayoexpress', login:'Sendwayoexpress',
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
@@ -8627,9 +8628,10 @@ function seedProfileFromAccount(account, role){
   const recoverButton=document.getElementById('sendwayo-recover-password');
   if(recoverButton) recoverButton.onclick=async()=>{
     const candidate=txt(document.getElementById('login-usuario')?.value);
-    if(!candidate.includes('@')){loginError('Escriba primero el correo registrado en Firebase Authentication para recibir el enlace de recuperación.');return;}
-    try{await auth.sendPasswordResetEmail(candidate.toLowerCase());loginError('Si el correo está registrado, Firebase enviará un enlace para restablecer la contraseña.');}
-    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe el correo y la configuración de Authentication.');}
+    const recoveryEmail=resolveEmail(candidate);
+    if(!recoveryEmail){loginError('Escriba su usuario SENDWAYO o el correo registrado para recibir el enlace de recuperación.');return;}
+    try{await auth.sendPasswordResetEmail(recoveryEmail);loginError('Firebase envió, si la cuenta existe, un enlace de recuperación al correo administrativo registrado. Revise también el correo no deseado.');}
+    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe la conexión y la configuración de Authentication.');}
   };
   // Guardar beneficiarios en Firebase antes de confirmar al usuario; no dejarlos solo en este navegador.
   window.v162_guardarBen = async function(){
