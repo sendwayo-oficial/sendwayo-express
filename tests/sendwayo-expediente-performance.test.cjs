@@ -76,20 +76,20 @@ assert.doesNotMatch(html, /rec=formatMoney\(net\/2\.3\)\s*\+\s*' DOP'/, 'el regi
 assert.doesNotMatch(html, /rate='Tasa HT→RD 2\.30'/, 'la calculadora heredada no debe presentar 2.30 como tasa automática');
 assert.doesNotMatch(html, /Tasa HT→RD:\s*2\.30/, 'el tablero no debe anunciar una tasa HT→RD no autorizada');
 // Encabezado horizontal y navegación vertical desde el borde izquierdo.
-assert.match(html, /sendwayo-v7-requested-topbar-and-left-vertical-menu-2026-11-08/);
-assert.match(html, /sendwayo-v7-workspace-layout-controller/);
+assert.match(html, /sendwayo-v7-canonical-top-workspace-style/);
+assert.match(html, /sendwayo-v7-approved-desktop-left-sidebar/);
 assert.match(html, /sendwayo-v7-user-strip/);
 assert.match(html, /insertAdjacentElement\('afterend',strip\)/);
-assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?left:0!important;top:0!important;right:auto!important;bottom:0!important;/);
-assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?flex-direction:column!important/);
-assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[^}]*transform:translateX\(0\)/);
-assert.match(html, /brandLeft\.insertBefore\(btn,brandLogo\|\|brandLeft\.firstChild\)/);
-assert.match(html, /#sendwayo-main-content\{display:block!important;flex:none!important;width:100%!important/);
-for (const id of ['sendwayo-v7-top-bal-dop','sendwayo-v7-top-bal-htg','sendwayo-v7-top-com-dop','sendwayo-v7-top-com-htg']) {
+assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?position:fixed!important;left:0!important;right:auto!important;top:118px!important;bottom:0!important;/);
+assert.match(html, /#sendwayo-main-sidebar\{[\s\S]*?grid-template-columns:1fr!important/);
+assert.match(html, /#sendwayo-main-sidebar\.sendwayo-menu-open\{[\s\S]*?transform:translateX\(0\)!important/);
+assert.match(html, /actions\.insertBefore\(btn,actions\.firstChild\)/);
+assert.match(html, /#sendwayo-main-content\{[\s\S]*?width:calc\(100% - 250px\)!important/);
+for (const id of ['sendwayo-v7-bal-dop','sendwayo-v7-bal-htg','sendwayo-v7-com-dop','sendwayo-v7-com-htg']) {
  assert.ok(html.includes('id="' + id + '"'), 'falta el indicador financiero superior ' + id);
 }
-assert.match(html, /topPairs\.forEach/);
-assert.match(html, /window\.sendwayoRefreshIdentityHeader=refreshIdentity/);
+assert.match(html, /pairs\.forEach/);
+assert.match(html, /window\.sendwayoRefreshIdentityHeader=buildIdentityStrip/);
 
 // Comprobante auténtico en imagen PNG.
 assert.match(html, /if\(!t\)\{alert\('No se encontró la transacción para generar el comprobante\.'\);return;\}/);
@@ -130,8 +130,8 @@ const legacyExpBlock = html.slice(legacyExpStart, legacyExpEnd);
 const legacyFind = legacyExpBlock.match(/function findAccount\(q\)\{[^}]+\}/)?.[0] || '';
 assert.ok(legacyFind, 'debe existir la búsqueda original del expediente');
 assert.doesNotMatch(legacyFind, /codigo|codeAliases|email|phone|telefono|celular/, 'el expediente heredado tampoco debe buscar por código, correo o teléfono');
-assert.match(html, /document\.body\.appendChild\(side\)/, 'el menú debe salir del diseño lateral y superponerse desde arriba');
-assert.match(html, /#sendwayo-main-sidebar\{[^}]*left:0!important;right:0!important;[^}]*width:100vw!important/s, 'el menú superior debe usar todo el ancho');
+assert.match(html, /#sendwayo-menu-shade/, 'el menú móvil debe incluir una capa de cierre');
+assert.match(html, /@media\(max-width:1024px\)[\s\S]*?#sendwayo-main-sidebar\{[\s\S]*?width:min\(290px,88vw\)!important/, 'el menú móvil debe desplegarse en un panel lateral adaptable');
 assert.match(html, /function identity\(a\)\{return \[a\.id,a\.idAnterior,a\.legacyId,a\.accountId,a\.staffId\]/, 'Expediente por ID debe buscar identificadores de cuenta');
 const expedienteIdentity = html.match(/function identity\(a\)\{[^}]+\}/)?.[0] || '';
 assert.doesNotMatch(expedienteIdentity, /codigo|codeAliases|email|phone|telefono/, 'Expediente por ID no debe aceptar códigos, correo ni teléfonos');
@@ -145,3 +145,15 @@ assert.match(html, /const IDLE_LIMIT=40\*60\*1000/, 'se debe conservar el cierre
 assert.match(html, /fallbackCountriesData=\[/, 'el catálogo internacional completo debe estar integrado localmente');
 
 assert.doesNotMatch(html, /AGE40001/, 'no debe sustituir la letra I del ID por el número uno');
+
+// Contrato de preservación: estas pantallas y entradas existentes no pueden desaparecer durante una optimización.
+const preservedViews = ['tablero','envios','retiros','depositos','tarifas','beneficiarios','remitentes','agentes','recargas','paquetikos','recepcion','facturas','mibanco','cuentas','ajustes','creditos','bienvenida','comisiones','conciliacion','reportes','informes','transferencia','secretas','perfil'];
+for (const view of preservedViews) assert.ok(html.includes('id="view-' + view + '"'), 'no se debe eliminar el módulo ' + view);
+const preservedFields = ['login-usuario','login-password','v162-envio-monto','v162-retiro-monto','v162-dep-monto','v162-ben-nom','v162-ben-tel','v162-rem-nom','v162-rec-num','v162-pkt-rec','v162-fac-num','aj171-cantidad','sendwayo-wallet-method','sendwayo-wallet-amount','sw-rate-min','sw-rate-max','sw-rate-envio','sw-rate-retiro'];
+for (const field of preservedFields) assert.ok(html.includes('id="' + field + '"'), 'no se debe eliminar el campo ' + field);
+assert.match(html, /id="sendwayo-v7-daily-gains"/, 'debe conservarse la ganancia diaria por moneda');
+assert.match(html, /Balance en Gourdes Haitianos \(HTG\)/);
+assert.match(html, /Balance en Pesos Dominicanos \(DOP\)/);
+assert.match(html, /Comisión en Gourdes Haitianos \(HTG\)/);
+assert.match(html, /Comisión en Pesos Dominicanos \(DOP\)/);
+
