@@ -7400,26 +7400,45 @@ window.sendwayoShareReceipt=async function(){
     document.getElementById('view-tablero')?.classList.remove('hidden');
   }
   function showLogin() {
-    document.body.classList.remove('sendwayo-authenticated', 'sendwayo-login-open');
+    const login = document.getElementById('login-screen');
+    const welcome = document.getElementById('welcome-landing');
+
+    // Si la persona ya abrió el formulario, una sesión Firebase nula no debe
+    // expulsarla a la portada mientras está intentando autenticarse.
+    if (document.body.classList.contains('sendwayo-login-open')) {
+      if (welcome) {
+        welcome.classList.add('hidden');
+        welcome.style.setProperty('display', 'none', 'important');
+        welcome.style.setProperty('visibility', 'hidden', 'important');
+        welcome.style.setProperty('pointer-events', 'none', 'important');
+      }
+      if (login) {
+        login.classList.remove('hidden');
+        login.classList.add('sendwayo-login-visible');
+        login.style.setProperty('display', 'flex', 'important');
+        login.style.setProperty('visibility', 'visible', 'important');
+        login.style.setProperty('pointer-events', 'auto', 'important');
+      }
+      return;
+    }
+
+    document.body.classList.remove('sendwayo-authenticated');
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-tablero')?.classList.add('hidden');
-    // En una sesión cerrada se muestra primero la portada pública. El formulario
-    // solo se abre cuando el visitante pulsa "Ya tengo una cuenta".
-    const login=document.getElementById('login-screen');
-    if(login){
+    if (login) {
       login.classList.add('hidden');
-      login.style.setProperty('display','none','important');
-      login.style.setProperty('visibility','hidden','important');
-      login.style.setProperty('pointer-events','none','important');
+      login.style.setProperty('display', 'none', 'important');
+      login.style.setProperty('visibility', 'hidden', 'important');
+      login.style.setProperty('pointer-events', 'none', 'important');
     }
-    const welcome=document.getElementById('welcome-landing');
-    if(welcome){
+    if (welcome) {
       welcome.classList.remove('hidden');
-      welcome.style.setProperty('display','block','important');
-      welcome.style.setProperty('visibility','visible','important');
-      welcome.style.setProperty('pointer-events','auto','important');
+      welcome.style.setProperty('display', 'block', 'important');
+      welcome.style.setProperty('visibility', 'visible', 'important');
+      welcome.style.setProperty('pointer-events', 'auto', 'important');
     }
-    const top=document.getElementById('user-top'); if(top) top.textContent='';
+    const top = document.getElementById('user-top');
+    if (top) top.textContent = '';
   }
   function collectAliases() {
     const rows=[];
@@ -7875,7 +7894,7 @@ function seedProfileFromAccount(account, role){
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
       const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
       if(currentUid!==firebaseUser.uid) updates.authUid=firebaseUser.uid;
-      if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;
+      if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;if(norm(data.email)!==ADMIN_EMAIL) updates.email=ADMIN_EMAIL;
       if(Object.keys(updates).length){
         await userRoot.child('admin').update(updates);
         Object.assign(data,updates);
@@ -8353,12 +8372,70 @@ function seedProfileFromAccount(account, role){
       await loginStep(state.authReadyPromise || Promise.resolve(true), 'La preparación de Firebase', 2000);
 
       if (button) button.textContent = 'Verificando contraseña…';
-      const credential = await loginStep(
-        auth.signInWithEmailAndPassword(email, password),
-        'Firebase Authentication',
-        12000
-      );
+      let credential;
+      try {
+        credential = await loginStep(
+          auth.signInWithEmailAndPassword(email, password),
+          'Firebase Authentication',
+          12000
+        );
+      } catch (authError) {
+        // One-time setup for the verified administrator address only.
+        // The password typed by the owner is used to create the missing Firebase identity;
+        // access is withheld until the mailbox owner confirms the email.
+        if (email === ADMIN_EMAIL && ['auth/user-not-found', 'auth/invalid-credential'].includes(authError?.code)) {
+          let createdCredential = null;
+          try {
+            createdCredential = await loginStep(
+              auth.createUserWithEmailAndPassword(email, password),
+              'La creación segura de la cuenta administrativa',
+              15000
+            );
+          } catch (createError) {
+            if (createError?.code === 'auth/email-already-in-use') {
+              await loginStep(auth.sendPasswordResetEmail(email), 'El envío de recuperación de contraseña', 12000);
+              keepLoginModalOpen();
+              loginError('La cuenta administrativa ya existe. Firebase envió un enlace de recuperación a ideletteismorin@gmail.com. Abra ese correo y después vuelva a ingresar aquí.');
+              return;
+            }
+            throw createError;
+          }
+
+          await loginStep(
+            createdCredential.user.sendEmailVerification(),
+            'El envío de verificación del correo administrativo',
+            12000
+          );
+          state.preserveLoginOnSignout = !!auth.currentUser;
+          keepLoginModalOpen();
+          try { await auth.signOut(); }
+          catch (signOutError) {
+            state.preserveLoginOnSignout = false;
+            console.warn('[SENDWAYO] No se pudo cerrar la sesión de verificación:', signOutError?.code || signOutError?.message || signOutError);
+          }
+          loginError('Se creó la cuenta administrativa con el correo correcto. Firebase envió un mensaje de verificación a ideletteismorin@gmail.com. Confirme ese correo y luego ingrese aquí con la misma contraseña que acaba de escribir.');
+          return;
+        }
+        throw authError;
+      }
+
       const firebaseUser = credential.user;
+      if (email === ADMIN_EMAIL && !firebaseUser.emailVerified) {
+        await loginStep(
+          firebaseUser.sendEmailVerification(),
+          'El reenvío de verificación del correo administrativo',
+          12000
+        );
+        state.preserveLoginOnSignout = !!auth.currentUser;
+        keepLoginModalOpen();
+        try { await auth.signOut(); }
+        catch (signOutError) {
+          state.preserveLoginOnSignout = false;
+          console.warn('[SENDWAYO] No se pudo cerrar la sesión pendiente de verificación:', signOutError?.code || signOutError?.message || signOutError);
+        }
+        loginError('La cuenta administrativa todavía no está verificada. Firebase volvió a enviar el mensaje a ideletteismorin@gmail.com. Confirme el correo y vuelva a ingresar.');
+        return;
+      }
 
       // Firebase Authentication ya validó la contraseña y emitió este usuario. No bloquear el acceso
       // por una segunda verificación HTTP del Worker, que puede fallar aunque Firebase esté disponible.
