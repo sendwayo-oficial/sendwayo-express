@@ -7503,44 +7503,78 @@ window.sendwayoShareReceipt=async function(){
     const uid = txt(firebaseUser && firebaseUser.uid);
     if (!email || !uid) throw new Error('Firebase no devolvió el correo y el identificador de esta cuenta.');
     const known = collectAliases().find(a => norm(a.email) === email);
+    const knownAliases = Array.isArray(known?.aliases) ? known.aliases : [];
     const identity = {
       email, uid, isAdmin: email === ADMIN_EMAIL,
-      knownKeys: new Set([known?.id, known?.codigo].filter(Boolean).map(key => safeDbKey(key)))
+      knownKeys: new Set([known?.id, known?.codigo, ...knownAliases].filter(Boolean).map(key => safeDbKey(key)))
     };
     const roots = [
       { path: userRootPath, ref: db.ref(userRootPath) },
       { path: 'users', ref: db.ref('users') }
     ];
 
-    // Consultar las rutas candidatas en paralelo: las consultas secuenciales anteriores
-    // podían agotar el límite de 16 segundos y dejar al usuario detenido en "Buscando tu cuenta".
-    const adminRoot = roots[0].ref;
+    // Buscar primero las claves administrativas actuales e históricas en las dos rutas.
+    // Evita recorrer el directorio completo y quedarse detenido en "Buscando tu cuenta".
     if (identity.isAdmin) {
-      try {
-        const adminSnap = await adminRoot.child('admin').once('value');
-        if (adminSnap.exists()) {
-          const existing = adminSnap.val() || {};
-          const previousId = txt(existing.id || existing.legacyId || 'ADMINADMIN');
-          const previousCode = txt(existing.code || existing.codigo || 'ADMIN-000');
-          const visibleId = !previousId || previousId.toUpperCase() === 'ADMINADMIN' ? 'ADMIN-ADMINISTRADOR' : previousId;
-          const visibleCode = !previousCode || previousCode === 'ADMIN-000' ? visibleId : previousCode;
-          const identityPatch = {
-            id: visibleId, accountId: visibleId, code: visibleCode, codigo: visibleCode, staffId: visibleCode,
-            idAnterior: previousId !== visibleId ? previousId : txt(existing.idAnterior || ''),
-            idAliases: [...new Set([...(Array.isArray(existing.idAliases) ? existing.idAliases : []), previousId, 'ADMINADMIN', 'ADMIN-000'].filter(Boolean))],
-            codeAliases: [...new Set([...(Array.isArray(existing.codeAliases) ? existing.codeAliases : []), previousCode, 'ADMIN-000'].filter(Boolean))]
-          };
-          userRoot = adminRoot;
-          try { await adminRoot.child('admin').update(identityPatch); Object.assign(existing, identityPatch); }
-          catch (identityError) { console.warn('[SENDWAYO] Perfil admin leído; no se pudo normalizar su identificador:', identityError?.code || identityError?.message || identityError); }
-          return { key: 'admin', data: existing };
+      const adminKeys = [...new Set([
+        'admin', known?.id, known?.codigo, ...knownAliases,
+        'ADMIN-ADMINISTRADOR', 'ADMINADMIN', 'ADMIN-000', uid
+      ].filter(Boolean).map(safeDbKey))];
+      let readableRoot = false;
+      for (const candidate of roots) {
+        const checks = await Promise.all(adminKeys.map(async key => {
+          try {
+            const snap = await candidate.ref.child(key).once('value');
+            return { readable: true, found: snap.exists() ? { key: snap.key, data: snap.val() } : null };
+          } catch (error) {
+            console.warn('[SENDWAYO] No se pudo consultar la clave administrativa ' + key + ' en ' + candidate.path + ':', error?.code || error?.message || error);
+            return { readable: false, found: null };
+          }
+        }));
+        if (checks.some(item => item.readable)) readableRoot = true;
+        const hit = checks.find(item => item.found);
+        if (hit) {
+          userRoot = candidate.ref;
+          return { key: hit.found.key, data: hit.found.data || {} };
         }
-      } catch (error) {
-        console.warn('[SENDWAYO] No se pudo leer el registro admin:', error?.code || error?.message || error);
       }
+
+      // Compatibilidad con registros cuya clave no coincide con el código visible.
+      for (const candidate of roots) {
+        const results = await Promise.all([
+          queryOne(candidate.ref, 'authUid', uid, identity),
+          queryOne(candidate.ref, 'authEmail', email, identity),
+          queryOne(candidate.ref, 'email', email, identity)
+        ]);
+        const found = results.find(Boolean);
+        if (found) { userRoot = candidate.ref; return found; }
+      }
+
+      // Firebase Auth ya verificó el correo administrativo. Si el directorio
+      // responde pero el nodo admin no existe, abrir con un perfil temporal en memoria.
+      // No se crean perfiles, no se reinician balances y no se escriben comisiones.
+      if (!readableRoot) {
+        throw new Error('Firebase autenticó el correo administrativo, pero no permitió consultar el directorio de perfiles. Revise la conexión o los permisos de lectura.');
+      }
+      try { await selectExistingUserRoot(); }
+      catch (rootError) { console.warn('[SENDWAYO] No se pudo elegir una ruta de perfiles:', rootError?.message || rootError); }
+      const adminAccount = (typeof ADMIN !== 'undefined' && ADMIN) ? ADMIN : {};
+      const adminId = txt(adminAccount.id || 'ADMIN-ADMINISTRADOR');
+      const adminCode = txt(adminAccount.codigo || adminAccount.code || adminId);
+      return {
+        key: 'admin',
+        virtualProfile: true,
+        data: {
+          id: adminId, accountId: adminId, code: adminCode, codigo: adminCode, staffId: adminCode,
+          name: txt(adminAccount.name || adminAccount.nombre || 'ADMINISTRADOR'),
+          nombre: txt(adminAccount.nombre || adminAccount.name || 'ADMINISTRADOR'),
+          email: ADMIN_EMAIL, authEmail: ADMIN_EMAIL,
+          role: 'admin', active: true, status: 'active'
+        }
+      };
     }
 
-    const directKeys = [...new Set([uid, known?.id, known?.codigo].filter(Boolean))];
+    const directKeys = [...new Set([uid, known?.id, known?.codigo, ...knownAliases].filter(Boolean))];
     for (const candidate of roots) {
       const directResults = await Promise.all(directKeys.map(key => directProfile(candidate.ref, key, identity)));
       const direct = directResults.find(Boolean);
@@ -7558,7 +7592,6 @@ window.sendwayoShareReceipt=async function(){
       if (found) { userRoot = candidate.ref; return found; }
     }
 
-    // Último recurso solo si fallaron las búsquedas puntuales.
     for (const candidate of roots) {
       try {
         const directorySnap = await candidate.ref.once('value');
@@ -7888,12 +7921,16 @@ function seedProfileFromAccount(account, role){
     const loginEmail=norm(firebaseUser.email);
     // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
-    if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
-      const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
+    if(role==='ADMIN' && profileRow.virtualProfile && loginEmail===ADMIN_EMAIL){
+      Object.assign(data,{role:'admin',email:ADMIN_EMAIL,authEmail:ADMIN_EMAIL});
+      return {key,data,virtualProfile:true};
+    }
+    if(role==='ADMIN' && loginEmail===ADMIN_EMAIL){
+      const oldId=txt(data.id||data.legacyId||key||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||data.staffId||key||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,role:'admin',email:ADMIN_EMAIL,authEmail:ADMIN_EMAIL,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
       if(currentUid!==firebaseUser.uid) updates.authUid=firebaseUser.uid;
       if(norm(data.authEmail)!==ADMIN_EMAIL) updates.authEmail=ADMIN_EMAIL;if(norm(data.email)!==ADMIN_EMAIL) updates.email=ADMIN_EMAIL;
       if(Object.keys(updates).length){
-        await userRoot.child('admin').update(updates);
+        await userRoot.child(key).update(updates);
         Object.assign(data,updates);
       }
     } else if(role==='ADMIN' && currentUid===firebaseUser.uid && norm(data.authEmail)!==loginEmail){
@@ -8501,7 +8538,7 @@ function seedProfileFromAccount(account, role){
       // transacciones se cargan después para que una lectura lenta no congele el botón Entrar.
       (async function loadDashboardData() {
         try {
-          if (role === 'ADMIN') {
+          if (role === 'ADMIN' && !linked.virtualProfile) {
             try { await loginStep(ensureInitialDirectoryProfiles(firebaseUser), 'La preparación del directorio', 10000); }
             catch (error) { console.warn('[SENDWAYO] Preparación del directorio pendiente:', error); }
           }
