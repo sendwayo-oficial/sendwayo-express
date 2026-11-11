@@ -4731,6 +4731,11 @@ window.sendwayoShareReceipt=async function(){
   const isAgent = () => currentRole().includes('AGENTE');
   const isRemitter = () => currentRole().includes('REMITENTE');
   let successfulLoginThisPage = false;
+  // Firebase autentica en un bloque separado. Registrar su evento evita que el evento load tardío
+  // ejecute showWelcome() y borre una sesión recién abierta.
+  window.addEventListener('sendwayo:firebase-ready', () => {
+    if (current()) successfulLoginThisPage = true;
+  });
   const accounts = () => {
     let a = null, ag = [], re = [];
     try { a = typeof ADMIN !== 'undefined' ? ADMIN : window.ADMIN || null; } catch (_) { a = window.ADMIN || null; }
@@ -5529,7 +5534,7 @@ window.sendwayoShareReceipt=async function(){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
-  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage) showWelcome(); else { updateIdentity(); applyIdentityDefaults(false); } });
+  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage && !current() && !document.body.classList.contains('sendwayo-authenticated') && !window.__sendwayoLoginPending) showWelcome(); else if (current()) { successfulLoginThisPage = true; updateIdentity(); applyIdentityDefaults(false); } });
   document.addEventListener('click', event => {
     const trigger = event.target && event.target.closest
       ? event.target.closest('button[onclick*="modal-"],button[onclick*="v162_abrir"],button[onclick*="sendwayoOpen"],[data-sendwayo-open-modal]')
@@ -8102,6 +8107,7 @@ window.sendwayoShareReceipt=async function(){
     }
 
     state.loginBusy = true;
+    window.__sendwayoLoginPending = true;
     clearLoginError();
     stopListeners();
     if (state.syncTimer) { clearInterval(state.syncTimer); state.syncTimer = null; }
@@ -8250,6 +8256,7 @@ window.sendwayoShareReceipt=async function(){
       loginError(message);
     } finally {
       state.loginBusy = false;
+      window.__sendwayoLoginPending = false;
       if (button) {
         button.disabled = false;
         button.textContent = button.dataset.oldText || 'Entrar';
