@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const fs=require('fs');
+import fs from 'node:fs';
 const rawInput=fs.readFileSync(0,'utf8').trim();
 function parseJsonStream(raw){
   let start=0;while(/\s/.test(raw[start]||''))start++;
