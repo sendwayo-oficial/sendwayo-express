@@ -34,7 +34,7 @@ const snapshot = {
 };
 
 // Firebase CLI may emit a successful JSON response followed by its status trailer.
-const input = JSON.stringify(snapshot) + '\\n' + JSON.stringify({ status: 'success' });
+const input = JSON.stringify(snapshot) + '\n' + JSON.stringify({ status: 'success' });
 const result = spawnSync(process.execPath, [script], {
   input,
   encoding: 'utf8',
