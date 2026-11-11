@@ -212,6 +212,35 @@ jobs:
                 console.error('CONSOLE ERRORS:', JSON.stringify(blockingConsoleErrors(), null, 2));
                 throw new Error('Hay errores JavaScript al abrir el acceso.');
               }
+              // Verify the exact reported failure path without using a real administrator credential.
+              await page.locator('#login-usuario').fill('sendwayo-smoke-no-account@invalid.invalid');
+              await page.locator('#login-password').fill('sendwayo-smoke-test-only');
+              await page.locator('#login-screen button[onclick*="intentarLogin"]').first().click();
+              await page.waitForFunction(() => {
+                const error = document.querySelector('#login-error');
+                return !!(error && (error.textContent || '').trim());
+              }, { timeout: 25000 });
+              await page.waitForTimeout(1200);
+              const rejectedLogin = await page.evaluate(() => {
+                const login = document.querySelector('#login-screen');
+                const welcome = document.querySelector('#welcome-landing');
+                const error = document.querySelector('#login-error');
+                return {
+                  loginVisible: !!login && getComputedStyle(login).display !== 'none' &&
+                    getComputedStyle(login).visibility !== 'hidden' && !login.classList.contains('hidden'),
+                  loginOpen: document.body.classList.contains('sendwayo-login-open'),
+                  welcomeHidden: !!welcome && (getComputedStyle(welcome).display === 'none' ||
+                    getComputedStyle(welcome).visibility === 'hidden' || welcome.classList.contains('hidden')),
+                  errorText: (error && error.textContent || '').trim()
+                };
+              });
+              console.log('REJECTED LOGIN RECOVERY STATE:', JSON.stringify(rejectedLogin, null, 2));
+              if (!rejectedLogin.loginVisible || !rejectedLogin.loginOpen || !rejectedLogin.welcomeHidden ||
+                  !rejectedLogin.errorText) {
+                await page.screenshot({ path: 'sendwayo-rejected-login-returned-to-welcome.png', fullPage: false });
+                throw new Error('Un acceso rechazado cerró el formulario o regresó a la bienvenida.');
+              }
+              console.log('PASS: Firebase login rejection keeps the login form open and displays the error.');
               console.log('PASS: bienvenida y formulario visibles; campos de acceso habilitados.');
             } finally {
               await browser.close();
