@@ -6,22 +6,18 @@ const html = fs.readFileSync(
   'utf8'
 );
 
-// La cuenta Firebase del administrador y la cuenta local de GitHub son identidades distintas.
-// El correo de Authentication se comprueba en la constante y en el perfil inicial de ADMIN.
+// El correo configurado por el archivo V7 para Authentication no es el correo de GitHub.
 const adminEmail = 'ideletteismorin@gmail.com';
-assert.match(html, /email:'ideletteismorin@gmail\\.com'/,
-  'el perfil ADMIN debe conservar el correo de acceso Firebase confirmado en V7');
-assert.match(html, /const ADMIN_EMAIL = 'ideletteismorin@gmail\\.com';/,
-  'Firebase Authentication debe resolver el perfil ADMIN con el mismo correo');
-assert.match(html, /auth\\.signInWithEmailAndPassword\\(email,\\s*password\\)/,
-  'Firebase debe autenticar con el correo resuelto y la contraseña escrita');
-assert.match(html, /if\\(email===ADMIN_EMAIL\\)/,
-  'la lectura del perfil debe reconocer al administrador por su correo Firebase');
+assert.ok(html.includes("email:'" + adminEmail + "'"), 'el perfil ADMIN debe conservar su correo Firebase');
+assert.ok(html.includes("const ADMIN_EMAIL = '" + adminEmail + "';"), 'el correo de Authentication y el perfil ADMIN deben coincidir');
+assert.ok(html.includes('auth.signInWithEmailAndPassword(email, password)') ||
+  html.includes('auth.signInWithEmailAndPassword(email,\\n'), 'Firebase debe autenticar con el correo resuelto y la contraseña');
+assert.ok(html.includes('if(email===ADMIN_EMAIL)'), 'la lectura del perfil debe reconocer al administrador por su correo Firebase');
 
-const match = html.match(/function resolveEmail\\(identifier\\)\\s*\\{([\\s\\S]*?)\\n  \\}\\n  async function queryOne/);
+const match = html.match(/function resolveEmail\(identifier\)\s*\{([\s\S]*?)\n  \}\n  async function queryOne/);
 assert.ok(match, 'debe existir el conversor de ID/correo a correo Firebase');
 const normalize = value => String(value ?? '').normalize('NFD')
-  .replace(/[\\u0300-\\u036f]/g, '').trim().toLowerCase().replace(/\\s+/g, ' ');
+  .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
 const resolver = new Function('identifier', 'txt', 'norm', 'collectAliases', match[1]);
 const collectAliases = () => [{
   email: adminEmail,
