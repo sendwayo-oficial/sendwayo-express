@@ -25,4 +25,8 @@ assert.ok(helper,'retry form helper must exist');
 assert.match(helper[1],/sendwayo-login-open/);
 assert.match(helper[1],/sendwayo-login-visible/);
 assert.match(helper[1],/welcome\.classList\.add\('hidden'\)/);
+assert.match(html, /if \(!window\.currentUser && !window\.__sendwayoLoginPending && !document\.body\.classList\.contains\('sendwayo-login-open'\)\) showWelcome\(\)/,
+  'DOMContentLoaded must not send an already-open login form back to welcome');
+assert.match(html, /!window\.__sendwayoLoginPending && !document\.body\.classList\.contains\('sendwayo-login-open'\)\) showWelcome\(\)/,
+  'the late load event must preserve an open login form');
 console.log('PASS: failed SENDWAYO login stays on the login form and displays its error.');
