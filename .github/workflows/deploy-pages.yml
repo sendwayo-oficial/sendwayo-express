@@ -6,7 +6,6 @@ on:
   push:
     branches: [main]
     paths:
-      - 'site/**'
       - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
@@ -114,9 +113,11 @@ jobs:
           assert html.rstrip().endswith('</html>')
           assert html.index('id="sendwayo-brand-bar"') < html.index('id="sendwayo-v7-user-strip"') < html.index('id="sendwayo-workspace-shell"')
           assert 'sendwayo-v7-no-side-identity-final' in html and 'sendwayo-v7-top-identity-and-width-final' in html
-          assert 'sendwayo-landing-photo-panel' in html, 'La foto debe permanecer en el lado izquierdo de la portada'
-          assert 'sendwayo-landing-logo' in html and 'sendwayo-landing-title' in html, 'El logo y nombre SENDWAYO deben verse en la portada'
-          assert 'sendwayo-home-login' in html and 'sendwayo-home-register' in html, 'Ingresar y Registrar deben estar presentes'
+          assert '<section class="sendwayo-landing-photo-panel"' not in html, 'La portada minimalista no debe mostrar una fotografía adicional'
+          assert 'class="sendwayo-landing-logo"' in html and 'class="sendwayo-landing-title"' in html, 'El logo y nombre SENDWAYO deben verse en la portada'
+          assert 'id="sendwayo-home-login"' in html and 'id="sendwayo-home-register"' in html, 'Ingresar y Registrar deben estar presentes'
+          assert 'sendwayo-v7-minimal-welcome-final' in html, 'La portada mínima debe tener el estilo final'
+          assert "loginButton.addEventListener('click'" in html and "registerButton.addEventListener('click'" in html, 'Los dos botones deben tener acciones activas'
           assert 'body:not(.sendwayo-authenticated)>#sendwayo-v7-modal' in html, 'El formulario público de registro no debe quedar oculto'
           assert 'const perPage=10;' in html
           assert "const num=String(i-start+1).padStart(2,'0')" in html

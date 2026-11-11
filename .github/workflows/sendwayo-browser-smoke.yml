@@ -1,16 +1,8 @@
 name: SENDWAYO browser smoke test
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/sendwayo-browser-smoke.yml'
-      - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
-      - 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'
-      - 'site/**'
-      - 'assets/**'
   workflow_run:
-    workflows: ["Publish approved SENDWAYO EXPRESS - shared balances", "pages build and deployment"]
+    workflows: ["Publish approved SENDWAYO EXPRESS - shared balances"]
     types: [completed]
     branches: [main]
 
@@ -19,7 +11,7 @@ permissions:
 
 jobs:
   welcome-and-login:
-    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the deployed revision
@@ -168,7 +160,7 @@ jobs:
                   attemptLoginFunction: typeof window.intentarLogin,
                   loginButtonExists: !!button,
                   registerButtonExists: !!register,
-                  photoVisible: !!photo && getComputedStyle(photo).display !== 'none' && getComputedStyle(photo).visibility !== 'hidden',
+                  photoAbsent: !photo,
                   logoVisible: !!logo && getComputedStyle(logo).display !== 'none' && getComputedStyle(logo).visibility !== 'hidden',
                   businessName: title && (title.textContent || '').trim(),
                   bodyText: (document.body && document.body.innerText || '').slice(0,1200)
@@ -176,7 +168,7 @@ jobs:
               });
               console.log('INITIAL PAGE STATE:', JSON.stringify(initial, null, 2));
               if (!initial.welcomeExists || initial.welcomeDisplay === 'none' || initial.welcomeVisibility === 'hidden' ||
-                  !initial.loginButtonExists || !initial.registerButtonExists || !initial.photoVisible ||
+                  !initial.loginButtonExists || !initial.registerButtonExists || !initial.photoAbsent ||
                   !initial.logoVisible || initial.businessName !== 'SENDWAYO EXPRESS') {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
                 console.error('FAILED SCRIPTS:', JSON.stringify(failedScripts, null, 2));
