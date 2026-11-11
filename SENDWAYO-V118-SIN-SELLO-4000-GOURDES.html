@@ -2395,106 +2395,64 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
 .toolbar-round { border-radius: 9999px; }
 </style>
 
-<div id="welcome-landing" class="fixed inset-0 z-[999] overflow-y-auto">
-  <main class="sendwayo-home">
-    <header class="sendwayo-home-header">
-      <div class="sendwayo-home-header-inner">
-        <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
-      </div>
-    </header>
-    <div class="sendwayo-home-content">
-      <section class="sendwayo-home-hero">
-        <div class="sendwayo-home-gallery">
-          <div class="sendwayo-home-main-photo">
-            <img id="v162-car-main" src="assets/ca43ab0c2b8e924cfacc.webp" alt="Servicios y operaciones SENDWAYO EXPRESS">
-            <div class="sendwayo-home-photo-shade"></div>
-            <div class="sendwayo-home-photo-copy"><span>REPÚBLICA DOMINICANA · HAITÍ · INTERNACIONAL</span><h1>Envía y recibe donde estés.</h1><p>Movemos tu dinero, paquetes y servicios con atención cercana y organizada.</p></div>
-            <div id="v162-dots" class="sendwayo-home-dots"></div>
-            <div class="sendwayo-home-arrows"><button type="button" onclick="v162_prev()" aria-label="Foto anterior">‹</button><button type="button" onclick="v162_next()" aria-label="Foto siguiente">›</button></div>
-          </div>
-          <div class="sendwayo-home-thumbs">
-            <img src="assets/2fdc9be46456ec238812.webp" alt="Servicio 1" onclick="v162_setCar(1)">
-            <img src="assets/d6ce41174c8bf68a01de.webp" alt="Servicio 2" onclick="v162_setCar(2)">
-            <img src="assets/d0a323d74b9c3176a044.webp" alt="Servicio 3" onclick="v162_setCar(3)">
-            <img src="assets/165bf5cfd643e8b3c495.webp" alt="Servicio 4" onclick="v162_setCar(4)">
-          </div>
-        </div>
-        <aside class="sendwayo-home-aside">
-          <div class="sendwayo-home-aside-tag">TU CONEXIÓN ENTRE DESTINOS</div>
-          <h2>Todo más fácil, en un solo lugar.</h2>
-          <p>Una plataforma para acompañarte en tus operaciones de República Dominicana, Haití y otros destinos.</p>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Atención organizada</strong><small>Seguimiento de tus solicitudes y operaciones.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Servicios variados</strong><small>Dinero, paquetes, recargas y pagos.</small></div></div>
-          <div class="sendwayo-home-benefit"><span>✓</span><div><strong>Acceso seguro</strong><small>Tu cuenta personal dentro de SENDWAYO EXPRESS.</small></div></div>
-          <div class="sendwayo-home-aside-photo"><img src="assets/sendwayo-servicios.jpg" alt="Servicios SENDWAYO EXPRESS"></div>
-        </aside>
-      </section>
-      <section class="sendwayo-home-services">
-        <div class="sendwayo-home-section-title"><span>NUESTROS SERVICIOS</span><h2>¿Qué necesitas hacer?</h2></div>
-        <div class="sendwayo-home-service-grid">
-          <article><span>💸</span><strong>Envíos de dinero</strong><small>RD · Haití · Estados Unidos y otros destinos</small></article>
-          <article><span>💰</span><strong>Retiros</strong><small>Operaciones de retiro y entrega</small></article>
-          <article><span>📦</span><strong>Paquetes</strong><small>Recepción, seguimiento y distribución</small></article>
-          <article><span>📱</span><strong>Recargas y pagos</strong><small>Recargas telefónicas y pago de servicios</small></article>
-        </div>
-      </section>
-    </div>
-    <footer class="sendwayo-home-footer">© SENDWAYO EXPRESS · Conectamos destinos</footer>
-  </main>
-</div>
+<div id="welcome-landing" class="fixed inset-0 z-[15000] overflow-y-auto">
+<main class="sendwayo-welcome">
+<header class="sendwayo-welcome-brand"><img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS"><h1>SENDWAYO EXPRESS</h1></header>
+<img class="sendwayo-welcome-photo" src="assets/sendwayo-bienvenida.jpg" alt="Local de atención SENDWAYO EXPRESS">
+<nav class="sendwayo-welcome-actions" aria-label="Acceso">
+<button type="button" onclick="v162_showLogin()">Ingresar</button>
+<button type="button" onclick="window.sendwayoOpenRegister()">Registrar</button>
+</nav></main></div>
+<div id="sendwayo-register-modal" class="sendwayo-register-modal" aria-hidden="true"><section class="sendwayo-register-card">
+<button type="button" class="sendwayo-register-close" onclick="window.sendwayoCloseRegister()" aria-label="Cerrar">×</button>
+<img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS"><h2>SENDWAYO EXPRESS</h2><p>Solicitud de registro</p>
+<label>Nombre completo<input id="sendwayo-reg-name" autocomplete="name" maxlength="100"></label>
+<label>Teléfono<input id="sendwayo-reg-phone" autocomplete="tel" maxlength="30"></label>
+<label>Correo electrónico<input id="sendwayo-reg-email" type="email" autocomplete="email" maxlength="120"></label>
+<button id="sendwayo-reg-submit" type="button" onclick="window.sendwayoSubmitRegister()">Enviar solicitud</button><p id="sendwayo-reg-message" role="status"></p>
+</section></div>
 <style id="sendwayo-v7-public-landing-clean">
-#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
-#welcome-landing>main.sendwayo-home{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:#f3f6fb!important;color:#10243d!important}
-.sendwayo-home *{box-sizing:border-box}
-.sendwayo-home-header{background:#fff!important;border-bottom:1px solid #e6ebf2!important;box-shadow:0 3px 16px rgba(15,36,64,.07)!important}
-.sendwayo-home-header-inner{max-width:1240px!important;margin:0 auto!important;padding:13px 24px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important}
-.sendwayo-home-brand{display:flex!important;align-items:center!important;gap:13px!important}
-.sendwayo-home-brand img{display:block!important;width:auto!important;height:48px!important;max-width:145px!important;object-fit:contain!important}
-.sendwayo-home-brand strong{display:block!important;font-size:15px!important;font-weight:900!important;color:#10243d!important;letter-spacing:.04em}
-.sendwayo-home-brand span{display:block!important;margin-top:3px!important;font-size:11px!important;color:#64748b!important}
-.sendwayo-home-login{display:inline-flex!important;align-items:center!important;justify-content:center!important;border:0!important;border-radius:999px!important;padding:13px 24px!important;background:#102c4c!important;color:#fff!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;box-shadow:0 5px 16px rgba(15,36,64,.16)!important}
-.sendwayo-home-content{width:100%!important;max-width:1240px!important;margin:0 auto!important;padding:28px 24px 34px!important;flex:1 0 auto!important}
-.sendwayo-home-hero{display:grid!important;grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr)!important;gap:22px!important;align-items:stretch!important}
-.sendwayo-home-gallery{min-width:0!important}
-.sendwayo-home-main-photo{position:relative!important;width:100%!important;height:clamp(340px,42vw,500px)!important;overflow:hidden!important;border-radius:23px!important;background:#071426!important;box-shadow:0 15px 36px rgba(15,36,64,.16)!important}
-.sendwayo-home-main-photo>img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;transition:opacity .35s!important}
-.sendwayo-home-photo-shade{position:absolute!important;inset:0!important;background:linear-gradient(90deg,rgba(4,15,30,.78),rgba(4,15,30,.10)),linear-gradient(0deg,rgba(4,15,30,.55),transparent 60%)!important;pointer-events:none!important}
-.sendwayo-home-photo-copy{position:absolute!important;left:0!important;right:0!important;bottom:0!important;padding:30px!important;color:#fff!important}
-.sendwayo-home-photo-copy span{font-size:10px!important;font-weight:800!important;letter-spacing:.15em!important;color:#c7e9ff!important}
-.sendwayo-home-photo-copy h1{font-size:clamp(30px,4vw,48px)!important;line-height:1.08!important;font-weight:900!important;margin:12px 0!important;color:#fff!important}
-.sendwayo-home-photo-copy p{font-size:14px!important;line-height:1.55!important;max-width:530px!important;color:#edf6ff!important}
-.sendwayo-home-dots{position:absolute!important;top:18px!important;left:20px!important;display:flex!important;gap:6px!important;z-index:2!important}
-.sendwayo-home-arrows{position:absolute!important;right:18px!important;top:16px!important;display:flex!important;gap:8px!important;z-index:2!important}
-.sendwayo-home-arrows button{width:36px!important;height:36px!important;border:1px solid rgba(255,255,255,.45)!important;border-radius:50%!important;background:rgba(0,0,0,.28)!important;color:#fff!important;font-size:24px!important;cursor:pointer!important}
-.sendwayo-home-thumbs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important;margin-top:10px!important}
-.sendwayo-home-thumbs img{display:block!important;width:100%!important;height:76px!important;object-fit:cover!important;border-radius:11px!important;cursor:pointer!important;border:2px solid transparent!important}
-.sendwayo-home-thumbs img:hover{border-color:#1e9bd1!important}
-.sendwayo-home-aside{display:flex!important;flex-direction:column!important;gap:13px!important;background:#fff!important;border:1px solid #e4eaf1!important;border-radius:22px!important;padding:24px!important;box-shadow:0 8px 25px rgba(15,36,64,.06)!important}
-.sendwayo-home-aside-tag{font-size:10px!important;letter-spacing:.14em!important;font-weight:900!important;color:#0782b8!important}
-.sendwayo-home-aside h2{font-size:26px!important;line-height:1.15!important;font-weight:900!important;color:#102c4c!important;margin:0!important}
-.sendwayo-home-aside>p{font-size:13px!important;line-height:1.6!important;color:#64748b!important;margin:0!important}
-.sendwayo-home-benefit{display:flex!important;align-items:flex-start!important;gap:10px!important}
-.sendwayo-home-benefit>span{display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 24px!important;width:24px!important;height:24px!important;border-radius:50%!important;background:#e0f2fe!important;color:#0369a1!important;font-weight:900!important}
-.sendwayo-home-benefit strong{display:block!important;font-size:12px!important;color:#102c4c!important}
-.sendwayo-home-benefit small{display:block!important;font-size:11px!important;line-height:1.45!important;color:#64748b!important;margin-top:3px!important}
-.sendwayo-home-aside-photo{margin-top:auto!important;height:128px!important;overflow:hidden!important;border-radius:13px!important}
-.sendwayo-home-aside-photo img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important}
-.sendwayo-home-services{margin-top:30px!important}
-.sendwayo-home-section-title{text-align:center!important;margin-bottom:16px!important}
-.sendwayo-home-section-title span{font-size:10px!important;letter-spacing:.16em!important;font-weight:900!important;color:#0782b8!important}
-.sendwayo-home-section-title h2{font-size:24px!important;font-weight:900!important;color:#102c4c!important;margin:6px 0 0!important}
-.sendwayo-home-service-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:13px!important}
-.sendwayo-home-service-grid article{display:flex!important;flex-direction:column!important;gap:7px!important;background:#fff!important;border:1px solid #e4eaf1!important;border-radius:16px!important;padding:17px!important;box-shadow:0 4px 14px rgba(15,36,64,.04)!important}
-.sendwayo-home-service-grid article>span{font-size:24px!important}
-.sendwayo-home-service-grid article strong{font-size:13px!important;color:#102c4c!important}
-.sendwayo-home-service-grid article small{font-size:11px!important;line-height:1.45!important;color:#64748b!important}
-.sendwayo-home-footer{background:#fff!important;border-top:1px solid #e4eaf1!important;padding:17px 24px!important;text-align:center!important;color:#64748b!important;font-size:11px!important}
-#login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:20000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;background:rgba(7,20,38,.96)!important}
-#login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important}
-@media(max-width:900px){.sendwayo-home-hero{grid-template-columns:1fr!important}.sendwayo-home-aside{display:grid!important;grid-template-columns:1fr 1fr!important}.sendwayo-home-aside-photo{grid-column:1/-1;height:150px!important}.sendwayo-home-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:560px){.sendwayo-home-header-inner{padding:11px 14px!important}.sendwayo-home-brand img{height:40px!important}.sendwayo-home-brand strong{font-size:12px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important}.sendwayo-home-content{padding:16px 13px 24px!important}.sendwayo-home-main-photo{height:360px!important}.sendwayo-home-photo-copy{padding:19px!important}.sendwayo-home-photo-copy h1{font-size:32px!important}.sendwayo-home-aside{display:flex!important;padding:18px!important}.sendwayo-home-aside-photo{height:120px!important}.sendwayo-home-service-grid{gap:8px!important}.sendwayo-home-service-grid article{padding:12px!important}}
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow-y:auto!important;background:#081a31!important;padding:18px!important}
+.sendwayo-welcome{width:min(100%,920px)!important;min-height:calc(100vh - 36px)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:20px!important;margin:auto!important}
+.sendwayo-welcome-brand{display:flex!important;align-items:center!important;justify-content:center!important;gap:15px!important;color:#fff!important}
+.sendwayo-welcome-brand img{width:76px!important;height:76px!important;object-fit:contain!important;background:#fff!important;border-radius:16px!important;padding:5px!important}
+.sendwayo-welcome-brand h1{font-size:clamp(22px,4vw,34px)!important;font-weight:900!important;letter-spacing:.035em!important;color:#fff!important;margin:0!important}
+.sendwayo-welcome-photo{display:block!important;width:100%!important;max-height:min(62vh,560px)!important;aspect-ratio:3/2!important;object-fit:cover!important;border-radius:18px!important;box-shadow:0 18px 50px rgba(0,0,0,.3)!important}
+.sendwayo-welcome-actions{display:flex!important;justify-content:center!important;gap:14px!important;width:100%!important}
+.sendwayo-welcome-actions button{min-width:155px!important;padding:14px 28px!important;border:0!important;border-radius:999px!important;background:#f28c28!important;color:#101f34!important;font-size:15px!important;font-weight:900!important;cursor:pointer!important}
+.sendwayo-welcome-actions button:first-child{background:#fff!important;color:#102c4c!important}
+.sendwayo-register-modal{display:none;position:fixed;inset:0;z-index:25000;background:rgba(3,12,24,.78);align-items:center;justify-content:center;padding:16px}
+.sendwayo-register-modal.open{display:flex}
+.sendwayo-register-card{position:relative;width:min(100%,420px);background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:12px;color:#10243d}
+.sendwayo-register-card>img{width:78px;height:78px;object-fit:contain;align-self:center}
+.sendwayo-register-card h2,.sendwayo-register-card>p{text-align:center;margin:0}
+.sendwayo-register-card h2{font-weight:900;font-size:20px}
+.sendwayo-register-card>p{font-size:13px;color:#64748b}
+.sendwayo-register-card label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700}
+.sendwayo-register-card input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;color:#10243d;background:#fff}
+.sendwayo-register-card #sendwayo-reg-submit{padding:13px;border:0;border-radius:12px;background:#102c4c;color:#fff;font-weight:800}
+.sendwayo-register-card #sendwayo-reg-message{min-height:18px;font-size:12px;color:#0f766e}
+.sendwayo-register-close{position:absolute;right:14px;top:10px;border:0;background:transparent;font-size:28px;color:#64748b;cursor:pointer}
+@media(max-width:600px){#welcome-landing{padding:12px!important}.sendwayo-welcome{min-height:calc(100vh - 24px)!important;gap:16px!important}.sendwayo-welcome-brand img{width:60px!important;height:60px!important}.sendwayo-welcome-photo{max-height:55vh!important;border-radius:14px!important}.sendwayo-welcome-actions button{min-width:0!important;flex:1!important;padding:14px 12px!important}}
 </style>
+<script>
+window.sendwayoOpenRegister=function(){const m=document.getElementById('sendwayo-register-modal');if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}};
+window.sendwayoCloseRegister=function(){const m=document.getElementById('sendwayo-register-modal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}};
+window.sendwayoSubmitRegister=async function(){
+const name=(document.getElementById('sendwayo-reg-name')?.value||'').trim(),phone=(document.getElementById('sendwayo-reg-phone')?.value||'').trim(),email=(document.getElementById('sendwayo-reg-email')?.value||'').trim().toLowerCase();
+const msg=document.getElementById('sendwayo-reg-message'),btn=document.getElementById('sendwayo-reg-submit');
+if(!name||!phone||!email){if(msg)msg.textContent='Complete los tres campos.';return;}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(msg)msg.textContent='Escriba un correo válido.';return;}
+if(!window.firebase?.apps?.length){if(msg)msg.textContent='No se pudo conectar. Inténtelo más tarde.';return;}
+try{if(btn){btn.disabled=true;btn.textContent='Enviando…';}
+const ref=window.firebase.database().ref('sendwayo_express_v2/requests/registro').push();
+await ref.set({id:ref.key,type:'registro',name,nombre:name,phone,telefono:phone,email,usuario:email,role:'REMITENTE',status:'PENDIENTE',estado:'PENDIENTE',createdAtMs:Date.now(),createdAt:new Date().toISOString()});
+if(msg)msg.textContent='Solicitud enviada. Administración revisará su registro.';
+['sendwayo-reg-name','sendwayo-reg-phone','sendwayo-reg-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}catch(e){if(msg)msg.textContent='No se pudo enviar la solicitud. Contacte a Administración.';}
+finally{if(btn){btn.disabled=false;btn.textContent='Enviar solicitud';}}
+};
+</script>
 <!-- MODAL ENVIO EXACTO CAPTURA - NO TOCAR -->
 <div id="modal-envio-v162" class="hidden fixed inset-0 bg-black/60 z-[550] flex items-center justify-center p-4">
   <div class="bg-white rounded-t-xl max-w-[500px] w-full shadow-2xl overflow-hidden">
