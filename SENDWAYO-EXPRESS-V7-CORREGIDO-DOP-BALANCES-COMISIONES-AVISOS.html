@@ -5522,8 +5522,8 @@ window.sendwayoShareReceipt=async function(){
 
   function boot() {
     installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors();
-    // Siempre iniciar sin sesión, incluso si la versión anterior dejó ADMIN precargado en memoria.
-    showWelcome();
+    // Solo mostrar bienvenida en un arranque limpio. Nunca cerrar un formulario de acceso que ya abrió el usuario.
+    if (!window.currentUser && !window.__sendwayoLoginPending && !document.body.classList.contains('sendwayo-login-open')) showWelcome();
     document.querySelectorAll('#welcome-landing button[onclick*="v162_showLogin"]').forEach(btn => btn.addEventListener('click', event => { event.preventDefault(); openLogin(); }, true));
     const logoutButtons = document.querySelectorAll('button[onclick*="cerrarSesion"],button[onclick*="CerrarSesion"]');
     logoutButtons.forEach(btn => { btn.onclick = event => { event?.preventDefault?.(); window.cerrarSesion(); }; });
@@ -5534,7 +5534,7 @@ window.sendwayoShareReceipt=async function(){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
-  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage && !current() && !document.body.classList.contains('sendwayo-authenticated') && !window.__sendwayoLoginPending) showWelcome(); else if (current()) { successfulLoginThisPage = true; updateIdentity(); applyIdentityDefaults(false); } });
+  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage && !current() && !document.body.classList.contains('sendwayo-authenticated') && !window.__sendwayoLoginPending && !document.body.classList.contains('sendwayo-login-open')) showWelcome(); else if (current()) { successfulLoginThisPage = true; updateIdentity(); applyIdentityDefaults(false); } });
   document.addEventListener('click', event => {
     const trigger = event.target && event.target.closest
       ? event.target.closest('button[onclick*="modal-"],button[onclick*="v162_abrir"],button[onclick*="sendwayoOpen"],[data-sendwayo-open-modal]')
