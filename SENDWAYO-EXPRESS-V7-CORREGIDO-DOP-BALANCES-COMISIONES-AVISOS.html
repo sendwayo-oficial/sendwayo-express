@@ -8934,11 +8934,11 @@ window.sendwayoShareReceipt=async function(){
    var accounts=[];
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
-   var a=id?accounts.find(function(x){return [x.id,x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username].some(function(v){return String(v||'')===String(id);});})||null:null;
-   var prefix=view==='agentes'?'AGE400I':'REM',num=1;
-   var nextId=function(){return view==='agentes'?prefix+String(num):prefix+String(num).padStart(5,'0');};
+   var a=id?accounts.find(function(x){return [x.id,x.idAnterior,x.legacyId,x.accountId,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.dbUserKey,x.rtdbUserKey].some(function(v){return String(v||'')===String(id);});})||null:null;
+   var prefix=view==='agentes'?'AGE':'REM',num=1;
+   var nextId=function(){return prefix+String(num).padStart(5,'0');};
    if(!a){while(accounts.some(function(x){return [x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'').toLowerCase()===nextId().toLowerCase();});}))num++;}
-   if(view==='agentes'&&!a&&num>9){alert('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');return;}
+   if(view==='agentes'&&!a&&num>99999){alert('Se agotó la serie de IDs disponibles para agentes.');return;}
    var visibleId=a?String(a.id):nextId();
    oldOpen(view,id||'');
    var name=$('v7-admin-name'),username=$('v7-admin-username'),code=$('v7-admin-code'),email=$('v7-admin-email'),phone=$('v7-admin-phone');
@@ -8960,7 +8960,7 @@ window.sendwayoShareReceipt=async function(){
    var accounts=[];
    try{if(typeof ADMIN!=='undefined'&&ADMIN)accounts.push(ADMIN);}catch(e){}
    try{accounts=accounts.concat(Array.isArray(AGENTES)?AGENTES:[],Array.isArray(REMITENTES)?REMITENTES:[]);}catch(e){}
-   var a=id?accounts.find(function(x){return [x.id,x.idAnterior,x.dbUserKey,x.rtdbUserKey,x.codigo,x.email,x.username,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'')===String(id);});})||null:null;
+   var a=id?accounts.find(function(x){return [x.id,x.idAnterior,x.legacyId,x.accountId,x.dbUserKey,x.rtdbUserKey,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(function(v){return String(v||'')===String(id);});})||null:null;
    var duplicate=accounts.find(function(x){return x!==a&&(String(x.id||'').toLowerCase()===ident.toLowerCase()||(Array.isArray(x.idAliases)&&x.idAliases.some(function(v){return String(v).toLowerCase()===ident.toLowerCase();})));});
    if(duplicate){alert('Ese ID ya está asignado a otra cuenta o fue utilizado anteriormente.');return false;}
    if(!a){
@@ -8975,13 +8975,12 @@ window.sendwayoShareReceipt=async function(){
    var username=String($('v7-admin-username')&&$('v7-admin-username').value||'').trim();
    var code=String($('v7-admin-code')&&$('v7-admin-code').value||'').trim();
    var phone=String($('v7-admin-phone')&&$('v7-admin-phone').value||'').trim();
-   if(!name||!username||!code||!phone){alert('Complete nombre, usuario, código y celular.');return false;}
-   var duplicateLogin=accounts.find(function(x){return x!==a&&(norm(x.username||x.login)===norm(username)||norm(x.codigo||x.code)===norm(code));});
-   if(duplicateLogin){alert('Ese usuario o código ya está asignado a otra cuenta.');return false;}
-   var oldId=String(a.id||''),oldCode=String(a.codigo||a.code||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
+   if(!name||!username||!phone){alert('Complete nombre completo, usuario y teléfono.');return false;}
+   var duplicateLogin=accounts.find(function(x){return x!==a&&(norm(x.username||x.login)===norm(username)||norm(x.email)===norm(a.email));});
+   if(duplicateLogin){alert('Ese usuario o correo ya está asignado a otra cuenta.');return false;}
+   var oldId=String(a.id||''),aliases=[...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(function(v){return v&&v!==ident;});
    aliases=[...new Set(aliases)];
-   const uniqueCodeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),oldCode].filter(function(v){return v&&norm(v)!==norm(code);} ))];
-   var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,codeAliases:uniqueCodeAliases,name:name,nombre:name,displayName:name,username:username,login:username,code:code,codigo:code,codigo2:code,staffId:code,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
+   var patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases:aliases,name:name,nombre:name,displayName:name,username:username,login:username,phone:phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:auth.uid};
    try{
     await db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
     Object.assign(a,patch);
@@ -9170,24 +9169,12 @@ window.sendwayoShareReceipt=async function(){
   const body=$('sendwayo-v7-beneficiary-rows');if(!body)return;
   body.querySelectorAll('tr').forEach(tr=>{if(tr.dataset.sendwayoViewAdded==='1')return;const cells=tr.querySelectorAll('td');if(cells.length<8)return;const id=txt(cells[1].textContent).trim();const actions=cells[7].querySelector('.sendwayo-v7-beneficiary-actions')||cells[7];if(!id)return;tr.dataset.sendwayoViewAdded='1';const b=document.createElement('button');b.type='button';b.textContent='Ver';b.className='border rounded-full px-3 py-1 text-xs';b.addEventListener('click',function(){const row=(window.BENEFICIARIOS_DB||[]).find(x=>txt(x.id)===id||txt(x.firebaseKey)===id);if(!row)return alert('No se encontró el beneficiario.');alert('BENEFICIARIO\\n\\nID: '+txt(row.id)+'\\nNombre: '+txt(row.nombre||row.name)+'\\nPaís: '+txt(row.paisNombre||row.paisIso2)+'\\nTeléfono: '+txt(row.telefonoE164||row.telefonoCompleto||row.telefono)+'\\nDirección: '+txt(row.direccion)+'\\nEstado: '+txt(row.estado||row.status)+'\\nPropietario: '+txt(row.userId||row.ownerUserId));});actions.insertBefore(b,actions.firstChild);});
  }
- function makeUserCode(view,name){
-  const parts=txt(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean);
-  const first=(parts[0]||'USR').slice(0,3).padEnd(3,'X'),last=(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).padEnd(3,'X');
-  return (view==='agentes'?'AG-':'REM-')+first+last;
- }
  function installAccountFormDefaults(){
   const open=window.sendwayoOpenAccountForm;if(typeof open!=='function'||open.__sendwayoDefaultsWrapped)return;
   const wrapped=function(view,id){
    const out=open.apply(this,arguments);
-   const name=$('v7-admin-name'),code=$('v7-admin-code'),password=$('v7-admin-password');
-   if(!id){
-    if(password){password.value='12345678';password.readOnly=true;password.autocomplete='new-password';}
-    if(name&&code){
-     const update=()=>{if(!code.dataset.sendwayoManualCode){code.value=makeUserCode(view,name.value);code.dataset.sendwayoAutoCode=code.value;}};
-     if(!code.dataset.sendwayoIdCodeBound){code.dataset.sendwayoIdCodeBound='1';code.addEventListener('input',()=>{if(code.value!==code.dataset.sendwayoAutoCode)code.dataset.sendwayoManualCode='1';});name.addEventListener('input',update);}
-     if(!code.dataset.sendwayoManualCode)update();
-    }
-   }
+   const password=$('v7-admin-password');
+   if(!id&&password){password.value='';password.readOnly=true;password.autocomplete='new-password';}
    return out;
   };
   wrapped.__sendwayoDefaultsWrapped=true;window.sendwayoOpenAccountForm=wrapped;
@@ -9273,7 +9260,7 @@ window.sendwayoShareReceipt=async function(){
    const rows=readRows(),request=rows.find(x=>String(x.id)===String(pending.requestId));
    if(request){request.estado='Aprobado';request.aprobadoPor=user()?.id||'ADMIN-ADMINISTRADOR';request.aprobadoAtMs=Date.now();request.firebaseAccountProvisioned=true;writeRows(rows);}
    window.__sendwayoPendingAccountApproval=null;
-   window.alert('Solicitud aprobada. La cuenta fue creada en Firebase con su ID y código oficiales. En el primer acceso deberá cambiar la contraseña inicial 12345678.');
+   window.alert('Solicitud aprobada. La cuenta fue creada en Firebase con su ID. El usuario recibe una contraseña temporal única y debe cambiarla en su primer acceso.');
    if(typeof window.showView==='function')window.showView('bienvenida');else if(typeof window.renderCustom==='function')window.renderCustom('bienvenida');
   }
   return result;
@@ -9297,7 +9284,7 @@ window.sendwayoShareReceipt=async function(){
    window.sendwayoOpenAccountForm(accountView,'');
    setTimeout(()=>{
     const name=$('v7-admin-name'),username=$('v7-admin-username'),mail=$('v7-admin-email'),phone=$('v7-admin-phone'),password=$('v7-admin-password'),code=$('v7-admin-code');
-    if(!$('sendwayo-admin-account-modal')||!name||!username||!mail||!phone||!password||!code){
+    if(!$('sendwayo-admin-account-modal')||!name||!username||!mail||!phone||!password){
      window.__sendwayoPendingAccountApproval=null;window.alert('No se pudo preparar el formulario de Firebase. La solicitud permanece pendiente.');return;
     }
     const fullName=String(request.nombre||request.name||'').trim();
@@ -9305,10 +9292,10 @@ window.sendwayoShareReceipt=async function(){
     username.value=email;username.dispatchEvent(new Event('input',{bubbles:true}));
     mail.value=email;mail.dispatchEvent(new Event('input',{bubbles:true}));
     phone.value=String(request.celular||request.telefono||'').trim();phone.dispatchEvent(new Event('input',{bubbles:true}));
-    password.value='12345678';
+    var tempBytes=new Uint32Array(1);try{crypto.getRandomValues(tempBytes);}catch(e){tempBytes[0]=Math.floor(Math.random()*0xffffffff);}password.value=String(1000000000+(tempBytes[0]%9000000000));
     password.readOnly=true;
     password.autocomplete='new-password';
-    if(!code.dataset.sendwayoManualCode){code.value=(accountView==='agentes'?'AG-':'REM-')+fullName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/\s+/).filter(Boolean).map((x,i)=>x.slice(0,3)).filter((x,i)=>i===0||i===fullName.trim().split(/\s+/).filter(Boolean).length-1).join('');code.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(code){code.value=String($('v7-admin-id')&&$('v7-admin-id').value||'');}
    },80);
    return;
   }
@@ -10133,9 +10120,9 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  }
  function hideCodeField(){
   const code=$('v7-admin-code');
-  if(code){const visibleId=text($('v7-admin-id')&&$('v7-admin-id').value||'');if(!code.value||code.value==='SWA-CUENTA'){code.value='SWA-'+(visibleId||'CUENTA');}code.setAttribute('aria-hidden','true');const label=code.closest('label')||code.parentElement;if(label)label.style.setProperty('display','none','important');}
+  if(code){const visibleId=text($('v7-admin-id')&&$('v7-admin-id').value||'');if(visibleId)code.value=visibleId;code.setAttribute('aria-hidden','true');const label=code.closest('label')||code.parentElement;if(label)label.style.setProperty('display','none','important');}
   const adminCode=$('sendwayo-admin-profile-code');
-  if(adminCode){if(!adminCode.value)adminCode.value='SWA-'+text($('sendwayo-admin-profile-id')&&$('sendwayo-admin-profile-id').value||'ADMIN');const label=adminCode.closest('label');if(label)label.style.setProperty('display','none','important');}
+  if(adminCode){adminCode.value=text($('sendwayo-admin-profile-id')&&$('sendwayo-admin-profile-id').value||'ADMIN');const label=adminCode.closest('label');if(label)label.style.setProperty('display','none','important');}
  }
  function prepareAccountForm(){
   hideCodeField();
@@ -10181,22 +10168,19 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   const selected=allCountries().find(x=>x.alpha2===select.value);if(selected)input.value=countryLabel(selected);
  }
  function installAllCountrySearch(){
-  ['sendwayo-v7-envio-from','sendwayo-v7-envio-to','sendwayo-v7-retiro-from','sendwayo-v7-retiro-to'].forEach(id=>installCountrySearch($(id)));
-  const phoneCountry=$('v162-ben-pais');
-  if(phoneCountry&&phoneCountry.dataset.sendwayoCountrySearch!=='1'){
-   phoneCountry.dataset.sendwayoCountrySearch='1';
-   const wrap=document.createElement('div');wrap.className='sendwayo-country-search-wrap';
-   const input=document.createElement('input');input.type='search';input.className='sendwayo-country-search-input';input.autocomplete='off';input.placeholder='Escriba Haití o República Dominicana…';input.setAttribute('aria-label','Buscar país del teléfono');
-   const results=document.createElement('div');results.className='sendwayo-country-search-results';
-   wrap.append(input,results);phoneCountry.parentElement.insertBefore(wrap,phoneCountry);
-   const choices=[{name:'Haití',prefixes:['+509']},{name:'República Dominicana',prefixes:['+1-809','+1-829','+1-849']}];
-   const draw=()=>{const q=norm(input.value),matches=choices.filter(c=>!q||norm(c.name+' '+c.prefixes.join(' ')).includes(q));results.replaceChildren();matches.forEach(c=>c.prefixes.forEach(prefix=>{const b=document.createElement('button');b.type='button';b.textContent=c.name+' · '+prefix;b.onclick=()=>{phoneCountry.value=prefix;input.value=c.name;results.classList.remove('open');phoneCountry.dispatchEvent(new Event('change',{bubbles:true}));};results.appendChild(b);}));results.classList.toggle('open',matches.length>0);};
-   input.addEventListener('input',draw);input.addEventListener('focus',draw);document.addEventListener('click',e=>{if(!wrap.contains(e.target))results.classList.remove('open');});
-  }
+  const candidates=new Set([
+   ...['sendwayo-v7-envio-from','sendwayo-v7-envio-to','sendwayo-v7-retiro-from','sendwayo-v7-retiro-to','v162-ben-pais'].map(id=>$(id)).filter(Boolean),
+   ...document.querySelectorAll('select[id*="pais" i],select[name*="pais" i],select[id*="country" i],select[name*="country" i]')
+  ]);
+  candidates.forEach(select=>{
+   const options=Array.from(select.options||[]);
+   const matches=options.filter(option=>allCountries().some(country=>country.alpha2===String(option.value||'').toUpperCase()));
+   if(matches.length>=3)installCountrySearch(select);
+  });
  }
  function scrubVisibleLegacyCodes(){
-  const roots=['view-agentes','view-remitentes','view-secretas','view-investigacion','lista-secretas','sendwayo-v7-user-strip'];
-  const pattern=/(?:\s*[·|—–-]\s*)?(?:Código|Cód\.?)\s*:\s*[A-Z0-9_-]+|\b(?:AG|REM)-[A-Z0-9_-]+\b/gi;
+  const roots=['view-agentes','view-remitentes','view-secretas','view-investigacion','lista-secretas','sendwayo-v7-user-strip','sendwayo-admin-account-modal','sendwayo-v7-modal'];
+  const pattern=/\bCódigo\s*:\s*[A-Z0-9_-]+|\bCód\.\s*:\s*[A-Z0-9_-]+|\b(?:AG|REM)\s*[-–—]\s*[A-Z0-9_-]+\b/gi;
   roots.forEach(id=>{
    const root=$(id);if(!root)return;
    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];
@@ -10204,8 +10188,9 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
    nodes.forEach(node=>{
     const parent=node.parentElement;
     if(parent&&/^(SCRIPT|STYLE|INPUT|TEXTAREA|SELECT|OPTION)$/i.test(parent.tagName))return;
-    const clean=node.nodeValue.replace(pattern,'').replace(/\s{2,}/g,' ');
-    if(clean!==node.nodeValue)node.nodeValue=clean;
+    const original=node.nodeValue;
+    const clean=/^\s*(?:Código|Cód\.?)\s*:?\s*$/i.test(original)?'':original.replace(pattern,'').replace(/\s{2,}/g,' ');
+    if(clean!==original)node.nodeValue=clean;
    });
   });
  }
