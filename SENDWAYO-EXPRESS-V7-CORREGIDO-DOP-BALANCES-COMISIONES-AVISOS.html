@@ -10116,7 +10116,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  function moveMenuButton(){
   const bar=$('sendwayo-brand-bar'),left=bar&&bar.querySelector('.sendwayo-brand-left'),title=$('sendwayo-v7-business-name'),btn=$('sendwayo-mobile-menu');
   if(!left||!title||!btn)return;
-  if(btn.parentElement!==left)left.insertBefore(btn,title.nextSibling);
+  if(btn.parentElement!==left||btn.previousElementSibling!==title)left.insertBefore(btn,title.nextSibling);
   btn.classList.add('sendwayo-top-menu-toggle');btn.style.removeProperty('display');
   btn.setAttribute('aria-label','Abrir menú lateral izquierdo');btn.setAttribute('title','Menú');
  }
@@ -10124,7 +10124,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   const side=$('sendwayo-main-sidebar'),btn=$('sendwayo-mobile-menu');if(!side||!btn)return;
   side.setAttribute('aria-label','Menú lateral izquierdo de SENDWAYO EXPRESS');
   btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');
-  btn.textContent=side.classList.contains('sendwayo-menu-open')?'✕':'☰';
+  const expected=side.classList.contains('sendwayo-menu-open')?'✕':'☰';if(btn.textContent!==expected)btn.textContent=expected;
  }
  function generateTenDigitPassword(){
   const bytes=new Uint32Array(1);
@@ -10133,7 +10133,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  }
  function hideCodeField(){
   const code=$('v7-admin-code');
-  if(code){if(!code.value)code.value='SWA-'+text($('v7-admin-id')&&$('v7-admin-id').value||'CUENTA');code.setAttribute('aria-hidden','true');const label=code.closest('label')||code.parentElement;if(label)label.style.setProperty('display','none','important');}
+  if(code){const visibleId=text($('v7-admin-id')&&$('v7-admin-id').value||'');if(!code.value||code.value==='SWA-CUENTA'){code.value='SWA-'+(visibleId||'CUENTA');}code.setAttribute('aria-hidden','true');const label=code.closest('label')||code.parentElement;if(label)label.style.setProperty('display','none','important');}
   const adminCode=$('sendwayo-admin-profile-code');
   if(adminCode){if(!adminCode.value)adminCode.value='SWA-'+text($('sendwayo-admin-profile-id')&&$('sendwayo-admin-profile-id').value||'ADMIN');const label=adminCode.closest('label');if(label)label.style.setProperty('display','none','important');}
  }
@@ -10143,7 +10143,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   if(password&&modal){
    password.type='text';password.readOnly=true;password.autocomplete='new-password';
    password.setAttribute('aria-label','Contraseña inicial temporal de diez dígitos');
-   if(!modal.dataset.sendwayoTemporaryPassword){const value=generateTenDigitPassword();password.value=value;modal.dataset.sendwayoTemporaryPassword=value;const label=password.closest('label');if(label&&label.firstChild&&label.firstChild.nodeType===3)label.firstChild.textContent='Contraseña inicial temporal (10 dígitos)';}
+   if(!modal.dataset.sendwayoTemporaryPassword){modal.dataset.sendwayoTemporaryPassword=generateTenDigitPassword();const label=password.closest('label');if(label&&label.firstChild&&label.firstChild.nodeType===3)label.firstChild.textContent='Contraseña inicial temporal (10 dígitos)';}password.value=modal.dataset.sendwayoTemporaryPassword;
   }
  }
  function watchAccountForms(){
@@ -10237,6 +10237,28 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  const observer=new MutationObserver(()=>{refreshPage();});
  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
  window.setInterval(tickSession,1000);
+ refreshPage();tickSession();
+})();
+nst priorSave=window.sendwayoSaveAccountForm;
+ if(typeof priorSave==='function'){
+  window.sendwayoSaveAccountForm=async function(view,id){
+   const field=$('v7-admin-password'),modal=$('sendwayo-admin-account-modal');
+   const isNew=!id,temp=isNew?text(field&&field.value):'';
+   hideCodeField();
+   const result=await priorSave.apply(this,arguments);
+   if(result===true&&isNew&&temp){alert('Cuenta creada. Contraseña temporal única: '+temp+'. Entréguela al usuario; el sistema le exigirá cambiarla en su primer acceso.');if(modal)delete modal.dataset.sendwayoTemporaryPassword;}
+   return result;
+  };
+ }
+ document.addEventListener('DOMContentLoaded',refreshPage,{once:true});
+ window.addEventListener('load',refreshPage);
+ window.addEventListener('pageshow',refreshPage);
+ window.addEventListener('sendwayo:firebase-ready',refreshPage);
+ window.addEventListener('sendwayo:transactions-updated',refreshPage);
+ window.addEventListener('resize',moveMenuButton);
+ const observer=new MutationObserver(()=>{refreshPage();});
+ observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+ window.setInterval(tickSession,1000);window.setInterval(scrubVisibleLegacyCodes,900);
  refreshPage();tickSession();
 })();
 </script>
