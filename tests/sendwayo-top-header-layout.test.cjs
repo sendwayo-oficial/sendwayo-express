@@ -10,11 +10,12 @@ for (const source of [html, publicHtml]) {
   const end = source.indexOf('<style id="sendwayo-v7-welcome-actions">', start);
   assert.ok(start >= 0 && end > start, 'la portada pública debe existir');
   const landing = source.slice(start, end);
-  assert.equal(landing.split('<img').length - 1, 1, 'la portada debe tener una sola fotografía');
+  assert.equal(landing.split('<img').length - 1, 1, 'la portada debe tener solo el logo corporativo');
   assert.equal(landing.split('<button').length - 1, 2, 'la portada debe tener solo dos botones');
-  assert.ok(landing.includes('assets/sendwayo-bienvenida.jpg'));
-  assert.ok(landing.includes('>INGRESAR</button>') && landing.includes('>REGISTRARSE</button>'));
-  assert.ok(!landing.includes('v162-car-main') && !landing.includes('carouselImgs'));
+  assert.ok(landing.includes('assets/sendwayo-logo-real.jpg'));
+  assert.ok(!landing.includes('assets/sendwayo-bienvenida.jpg'));
+  assert.ok(landing.includes('>INGRESAR</button>') && landing.includes('>REGISTRAR</button>'));
+  assert.ok(!landing.includes('sendwayo-landing-photo-panel') && !landing.includes('v162-car-main') && !landing.includes('carouselImgs'));
   assert.ok(!landing.toLowerCase().includes('<video'));
 
   const brandAt = source.indexOf('<div id="sendwayo-brand-bar"');
