@@ -205,6 +205,29 @@ jobs:
               if (!ready.usernameEnabled || !ready.passwordEnabled || !ready.loginFunction) {
                 throw new Error('El formulario apareció, pero no quedó listo para escribir e iniciar sesión.');
               }
+
+              // Reproducir el caso reportado: la página termina de cargar después de que se abrió el login.
+              await page.evaluate(() => {
+                window.dispatchEvent(new Event('load'));
+                document.dispatchEvent(new Event('DOMContentLoaded'));
+              });
+              await page.waitForTimeout(150);
+              const afterLateLifecycle = await page.evaluate(() => {
+                const login = document.querySelector('#login-screen');
+                const welcome = document.querySelector('#welcome-landing');
+                return {
+                  loginVisible: !!login && !login.classList.contains('hidden') &&
+                    getComputedStyle(login).display !== 'none' &&
+                    getComputedStyle(login).visibility !== 'hidden',
+                  welcomeHidden: !!welcome && (welcome.classList.contains('hidden') ||
+                    getComputedStyle(welcome).display === 'none'),
+                  loginOpen: document.body.classList.contains('sendwayo-login-open')
+                };
+              });
+              console.log('LOGIN PRESERVED AFTER LATE PAGE EVENTS:', JSON.stringify(afterLateLifecycle, null, 2));
+              if (!afterLateLifecycle.loginVisible || !afterLateLifecycle.welcomeHidden || !afterLateLifecycle.loginOpen) {
+                throw new Error('Un evento tardío de carga devolvió el formulario de acceso a bienvenida.');
+              }
               if (pageErrors.length || blockingConsoleErrors().length) {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
                 console.error('FAILED SCRIPTS:', JSON.stringify(failedScripts, null, 2));
