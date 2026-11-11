@@ -8292,9 +8292,13 @@ window.sendwayoShareReceipt=async function(){
       // Una contraseña incorrecta no crea una sesión Firebase. No ejecutar signOut en ese caso:
       // su evento onAuthStateChanged ocultaba el formulario y regresaba a la bienvenida.
       try {
-        if (auth.currentUser) { await auth.signOut(); }
+        // La limpieza de una sesión anterior nunca debe dejar el botón bloqueado.
+        // Firebase signOut es local; esperar como máximo 2 segundos y continuar mostrando el error real.
+        if (auth.currentUser) {
+          await loginStep(auth.signOut(), 'La limpieza de la sesión anterior', 2000);
+        }
       } catch (signOutError) {
-        console.warn('[SENDWAYO] Limpieza de sesión fallida:', signOutError);
+        console.warn('[SENDWAYO] Limpieza de sesión pendiente; se libera el formulario:', signOutError);
       }
       stopListeners();
 
