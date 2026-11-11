@@ -7211,6 +7211,27 @@ window.sendwayoShareReceipt=async function(){
     else window.alert(message);
   }
   function clearLoginError(){ const el=document.getElementById('login-error'); if(el) el.classList.add('hidden'); }
+  function showLoginFormForRetry() {
+    // Una autenticación fallida no debe enviar al visitante de vuelta a la portada.
+    const login=document.getElementById('login-screen');
+    const welcome=document.getElementById('welcome-landing');
+    document.body.classList.remove('sendwayo-authenticated');
+    document.body.classList.add('sendwayo-login-open');
+    if(login){
+      if(login.parentElement!==document.body) document.body.appendChild(login);
+      login.classList.remove('hidden');
+      login.classList.add('sendwayo-login-visible');
+      login.style.setProperty('display','flex','important');
+      login.style.setProperty('visibility','visible','important');
+      login.style.setProperty('pointer-events','auto','important');
+    }
+    if(welcome){
+      welcome.classList.add('hidden');
+      welcome.style.setProperty('display','none','important');
+      welcome.style.setProperty('visibility','hidden','important');
+      welcome.style.setProperty('pointer-events','none','important');
+    }
+  }
   async function enforceFirstPasswordChange(firebaseUser, profileRow){
     const data=profileRow&&profileRow.data||{};
     if(!(data.mustChangePassword===true||data.passwordChangeRequired===true||data.forcePasswordChange===true))return;
@@ -8241,18 +8262,24 @@ window.sendwayoShareReceipt=async function(){
       state.readReady = false;
       state.directory = [];
       state.remoteTransactions = {};
-      // No esperar signOut aquí: no debe impedir que finally reactive el botón.
-      try { auth.signOut().catch(signOutError => console.warn('[SENDWAYO] Limpieza de sesión:', signOutError)); } catch (_) {}
+      // Una contraseña incorrecta no crea una sesión Firebase. No ejecutar signOut en ese caso:
+      // su evento onAuthStateChanged ocultaba el formulario y regresaba a la bienvenida.
+      try {
+        if (auth.currentUser) await auth.signOut();
+      } catch (signOutError) {
+        console.warn('[SENDWAYO] Limpieza de sesión fallida:', signOutError);
+      }
       stopListeners();
 
       const code = error?.code;
       const message = code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found'
-        ? 'El correo o la contraseña no son válidos en Firebase Authentication.'
+        ? 'Firebase rechazó el correo o la contraseña. Compruebe que sendwayoexpress@gmail.com exista en Authentication y que la contraseña sea la actual.'
         : code === 'auth/too-many-requests'
           ? 'Firebase bloqueó temporalmente los intentos. Espere antes de probar otra vez.'
           : code === 'auth/network-request-failed'
             ? 'No se pudo conectar con Firebase Authentication. Compruebe Internet e inténtelo otra vez.'
             : (error?.message || 'No se pudo iniciar sesión.');
+      showLoginFormForRetry();
       loginError(message);
     } finally {
       state.loginBusy = false;
