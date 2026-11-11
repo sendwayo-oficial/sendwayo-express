@@ -183,15 +183,41 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
   },true);
   function loadScript(src){
     return new Promise(function(resolve,reject){
-      var script=document.createElement('script');
-      var timer=window.setTimeout(function(){
-        script.onerror=null;script.onload=null;
-        reject(new Error('La descarga de una biblioteca de Firebase tardó demasiado.'));
-      },15000);
-      script.src=src;
-      script.onload=function(){window.clearTimeout(timer);resolve(true);};
-      script.onerror=function(){window.clearTimeout(timer);reject(new Error('No se pudo descargar una biblioteca de Firebase. Compruebe la conexión a Internet.'));};
-      document.head.appendChild(script);
+      var filename=src.split('/').pop().split('?')[0];
+      var urls=[
+        src,
+        'https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/'+filename,
+        'https://unpkg.com/firebase@10.12.2/'+filename
+      ];
+      var index=0, finished=false;
+      function attempt(){
+        if(finished)return;
+        if(index>=urls.length){
+          finished=true;
+          reject(new Error('No se pudo descargar una biblioteca de Firebase desde los servidores disponibles. Compruebe la conexión a Internet y vuelva a intentarlo.'));
+          return;
+        }
+        var script=document.createElement('script');
+        var timer=window.setTimeout(function(){
+          script.onload=null;script.onerror=null;
+          if(script.parentNode)script.parentNode.removeChild(script);
+          index++;attempt();
+        },10000);
+        script.async=true;
+        script.crossOrigin='anonymous';
+        script.src=urls[index];
+        script.onload=function(){
+          if(finished)return;
+          finished=true;window.clearTimeout(timer);resolve(true);
+        };
+        script.onerror=function(){
+          window.clearTimeout(timer);
+          if(script.parentNode)script.parentNode.removeChild(script);
+          index++;attempt();
+        };
+        document.head.appendChild(script);
+      }
+      attempt();
     });
   }
   var sdkResolve, sdkReject, sdkStarted=false;

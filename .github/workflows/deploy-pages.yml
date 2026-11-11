@@ -130,8 +130,23 @@ jobs:
           if git diff --cached --quiet; then
             echo "The published V7 source already contains the verified SENDWAYO login."
           else
-            git commit -m "Persist SENDWAYO username and Firebase login in V7"
-            git push origin HEAD:main
+            git commit -m "Persist verified V7 page at the public SENDWAYO URL"
+            pushed=0
+            for attempt in 1 2 3 4 5; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                pushed=1
+                echo "PASS: publicación estática guardada en main (intento $attempt)."
+                break
+              fi
+              echo "La rama main recibió otro cambio en paralelo; reintentando publicación (intento $attempt/5)."
+              sleep 2
+            done
+            if [ "$pushed" -ne 1 ]; then
+              echo "ERROR: no se pudo guardar la copia pública después de 5 intentos."
+              exit 1
+            fi
           fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
