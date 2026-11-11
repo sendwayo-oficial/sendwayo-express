@@ -10104,7 +10104,7 @@ body::before{content:""!important;position:fixed!important;inset:0!important;z-i
   input.style.cssText='display:block;width:100%;min-width:0;min-height:42px;margin-top:6px;border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#fff;color:#10243d;font-size:13px';
   dl.id=listId;
   var countries=Array.isArray(window.SENDWAYO_V7_COUNTRIES)?window.SENDWAYO_V7_COUNTRIES:[];
-  countries.slice().sort(function(a,b){return countryName(a).localeCompare(countryName(b),'es');}).forEach(function(c){var o=document.createElement('option');o.value=countryName(c);o.label=(c.flag||'🌐')+' '+countryName(c)+' ('+c.alpha2+')';dl.appendChild(o);});
+  countries.slice().sort(function(a,b){return countryName(a).localeCompare(countryName(b),'es');}).forEach(function(c){var o=document.createElement('option');o.value=countryName(c);o.label=(c.flag||'🌐')+' '+countryName(c)+' · ID '+c.alpha2+' · '+(c.callingCode||'Sin prefijo');dl.appendChild(o);});
   label.appendChild(input);label.appendChild(dl);select.dataset.sendwayoSearchReady='1';select.setAttribute('aria-hidden','true');select.tabIndex=-1;select.style.setProperty('display','none','important');
   function match(){
    var value=norm(input.value);if(!value)return;
@@ -10480,10 +10480,10 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   var route=txt(t.ruta||t.rutaExacta||t.detalle||raw.ruta||raw.rutaExacta||''),details=txt(t.rutaExacta||t.detalleRutaInternacional||raw.rutaExacta||''),whole=norm([route,details,t.paisOrigen,t.paisDestino].join(' '));
   var arrow=route+' '+details,match=arrow.match(/\b(HT|DO|RD|US|USA|CA|FR|ES)\s*(?:→|->|➜|a|hacia)\s*(HT|DO|RD|US|USA|CA|FR|ES)\b/i);
   if((!from||!to)&&match){from=from||match[1].toUpperCase();to=to||match[2].toUpperCase();}
-  if(!from){var fm=details.match(/pais de origen\s*:\s*[^;(]+\s*\(([A-Z]{2})\)/i);if(fm)from=fm[1].toUpperCase();}
-  if(!to){var tm=details.match(/pais de destino\s*:\s*[^;(]+\s*\(([A-Z]{2})\)/i);if(tm)to=tm[1].toUpperCase();}
-  if(!from&&/\bhaiti\b|\bht\b/.test(whole))from='HT';
-  if(!to&&/\bhaiti\b|\bht\b/.test(whole)&&/haiti.*haiti|\bht\s*(?:→|->|a)\s*ht\b/.test(whole))to='HT';
+  var normalizedDetails=norm(details);
+  if(!from){var fm=normalizedDetails.match(/pais de origen\s*:\s*[^;(]+\s*\(([a-z]{2})\)/i);if(fm)from=fm[1].toUpperCase();}
+  if(!to){var tm=normalizedDetails.match(/pais de destino\s*:\s*[^;(]+\s*\(([a-z]{2})\)/i);if(tm)to=tm[1].toUpperCase();}
+  /* No inferir un país solo por mencionar Haití: una ruta internacional sin ISO explícito debe quedar sin clasificar. */
   var provider=txt(t.proveedorDestino||t.provider||t.metodo||raw.proveedorDestino||raw.provider||raw.metodo||'');
   if(!provider){var pm=whole.match(/\b(natcash|moncash|transferencia|ventanilla|efectivo|cash pickup|deposito bancario|banco)\b/i);if(pm)provider=pm[1];}
   var prettyProvider=provider?(/natcash/i.test(provider)?'NatCash':/moncash/i.test(provider)?'MonCash':provider):'General';
@@ -10495,8 +10495,21 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  function transactions(){return Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES)?TRANSACCIONES:[]);}
  function escapeHtml(v){return txt(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
  function groupedBody(tbody,tableRows,recordMap,view,colspan){
-  var groups=new Map();tableRows.forEach(function(row){var rec=recordMap(row);if(!rec)return;var info=routeInfo(rec);row.dataset.sendwayoRouteKey=info.key;row.dataset.sendwayoRouteLabel=info.label;var key=info.key;if(routeFilters[view]!=='ALL'&&routeFilters[view]!==key){row.style.display='none';return;}row.style.display='';if(!groups.has(key))groups.set(key,{label:info.label,rows:[]});groups.get(key).rows.push(row);});
-  var nodes=[];groups.forEach(function(group,key){var heading=document.createElement('tr');heading.dataset.sendwayoRouteHeading='1';heading.innerHTML='<td colspan="'+colspan+'" style="padding:9px 12px;background:#eaf1fa;color:#12365a;font-size:11px;font-weight:900;border-top:2px solid #cbd8e8">RUTA / MODALIDAD: '+escapeHtml(group.label)+'</td>';nodes.push(heading);group.rows.forEach(function(row){nodes.push(row);});});
+  var groups=new Map(),query=view==='retiros'?norm(($('sendwayo-retiros-buscar')||{}).value||''):'';
+  tableRows.forEach(function(row){
+   var rec=recordMap(row);if(!rec)return;
+   var info=routeInfo(rec),key=info.key;
+   row.dataset.sendwayoRouteKey=key;row.dataset.sendwayoRouteLabel=info.label;
+   var routeMatches=routeFilters[view]==='ALL'||routeFilters[view]===key;
+   var textMatches=!query||norm(row.textContent).indexOf(query)>=0;
+   row.style.display=routeMatches&&textMatches?'':'none';
+   if(!groups.has(key))groups.set(key,{label:info.label,rows:[],visible:0});
+   var group=groups.get(key);group.rows.push(row);if(routeMatches&&textMatches)group.visible++;
+  });
+  var nodes=[];groups.forEach(function(group){
+   if(group.visible){var heading=document.createElement('tr');heading.dataset.sendwayoRouteHeading='1';heading.innerHTML='<td colspan="'+colspan+'" style="padding:9px 12px;background:#eaf1fa;color:#12365a;font-size:11px;font-weight:900;border-top:2px solid #cbd8e8">RUTA / MODALIDAD: '+escapeHtml(group.label)+'</td>';nodes.push(heading);}
+   group.rows.forEach(function(row){nodes.push(row);});
+  });
   if(nodes.length)tbody.replaceChildren.apply(tbody,nodes);
  }
  function ensureFilter(parent,id,label,options,view,selectHandler){
@@ -10572,7 +10585,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   var money=function(a,key){var b=a.balances||{},c=a.commissions||a.comisiones||{};return 'Balance: RD$ '+Number(b.DOP||a.balanceDOP||0).toLocaleString('es-DO')+' · HTG '+Number(b.HTG||a.balanceHTG||0).toLocaleString('es-DO')+' | Comisión: RD$ '+Number(c.DOP||a.commissionDOP||0).toLocaleString('es-DO')+' · HTG '+Number(c.HTG||a.commissionHTG||0).toLocaleString('es-DO');};
   var html='<section class="space-y-3 p-3"><header class="rounded-xl border bg-white p-4"><h2 class="text-sm font-black text-slate-900">Expedientes de usuarios</h2><p class="mt-1 text-xs text-slate-500">Identificación por ID, nombre completo, usuario y teléfono. Las contraseñas no se muestran en esta sección.</p></header>';
   rows.forEach(function(row){var a=row.account||{},id=txt(a.id||a.accountId||'—'),name=txt(a.nombre||a.name||'Nombre no registrado'),username=txt(a.username||a.usuario||a.email||'—'),phone=txt(a.telefono||a.celular||'—');
-   var actionId=String(row.role==='ADMIN'?(a.idAnterior||'ADMINADMIN'):id);
+   var actionId=String(row.role==='ADMINISTRADOR'?(a.idAnterior||'ADMINADMIN'):id);
    html+='<article class="rounded-xl border bg-white p-3 shadow-sm"><div class="flex flex-wrap items-center gap-2 text-sm"><strong class="text-blue-900">ID: '+escapeHtml(id)+'</strong><strong>'+escapeHtml(name)+'</strong><span class="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold">'+row.role+'</span></div><div class="mt-2 grid gap-1 text-xs text-slate-600 sm:grid-cols-2"><div>Usuario: <strong>'+escapeHtml(username)+'</strong></div><div>Teléfono: <strong>'+escapeHtml(phone)+'</strong></div></div><div class="mt-2 text-xs font-semibold text-slate-700">'+escapeHtml(money(a))+'</div><div class="mt-3 flex flex-wrap gap-2"><button type="button" class="rounded-full bg-[#1e3a5f] px-3 py-2 text-[10px] font-bold text-white" onclick="ajustarBalance(\\''+escapeHtml(actionId)+'\\')">Ajustar balance</button><button type="button" class="rounded-full bg-orange-500 px-3 py-2 text-[10px] font-bold text-white" onclick="ajustarComision(\\''+escapeHtml(actionId)+'\\')">Ajustar comisión</button></div></article>';
   });
   html+='</section>';root.innerHTML=html;
