@@ -159,7 +159,6 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     event.preventDefault();
     event.stopImmediatePropagation();
     window.__sendwayoLoginPending=true;
-    if(typeof window.sendwayoStartFirebaseSdk==='function')window.sendwayoStartFirebaseSdk();
     const error=document.getElementById('login-error');
     if(error){
       error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
@@ -174,7 +173,6 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
     event.preventDefault();
     event.stopImmediatePropagation();
     window.__sendwayoLoginPending=true;
-    if(typeof window.sendwayoStartFirebaseSdk==='function')window.sendwayoStartFirebaseSdk();
     const error=document.getElementById('login-error');
     if(error){
       error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
@@ -183,61 +181,23 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
   },true);
   function loadScript(src){
     return new Promise(function(resolve,reject){
-      var filename=src.split('/').pop().split('?')[0];
-      var urls=[
-        src,
-        'https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/'+filename,
-        'https://unpkg.com/firebase@10.12.2/'+filename
-      ];
-      var index=0, finished=false;
-      function attempt(){
-        if(finished)return;
-        if(index>=urls.length){
-          finished=true;
-          reject(new Error('No se pudo descargar una biblioteca de Firebase desde los servidores disponibles. Compruebe la conexión a Internet y vuelva a intentarlo.'));
-          return;
-        }
-        var script=document.createElement('script');
-        var timer=window.setTimeout(function(){
-          script.onload=null;script.onerror=null;
-          if(script.parentNode)script.parentNode.removeChild(script);
-          index++;attempt();
-        },10000);
-        script.async=true;
-        script.crossOrigin='anonymous';
-        script.src=urls[index];
-        script.onload=function(){
-          if(finished)return;
-          finished=true;window.clearTimeout(timer);resolve(true);
-        };
-        script.onerror=function(){
-          window.clearTimeout(timer);
-          if(script.parentNode)script.parentNode.removeChild(script);
-          index++;attempt();
-        };
-        document.head.appendChild(script);
-      }
-      attempt();
+      var script=document.createElement('script');
+      var timer=window.setTimeout(function(){
+        script.onerror=null;script.onload=null;
+        reject(new Error('La descarga de una biblioteca de Firebase tardó demasiado.'));
+      },15000);
+      script.src=src;
+      script.onload=function(){window.clearTimeout(timer);resolve(true);};
+      script.onerror=function(){window.clearTimeout(timer);reject(new Error('No se pudo descargar una biblioteca de Firebase. Compruebe la conexión a Internet.'));};
+      document.head.appendChild(script);
     });
   }
-  var sdkResolve, sdkReject, sdkStarted=false;
-  window.sendwayoFirebaseSdkReady=new Promise(function(resolve,reject){sdkResolve=resolve;sdkReject=reject;});
-  window.sendwayoStartFirebaseSdk=function(){
-    if(sdkStarted)return window.sendwayoFirebaseSdkReady;
-    sdkStarted=true;
-    loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
-      .then(function(){return Promise.all([
-        loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'),
-        loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js')
-      ]);})
-      .then(function(){sdkResolve(true);},function(error){sdkReject(error);});
-    return window.sendwayoFirebaseSdkReady;
-  };
+  window.sendwayoFirebaseSdkReady=loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
+    .then(function(){return Promise.all([
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'),
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js')
+    ]);});
   window.sendwayoFirebaseSdkReady.catch(function(error){window.sendwayoFirebaseSdkError=error;});
-  // Start Firebase downloads immediately in the background; dynamic scripts do not block typing.
-  // This removes the artificial 2.2-second wait before the secure login can initialize.
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){window.sendwayoStartFirebaseSdk();},{once:true});
-  else window.sendwayoStartFirebaseSdk();
 })();
 </script>
 
@@ -355,14 +315,6 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </style>
 
 
-
-<link rel="preconnect" href="https://www.gstatic.com">
-<link rel="dns-prefetch" href="//www.gstatic.com">
-<link rel="preconnect" href="https://cdn.tailwindcss.com">
-<link rel="dns-prefetch" href="//cdn.tailwindcss.com">
-<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
-<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
-<link rel="preload" as="image" href="./assets/sendwayo-logo-real.jpg">
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -603,12 +555,11 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 // DATOS CORREGIDOS - 5 AGENTES + ADMIN CON CODIGO - RECUERDA QUE ESTOS SON LOS 5 AGENTES, TIENES QUE PONERLO CON SU CODIGO
 let ADMIN = {
   id:'ADMIN-ADMINISTRADOR', idAnterior:'ADMINADMIN',
-  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','Sendwayoexpress','sendwayoexpress@gmail.com'],
-  username:'sendwayoexpress@gmail.com', login:'sendwayoexpress@gmail.com',
+  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN'],
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
-  email:'sendwayoexpress@gmail.com',
+  email:'ideletteismorin@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
   balances:{DOP:0,HTG:0},
@@ -617,11 +568,11 @@ let ADMIN = {
   role:'ADMIN'
 };
 let AGENTES = [
-  {id:'AGE00001', idAnterior:'AG-HERACE', codigo:'AGE-HERFLE', codigoAnterior:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00002', idAnterior:'AG-JULIE', codigo:'AGE-JULOCC', codigoAnterior:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00003', idAnterior:'AG-BETINA', codigo:'AGE-BETLIN', codigoAnterior:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00004', idAnterior:'AGE00004', codigo:'AGE-IDEISM', codigoAnterior:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00005', idAnterior:'AG-MIKE', codigo:'AGE-MIKMYK', codigoAnterior:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
+  {id:'AGE00001', idAnterior:'AG-HERACE', codigo:'AG-HERFLE', codigoAnterior:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00002', idAnterior:'AG-JULIE', codigo:'AG-JULOCC', codigoAnterior:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00003', idAnterior:'AG-BETINA', codigo:'AG-BETLIN', codigoAnterior:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00004', idAnterior:'AGE00004', codigo:'AG-IDEISM', codigoAnterior:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
+  {id:'AGE00005', idAnterior:'AG-MIKE', codigo:'AG-MIKMYK', codigoAnterior:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
 ];
 let REMITENTES = [
   {id:'REM00001', idAnterior:'REM-DANIA', codigo:'REM-DANSAI', codigoAnterior:'REM-001', numero:'01', name:'DANIA SAINTHILAIRE', nombre:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', telefono:'+1-849 8493727884', celular:'+1-849 8493727884', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
@@ -868,8 +819,9 @@ function addNotificacion(msg, tipo){
 
 document.getElementById('bell-top').onclick=()=>{ document.getElementById('notif-panel').classList.toggle('hidden'); };
 
-// No renderizar el tablero completo antes de autenticar: evita bloquear la portada y el formulario de acceso.
-// renderPrincipal() se ejecuta después de validar la sesión Firebase.
+setTimeout(()=>{
+  renderPrincipal();
+},500);
 </script>
 
 <!-- MODAL RECARGAS EXACTO FOTO - Recargas - Comisión 5% -->
@@ -2518,7 +2470,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
     <header class="sendwayo-home-header">
       <div class="sendwayo-home-header-inner">
         <div class="sendwayo-home-brand"><img src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS"><div><strong>SENDWAYO EXPRESS</strong><span>Envíos · Retiros · Paquetes · Recargas</span></div></div>
-        <button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">Ya tengo una cuenta</button>
+        <div class="sendwayo-home-actions"><button type="button" class="sendwayo-home-login" onclick="v162_showLogin()">INGRESAR</button><button type="button" class="sendwayo-home-register" onclick="sendwayoOpenPublicRequest('Quiero ser remitente')">REGISTRARSE</button></div>
       </div>
     </header>
     <div class="sendwayo-home-content">
@@ -2561,6 +2513,11 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
     <footer class="sendwayo-home-footer">© SENDWAYO EXPRESS · Conectamos destinos</footer>
   </main>
 </div>
+<style id="sendwayo-v7-welcome-actions">
+.sendwayo-home-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sendwayo-home-register{display:inline-flex!important;align-items:center!important;justify-content:center!important;border:0!important;border-radius:9999px!important;padding:14px 24px!important;background:#10243d!important;color:#fff!important;font-size:14px!important;font-weight:900!important;cursor:pointer!important;box-shadow:0 8px 24px rgba(15,36,64,.18)!important}
+.sendwayo-home-actions button{min-height:46px}
+</style>
 <style id="sendwayo-v7-public-landing-clean">
 #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
 #welcome-landing>main.sendwayo-home{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:#f3f6fb!important;color:#10243d!important}
@@ -2793,10 +2750,10 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
       <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
-        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico</label><input id="login-usuario" type="email" placeholder="ejemplo@mail.com" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
+        <div><label class="block text-[11px] font-bold mb-1">Correo electrónico, usuario o código</label><input id="login-usuario" type="text" autocomplete="username" placeholder="Correo, usuario o código" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
         <div id="login-error" class="hidden text-red-600 text-[11px] bg-red-50 p-2 rounded-full"></div>
-        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">Entrar</button>
+        <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-full">INGRESAR</button>
         <p class="text-center text-[11px] text-slate-500 mt-3">¿Necesita acceso? Comuníquese con el administrador.</p>
       </div>
     </div>`;
@@ -3309,125 +3266,17 @@ document.addEventListener('DOMContentLoaded', function(){
     if(typeof abrirOriginal==='function') return abrirOriginal(ruta,tipo);
     if(String(tipo||'').toLowerCase()==='retiro') window.v162_setRetiro(ruta);
   };
-})();
-</script>
 
-<style id="sendwayo-v7-approved-desktop-left-sidebar">
-/* Menú lateral vertical en escritorio y desplegable en móvil/tableta. */
-@media(min-width:1025px){
- body.sendwayo-authenticated #sendwayo-main-sidebar{
-  display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
-  position:fixed!important;left:0!important;right:auto!important;top:118px!important;bottom:0!important;
-  width:250px!important;min-width:250px!important;max-width:250px!important;height:calc(100dvh - 118px)!important;
-  max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;transform:none!important;
-  grid-template-columns:1fr!important;align-content:start!important;gap:0!important;
-  border-radius:0!important;background:#0f2440!important;color:#fff!important;
-  padding:8px 7px 18px!important;box-shadow:3px 0 16px rgba(5,18,38,.16)!important;
-  border-right:1px solid rgba(255,255,255,.12)!important;
- }
- body.sendwayo-authenticated #sendwayo-main-sidebar button[onclick*="showView"]{
-  display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;
-  min-height:44px!important;height:auto!important;margin:2px 0!important;padding:10px 12px!important;
-  border-radius:9px!important;color:#fff!important;text-align:left!important;white-space:normal!important;
-  font-size:13px!important;line-height:1.35!important;overflow:visible!important;
- }
- body.sendwayo-authenticated #sendwayo-main-sidebar button[onclick*="showView"]:hover,
- body.sendwayo-authenticated #sendwayo-main-sidebar button[onclick*="showView"]:focus-visible{background:#1c385c!important}
- #sendwayo-main-content{
-  display:block!important;position:relative!important;float:none!important;flex:none!important;
-  width:calc(100% - 250px)!important;max-width:calc(100% - 250px)!important;min-width:0!important;
-  margin:0 0 0 250px!important;padding:clamp(10px,1.5vw,22px)!important;box-sizing:border-box!important;
- }
- #sendwayo-mobile-menu.sendwayo-top-menu-toggle{
-  display:flex!important;position:static!important;left:auto!important;top:auto!important;right:auto!important;
-  width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
-  align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;
-  border:0!important;border-radius:10px!important;background:#173b68!important;color:#fff!important;
-  font-size:25px!important;line-height:1!important;z-index:2!important;cursor:pointer!important;
- }
- #sendwayo-menu-shade{display:none!important}
- body.sendwayo-sidebar-collapsed #sendwayo-main-sidebar{display:none!important}
- body.sendwayo-sidebar-collapsed #sendwayo-main-content{width:100%!important;max-width:100%!important;margin:0!important}
-}
-@media(max-width:1024px){
- #sendwayo-workspace-shell{display:block!important;position:relative!important;width:100%!important}
- #sendwayo-main-sidebar{
-  display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
-  position:fixed!important;left:0!important;right:auto!important;top:58px!important;bottom:0!important;
-  width:min(290px,88vw)!important;min-width:0!important;max-width:88vw!important;height:auto!important;
-  max-height:calc(100dvh - 58px)!important;overflow-y:auto!important;overflow-x:hidden!important;
-  transform:translateX(-110%)!important;transition:transform .2s ease!important;z-index:2147482600!important;
-  grid-template-columns:1fr!important;align-content:start!important;gap:2px!important;
-  border-radius:0 16px 16px 0!important;background:#0f2440!important;color:#fff!important;
-  box-shadow:8px 0 28px rgba(0,0,0,.25)!important;
- }
- #sendwayo-main-sidebar.sendwayo-menu-open{
-  display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
-  transform:translateX(0)!important;
- }
- #sendwayo-main-sidebar button[onclick*="showView"]{
-  display:flex!important;align-items:center!important;gap:11px!important;width:100%!important;
-  min-height:48px!important;height:auto!important;padding:11px 14px!important;margin:2px 0!important;
-  color:#fff!important;text-align:left!important;font-size:15px!important;line-height:1.35!important;
-  white-space:normal!important;overflow:visible!important;
- }
- #sendwayo-main-content{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:10px!important}
- #sendwayo-mobile-menu.sendwayo-top-menu-toggle{
-  display:flex!important;position:fixed!important;left:10px!important;top:8px!important;right:auto!important;
-  width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
-  align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;
-  border:0!important;border-radius:11px!important;background:#0f2440!important;color:#fff!important;
-  font-size:26px!important;line-height:1!important;font-weight:900!important;z-index:2147482700!important;
-  box-shadow:0 3px 12px rgba(0,0,0,.22)!important;cursor:pointer!important;touch-action:manipulation!important;
- }
- #sendwayo-menu-shade{display:none!important;position:fixed!important;left:0!important;right:0!important;top:58px!important;bottom:0!important;background:rgba(0,0,0,.48)!important;z-index:2147482500!important}
- #sendwayo-menu-shade.open{display:block!important}
-}
-#sendwayo-main-content .view.hidden{display:none!important}
-</style>
-
-<script id="sendwayo-v7-approved-left-sidebar-controller">
-(function(){
- 'use strict';
- function install(){
-  var sidebar=document.getElementById('sendwayo-main-sidebar');
-  var button=document.getElementById('sendwayo-mobile-menu');
-  if(!sidebar||!button||button.dataset.sendwayoSidebarBound==='1')return;
-  button.dataset.sendwayoSidebarBound='1';
-  button.classList.add('sendwayo-top-menu-toggle');
-  button.setAttribute('aria-label','Abrir menú de módulos');
-  button.setAttribute('aria-controls','sendwayo-main-sidebar');
-  var shade=document.getElementById('sendwayo-menu-shade');
-  if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
-  function isMobile(){return window.matchMedia('(max-width: 1024px)').matches;}
-  function closeMobile(){
-   sidebar.classList.remove('sendwayo-menu-open');
-   shade.classList.remove('open');
-   button.setAttribute('aria-expanded','false');
-  }
-  function syncLayout(){document.body.classList.remove('sendwayo-sidebar-collapsed');if(isMobile())closeMobile();else{sidebar.classList.remove('sendwayo-menu-open');shade.classList.remove('open');button.setAttribute('aria-expanded','true');}}
-  button.addEventListener('click',function(){
-   if(!document.body.classList.contains('sendwayo-authenticated'))return;
-   if(isMobile()){
-    var open=!sidebar.classList.contains('sendwayo-menu-open');
-    sidebar.classList.toggle('sendwayo-menu-open',open);
-    shade.classList.toggle('open',open);
-    button.setAttribute('aria-expanded',open?'true':'false');
-   }else{
-    document.body.classList.remove('sendwayo-sidebar-collapsed');
-    button.setAttribute('aria-expanded','true');
-   }
-  });
-  shade.addEventListener('click',closeMobile);
-  sidebar.querySelectorAll('button[onclick*="showView"]').forEach(function(item){item.addEventListener('click',function(){if(isMobile())closeMobile();});});
-  document.addEventListener('keydown',function(event){if(event.key==='Escape')closeMobile();});
-  window.addEventListener('resize',syncLayout,{passive:true});
-  syncLayout();
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-})();
-</script>
-</body></html>';
+  // Exportación limpia: no insertar etiquetas <script> dentro del HTML del PDF.
+  function tablaActual(view){ return document.querySelector('#tabla-'+view+'-body')?.closest('table') || document.querySelector('#view-'+view+' table'); }
+  function exportar(view, formato){
+    const tabla=tablaActual(view);
+    if(!tabla){ alert('No hay tabla para exportar.'); return; }
+    const nombre='Sendwayo-'+view+'-'+new Date().toISOString().slice(0,10);
+    if(formato==='pdf'){
+      const w=window.open('','_blank');
+      if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
+      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+ '\\n\\n</body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
       return;
@@ -3986,7 +3835,7 @@ window.sendwayoShareReceipt=async function(){
  const SENDWAYO_OFFICIAL_BANKS = [];
  // Siempre usar los tres datos oficiales exactos; conservar solo cuentas adicionales creadas por el administrador.
  const bankStorage=readJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',[]);
- const customBanks=Array.isArray(bankStorage)?bankStorage:[]; // Conservar todas las cuentas ya registradas; no descartar cuentas por formato de ID.
+ const customBanks=Array.isArray(bankStorage)?bankStorage.filter(b=>String(b.id||'').startsWith('BANK-')&&!SENDWAYO_OFFICIAL_BANKS.some(o=>String(o.cuenta)===String(b.cuenta))):[];
  window.SENDWAYO_BANKS=[...SENDWAYO_OFFICIAL_BANKS,...customBanks];
  writeJSON('sendwayo_express_oficial_20261029_bank_accounts_v5',window.SENDWAYO_BANKS);
  const bankOptions=()=>window.SENDWAYO_BANKS.map(b=>`<option value="${esc(b.id)}">${esc(b.banco)} — ${esc(b.cuenta)} — ${esc(b.titular)} — Pasaporte ${esc(b.documento)}</option>`).join('');
@@ -4757,11 +4606,6 @@ window.sendwayoShareReceipt=async function(){
   const isAgent = () => currentRole().includes('AGENTE');
   const isRemitter = () => currentRole().includes('REMITENTE');
   let successfulLoginThisPage = false;
-  // Firebase autentica en un bloque separado. Registrar su evento evita que el evento load tardío
-  // ejecute showWelcome() y borre una sesión recién abierta.
-  window.addEventListener('sendwayo:firebase-ready', () => {
-    if (current()) successfulLoginThisPage = true;
-  });
   const accounts = () => {
     let a = null, ag = [], re = [];
     try { a = typeof ADMIN !== 'undefined' ? ADMIN : window.ADMIN || null; } catch (_) { a = window.ADMIN || null; }
@@ -4991,7 +4835,7 @@ window.sendwayoShareReceipt=async function(){
     ['Plan','Plan','Forfait','Plan','Plano'],['Seleccione un plan','Select a plan','Sélectionnez un forfait','Chwazi yon plan','Selecione um plano'],['1 día — RD$ 50','1 day — RD$ 50','1 jour — RD$ 50','1 jou — RD$ 50','1 dia — RD$ 50'],['1 día — RD$ 65','1 day — RD$ 65','1 jour — RD$ 65','1 jou — RD$ 65','1 dia — RD$ 65'],['3 días — RD$ 100','3 days — RD$ 100','3 jours — RD$ 100','3 jou — RD$ 100','3 dias — RD$ 100'],['3 días — RD$ 120','3 days — RD$ 120','3 jours — RD$ 120','3 jou — RD$ 120','3 dias — RD$ 120'],['5 días — RD$ 160','5 days — RD$ 160','5 jours — RD$ 160','5 jou — RD$ 160','5 dias — RD$ 160'],['5 días — RD$ 170','5 days — RD$ 170','5 jours — RD$ 170','5 jou — RD$ 170','5 dias — RD$ 170'],['7 días — RD$ 200','7 days — RD$ 200','7 jours — RD$ 200','7 jou — RD$ 200','7 dias — RD$ 200'],['7 días — RD$ 225','7 days — RD$ 225','7 jours — RD$ 225','7 jou — RD$ 225','7 dias — RD$ 225'],['7 días — RD$ 270','7 days — RD$ 270','7 jours — RD$ 270','7 jou — RD$ 270','7 dias — RD$ 270'],['7 días — RD$ 275','7 days — RD$ 275','7 jours — RD$ 275','7 jou — RD$ 275','7 dias — RD$ 275']
   ];
   translationRows.push(
-    ['Ya tengo una cuenta','I already have an account','J’ai déjà un compte','Mwen deja gen yon kont','Já tenho uma conta'],
+    ['INGRESAR','I already have an account','J’ai déjà un compte','Mwen deja gen yon kont','Já tenho uma conta'],
     ['Tus envíos y servicios,','Your transfers and services,','Vos transferts et services,','Transfè ak sèvis ou yo,','Seus envios e serviços,'],
     ['más cerca.','closer.','plus proches.','pi pre.','mais perto.'],
     ['Servicio cercano, seguro y confiable','Nearby, safe and reliable service','Un service proche, sûr et fiable','Sèvis toupre, an sekirite e fyab','Serviço próximo, seguro e confiável'],
@@ -5120,7 +4964,7 @@ window.sendwayoShareReceipt=async function(){
     const right = top?.children?.[1];
     if (right && !$('sendwayo-language-private-wrap')) {
       const wrap = makeLanguageControl('sendwayo-language-private', 'sendwayo-language-private-wrap');
-      const bell = $('bell-top'); if (wrap) right.insertBefore(wrap, bell && bell.parentElement === right ? bell : right.lastElementChild);
+      const bell = $('bell-top'); if (wrap) right.insertBefore(wrap, bell || right.lastElementChild);
     }
     setLanguage(languageValue());
   }
@@ -5362,9 +5206,9 @@ window.sendwayoShareReceipt=async function(){
   const modulePageState = window.__sendwayoModulePageState || (window.__sendwayoModulePageState = Object.create(null));
   function renderModulePager(view, total, page, pageCount) {
     const pager = $('sendwayo-module-pagination-' + view); if (!pager) return;
-    const start = total ? ((page-1)*10)+1 : 0;
-    const end = total ? Math.min(page*10,total) : 0;
-    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" aria-label="Página posterior" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Posterior</button></div></div>`;
+    const start = total ? 1 : 0;
+    const end = total ? Math.min(10,total-(page-1)*10) : 0;
+    pager.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px;font-size:11px;color:#334155"><span>Registros ${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')} de ${total} · Página ${page} de ${pageCount}</span><div style="display:flex;gap:8px"><button type="button" ${page<=1?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page-1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page<=1?'#e2e8f0':'#fff'};font-weight:800">Anterior</button><button type="button" ${page>=pageCount?'disabled':''} onclick="window.sendwayoSetModulePage('${view}',${page+1})" style="padding:9px 13px;border-radius:999px;border:1px solid #cbd5e1;background:${page>=pageCount?'#e2e8f0':'#fff'};font-weight:800">Posterior</button></div></div>`;
   }
   window.sendwayoSetModulePage = function(view, page) {
     const state = modulePageState[view] || (modulePageState[view] = {page:1, query:''});
@@ -5548,8 +5392,8 @@ window.sendwayoShareReceipt=async function(){
 
   function boot() {
     installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors();
-    // Solo mostrar bienvenida en un arranque limpio. Nunca cerrar un formulario de acceso que ya abrió el usuario.
-    if (!window.currentUser && !window.__sendwayoLoginPending && !document.body.classList.contains('sendwayo-login-open')) showWelcome();
+    // Siempre iniciar sin sesión, incluso si la versión anterior dejó ADMIN precargado en memoria.
+    showWelcome();
     document.querySelectorAll('#welcome-landing button[onclick*="v162_showLogin"]').forEach(btn => btn.addEventListener('click', event => { event.preventDefault(); openLogin(); }, true));
     const logoutButtons = document.querySelectorAll('button[onclick*="cerrarSesion"],button[onclick*="CerrarSesion"]');
     logoutButtons.forEach(btn => { btn.onclick = event => { event?.preventDefault?.(); window.cerrarSesion(); }; });
@@ -5560,7 +5404,7 @@ window.sendwayoShareReceipt=async function(){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
-  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage && !current() && !document.body.classList.contains('sendwayo-authenticated') && !window.__sendwayoLoginPending && !document.body.classList.contains('sendwayo-login-open')) showWelcome(); else if (current()) { successfulLoginThisPage = true; updateIdentity(); applyIdentityDefaults(false); } });
+  window.addEventListener('load', () => { installIdentityStrip(); installLanguageControls(); hideFalseCredentialHints(); receiptLogoBackground(); refreshBellCount(); installModalIdentity(); installAccountSelectors(); if (!successfulLoginThisPage) showWelcome(); else { updateIdentity(); applyIdentityDefaults(false); } });
   document.addEventListener('click', event => {
     const trigger = event.target && event.target.closest
       ? event.target.closest('button[onclick*="modal-"],button[onclick*="v162_abrir"],button[onclick*="sendwayoOpen"],[data-sendwayo-open-modal]')
@@ -5658,7 +5502,7 @@ window.sendwayoShareReceipt=async function(){
     let button=$('sendwayo-mobile-menu');
     if(!button){ button=document.createElement('button'); button.id='sendwayo-mobile-menu'; button.type='button'; button.textContent='☰'; document.body.appendChild(button); }
     button.type='button'; button.setAttribute('aria-label','Abrir o cerrar el menú de navegación'); button.title='Menú';
-    if(button.dataset.sendwayoSidebarBound!=='1') button.onclick = function(ev){
+    button.onclick = function(ev){
       ev.preventDefault(); ev.stopPropagation();
       if(!document.body.classList.contains('sendwayo-authenticated')) return;
       const sidebar=$('sendwayo-main-sidebar'); const shade=$('sendwayo-menu-shade');
@@ -5680,19 +5524,15 @@ window.sendwayoShareReceipt=async function(){
     }
     const sync=()=>{
       const logged=document.body.classList.contains('sendwayo-authenticated');
-      button.style.display=logged?'flex':'none';
+      button.style.display=(logged && window.innerWidth<=1024)?'flex':'none';
       if(!logged || window.innerWidth>1024){ side?.classList.remove('sendwayo-menu-open'); shade.classList.remove('open'); button.setAttribute('aria-expanded','false'); }
     };
     sync();
-    const authObserver=new MutationObserver(sync);
-    authObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
-    window.addEventListener('sendwayo:firebase-ready',sync);
-    window.addEventListener('resize',sync,{passive:true});
   }
 
   /* C. Pagina de diez registros para las tablas de los módulos transaccionales. */
   const perPage=10;
-  const transactionViews=new Set(['tablero','envios','retiros','depositos','recargas','paquetikos','paquetes','recepcion','beneficiarios','remitentes','agentes','facturas','mibanco','cuentas','ajustes','comisiones','conciliacion','reportes','informes','secretas','perfil','transferencia','referencia','creditos']);
+  const transactionViews=new Set(['envios','retiros','depositos','recargas','paquetikos','paquetes','recepcion','facturas','comisiones','creditos','ajustes','transferencia','conciliacion','referencia','reportes','informes']);
   const specialTables=new Set(['tabla-sendwayo-envios','tabla-sendwayo-recargas','tabla-sendwayo-paquetikos']);
   const tableStates=new Map();
   const watchedBodies=new WeakSet();
@@ -5933,7 +5773,7 @@ window.sendwayoShareReceipt=async function(){
     try{
       const a=allAccounts().find(x=>String(x.role||'').toUpperCase().includes('ADMIN')||String(x.id||'').toUpperCase()==='ADMINADMIN');
       if(a){const previousId=String(a.id||'');const previousCode=String(a.codigo||'');if(!a.id||['ADMINADMIN'].includes(previousId.toUpperCase()))a.id='ADMIN-ADMINISTRADOR';if(!a.codigo||previousCode.toUpperCase()==='ADMIN-000')a.codigo=a.id;a.codigo2=a.codigo;if(previousId&&previousId!==a.id){a.idAnterior=a.idAnterior||previousId;a.idAliases=[...new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),previousId].filter(Boolean))];}if(previousCode&&previousCode!==a.codigo)a.codeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),previousCode].filter(Boolean))];a.role='ADMIN';}
-      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='sendwayoexpress@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
+      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='ideletteismorin@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
     }catch(_){ }
   }
 
@@ -6284,7 +6124,7 @@ window.sendwayoShareReceipt=async function(){
     }else if(isCommissionPayment(t)){if(!isAdmin()){announce('Solo Administración puede gestionar pagos de comisión.');return;}const dest=accountById(t.destinoId);if(!dest||roleOf(dest)!=='REMITENTE'){announce('Seleccione un remitente válido para trasladar su propia comisión al balance.');return;}if(!t.pagoComisionAplicado){const sourceCom=commissions(dest),destBal=balances(dest);if(num(sourceCom[cur])+0.000001<amount){announce('Comisión insuficiente del remitente. Disponible: '+num(sourceCom[cur]).toFixed(2)+' '+cur+'.');return;}sourceCom[cur]=round2(num(sourceCom[cur])-amount);destBal[cur]=round2(num(destBal[cur])+amount);t.pagoComisionAplicado=true;t.pagoComisionWallet=true;t.pagoComisionMonto=amount;t.pagoComisionDestinoId=String(dest.id);t.pagoComisionOrigenId=String(dest.id);t.pagoComisionMoneda=cur;}
     }else if(isSpend(t)){const debited=debit(t,true);if(!debited.ok){announce(debited.reason||'No se pudo descontar el balance; la operación continúa pendiente.');return;}applyCommission(t);
     }else{announce('Este tipo de registro no tiene una acción de aprobación financiera disponible.');return;}
-    try{if(typeof window.sendwayoTaxAssess==='function')window.sendwayoTaxAssess(t)}catch(fiscalError){console.warn('[SENDWAYO fiscal]',fiscalError)}t.estado='Aprobado';t.aprobadoPor=(getUser()&&getUser().id)||'ADMINADMIN';t.fechaAprobacion=new Date().toLocaleString('es-DO');t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('Operación aprobada. El balance y la comisión correspondientes fueron actualizados una sola vez.');try{if(window.verComprobante)window.verComprobante(t.id);}catch(_){}
+    t.estado='Aprobado';t.aprobadoPor=(getUser()&&getUser().id)||'ADMINADMIN';t.fechaAprobacion=new Date().toLocaleString('es-DO');t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('Operación aprobada. El balance y la comisión correspondientes fueron actualizados una sola vez.');try{if(window.verComprobante)window.verComprobante(t.id);}catch(_){}
   }
   function reject(id){const t=findTx(id);if(!t)return;if(status(t)==='rechazado'){announce('Esta operación ya está rechazada.');return;}if(status(t)==='aprobado'&&!isAdmin()){announce('Solo Administración puede revertir una operación aprobada.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden rechazar operaciones permitidas de otras cuentas.');return;}if(status(t)==='aprobado'&&isAdmin())undoAccounting(t);else refundDebit(t);t.estado='Rechazado';t.rechazadoPor=(getUser()&&getUser().id)||'ADMINADMIN';t.fechaRechazo=new Date().toLocaleString('es-DO');t.reservaAplicada=false;refreshAll();announce('Operación rechazada. La contabilidad correspondiente fue revertida una sola vez.');}
   function noCoincide(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'||status(t)==='rechazado'){announce('Solo se puede marcar No coincide una operación que siga pendiente.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden marcar No coincide operaciones permitidas de otras cuentas.');return;}if(isSpend(t)&&!(t.fondosDebitados&&!t.fondosDevueltos)){const r=debit(t,true);if(!r.ok){announce(r.reason||'No se pudo reservar el balance.');return;}}t.estado='No coincide';t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('La operación quedó marcada como No coincide y el monto continúa retenido.');}
@@ -7149,7 +6989,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -7236,28 +7076,23 @@ window.sendwayoShareReceipt=async function(){
     if (el) { el.textContent = message; el.classList.remove('hidden'); }
     else window.alert(message);
   }
-  function clearLoginError(){ const el=document.getElementById('login-error'); if(el) el.classList.add('hidden'); }
-  function showLoginFormForRetry() {
-    // Una autenticación fallida no debe enviar al visitante de vuelta a la portada.
-    const login=document.getElementById('login-screen');
-    const welcome=document.getElementById('welcome-landing');
-    document.body.classList.remove('sendwayo-authenticated');
-    document.body.classList.add('sendwayo-login-open');
-    if(login){
-      if(login.parentElement!==document.body) document.body.appendChild(login);
-      login.classList.remove('hidden');
-      login.classList.add('sendwayo-login-visible');
-      login.style.setProperty('display','flex','important');
-      login.style.setProperty('visibility','visible','important');
-      login.style.setProperty('pointer-events','auto','important');
+  function showLoginFormError(message) {
+    if (typeof window.v162_showLogin === 'function') {
+      window.v162_showLogin();
+    } else {
+      const welcome = document.getElementById('welcome-landing');
+      if (welcome) welcome.classList.add('hidden');
+      const login = document.getElementById('login-screen');
+      if (login) {
+        login.classList.remove('hidden');
+        login.style.setProperty('display','flex','important');
+        login.style.setProperty('visibility','visible','important');
+        login.style.setProperty('pointer-events','auto','important');
+      }
     }
-    if(welcome){
-      welcome.classList.add('hidden');
-      welcome.style.setProperty('display','none','important');
-      welcome.style.setProperty('visibility','hidden','important');
-      welcome.style.setProperty('pointer-events','none','important');
-    }
+    loginError(message);
   }
+  function clearLoginError(){ const el=document.getElementById('login-error'); if(el) el.classList.add('hidden'); }
   async function enforceFirstPasswordChange(firebaseUser, profileRow){
     const data=profileRow&&profileRow.data||{};
     if(!(data.mustChangePassword===true||data.passwordChangeRequired===true||data.forcePasswordChange===true))return;
@@ -7309,7 +7144,7 @@ window.sendwayoShareReceipt=async function(){
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-tablero')?.classList.add('hidden');
     // En una sesión cerrada se muestra primero la portada pública. El formulario
-    // solo se abre cuando el visitante pulsa "Ya tengo una cuenta".
+    // solo se abre cuando el visitante pulsa "INGRESAR".
     const login=document.getElementById('login-screen');
     if(login){
       login.classList.add('hidden');
@@ -7344,13 +7179,10 @@ window.sendwayoShareReceipt=async function(){
   }
   function resolveEmail(identifier) {
     const entered=txt(identifier);
-    const key=norm(entered);
-    // El usuario público SENDWAYO puede ser distinto del correo propietario de Firebase.
-    // Resolver primero todos los alias para que el nombre de usuario no se envíe como correo Firebase.
-    const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
-    if(match) return match.email;
     if(entered.includes('@')) return entered.toLowerCase();
-    return '';
+    const key=norm(entered);
+    const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
+    return match ? match.email : '';
   }
   async function queryOne(field, value) {
     if (!value) return null;
@@ -7688,7 +7520,7 @@ window.sendwayoShareReceipt=async function(){
     const {key, data}=profileRow;
     const currentUid=txt(data.authUid);
     const loginEmail=norm(firebaseUser.email);
-    // Cuenta administrativa confirmada: sendwayoexpress@gmail.com.
+    // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
       const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
@@ -8056,29 +7888,7 @@ window.sendwayoShareReceipt=async function(){
     const accountChanged=(role==='ADMIN'||role==='AGENTE')&&localMoneyChanged;
     if(!changed.length&&!accountChanged&&!deleted.length){return;}
     state.syncBusy=true;
-    const approvalClaims=[];
     try{
-      // Reclamo atómico en Realtime Database: una sola sesión puede obtener el derecho de aprobar.
-      // Si las reglas no permiten el reclamo, la operación falla cerrada y no acredita balances.
-      for(const t of changed){
-        const nextStatus=norm(t.estado||t.status||'');
-        const raw=t._cloudRaw||{};
-        const previousStatus=norm(raw.status||raw.estado||'Pendiente');
-        if(nextStatus!=='aprobado'||['aprobado','approved','pagado'].includes(previousStatus))continue;
-        const category=txt(t.firebaseCategory||categoryForTx(t));
-        const key=safeDbKey(t.firebaseKey||t.id);
-        if(!category)throw new Error('No se pudo identificar la categoría para proteger la aprobación única.');
-        const recordRef=db.ref(ROOT+'/'+category+'/'+key);
-        const currentSnap=await recordRef.once('value');
-        const currentRow=currentSnap.val()||{};
-        const currentStatus=norm(currentRow.status||currentRow.estado||'Pendiente');
-        if(['aprobado','approved','pagado'].includes(currentStatus))throw new Error('Esta transacción ya fue aprobada en otro dispositivo. No se repetirá el crédito ni el pago.');
-        const lockRef=recordRef.child('approvalLock');
-        const lock={authUid:auth.currentUser.uid,userId:state.profileKey,role:role,transactionId:txt(t.id),claimedAtMs:Date.now()};
-        const claim=await lockRef.transaction(value=>value?undefined:lock,undefined,false);
-        if(!claim.committed)throw new Error('Otro usuario ya está procesando la aprobación de esta transacción. No se realizará un segundo pago.');
-        approvalClaims.push({recordRef,lockRef,lock});
-      }
       const packageData=await buildCloudUpdates({current:changed,deleted});
       if(!Object.keys(packageData.updates).length){changed.forEach(t=>state.lastTxSnapshot.set(txt(t.id),transactionSignature(t)));return;}
       await db.ref().update(packageData.updates);
@@ -8097,20 +7907,8 @@ window.sendwayoShareReceipt=async function(){
       if(state.directory.some(r=>r.key===state.profileKey)){try{const currentProfileSnap=await userRoot.child(state.profileKey).once('value');if(currentProfileSnap.exists())state.profile=currentProfileSnap.val();}catch(e){}}
       clearSyncIssue();
     }catch(error){
-      // Liberar un reclamo únicamente si el registro sigue sin aprobarse. Si Firebase ya guardó
-      // la aprobación, el candado se conserva aunque se haya perdido la respuesta de red.
-      for(const claim of approvalClaims){
-        try{
-          const snap=await claim.recordRef.once('value');
-          const row=snap.val()||{};
-          const status=norm(row.status||row.estado||'Pendiente');
-          if(!['aprobado','approved','pagado'].includes(status)){
-            await claim.lockRef.transaction(value=>value&&value.authUid===claim.lock.authUid?null:undefined,undefined,false);
-          }
-        }catch(releaseError){console.warn('[SENDWAYO] No se pudo liberar un reclamo de aprobación fallido:',releaseError?.message||releaseError);}
-      }
       const message=error?.code==='PERMISSION_DENIED'||/permission_denied|permission denied/i.test(error?.message||'')
-        ? 'Firebase rechazó la escritura o el candado de aprobación por sus reglas. La operación no se confirmó; no la repita todavía.'
+        ? 'Firebase rechazó la escritura por sus reglas de seguridad. La operación no se confirmó; no la repita todavía.'
         : (error?.message||'No fue posible confirmar los cambios en Firebase.');
       showSyncIssue(message);
       // Revert the local transaction list to the last known remote baseline for any failed new record/status edit.
@@ -8154,7 +7952,6 @@ window.sendwayoShareReceipt=async function(){
     }
 
     state.loginBusy = true;
-    window.__sendwayoLoginPending = true;
     clearLoginError();
     stopListeners();
     if (state.syncTimer) { clearInterval(state.syncTimer); state.syncTimer = null; }
@@ -8288,28 +8085,21 @@ window.sendwayoShareReceipt=async function(){
       state.readReady = false;
       state.directory = [];
       state.remoteTransactions = {};
-      // Una contraseña incorrecta no crea una sesión Firebase. No ejecutar signOut en ese caso:
-      // su evento onAuthStateChanged ocultaba el formulario y regresaba a la bienvenida.
-      try {
-        if (auth.currentUser) { await auth.signOut(); }
-      } catch (signOutError) {
-        console.warn('[SENDWAYO] Limpieza de sesión fallida:', signOutError);
-      }
+      // No esperar signOut aquí: no debe impedir que finally reactive el botón.
+      try { auth.signOut().catch(signOutError => console.warn('[SENDWAYO] Limpieza de sesión:', signOutError)); } catch (_) {}
       stopListeners();
 
       const code = error?.code;
       const message = code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found'
-        ? 'Firebase rechazó el correo o la contraseña. Compruebe que sendwayoexpress@gmail.com exista en Authentication y que la contraseña sea la actual.'
+        ? 'El correo o la contraseña no son válidos en Firebase Authentication.'
         : code === 'auth/too-many-requests'
           ? 'Firebase bloqueó temporalmente los intentos. Espere antes de probar otra vez.'
           : code === 'auth/network-request-failed'
             ? 'No se pudo conectar con Firebase Authentication. Compruebe Internet e inténtelo otra vez.'
             : (error?.message || 'No se pudo iniciar sesión.');
-      showLoginFormForRetry();
       loginError(message);
     } finally {
       state.loginBusy = false;
-      window.__sendwayoLoginPending = false;
       if (button) {
         button.disabled = false;
         button.textContent = button.dataset.oldText || 'Entrar';
@@ -8400,19 +8190,10 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  function loginFormIsOpen(){
-    const login=document.getElementById('login-screen');
-    if(document.body.classList.contains('sendwayo-login-open'))return true;
-    if(!login||login.classList.contains('hidden'))return false;
-    const style=window.getComputedStyle(login);
-    return style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none';
-  }
   state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
-      // El evento inicial/sin usuario no puede cerrar un formulario de acceso que el visitante ya abrió.
-      // Firebase puede emitir este evento después de un intento fallido; conservar el formulario evita volver a bienvenida.
-      if(state.loginBusy||state.sessionEstablished||loginFormIsOpen())return;
+      if(state.loginBusy||state.sessionEstablished)return;
       state.sessionEstablished=false;state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
       stopListeners();if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;}
       try{window.currentUser=null;currentUser=null}catch(e){}
@@ -8481,10 +8262,10 @@ window.sendwayoShareReceipt=async function(){
       console.error('[SENDWAYO Firebase session]',error);stopListeners();state.readReady=false;state.sessionEstablished=false;
       const message=error?.message||'No se pudo restaurar la sesión desde Firebase.';
       try{await auth.signOut()}catch(e){}
-      showLoginFormForRetry();loginError(message);
+      showLoginFormError(message);
     }finally{state.loginBusy=false;}
   });
-  }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLoginFormForRetry();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
+  }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLoginFormError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
   window.sendwayoCloudStatus='Firebase Authentication y lecturas en tiempo real están conectados. Antes de usar dinero real, todavía deben validarse las reglas de escritura por rol y probarse las operaciones financieras en Firebase.';
   // Liberar el acceso solo cuando el manejador final y el arranque de Firebase ya existen.
   window.__sendwayoFirebaseSecureLoginReady = true;
@@ -8678,7 +8459,7 @@ window.sendwayoShareReceipt=async function(){
         let credential;
         try{credential=await secondaryAuth.createUserWithEmailAndPassword(email,password);}finally{try{await secondaryAuth.signOut();}catch(e){}}
         const uid=credential.user.uid,dbKey=uid;
-        if(ag&&!/^AGE\d{5}$/.test(ident))throw new Error('El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9; el primer ID es AGE400I1.');
+        if(ag&&!/^AGE400I[1-9]$/.test(ident))throw new Error('El ID de un agente nuevo debe seguir la serie AGE400I1–AGE400I9; el primer ID es AGE400I1.');
         if(!ag&&!/^REM\d{5}$/.test(ident))throw new Error('El ID de un remitente nuevo debe tener el formato REM seguido de cinco dígitos.');
         const idDuplicate=accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(ident)));
         if(idDuplicate)throw new Error('Ese ID ya existe o fue utilizado anteriormente.');
@@ -8746,16 +8527,7 @@ window.sendwayoShareReceipt=async function(){
   }
   window.sendwayoBuildFinancialAudit=()=>({rows:auditRows(),totals:auditTotals(auditRows())});
   window.sendwayoFilterAudit=function(value){const q=norm(value);const table=$('sendwayo-audit-table');if(!table)return;table.querySelectorAll('tbody tr').forEach(tr=>{tr.hidden=!!q&&!norm(tr.innerText||tr.textContent).includes(q);});};
-  window.sendwayoExportAudit=function(format){const table=$('sendwayo-audit-table');if(!table)return;const name='SENDWAYO-Auditoria-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){window.alert('Permita ventanas emergentes para imprimir el PDF.');return false;}w.document.write('<!doctype html><html><meta charset="utf-8"><title>'+name+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:10px}td,th{border:1px solid #aaa;padding:4px}</style><h2>'+name+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></html>');w.document.close();return;}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+name+'</h2>'+table.outerHTML+String.raw`<style id="sendwayo-v7-left-aligned-admin-toolbars">
-#view-agentes>div:first-child,#view-remitentes>div:first-child{justify-content:flex-start!important;gap:10px!important;flex-wrap:wrap!important}
-#view-agentes>div:first-child>div,#view-remitentes>div:first-child>div{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;flex-wrap:wrap!important;width:auto!important}
-#view-agentes>div:first-child>div>button,#view-remitentes>div:first-child>div>button{order:1!important;flex:0 0 auto!important}
-#view-agentes>div:first-child>div>input,#view-remitentes>div:first-child>div>input{order:2!important;flex:0 1 220px!important;min-width:140px!important}
-#sendwayo-module-list header .flex.flex-wrap.items-center.gap-2{justify-content:flex-start!important}
-#sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>button{order:1!important}
-#sendwayo-module-list header .flex.flex-wrap.items-center.gap-2>input{order:2!important;flex:0 1 220px!important;min-width:140px!important}
-</style>
-</body></html>`;const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  window.sendwayoExportAudit=function(format){const table=$('sendwayo-audit-table');if(!table)return;const name='SENDWAYO-Auditoria-'+new Date().toISOString().slice(0,10);if(format==='pdf'){const w=window.open('','_blank');if(!w){window.alert('Permita ventanas emergentes para imprimir el PDF.');return false;}w.document.write('<!doctype html><html><meta charset="utf-8"><title>'+name+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:10px}td,th{border:1px solid #aaa;padding:4px}</style><h2>'+name+'</h2>'+table.outerHTML+'<script>window.onload=()=>window.print()<\/script></html>');w.document.close();return;}if(format==='excel'){const html='<!doctype html><html><head><meta charset="utf-8"></head><body><h2>'+name+'</h2>'+table.outerHTML+'</body></html>';const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.xls';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const lines=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>'"'+(td.innerText||'').replace(/"/g,'""').replace(/\s+/g,' ').trim()+'"').join(','));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   const priorShow=window.showView;
   if(typeof priorShow==='function')window.showView=function(view){const r=priorShow.apply(this,arguments);if(['conciliacion','reportes','informes'].includes(view))setTimeout(()=>renderAudit(view),0);return r;};
   window.addEventListener('sendwayo:firebase-ready',()=>{const active=document.body.dataset.sendwayoActiveView||'';if(['conciliacion','reportes','informes'].includes(active))renderAudit(active);});
@@ -9284,7 +9056,7 @@ window.sendwayoShareReceipt=async function(){
  function senderAccounts(){try{return typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:(window.REMITENTES||[]);}catch(e){return window.REMITENTES||[];}}
  function accounts(){return [adminAccount(),...agentAccounts(),...senderAccounts()].filter(Boolean);}
  function current(){return window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();}
- function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
+ function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
  function role(a){return txt(a&&(a.role||a.rol)).toUpperCase();}
  function identityValues(a){
   return [a.id,a.idAnterior,a.legacyId,a.accountId,a.codigo,a.codigo2,a.codigoAnterior,a.code,a.staffId,a.username,a.login,a.usuario,a.email,a.authEmail,a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid,a.phone,a.telefono,a.celular]
@@ -9404,7 +9176,7 @@ window.sendwayoShareReceipt=async function(){
   const a=adminAccount();if(!a)return alert('No se encontró el perfil de Administración.');
   let modal=$('sendwayo-admin-profile-editor');
   if(!modal){modal=document.createElement('div');modal.id='sendwayo-admin-profile-editor';modal.className='fixed inset-0 z-[40000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(modal);}
-  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'sendwayoexpress@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
+  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'ideletteismorin@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
   $('sendwayo-admin-profile-close').onclick=()=>modal.remove();
   $('sendwayo-admin-profile-save').onclick=saveAdminProfile;
  }
@@ -9527,7 +9299,7 @@ window.sendwayoShareReceipt=async function(){
  const readRows=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
  const writeRows=rows=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO registration approval]',e);}};
  const user=()=>window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();
- const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
+ const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
  const allAccounts=()=>{let rows=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)rows.push(ADMIN);}catch(e){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))rows=rows.concat(AGENTES);}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))rows=rows.concat(REMITENTES);}catch(e){}return rows;};
  const priorAction=window.sendwayoActionGeneric;
  const priorSave=window.sendwayoSaveAccountForm;
@@ -9875,8 +9647,9 @@ body:not(.sendwayo-authenticated) #sendwayo-mobile-menu.sendwayo-top-menu-toggle
   if(side&&side.parentElement!==document.body)document.body.appendChild(side);
   purgeLegacySideIdentity();
   bar.classList.add('sticky');
-  if(shell){shell.style.setProperty('display','block','important');shell.style.setProperty('width','100%','important');shell.style.setProperty('max-width','100%','important');shell.style.setProperty('margin','0','important');}
-  if(main){main.style.setProperty('display','block','important');main.style.setProperty('flex','none','important');main.style.setProperty('width','100%','important');main.style.setProperty('max-width','100%','important');main.style.setProperty('min-width','0','important');main.style.setProperty('margin','0','important');}
+  // Dejar que las reglas responsive gobiernen la disposición: menú fijo a la izquierda en escritorio y panel superior en móvil.
+  if(shell){['display','width','max-width','margin'].forEach(name=>shell.style.removeProperty(name));}
+  if(main){['display','flex','width','max-width','min-width','margin'].forEach(name=>main.style.removeProperty(name));}
   ensureMenu();refreshIdentity();updateMenuPosition();
  }
  function refresh(){layout();}
@@ -10041,7 +9814,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
  function current(){return window.currentUser||null;}
  function role(){return String(current()&&(current().role||current().rol)||'').toUpperCase();}
  function isAdmin(){return role().indexOf('ADMIN')>=0;}
- function allowed(){return isAdmin()||role().indexOf('REMITENTE')>=0||role().indexOf('AGENTE')>=0;}
+ function allowed(){return isAdmin()||role().indexOf('REMITENTE')>=0;}
  function safe(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
  function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
  function fb(){return window.sendwayoFirebase||null;}
@@ -10078,8 +9851,10 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
    '<header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><div class="sw-pay-label">SENDWAYO EXPRESS · V7</div><h2 class="mt-1 text-2xl font-black">Pagos y transferencias</h2><p class="mt-1 max-w-3xl text-sm text-slate-600">Cobros con tarjeta, depósitos desde cualquier banco y entregas a cuentas bancarias, MonCash o NatCash.</p></div><span class="sw-pay-status">Activación de proveedores pendiente</span></header>'+
    '<div class="sw-pay-note mb-4"><b>El recorrido del dinero:</b> el cliente paga con tarjeta o transfiere desde su banco; AZUL/CardNET o el banco confirma el ingreso; el dinero se liquida en la cuenta comercial SENDWAYO elegida; después Administración ordena la entrega al banco, MonCash o NatCash. Cobrar la tarjeta y pagar al beneficiario son dos operaciones separadas.</div>'+
    '<div class="grid grid-cols-1 gap-3 xl:grid-cols-2">'+
-    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga en la Página de Pagos segura de AZUL o en un enlace de pago habilitado. El cargo se solicita cuando confirma el checkout y el emisor aprueba la transacción.</p><p class="mt-2"><b>Liquidación:</b> AZUL abona primero al comercio afiliado y liquida en la cuenta bancaria comercial que SENDWAYO haya registrado y AZUL haya validado. El abono no se envía directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>Activación:</b> requiere afiliación, cuenta bancaria en pesos a nombre del titular admitido, documentos del comercio, credenciales de pruebas y certificación técnica.</p><p class="mt-3"><a href="https://www.azul.com.do/Pages/es/hazte-cliente.aspx" target="_blank" rel="noopener noreferrer">Solicitar afiliación AZUL</a> · <a href="https://dev.azul.com.do/Pages/developer/pages/lib/index.aspx" target="_blank" rel="noopener noreferrer">Documentación técnica</a></p></article>'+
-    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga mediante el botón/checkout seguro de CardNET. CardNET publica integración para web y APP, tokenización y autenticación 3-D Secure. La venta se confirma desde el servidor y con la referencia del adquirente.</p><p class="mt-2"><b>Liquidación:</b> el pago se liquida en la cuenta bancaria comercial que figure en la afiliación CardNET. Solo después de la confirmación del adquirente se inicia la entrega al destinatario.</p><p class="mt-2"><b>WhatsApp:</b> CardNET publica Cobros por WhatsApp y Enlace de Pago. SENDWAYO podrá enviar el enlace oficial de cobro al cliente; el pago pasa por CardNET y luego la entrega a una billetera se tramita por separado.</p><p class="mt-3"><a href="https://www.cardnet.com.do/afiliate" target="_blank" rel="noopener noreferrer">Iniciar afiliación CardNET</a> · <a href="https://www.cardnet.com.do/afiliate/empresarial" target="_blank" rel="noopener noreferrer">Afiliación empresarial</a> · <a href="https://www.cardnet.com.do/soluciones/online/boton-de-pago" target="_blank" rel="noopener noreferrer">Botón de pago</a> · <a href="https://www.cardnet.com.do/tarifario" target="_blank" rel="noopener noreferrer">Tarifario y cobros por WhatsApp</a></p></article>'+
+    '<article class="sw-pay-card"><div class="sw-pay-label">Medios de tarjeta · selección del cliente</div><h3 class="mt-1">Tarjeta de débito o crédito</h3><div class="mt-2 flex flex-wrap gap-2"><span class="sw-pay-status">Débito</span><span class="sw-pay-status">Crédito</span></div><p class="mt-3">El cliente podrá elegir si paga con tarjeta de débito o con tarjeta de crédito. El cobro se procesará únicamente en el checkout alojado o en la integración tokenizada aprobada por AZUL o CardNET, una vez completadas afiliación, pruebas y autorización para la actividad de SENDWAYO.</p><p class="mt-2"><b>Protección:</b> SENDWAYO no solicita ni almacena número completo de tarjeta, fecha de vencimiento, CVV ni PIN. La pantalla de SENDWAYO solo recibirá la referencia y el estado verificado por el proveedor.</p><span class="sw-pay-status">Preparado · cobro real desactivado</span></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Proveedor internacional · tarjetas</div><h3 class="mt-1">Stripe</h3></div><span class="sw-pay-status">No habilitado para RD</span></div><p class="mt-3">La República Dominicana no figura actualmente en la lista oficial de países/regiones donde Stripe admite la apertura de cuentas de pagos. Por eso, esta versión no crea cargos, checkout ni claves Stripe para una empresa constituida solamente en República Dominicana.</p><p class="mt-2"><b>Condición para evaluarlo:</b> una entidad legal legítima en un país admitido, identificación fiscal, domicilio físico, teléfono, identificación oficial y cuenta bancaria física en ese país. No se usarán domicilios, compañías ni datos bancarios ficticios.</p><p class="mt-3"><a href="https://stripe.com/global" target="_blank" rel="noopener noreferrer">Consultar países admitidos por Stripe</a> · <a href="https://support.stripe.com/questions/requirements-to-open-a-stripe-account-in-another-country" target="_blank" rel="noopener noreferrer">Requisitos de cuenta en otro país</a></p><span class="sw-pay-status">Pendiente de elegibilidad y verificación</span></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">AZUL</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga en la Página de Pagos segura de AZUL o en un enlace de pago habilitado. El cargo se solicita cuando confirma el checkout y el emisor aprueba la transacción.</p><p class="mt-2"><b>Liquidación:</b> AZUL abona primero al comercio afiliado y liquida en la cuenta bancaria comercial que SENDWAYO haya registrado y AZUL haya validado. El abono no se envía directamente al MonCash/NatCash del beneficiario.</p><p class="mt-2"><b>Activación:</b> requiere afiliación, cuenta bancaria en pesos a nombre del titular admitido, documentos del comercio, credenciales de pruebas y certificación técnica.</p><p class="mt-2"><b>WhatsApp:</b> AZUL ofrece enlaces de pago para que el cliente pague con tarjeta desde WhatsApp, correo o redes sociales. El dinero se liquida primero en la cuenta comercial aprobada por AZUL.</p><p class="mt-3"><a href="https://www.azul.com.do/Pages/es/hazte-cliente.aspx" target="_blank" rel="noopener noreferrer">Solicitar afiliación AZUL</a> · <a href="https://www.azul.com.do/Pages/es/app-azul.aspx" target="_blank" rel="noopener noreferrer">Enlaces de pago AZUL por WhatsApp</a> · <a href="https://dev.azul.com.do/Pages/developer/pages/lib/index.aspx" target="_blank" rel="noopener noreferrer">Documentación técnica</a></p></article>'+
+    '<article class="sw-pay-card"><div class="flex items-start justify-between gap-2"><div><div class="sw-pay-label">Adquirente local · tarjeta</div><h3 class="mt-1">CardNET</h3></div><span class="sw-pay-status">Afiliación pendiente</span></div><p class="mt-3">El cliente paga mediante el botón/checkout seguro de CardNET. CardNET publica integración para web y APP, tokenización y autenticación 3-D Secure. La venta se confirma desde el servidor y con la referencia del adquirente.</p><p class="mt-2"><b>Liquidación:</b> el pago se liquida en la cuenta bancaria comercial que figure en la afiliación CardNET. Solo después de la confirmación del adquirente se inicia la entrega al destinatario.</p><p class="mt-2"><b>WhatsApp:</b> CardNET publica Cobros por WhatsApp y Enlace de Pago. SENDWAYO podrá enviar el enlace oficial de cobro al cliente; el pago pasa por CardNET y luego la entrega a una billetera se tramita por separado.</p><p class="mt-3"><a href="https://www.cardnet.com.do/afiliate" target="_blank" rel="noopener noreferrer">Iniciar afiliación CardNET</a> · <a href="https://www.cardnet.com.do/afiliate/empresarial" target="_blank" rel="noopener noreferrer">Afiliación empresarial</a> · <a href="https://www.cardnet.com.do/soluciones/online/boton-de-pago" target="_blank" rel="noopener noreferrer">Botón de pago</a> · <a href="https://www.cardnet.com.do/soluciones/online/cobros-por-whatsapp" target="_blank" rel="noopener noreferrer">Cobros por WhatsApp</a> · <a href="https://www.cardnet.com.do/tarifario" target="_blank" rel="noopener noreferrer">Tarifario</a></p></article>'+
     '<article class="sw-pay-card"><div class="sw-pay-label">Ingreso desde cualquier banco</div><h3 class="mt-1">Transferencia bancaria a SENDWAYO</h3><p class="mt-3">El cliente puede transferir desde la aplicación o sucursal de su propio banco a la cuenta comercial de recepción de SENDWAYO que Administración haya seleccionado y verificado.</p><p class="mt-2"><b>Confirmación:</b> la operación queda Pendiente de verificación hasta que el abono aparezca en el estado de cuenta de SENDWAYO. Una captura o recibo del cliente no acredita por sí solo los fondos.</p><p class="mt-2">Una transferencia bancaria tradicional se debita de una cuenta bancaria. Para pagar con tarjeta de crédito, el cliente usa el checkout AZUL/CardNET cuando el adquirente esté activo; no se asume que todos los bancos admitan transferencias financiadas con tarjeta.</p><div id="sw-pay-incoming-bank" class="sw-pay-bank-info mt-3">Cuenta de recepción: pendiente de seleccionar y verificar por Administración.</div></article>'+
     '<article class="sw-pay-card"><div class="sw-pay-label">Entrega / dispersión</div><h3 class="mt-1">Bancos, MonCash y NatCash</h3><p class="mt-3"><b>MonCash:</b> existe un programa oficial MonCash Business con API, sandbox y soluciones de desembolso empresarial. Se requiere alta comercial y paso a producción autorizado.</p><p class="mt-2"><b>NatCash:</b> se puede incorporar mediante un convenio directo de Natcom o un agregador autorizado. Tranzak y LevaPay publican APIs independientes; hay que evaluar contrato, liquidación, tarifas, titular del beneficiario y reversos antes de conectar.</p><p class="mt-2"><b>Otra cuenta bancaria:</b> Administración puede transferir desde la cuenta de tesorería SENDWAYO en el portal del banco y registrar referencia/comprobante. La automatización necesita un convenio o API específica del banco.</p><p class="mt-3"><a href="https://moncashdfs.com/business" target="_blank" rel="noopener noreferrer">MonCash Business</a> · <a href="https://docs.tranzak.co/" target="_blank" rel="noopener noreferrer">Tranzak API (tercero)</a> · <a href="https://levapay.dev/api-natcash" target="_blank" rel="noopener noreferrer">LevaPay NatCash (tercero)</a></p></article>'+
    '</div>'+
@@ -10091,7 +9866,7 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{
    '</div><div class="mt-3 flex flex-wrap items-center gap-3"><button id="sw-pay-save-settlement" type="button" class="sw-pay-primary">Guardar asignación de cuentas</button><span id="sw-pay-settlement-status" class="sw-pay-muted" role="status">Todavía no se ha guardado ninguna asignación.</span></div><div class="sw-pay-note mt-3">No se ha elegido una cuenta automáticamente porque no debo adivinar cuál de tus tres cuentas está afiliada ni cuál coincide con el titular del contrato. La asignación se guardará en Firebase solo cuando Administración la seleccione y las reglas de seguridad autoricen la escritura.</div></section>'+
    '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Ruta del dinero · separación obligatoria</div><h3 class="mt-1">Del pagador al beneficiario</h3><div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4"><div class="sw-pay-flow"><b>1. Pagador</b><p class="mt-1">Tarjeta AZUL/CardNET, enlace por WhatsApp o transferencia bancaria.</p></div><div class="sw-pay-flow"><b>2. Ingreso confirmado</b><p class="mt-1">El adquirente/banco verifica importe, moneda y referencia. La captura no basta.</p></div><div class="sw-pay-flow"><b>3. Cuenta comercial SENDWAYO</b><p class="mt-1">La liquidación entra en la cuenta elegida y validada por el adquirente.</p></div><div class="sw-pay-flow"><b>4. Entrega</b><p class="mt-1">Tesorería envía a banco, MonCash o NatCash y espera confirmación.</p></div></div></section>'+
    '<section class="sw-pay-card mt-4"><div class="sw-pay-label">Estados que verá Administración</div><div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pendiente de pago</b><p class="mt-1">El cliente no ha pagado o el abono no aparece.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Pago confirmado</b><p class="mt-1">AZUL, CardNET o el banco confirmó el ingreso.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Dispersión en proceso</b><p class="mt-1">El dinero sale hacia la cuenta o billetera seleccionada.</p></div><div class="rounded-lg bg-slate-100 p-3 text-xs"><b>Entregado / Rechazado</b><p class="mt-1">El banco o proveedor confirmó la entrega o el fallo/reverso.</p></div></div></section>'+
-   '<div class="sw-pay-good mt-4"><b>Protecciones:</b> DOP y HTG permanecen separados; no se acredita por el retorno del navegador ni por un comprobante subido; cada cobro/dispersión requiere referencia idempotente y verificación servidor-a-servidor; nunca se guardan PAN, CVV o PIN en SENDWAYO.</div>'+
+   '<div class="sw-pay-good mt-4"><b>Protecciones:</b> DOP y HTG permanecen separados; no se acredita por el retorno del navegador ni por un comprobante subido; cada cobro/dispersión requiere referencia idempotente y verificación servidor-a-servidor; nunca se guardan PAN, CVV o PIN en SENDWAYO.</div><div class="sw-pay-note mt-3"><b>Autorización de actividad:</b> cobrar con tarjeta para financiar remesas, cargar MonCash/NatCash o enviar fondos a otra cuenta bancaria requiere que AZUL/CardNET autoricen expresamente ese uso y el modelo de negocio de SENDWAYO. Un enlace de pago de WhatsApp cobra al comercio; no significa que el adquirente permita convertir el cargo en efectivo o transferirlo automáticamente a una billetera. No se habilitará esa operación como si fuera una compra ordinaria sin aprobación del adquirente.</div>'+
    '<div class="sw-pay-note mt-3">Este módulo todavía no procesa cargos ni envía fondos. AZUL/CardNET necesitan afiliación y credenciales sandbox/producción; MonCash necesita activar la cuenta Business; NatCash necesita convenio y proveedor aprobado. El dinero real no se moverá mientras falte cualquiera de esas verificaciones.</div>';
   host.appendChild(view);
   return view;
@@ -10239,258 +10014,51 @@ body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-
 #sendwayo-workspace-shell,#sendwayo-main-content{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;float:none!important;flex:none!important;box-sizing:border-box!important}
 #sendwayo-main-content>.view,#sendwayo-main-content .view:not(.hidden){width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
 </style>
-<script defer src="./SENDWAYO-V7-FISCAL-INTERNACIONAL.js"></script>
-
-
-
-
-<style id="sendwayo-v7-account-directory-layout">
-.sendwayo-account-toolbar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;width:100%!important}
-.sendwayo-account-toolbar>button{flex:0 0 auto!important;min-width:max-content!important;min-height:38px!important;padding:8px 12px!important;font-size:11px!important;white-space:nowrap!important}
-.sendwayo-account-search{flex:0 1 245px!important;width:245px!important;min-width:155px!important;max-width:270px!important;min-height:38px!important}
-.sendwayo-account-row-actions{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:7px!important;min-width:175px!important}
-.sendwayo-account-row-actions button{flex:0 0 auto!important;min-height:36px!important;padding:8px 13px!important;border:1px solid #cbd5e1!important;border-radius:999px!important;background:#fff!important;color:#102b4e!important;font-size:11px!important;font-weight:800!important;white-space:nowrap!important}
-.sendwayo-account-row-actions button.is-inactive{border-color:#f2c3c3!important;background:#fff7f7!important;color:#a12525!important}
-.sendwayo-account-row-actions button.is-active{border-color:#b7dfc4!important;background:#f0fdf4!important;color:#166534!important}
-.sendwayo-account-pagination{width:100%!important;padding:6px 4px 3px!important}
-.sendwayo-account-pager-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:wrap!important;padding:10px 3px!important;color:#334155!important;font-size:11px!important}
-.sendwayo-account-pager-actions{display:flex!important;align-items:center!important;gap:8px!important}
-.sendwayo-account-pager-actions button{min-height:39px!important;padding:8px 14px!important;border:1px solid #cbd5e1!important;border-radius:999px!important;background:#fff!important;color:#102b4e!important;font-size:11px!important;font-weight:800!important}
-.sendwayo-account-pager-actions button:disabled{background:#e2e8f0!important;color:#94a3b8!important;cursor:not-allowed!important;opacity:.75!important}
-#tabla-sendwayo-agentes tbody tr,#tabla-sendwayo-remitentes tbody tr{vertical-align:middle!important}
-#tabla-sendwayo-agentes td,#tabla-sendwayo-remitentes td{padding:13px 12px!important;line-height:1.45!important}
-@media(max-width:680px){
- .sendwayo-account-toolbar{gap:5px!important}
- .sendwayo-account-toolbar>button{padding:7px 10px!important;font-size:10px!important;min-height:36px!important}
- .sendwayo-account-search{flex:1 1 100%!important;width:100%!important;max-width:100%!important}
- .sendwayo-account-pager-row{align-items:flex-start!important;flex-direction:column!important}
+<style id="sendwayo-v7-approved-desktop-left-sidebar">
+/* Reapertura del menú lateral izquierdo en escritorio; identidad y hora permanecen arriba. */
+@media(min-width:1025px){
+ body.sendwayo-authenticated #sendwayo-main-sidebar,
+ body.sendwayo-authenticated #sendwayo-main-sidebar.sendwayo-menu-open{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:5px!important;
+  position:fixed!important;left:0!important;right:auto!important;
+  top:var(--sendwayo-top-menu-top,118px)!important;bottom:0!important;
+  width:250px!important;min-width:250px!important;max-width:250px!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+  padding:12px 8px 18px!important;box-sizing:border-box!important;
+  border:0!important;border-right:1px solid rgba(255,255,255,.14)!important;border-radius:0!important;
+  background:linear-gradient(180deg,#102b4e 0%,#091a30 100%)!important;
+  box-shadow:4px 0 18px rgba(4,18,36,.12)!important;
+  transform:none!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+  z-index:2147481900!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-sidebar>div:first-child{
+  position:sticky!important;top:0!important;z-index:2!important;flex:0 0 auto!important;
+  padding:8px 10px 12px!important;background:#102b4e!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-sidebar button{
+  flex:0 0 auto!important;width:100%!important;min-width:0!important;min-height:44px!important;height:auto!important;
+  margin:0!important;padding:10px 11px!important;border-radius:9px!important;
+  text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  font-size:12px!important;line-height:1.35!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-content{
+  display:block!important;position:relative!important;float:none!important;flex:none!important;
+  width:calc(100% - 250px)!important;max-width:calc(100% - 250px)!important;
+  min-width:0!important;margin:0 0 0 250px!important;padding:clamp(10px,1.5vw,22px)!important;
+  box-sizing:border-box!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-content .view.hidden{display:none!important}
+ body.sendwayo-authenticated #sendwayo-mobile-menu.sendwayo-top-menu-toggle{display:none!important}
+ body.sendwayo-authenticated #sendwayo-menu-shade{display:none!important}
+}
+@media(max-width:1024px){
+ body.sendwayo-authenticated #sendwayo-main-content{
+  display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
+  margin:0!important;box-sizing:border-box!important
+ }
+ body.sendwayo-authenticated #sendwayo-main-content .view.hidden{display:none!important}
 }
 </style>
-<script id="sendwayo-v7-account-directory-behavior">
-(function(){
- 'use strict';
- var $=function(id){return document.getElementById(id);};
- var norm=function(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();};
- var pages=window.__sendwayoDirectoryPages||(window.__sendwayoDirectoryPages={agentes:{page:1,query:''},remitentes:{page:1,query:''}});
- function accounts(view){
-  try{if(view==='agentes'&&typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))return AGENTES;if(view==='remitentes'&&typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))return REMITENTES;}catch(e){}
-  var arr=view==='agentes'?window.AGENTES:window.REMITENTES;return Array.isArray(arr)?arr:[];
- }
- function allAccounts(){
-  var out=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)out.push(ADMIN);}catch(e){}
-  return out.concat(accounts('agentes'),accounts('remitentes'));
- }
- function visibleCode(a,view){
-  var c=String(a&&(a.codigo||a.code||a.staffId)||'').trim();
-  return view==='agentes'&&/^AG-/i.test(c)?'AGE-'+c.slice(3):c;
- }
- function canonicalCode(c){
-  c=String(c||'').trim().toUpperCase();return c.indexOf('AG-')===0?'AGE-'+c.slice(3):c;
- }
- function toolbar(view){
-  var input=$('sendwayo-search-'+view);if(!input)return;
-  var bar=input.parentElement;if(!bar)return;
-  bar.classList.add('sendwayo-account-toolbar');input.classList.add('sendwayo-account-search');
-  var buttons=Array.from(bar.querySelectorAll('button'));
-  var add=buttons.find(function(b){return /agregar nuevo|agregar usuario/i.test(b.textContent||'');});
-  var excel=buttons.find(function(b){return /^excel$/i.test((b.textContent||'').trim());});
-  var pdf=buttons.find(function(b){return /^pdf$/i.test((b.textContent||'').trim());});
-  var csv=buttons.find(function(b){return /^csv$/i.test((b.textContent||'').trim());});
-  [add,excel,pdf,csv,input].filter(Boolean).forEach(function(el,index){var at=bar.children[index]||null;if(at!==el)bar.insertBefore(el,at);});
-  if(input.dataset.sendwayoDirectorySearch!=='1'){
-   input.dataset.sendwayoDirectorySearch='1';
-   input.oninput=function(){pages[view].query=String(input.value||'');pages[view].page=1;draw(view);};
-  }
- }
- function getTable(view){return $('tabla-sendwayo-'+view);}
- function getPager(view){
-  var table=getTable(view);if(!table)return null;
-  var pager=$('sendwayo-account-pagination-'+view);
-  if(!pager){pager=document.createElement('div');pager.id='sendwayo-account-pagination-'+view;pager.className='sendwayo-account-pagination';(table.closest('.overflow-x-auto')||table).insertAdjacentElement('afterend',pager);}
-  return pager;
- }
- function rowAccount(view,row){
-  var id=String(row.cells[3]&&row.cells[3].textContent||'').trim();
-  return accounts(view).find(function(a){return String(a.id||'')===id;})||null;
- }
- function headersAndBalances(view,table){
-  var head=table.tHead&&table.tHead.rows&&table.tHead.rows[0];if(!head)return;
-  var cells=head.cells;if(cells.length<7)return;
-  if(cells[3].textContent!=='ID fijo')cells[3].textContent='ID fijo';if(cells[4].textContent!=='Código fijo')cells[4].textContent='Código fijo';
-  if(view==='agentes'){if(cells[5].textContent!=='Balance compartido con administración')cells[5].textContent='Balance compartido con administración';return;}
-  if(cells[5].textContent!=='Balance DOP')cells[5].textContent='Balance DOP';
-  if(!head.querySelector('th[data-sendwayo-balance-htg]')){
-   var th=document.createElement('th');th.className=cells[5].className;th.textContent='Balance HTG';th.dataset.sendwayoBalanceHtg='1';cells[5].insertAdjacentElement('afterend',th);
-  }
-  table.querySelectorAll('tbody tr').forEach(function(row){
-   if(row.dataset.sendwayoBalanceSplit==='1'||row.cells.length<8)return;
-   var cell=row.cells[5],raw=String(cell.textContent||'');
-   var dop=(raw.match(/DOP\s*([\d,.+-]+)/i)||[])[1]||'0.00';
-   var htg=(raw.match(/HTG\s*([\d,.+-]+)/i)||[])[1]||'0.00';
-   cell.textContent='DOP '+dop;
-   var extra=document.createElement('td');extra.className=cell.className;extra.textContent='HTG '+htg;
-   cell.insertAdjacentElement('afterend',extra);row.dataset.sendwayoBalanceSplit='1';
-  });
- }
- function normalizeRows(view,table){
-  var body=table.tBodies&&table.tBodies[0];if(!body)return;
-  var directoryRows=Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;});
-  var sortedRows=directoryRows.slice().sort(function(a,b){
-   var aid=parseInt(String(a.cells[3]&&a.cells[3].textContent||'').replace(/\D/g,''),10)||0;
-   var bid=parseInt(String(b.cells[3]&&b.cells[3].textContent||'').replace(/\D/g,''),10)||0;
-   return aid-bid;
-  });
-  sortedRows.forEach(function(row,index){var current=body.children[index];if(current!==row)body.insertBefore(row,current||null);});
-  directoryRows=sortedRows;
-  directoryRows.forEach(function(row){
-   var account=rowAccount(view,row);
-   if(account){
-    var code=visibleCode(account,view),codeCell=row.cells[4];
-    if(codeCell&&code&&codeCell.textContent!==code)codeCell.textContent=code;
-    if(code&&view==='agentes')account.aliases=Array.from(new Set([].concat(Array.isArray(account.aliases)?account.aliases:[],[code])));
-    if(codeCell){
-     var same=accounts(view).filter(function(a){return canonicalCode(a.codigo||a.code)===canonicalCode(code);});
-     if(same.length>1){codeCell.title='Código repetido en más de una cuenta; revisar antes de utilizarlo como alias de acceso.';codeCell.style.color='#b45309';codeCell.style.fontWeight='900';}
-    }
-   }
-   var actionCell=row.cells[row.cells.length-1];if(!actionCell||actionCell.dataset.sendwayoActionsNormalized==='1')return;
-   Array.from(actionCell.querySelectorAll('button')).forEach(function(button){var label=norm(button.textContent);if(!label.includes('modificar')&&!label.includes('inactivar')&&!label.includes('activar'))button.remove();});
-   actionCell.classList.add('sendwayo-account-row-actions-cell');
-   var box=actionCell.querySelector('div');if(box)box.classList.add('sendwayo-account-row-actions');
-   actionCell.dataset.sendwayoActionsNormalized='1';
-  });
- }
- function draw(view){
-  var table=getTable(view),pager=getPager(view);if(!table||!pager||!table.tBodies||!table.tBodies[0])return;
-  var body=table.tBodies[0],state=pages[view];
-  var rows=Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !r.querySelector('td[colspan]')&&r.cells.length>1;});
-  var query=norm(state.query||''),filtered=rows.filter(function(r){return !query||norm(r.innerText||r.textContent).includes(query);});
-  var count=Math.max(1,Math.ceil(filtered.length/10));state.page=Math.min(Math.max(1,Number(state.page)||1),count);
-  var start=(state.page-1)*10,end=Math.min(filtered.length,start+10);
-  rows.forEach(function(r){r.style.display='none';});
-  filtered.forEach(function(r,i){var visible=i>=start&&i<end;r.style.display=visible?'':'none';if(visible&&r.cells[0]){var n=String(i-start+1).padStart(2,'0');if(r.cells[0].textContent!==n)r.cells[0].textContent=n;}});
-  Array.from(body.querySelectorAll(':scope > tr')).filter(function(r){return !!r.querySelector('td[colspan]');}).forEach(function(r){r.style.display=filtered.length?'none':'';});
-  var first=filtered.length?start+1:0,last=filtered.length?end:0;
-  var signature=[view,first,last,filtered.length,state.page,count].join('|');
-  if(pager.dataset.signature!==signature){
-   pager.dataset.signature=signature;
-   pager.innerHTML='<div class="sendwayo-account-pager-row"><span>Registros '+String(first).padStart(2,'0')+'–'+String(last).padStart(2,'0')+' de '+filtered.length+' · Página '+state.page+' de '+count+'</span><div class="sendwayo-account-pager-actions"><button type="button" data-dir-page="prev" '+(state.page<=1?'disabled':'')+'>Anterior</button><button type="button" data-dir-page="next" '+(state.page>=count?'disabled':'')+'>Siguiente</button></div></div>';
-  }
- }
- function enhance(view){if(!pages[view])return;var table=getTable(view);if(!table)return;toolbar(view);headersAndBalances(view,table);normalizeRows(view,table);draw(view);}
- function refresh(){
-  accounts('agentes').forEach(function(account){
-   var code=visibleCode(account,'agentes');
-   if(code)account.aliases=Array.from(new Set([].concat(Array.isArray(account.aliases)?account.aliases:[],[code])));
-  });
-  enhance('agentes');enhance('remitentes');
- }
- window.sendwayoAccountDirectoryPage=function(view,page){if(!pages[view])return;pages[view].page=Math.max(1,Number(page)||1);enhance(view);};
- window.sendwayoSearchAccountDirectory=function(view,value){if(!pages[view])return;pages[view].query=String(value||'');pages[view].page=1;var input=$('sendwayo-search-'+view);if(input)input.value=String(value||'');enhance(view);};
- document.addEventListener('click',function(event){
-  var button=event.target&&event.target.closest?event.target.closest('[data-dir-page]'):null;if(!button)return;
-  var pager=button.closest('.sendwayo-account-pagination'),view=pager&&pager.id.indexOf('agentes')>=0?'agentes':'remitentes';
-  if(!pages[view])return;pages[view].page=button.dataset.dirPage==='prev'?Math.max(1,pages[view].page-1):pages[view].page+1;enhance(view);
- });
- document.addEventListener('click',function(event){
-  var button=event.target&&event.target.closest?event.target.closest('button[onclick*="showView"]'):null;if(!button)return;
-  var match=(button.getAttribute('onclick')||'').match(/showView\(['"]([^'"]+)['"]\)/);
-  if(match&&pages[match[1]])window.setTimeout(function(){enhance(match[1]);},60);
- },true);
- ['agentes','remitentes'].forEach(function(view){
-  var el=$(view==='agentes'?'view-agentes':'view-remitentes');if(!el)return;
-  var queued=false,observer=new MutationObserver(function(){
-   if(queued)return;queued=true;
-   window.setTimeout(function(){queued=false;enhance(view);},80);
-  });
-  observer.observe(el,{childList:true,subtree:true});
- });
- window.addEventListener('sendwayo:firebase-ready',function(){window.setTimeout(refresh,80);});
- window.addEventListener('load',function(){window.setTimeout(refresh,120);});
- window.addEventListener('pageshow',function(){window.setTimeout(refresh,120);});
- if(typeof window.sendwayoOpenAccountForm==='function'){
-  var oldOpen=window.sendwayoOpenAccountForm;
-  window.sendwayoOpenAccountForm=function(view,id){
-   var result=oldOpen.apply(this,arguments);
-   window.setTimeout(function(){
-    var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name');
-    if(!idInput||!codeInput)return;
-    idInput.readOnly=true;codeInput.readOnly=true;codeInput.setAttribute('aria-readonly','true');
-    var list=accounts(view),existing=id?list.find(function(a){return String(a.id||'')===String(id);}):null,prefix=view==='agentes'?'AGE':'REM';
-    if(existing){idInput.value=String(existing.id||'');codeInput.value=visibleCode(existing,view);return;}
-    var max=0;list.forEach(function(a){var match=String(a.id||'').match(new RegExp('^'+prefix+'(\\d{5})$','i'));if(match)max=Math.max(max,Number(match[1]));});
-    idInput.value=prefix+String(max+1).padStart(5,'0');
-    var makeCode=function(value){var p=String(value||'').trim().split(/\s+/).filter(Boolean);var clean=function(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/gi,'').slice(0,3).toUpperCase();};return prefix+'-'+clean(p[0]||'USR')+clean(p.length>1?p[p.length-1]:p[0]||'USR');};
-    codeInput.value=makeCode(nameInput&&nameInput.value);
-    if(nameInput&&!nameInput.dataset.sendwayoFixedCodeBound){nameInput.dataset.sendwayoFixedCodeBound='1';nameInput.addEventListener('input',function(){codeInput.value=makeCode(nameInput.value);});}
-   },0);
-   return result;
-  };
- }
- if(typeof window.sendwayoSaveAccountForm==='function'){
-  var oldSave=window.sendwayoSaveAccountForm;
-  window.sendwayoSaveAccountForm=async function(view,id){
-   var idInput=$('v7-admin-id'),codeInput=$('v7-admin-code'),nameInput=$('v7-admin-name'),existing=id?allAccounts().find(function(a){return String(a.id||'')===String(id)||String(a.dbUserKey||'')===String(id);}):null;
-   if(id){
-    if(!existing){window.alert('No se encontró la cuenta original; no se modificó.');return false;}
-    if(idInput&&String(idInput.value||'')!==String(existing.id||'')){window.alert('El ID es fijo y no se puede cambiar.');return false;}
-    if(codeInput&&String(codeInput.value||'')!==visibleCode(existing,view)){window.alert('El código es fijo y no se puede cambiar.');return false;}
-   }else{
-    var ident=String(idInput&&idInput.value||''),prefix=view==='agentes'?'AGE':'REM',code=String(codeInput&&codeInput.value||'').trim();
-    if(!(new RegExp('^'+prefix+'\\d{5}$','i')).test(ident)){window.alert('ID inválido. Debe usar '+prefix+' seguido de cinco dígitos.');return false;}
-    var duplicate=allAccounts().find(function(a){return canonicalCode(a.codigo||a.code)===canonicalCode(code);});
-    if(duplicate){window.alert('Ese código ya pertenece a otra cuenta. No se creará una cuenta duplicada.');return false;}
-    if(!String(nameInput&&nameInput.value||'').trim()){window.alert('Escriba el nombre completo.');return false;}
-   }
-   return oldSave.apply(this,arguments);
-  };
- }
- refresh();
-})();
-</script>
-
-<style id="sendwayo-v7-header-one-line-fix">
-#sendwayo-brand-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:nowrap!important;padding:7px 12px!important;min-height:58px!important;overflow-x:auto!important}
-#sendwayo-brand-bar .sendwayo-brand-left,#sendwayo-brand-bar .sendwayo-brand-actions{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important}
-#sendwayo-v7-user-strip{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;padding:4px 8px!important;background:transparent!important;border:0!important;box-shadow:none!important;position:static!important;white-space:nowrap!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-kicker{display:none!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-name{font-size:12px!important;white-space:nowrap!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:10px!important}
-#sendwayo-v7-user-strip .sendwayo-workspace-meta strong{font-weight:800!important}
-#sendwayo-v7-user-strip [id="sendwayo-v7-date"]{display:none!important}
-body:not(.sendwayo-authenticated) #sendwayo-v7-user-strip{display:none!important}
-body.sendwayo-authenticated>#welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-body.sendwayo-authenticated>#login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
-@media(max-width:760px){
- #sendwayo-brand-bar{gap:5px!important;padding:6px!important}
- #sendwayo-brand-bar .sendwayo-brand-title{display:none!important}
- #sendwayo-v7-user-strip{gap:5px!important;padding:2px!important}
- #sendwayo-v7-user-strip .sendwayo-workspace-person,#sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{gap:4px!important}
- #sendwayo-v7-user-strip .sendwayo-workspace-name{max-width:82px!important;overflow:hidden!important;text-overflow:ellipsis!important}
- #sendwayo-v7-user-strip .sendwayo-workspace-meta,#sendwayo-v7-user-strip .sendwayo-workspace-time{font-size:9px!important}
- #sendwayo-top-logout{padding:7px 9px!important;font-size:10px!important}
-}
-</style>
-<script id="sendwayo-v7-header-one-line-runtime">
-(function(){
- const $=id=>document.getElementById(id);
- function placeHeader(){
-  const bar=$('sendwayo-brand-bar'),strip=$('sendwayo-v7-user-strip');
-  if(bar&&strip&&strip.parentElement!==bar){const actions=bar.querySelector('.sendwayo-brand-actions');bar.insertBefore(strip,actions||null);}
- }
- function authView(){
-  let u=null;try{u=window.currentUser||currentUser||null}catch(e){u=window.currentUser||null}
-  const ok=!!(u&&(u.id||u.uid||u.codigo||u.email));
-  document.body.classList.toggle('sendwayo-authenticated',ok);
-  const w=$('welcome-landing'),l=$('login-screen');
-  if(ok){if(w){w.hidden=true;w.style.setProperty('display','none','important')}if(l){l.classList.add('hidden');l.style.setProperty('display','none','important')}placeHeader();}
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{placeHeader();authView()},{once:true});else{placeHeader();authView()}
- document.addEventListener('click',()=>setTimeout(()=>{placeHeader();authView()},80),true);
- const mo=new MutationObserver(()=>{placeHeader();authView()});
- mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
-})();
-</script>
 </body>
 </html>
