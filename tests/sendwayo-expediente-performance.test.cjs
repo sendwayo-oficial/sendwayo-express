@@ -39,6 +39,11 @@ assert.match(html, /SENDWAYO_CUSTOM_ROUTE/);
 assert.match(html, /t\.countryFrom=\{/);
 assert.match(html, /t\.countryTo=\{/);
 
+// Regresión de sesión: Firebase confirma el acceso desde otro bloque; el evento load tardío no debe borrar el panel.
+assert.match(html, /window\.addEventListener\('sendwayo:firebase-ready', \(\) => \{\s*if \(current\(\)\) successfulLoginThisPage = true;\s*\}\);/, 'la sesión Firebase debe marcar el acceso como exitoso');
+assert.match(html, /window\.__sendwayoLoginPending = true;/, 'el arranque de página no debe reiniciar el formulario mientras Firebase valida el acceso');
+assert.match(html, /if \(!successfulLoginThisPage && !current\(\) && !document\.body\.classList\.contains\('sendwayo-authenticated'\) && !window\.__sendwayoLoginPending\) showWelcome\(\)/, 'la carga tardía no debe devolver al usuario autenticado a bienvenida');
+
 // Sesión y rendimiento: conservar inicio hasta 40 minutos de inactividad.
 assert.match(html, /auth\.setPersistence\(firebase\.auth\.Auth\.Persistence\.SESSION\)/);
 assert.match(html, /LIMIT=40\*60\*1000/);
