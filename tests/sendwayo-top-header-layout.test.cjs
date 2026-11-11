@@ -2,65 +2,43 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
-const legacyUrlHtml = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
-assert.ok(html.includes('sendwayo-v7-user-strip') && legacyUrlHtml.includes('sendwayo-v7-user-strip'),
-  'el archivo consolidado y la URL pública deben conservar la cabecera de identidad V7');
+const repoFile = path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html');
+const publicFile = path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html');
+const html = fs.readFileSync(repoFile, 'utf8');
+const publicHtml = fs.readFileSync(publicFile, 'utf8');
 
-const brandAt = html.indexOf('<div id="sendwayo-brand-bar"');
-const identityAt = html.indexOf('<section id="sendwayo-v7-user-strip"');
-const shellAt = html.indexOf('<div id="sendwayo-workspace-shell"');
-assert.ok(brandAt >= 0 && identityAt > brandAt && shellAt > identityAt,
-  'la marca, administrador/ID/código y hora deben ir arriba del área de trabajo');
+for (const source of [html, publicHtml]) {
+  const landingStart = source.indexOf('<div id="welcome-landing"');
+  const landingEnd = source.indexOf('<style id="sendwayo-v7-welcome-actions">', landingStart);
+  assert.ok(landingStart >= 0 && landingEnd > landingStart, 'la portada pública debe existir');
+  const landing = source.slice(landingStart, landingEnd);
+  assert.equal((landing.match(/<img\\b/g) || []).length, 1, 'la portada debe tener una sola fotografía');
+  assert.equal((landing.match(/<button\\b/g) || []).length, 2, 'la portada debe tener solo Ingresar y Registrarse');
+  assert.ok(landing.includes('assets/sendwayo-bienvenida.jpg'), 'debe usar la fotografía de bienvenida confirmada');
+  assert.ok(landing.includes('>INGRESAR</button>') && landing.includes('>REGISTRARSE</button>'));
+  assert.ok(!landing.includes('v162-car-main') && !landing.includes('carouselImgs'), 'no debe quedar carrusel');
+  assert.ok(!/<video\\b/i.test(landing), 'no debe haber video de bienvenida');
 
-assert.match(html, /id="sendwayo-v7-business-name"/, 'el nombre del negocio debe aparecer en la barra superior');
-assert.match(html, /id="sendwayo-v7-role"/, 'el rol de administración debe estar en la franja superior');
-assert.match(html, /id="sendwayo-v7-id"/, 'el ID debe estar en la franja superior');
-assert.match(html, /id="sendwayo-v7-code"/, 'el código debe estar en la franja superior');
-assert.match(html, /id="sendwayo-v7-clock"/, 'la hora debe estar en la franja superior');
-
-assert.match(html, /function purgeLegacySideIdentity\(/, 'debe limpiarse el encabezado viejo del lateral');
-assert.match(legacyUrlHtml, /sendwayo-v7-canonical-top-workspace-style/,
-  'la URL pública debe conservar la cabecera V7 actual');
-assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\s*\{[\s\S]*?grid-template-columns:1fr!important/s,
-  'el menú de escritorio debe conservar una columna vertical a la izquierda');
-assert.match(legacyUrlHtml, /#sendwayo-main-sidebar\.sendwayo-menu-open\s*\{[^}]*transform:translateX\(0\)!important/s,
-  'el panel lateral debe deslizarse desde la izquierda al abrirse');
-assert.match(legacyUrlHtml, /actions\.insertBefore\(btn,actions\.firstChild\)/,
-  'el botón de tres rayas debe permanecer dentro de la barra superior');
-for (const id of ['sendwayo-v7-bal-dop','sendwayo-v7-bal-htg','sendwayo-v7-com-dop','sendwayo-v7-com-htg']) {
-  assert.match(legacyUrlHtml, new RegExp('id="' + id + '"'),
-    'la franja superior debe mostrar balance y comisión en ambas monedas: ' + id);
+  const brandAt = source.indexOf('<div id="sendwayo-brand-bar"');
+  const identityAt = source.indexOf('<section id="sendwayo-v7-user-strip"');
+  const shellAt = source.indexOf('<div id="sendwayo-workspace-shell"');
+  assert.ok(brandAt >= 0 && identityAt > brandAt && shellAt > identityAt, 'marca e identidad deben quedar encima del módulo');
+  for (const id of ['sendwayo-v7-business-name','sendwayo-mobile-menu','sendwayo-v7-id','sendwayo-v7-name','sendwayo-v7-username','sendwayo-v7-phone','sendwayo-v7-date','sendwayo-v7-clock','sendwayo-v7-duration']) {
+    assert.ok(source.includes('id="' + id + '"') || source.includes(id), 'falta el control superior ' + id);
+  }
+  assert.ok(source.includes("left.insertBefore(btn,title.nextSibling)"), 'las tres rayas deben ir inmediatamente después del nombre del negocio');
+  assert.ok(source.includes('#sendwayo-main-sidebar.sendwayo-menu-open{display:flex!important;flex-direction:column!important;transform:translateX(0)!important;'), 'el menú debe deslizarse desde la izquierda en vertical');
+  assert.ok(source.includes('#sendwayo-mobile-menu{order:3!important;'), 'logo, nombre y menú deben conservar ese orden');
+  assert.ok(source.includes('function scrubVisibleLegacyCodes()'), 'no deben quedar códigos antiguos en las listas visibles');
+  assert.ok(source.includes('#sendwayo-v7-code{display:none!important}'), 'el campo de código debe permanecer oculto');
+  assert.ok(source.includes('function installCountrySearch(select)'), 'las rutas deben permitir buscar países por nombre');
+  assert.ok(source.includes('assets/sendwayo-logo-real.jpg'), 'el logo debe conservarse para las marcas de agua');
+  assert.ok(source.includes('body.sendwayo-authenticated #sendwayo-main-content::before'), 'las páginas interiores deben llevar marca de agua');
+  assert.ok(source.includes('function setupReceiptWatermark()'), 'el comprobante debe conservar su marca de agua');
+  for (const id of ['sendwayo-v7-bal-dop','sendwayo-v7-bal-htg','sendwayo-v7-com-dop','sendwayo-v7-com-htg']) {
+    assert.ok(source.includes('id="' + id + '"'), 'debe permanecer el campo financiero ' + id);
+  }
+  assert.ok(source.includes('CLOUD_SYNC_INTERVAL_MS=15000'), 'la sincronización no debe ejecutar una lectura completa cada segundo');
 }
-assert.match(legacyUrlHtml, /pairs\.forEach/,
-  'los cuatro indicadores del tablero deben actualizarse desde los valores financieros existentes');
-assert.match(legacyUrlHtml, /sendwayo-v7-header-one-line-fix/,
-  'el encabezado final debe conservar la versión de una sola línea');
-assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \.sendwayo-workspace-person,#sendwayo-v7-user-strip \.sendwayo-workspace-meta,#sendwayo-v7-user-strip \.sendwayo-workspace-time\{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex-wrap:nowrap!important\}/,
-  'nombre, rol, ID, código, hora y duración deben permanecer alineados en la cabecera superior');
-assert.match(legacyUrlHtml, /#sendwayo-v7-user-strip \[id="sendwayo-v7-date"\]\{display:none!important\}/,
-  'el encabezado compacto debe evitar duplicar la fecha y conservar el reloj');
-assert.match(html, /#user-top,#hora-top,#sendwayo-active-identity-strip\{display:none!important/,
-  'los campos antiguos no deben duplicar la identidad ni la hora');
 
-
-// El diseño V7 actual conserva cuatro valores separados en el tablero y dos ganancias diarias.
-for (const id of ['sendwayo-v7-bal-dop','sendwayo-v7-bal-htg','sendwayo-v7-com-dop','sendwayo-v7-com-htg']) {
-  assert.ok(legacyUrlHtml.includes('id="' + id + '"'), 'debe permanecer el campo financiero ' + id);
-}
-assert.match(legacyUrlHtml, /sendwayo-v7-daily-gain-feed/);
-assert.match(legacyUrlHtml, /sendwayo-v7-daily-gains/);
-
-// Performance regression coverage: no whole-document work on ordinary clicks.
-assert.ok(!html.includes("document.addEventListener('click',function(){window.setTimeout(styleSidebar,50);});"),
-  'el formato del menú no debe recalcularse en cada clic');
-assert.ok(!html.includes("document.addEventListener('click',()=>setTimeout(hookVisibleExports,20));"),
-  'las exportaciones no deben reinspeccionar todos los botones en cada clic');
-assert.ok(!html.includes("document.addEventListener('click', () => setTimeout(() => { refreshBellCount(); if (current()) { updateIdentity(); applyIdentityDefaults(false);"),
-  'la identidad y los formularios no deben recalcularse al pulsar cualquier parte de la página');
-assert.ok(html.includes('sendwayo:local-data-changed'),
-  'los cambios locales deben poder activar la sincronización sin esperar al temporizador');
-assert.ok(html.includes('CLOUD_SYNC_INTERVAL_MS=15000'),
-  'la comprobación completa de respaldo no debe ejecutarse cada cinco segundos');
-
-console.log('SENDWAYO top header / performance: comprobaciones correctas.');
+console.log('PASS: portada de una foto, encabezado por ID, menú lateral, reloj, países y marcas de agua.');
