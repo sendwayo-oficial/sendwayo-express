@@ -10194,7 +10194,22 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
    input.addEventListener('input',draw);input.addEventListener('focus',draw);document.addEventListener('click',e=>{if(!wrap.contains(e.target))results.classList.remove('open');});
   }
  }
- function refreshPage(){ensureIdentityMarkup();moveMenuButton();fixSidebar();installAllCountrySearch();if(document.body.classList.contains('sendwayo-authenticated'))updateIdentity();prepareAccountForm();watchAccountForms();}
+ function scrubVisibleLegacyCodes(){
+  const roots=['view-agentes','view-remitentes','view-secretas','view-investigacion','lista-secretas','sendwayo-v7-user-strip'];
+  const pattern=/(?:\s*[·|—–-]\s*)?(?:Código|Cód\.?)\s*:\s*[A-Z0-9_-]+|\b(?:AG|REM)-[A-Z0-9_-]+\b/gi;
+  roots.forEach(id=>{
+   const root=$(id);if(!root)return;
+   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];
+   while(walker.nextNode())nodes.push(walker.currentNode);
+   nodes.forEach(node=>{
+    const parent=node.parentElement;
+    if(parent&&/^(SCRIPT|STYLE|INPUT|TEXTAREA|SELECT|OPTION)$/i.test(parent.tagName))return;
+    const clean=node.nodeValue.replace(pattern,'').replace(/\s{2,}/g,' ');
+    if(clean!==node.nodeValue)node.nodeValue=clean;
+   });
+  });
+ }
+ function refreshPage(){ensureIdentityMarkup();moveMenuButton();fixSidebar();installAllCountrySearch();if(document.body.classList.contains('sendwayo-authenticated'))updateIdentity();prepareAccountForm();watchAccountForms();scrubVisibleLegacyCodes();}
  // Session clock: starts when Firebase authentication makes the workspace visible.
  let sessionStarted=0,lastLogged=false;
  function tickSession(){
@@ -10236,29 +10251,6 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  window.addEventListener('resize',moveMenuButton);
  const observer=new MutationObserver(()=>{refreshPage();});
  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
- window.setInterval(tickSession,1000);
- refreshPage();tickSession();
-})();
-nst priorSave=window.sendwayoSaveAccountForm;
- if(typeof priorSave==='function'){
-  window.sendwayoSaveAccountForm=async function(view,id){
-   const field=$('v7-admin-password'),modal=$('sendwayo-admin-account-modal');
-   const isNew=!id,temp=isNew?text(field&&field.value):'';
-   hideCodeField();
-   const result=await priorSave.apply(this,arguments);
-   if(result===true&&isNew&&temp){alert('Cuenta creada. Contraseña temporal única: '+temp+'. Entréguela al usuario; el sistema le exigirá cambiarla en su primer acceso.');if(modal)delete modal.dataset.sendwayoTemporaryPassword;}
-   return result;
-  };
- }
- document.addEventListener('DOMContentLoaded',refreshPage,{once:true});
- window.addEventListener('load',refreshPage);
- window.addEventListener('pageshow',refreshPage);
- window.addEventListener('sendwayo:firebase-ready',refreshPage);
- window.addEventListener('sendwayo:transactions-updated',refreshPage);
- window.addEventListener('resize',moveMenuButton);
- const observer=new MutationObserver(()=>{refreshPage();});
- observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
  window.setInterval(tickSession,1000);window.setInterval(scrubVisibleLegacyCodes,900);
  refreshPage();tickSession();
-})();
-</script>
+})();</script>
