@@ -55,7 +55,7 @@ jobs:
           base_html = source.read_text(encoding='utf-8')
           if "username:'sendwayoexpress@gmail.com'" not in base_html:
               raise SystemExit('No se encontró el usuario administrativo SENDWAYO exacto en el archivo V7.')
-          if "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in base_html:
+          if "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" not in base_html:
               raise SystemExit('Se debe conservar el correo existente de Firebase Authentication.')
           if "aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','Sendwayoexpress','sendwayoexpress@gmail.com']" not in base_html:
               raise SystemExit('Falta el alias de inicio de sesión SENDWAYO.')
@@ -87,13 +87,13 @@ jobs:
           from pathlib import Path
           html = Path('site/index.html').read_text(encoding='utf-8')
           assert re.search(r'<title>SENDWAYO EXPRESS - V7[^<]*</title>', html), 'Título V7 ausente'
-          assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" in html, 'El correo de acceso Firebase existente no está configurado'
+          assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" in html, 'El correo administrativo de Firebase no está configurado'
           assert "username:'sendwayoexpress@gmail.com'" in html, 'El usuario SENDWAYO no está configurado'
           assert "aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','Sendwayoexpress','sendwayoexpress@gmail.com']" in html, 'El alias de acceso SENDWAYO no está configurado'
           assert 'if(match) return match.email;' in html, 'El alias debe resolverse antes del correo Firebase'
           assert html.count('sendwayo-v7-brand-and-login-performance-fix') == 1, 'El CSS de bienvenida debe aparecer una sola vez'
           assert html.rfind('</body>') > html.rfind('</script>'), 'El CSS final debe estar fuera de los scripts'
-          assert "const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';" not in html, 'El nombre de usuario SENDWAYO no debe sustituir el correo de Firebase'
+          assert "email:'sendwayoexpress@gmail.com'" in html, 'El perfil administrador debe usar el correo de acceso SENDWAYO'
           assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
           assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
           assert "function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
