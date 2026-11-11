@@ -1,0 +1,18 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
+assert.match(html, /sendwayo-landing-photo-panel/, 'la foto principal debe ocupar el panel izquierdo');
+assert.match(html, /src="assets\/sendwayo-bienvenida\.jpg"/, 'la portada debe conservar la foto SENDWAYO');
+assert.match(html, /src="assets\/sendwayo-logo-real\.jpg"/, 'el logo corporativo debe aparecer en la portada');
+assert.match(html, /class="sendwayo-landing-title">SENDWAYO EXPRESS/, 'el nombre del negocio debe quedar visible');
+assert.match(html, /id="sendwayo-home-login"[^>]*>INGRESAR/, 'el botón Ingresar debe existir');
+assert.match(html, /id="sendwayo-home-register"[^>]*>REGISTRAR/, 'el botón Registrar debe existir');
+assert.match(html, /grid-template-columns:minmax\(0,1\.32fr\) minmax\(300px,\.68fr\)/, 'la portada debe colocar la imagen a la izquierda y la identidad a la derecha');
+assert.match(html, /function openLogin\(\)/, 'el botón Ingresar debe tener un controlador explícito');
+assert.match(html, /function openRegistration\(\)/, 'el botón Registrar debe tener un controlador explícito');
+assert.match(html, /window\.sendwayoOpenPublicRequest\('Quiero ser remitente'\)/, 'Registrar debe abrir la ventanilla pública de solicitud');
+assert.match(html, /body:not\(\.sendwayo-authenticated\)>#sendwayo-v7-modal/, 'la ventanilla de registro debe poder mostrarse sin sesión');
+assert.doesNotMatch(html, /onclick="v162_showLogin\(\)"/, 'Ingresar debe usar el controlador protegido por delegación');
+assert.doesNotMatch(html, /onclick="sendwayoOpenPublicRequest\(/, 'Registrar debe usar el controlador protegido por delegación');
+console.log('PASS: welcome layout, logo, business name, and public login/register controls.');
