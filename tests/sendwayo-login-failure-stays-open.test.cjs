@@ -9,7 +9,9 @@ assert.ok(match,'Firebase login handler must exist');
 const source=match[1];
 const catchAt=source.lastIndexOf('} catch (error) {');
 assert.ok(catchAt>=0,'login handler must expose its failure path');
-const catchBlock=source.slice(catchAt);
+const finallyAt=source.indexOf('} finally {',catchAt);
+assert.ok(finallyAt>catchAt,'login handler must always release the busy state');
+const catchBlock=source.slice(catchAt,finallyAt);
 assert.match(catchBlock,/if\s*\(auth\.currentUser\)\s*\{\s*await\s+auth\.signOut\(\)\s*;?\s*\}/,
   'only clean up Firebase when a real user session exists; never sign out after invalid credentials');
 assert.doesNotMatch(catchBlock,/auth\.signOut\(\)\.catch/,
