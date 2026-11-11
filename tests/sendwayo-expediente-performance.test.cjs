@@ -19,6 +19,13 @@ assert.match(html, /Cuentas bancarias vinculadas/);
 assert.match(html, /password\|contrasena\|clave\|secret\|token/);
 assert.match(html, /Este agente opera con fondos de Administración/);
 
+// Identidad administrativa: el correo de Firebase debe coincidir con el usuario SENDWAYO confirmado.
+assert.match(html, /username:'sendwayoexpress@gmail\.com', login:'sendwayoexpress@gmail\.com'/);
+assert.match(html, /email:'sendwayoexpress@gmail\.com'/);
+assert.match(html, /const ADMIN_EMAIL = 'sendwayoexpress@gmail\.com';/);
+assert.doesNotMatch(html, /ideletteismorin@gmail\.com/, 'la cuenta GitHub no debe sustituir al correo de acceso de SENDWAYO');
+assert.match(html, /function resolveEmail\(identifier\)[\s\S]{0,700}if\(match\) return match\.email;/, 'el usuario público debe resolverse al correo de Firebase confirmado');
+
 // Catálogo internacional local: todos los ISO alpha-2, prefijos y rutas.
 const countryDataMatch = html.match(/var fallbackCountriesData=(\[[\s\S]*?\]);/);
 assert.ok(countryDataMatch, 'el catálogo de países debe estar integrado en el HTML');
