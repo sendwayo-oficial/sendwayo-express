@@ -17,4 +17,13 @@ assert.match(html, /no tiene prefijo telefónico asignado/, 'no se debe formar n
 assert.match(html, /window\.SENDWAYO_V7_COUNTRIES_READY=Promise\.resolve\(countries\)/, 'el catálogo local debe estar disponible sin descargarlo');
 assert.doesNotMatch(html, /fetch\('https:\/\/staticdata\.dev/, 'la pantalla no debe depender de una descarga externa del catálogo');
 assert.match(html, /new Intl\.DisplayNames\(\['es'\]/, 'los nombres deben localizarse en español cuando el navegador lo permita');
-console.log('SENDWAYO countries: catálogo global integrado y validaciones correctas.');
+
+assert.match(html, /function installAllCountrySearch\(\)/, 'el buscador debe instalarse en los selectores de país de los formularios');
+assert.match(html, /sendwayo-v7-envio-from[\s\S]*sendwayo-v7-retiro-to/, 'el buscador debe cubrir origen y destino de envíos y retiros');
+assert.match(html, /select\[id\*="pais" i\],select\[name\*="pais" i\],select\[id\*="country" i\],select\[name\*="country" i\]/, 'los nuevos campos de país también deben recibir búsqueda');
+assert.match(html, /input\.placeholder='Escriba el nombre del país para buscar…'/, 'el campo debe invitar a escribir el nombre del país');
+assert.match(html, /input\.addEventListener\('input',show\)/, 'las coincidencias deben aparecer mientras el usuario escribe');
+assert.match(html, /allCountries\(\)\.filter\(c=>!query\|\|norm\(countryLabel\(c\)\+' '\+c\.name\+' '\+c\.alpha2\+' '\+c\.callingCode\)\.includes\(query\)\)/, 'la búsqueda debe filtrar por nombre, ISO y prefijo');
+assert.match(html, /select\.dispatchEvent\(new Event\('change',\{bubbles:true\}\)\)/, 'elegir una coincidencia debe actualizar el selector original');
+
+console.log('SENDWAYO countries: catálogo global integrado, búsqueda interactiva y validaciones correctas.');

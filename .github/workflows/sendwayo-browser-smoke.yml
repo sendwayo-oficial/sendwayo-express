@@ -128,14 +128,15 @@ jobs:
                 const source = document.documentElement.innerHTML;
                 return {
                   usernameConfigured: source.includes("username:'sendwayoexpress@gmail.com'"),
-                  profileEmailConfigured: source.includes("email:'sendwayoexpress@gmail.com'"),
-                  firebaseEmailConfigured: source.includes("const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';"),
-                  staleOwnerEmailAbsent: !source.includes('ideletteismorin@gmail.com')
+                  profileEmailConfigured: source.includes("email:'ideletteismorin@gmail.com'"),
+                  firebaseEmailConfigured: source.includes("const ADMIN_EMAIL = 'ideletteismorin@gmail.com';"),
+                  aliasResolutionConfigured: source.includes("aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','sendwayoexpress@gmail.com']") &&
+                    source.includes('if(match) return match.email;')
                 };
               });
               console.log('PUBLIC ADMIN LOGIN IDENTITY:', JSON.stringify(adminIdentity, null, 2));
               if (!adminIdentity.usernameConfigured || !adminIdentity.profileEmailConfigured ||
-                  !adminIdentity.firebaseEmailConfigured || !adminIdentity.staleOwnerEmailAbsent) {
+                  !adminIdentity.firebaseEmailConfigured || !adminIdentity.aliasResolutionConfigured) {
                 throw new Error('La página pública no tiene el usuario y correo administrativo SENDWAYO alineados.');
               }
 
