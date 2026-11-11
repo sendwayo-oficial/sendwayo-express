@@ -2445,7 +2445,7 @@ if(!name||!phone||!email){if(msg)msg.textContent='Complete los tres campos.';ret
 if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(msg)msg.textContent='Escriba un correo válido.';return;}
 if(!window.firebase?.apps?.length){if(msg)msg.textContent='No se pudo conectar. Inténtelo más tarde.';return;}
 try{if(btn){btn.disabled=true;btn.textContent='Enviando…';}
-const ref=window.firebase.database().ref('sendwayo_express_v2/requests/registro').push();
+const ref=window.firebase.database().ref('sendwayo_express_v2/requests').push();
 await ref.set({id:ref.key,type:'registro',name,nombre:name,phone,telefono:phone,email,usuario:email,role:'REMITENTE',status:'PENDIENTE',estado:'PENDIENTE',createdAtMs:Date.now(),createdAt:new Date().toISOString()});
 if(msg)msg.textContent='Solicitud enviada. Administración revisará su registro.';
 ['sendwayo-reg-name','sendwayo-reg-phone','sendwayo-reg-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
