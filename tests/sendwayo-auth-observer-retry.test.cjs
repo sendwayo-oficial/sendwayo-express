@@ -5,30 +5,34 @@ const html=fs.readFileSync(
   'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html',
   'utf8'
 );
-const helper=html.match(/function loginFormIsOpen\(\)\{([\s\S]*?)\n  \}\n  state\.authReadyPromise/);
-assert.ok(helper,'Firebase must have a guard that detects an already-open login form');
-const isOpen=new Function('document','window',helper[1]);
-const body={classList:{contains:()=>true}};
-const hiddenLogin={classList:{contains:()=>true}};
-assert.equal(isOpen({body,getElementById:()=>hiddenLogin},{}),true,
-  'an explicitly opened login form must be preserved');
-const visibleLogin={classList:{contains:()=>false}};
-assert.equal(isOpen(
-  {body:{classList:{contains:()=>false}},getElementById:()=>visibleLogin},
-  {getComputedStyle:()=>({display:'flex',visibility:'visible',pointerEvents:'auto'})}
-),true,'a visible login form must be preserved');
-const closedLogin={classList:{contains:()=>true}};
-assert.equal(isOpen(
-  {body:{classList:{contains:()=>false}},getElementById:()=>closedLogin},
-  {getComputedStyle:()=>({display:'none',visibility:'hidden',pointerEvents:'none'})}
-),false,'a closed login form must not block the public welcome page');
 
-const start=html.indexOf('auth.onAuthStateChanged(async user=>{');
-const end=html.indexOf('  });\n  }).catch(error=>',start);
-assert.ok(start>=0&&end>start,'Firebase auth state observer must exist');
-const observer=html.slice(start,end);
-assert.match(observer,/state\.loginBusy\|\|state\.sessionEstablished\|\|loginFormIsOpen\(\)/,
-  'a late signed-out Firebase event must not replace an open login form with the welcome page');
-assert.match(observer,/showLoginFormForRetry\(\);loginError\(message\);/,
-  'failed session restoration must leave the login form open and show the reason');
-console.log('PASS: delayed Firebase signed-out events cannot send an open SENDWAYO login form back to welcome.');
+const observerStart=html.indexOf('auth.onAuthStateChanged(async user=>{');
+const observerEnd=html.indexOf('  });\n  }).catch(error=>',observerStart);
+assert.ok(observerStart>=0&&observerEnd>observerStart,'Firebase auth state observer must exist');
+const observer=html.slice(observerStart,observerEnd);
+assert.match(observer,/if\\(state\\.loginBusy\\|\\|state\\.sessionEstablished\\)return;/,
+  'a late signed-out Firebase event must not interrupt an active login attempt or established session');
+assert.match(observer,/state\\.sessionEstablished=true/,
+  'a restored account session must be marked as established before dashboard rendering');
+assert.match(observer,/setVisibleAfterLogin\\(appUser\\)/,
+  'a valid restored Firebase account must enter the workspace');
+
+const helper=html.match(/function showLoginFormError\\(message\\)\\s*\\{([\\s\\S]*?)\\n  \\}/);
+assert.ok(helper,'Firebase login errors must have a dedicated retry-screen helper');
+assert.match(helper[1],/welcome\\.classList\\.add\\('hidden'\\)/,
+  'a failed login must hide the welcome page');
+assert.match(helper[1],/login\\.classList\\.remove\\('hidden'\\)/,
+  'a failed login must reopen the login form');
+assert.match(helper[1],/visibility','visible'/,
+  'a failed login must keep the login form visible');
+
+const loginCatch=html.match(/async function attemptLogin\\(\\)\\s*\\{([\\s\\S]*?)\\n  \\}\\n  window\\.intentarLogin=attemptLogin/);
+assert.ok(loginCatch,'the Firebase login handler must exist');
+assert.match(loginCatch[1],/showLoginFormError\\(message\\)/,
+  'the exact Firebase error must leave the user on the login form');
+assert.match(html,/window\\.__sendwayoFirebaseSecureLoginReady = false/);
+assert.match(html,/window\\.__sendwayoLoginPending = false/);
+assert.match(html,/window\\.__sendwayoLoginPending=true/,
+  'the first login click must be held safely until the secure Firebase handler is ready');
+
+console.log('PASS: delayed Firebase auth events cannot interrupt login, and errors keep the form open.');
