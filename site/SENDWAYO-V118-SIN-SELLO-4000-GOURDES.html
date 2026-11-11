@@ -8374,10 +8374,19 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
+  function loginFormIsOpen(){
+    const login=document.getElementById('login-screen');
+    if(document.body.classList.contains('sendwayo-login-open'))return true;
+    if(!login||login.classList.contains('hidden'))return false;
+    const style=window.getComputedStyle(login);
+    return style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none';
+  }
   state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
-      if(state.loginBusy||state.sessionEstablished)return;
+      // El evento inicial/sin usuario no puede cerrar un formulario de acceso que el visitante ya abrió.
+      // Firebase puede emitir este evento después de un intento fallido; conservar el formulario evita volver a bienvenida.
+      if(state.loginBusy||state.sessionEstablished||loginFormIsOpen())return;
       state.sessionEstablished=false;state.readReady=false;state.profile=null;state.profileKey=null;state.remoteTransactions={};
       stopListeners();if(state.syncTimer){clearInterval(state.syncTimer);state.syncTimer=null;}
       try{window.currentUser=null;currentUser=null}catch(e){}
@@ -8446,10 +8455,10 @@ window.sendwayoShareReceipt=async function(){
       console.error('[SENDWAYO Firebase session]',error);stopListeners();state.readReady=false;state.sessionEstablished=false;
       const message=error?.message||'No se pudo restaurar la sesión desde Firebase.';
       try{await auth.signOut()}catch(e){}
-      showLogin();loginError(message);
+      showLoginFormForRetry();loginError(message);
     }finally{state.loginBusy=false;}
   });
-  }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLogin();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
+  }).catch(error=>{console.error("[SENDWAYO] No se pudo iniciar una sesión limpia:",error);showLoginFormForRetry();loginError("Firebase no pudo preparar el acceso. Compruebe la conexión y recargue la página.");throw error;});
   window.sendwayoCloudStatus='Firebase Authentication y lecturas en tiempo real están conectados. Antes de usar dinero real, todavía deben validarse las reglas de escritura por rol y probarse las operaciones financieras en Firebase.';
   // Liberar el acceso solo cuando el manejador final y el arranque de Firebase ya existen.
   window.__sendwayoFirebaseSecureLoginReady = true;
