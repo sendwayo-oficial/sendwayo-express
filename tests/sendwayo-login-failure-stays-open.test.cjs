@@ -12,7 +12,7 @@ assert.ok(catchAt>=0,'login handler must expose its failure path');
 const finallyAt=source.indexOf('} finally {',catchAt);
 assert.ok(finallyAt>catchAt,'login handler must always release the busy state');
 const catchBlock=source.slice(catchAt,finallyAt);
-assert.match(catchBlock,/if\s*\(auth\.currentUser\)\s*\{\s*await\s+auth\.signOut\(\)\s*;?\s*\}/,
+assert.match(catchBlock,/if\s*\(auth\.currentUser\)\s*(?:\{\s*await\s+auth\.signOut\(\)\s*;?\s*\}|await\s+auth\.signOut\(\)\s*;?)/,
   'only clean up Firebase when a real user session exists; never sign out after invalid credentials');
 assert.doesNotMatch(catchBlock,/auth\.signOut\(\)\.catch/,
   'unconditional signOut must not trigger the unauthenticated redirect after a failed login');
