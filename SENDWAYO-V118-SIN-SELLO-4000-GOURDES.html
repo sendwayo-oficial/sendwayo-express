@@ -186,6 +186,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
       var filename=src.split('/').pop().split('?')[0];
       var urls=[
         src,
+        'https://cdn.jsdelivr.net/npm/firebase@10.12.2/'+filename,
         'https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/'+filename,
         'https://unpkg.com/firebase@10.12.2/'+filename
       ];
