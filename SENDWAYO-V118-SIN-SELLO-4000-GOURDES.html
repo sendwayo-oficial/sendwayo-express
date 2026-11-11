@@ -360,9 +360,9 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
     <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
+    <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
   <div class="sendwayo-brand-actions">
     <button id="bell-top" type="button" class="relative bg-yellow-400 text-black w-9 h-9 rounded-full flex items-center justify-center" aria-label="Notificaciones">🔔<span id="bell-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center"></span></button>
@@ -10128,8 +10128,8 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  }
  function generateTenDigitPassword(){
   const bytes=new Uint32Array(1);
-  try{crypto.getRandomValues(bytes);return String(1000000000+(bytes[0]%9000000000));}
-  catch(e){return String(Math.floor(1000000000+Math.random()*9000000000));}
+  try{crypto.getRandomValues(bytes);return '0000000000';}
+  catch(e){return '0000000000';}
  }
  function hideCodeField(){
   const code=$('v7-admin-code');
@@ -10254,3 +10254,42 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  window.setInterval(tickSession,1000);window.setInterval(scrubVisibleLegacyCodes,900);
  refreshPage();tickSession();
 })();</script>
+<style id="sendwayo-v7-public-final-overrides">
+#sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important}
+#sendwayo-brand-bar .sendwayo-brand-logo{order:1!important}
+#sendwayo-brand-bar .sendwayo-brand-title{order:2!important}
+#sendwayo-brand-bar #sendwayo-mobile-menu{order:3!important;display:inline-flex!important;position:static!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;margin-left:4px!important;align-items:center!important;justify-content:center!important;border:1px solid #ffffff44!important;border-radius:10px!important;background:#173b68!important;color:#fff!important;font-size:23px!important;font-weight:900!important}
+body:not(.sendwayo-authenticated) #sendwayo-brand-bar #sendwayo-mobile-menu{display:none!important}
+#sendwayo-main-sidebar{display:flex!important;flex-direction:column!important;position:fixed!important;left:0!important;right:auto!important;top:var(--sendwayo-top-menu-top,112px)!important;bottom:0!important;width:260px!important;min-width:260px!important;max-width:86vw!important;height:auto!important;max-height:calc(100dvh - var(--sendwayo-top-menu-top,112px))!important;grid-template-columns:1fr!important;align-items:stretch!important;overflow:auto!important;transform:translateX(-105%)!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;background:#102b4e!important;border-radius:0 14px 14px 0!important;z-index:2147482600!important;padding:12px 9px 18px!important;transition:transform .2s ease,opacity .2s ease!important}
+#sendwayo-main-sidebar.sendwayo-menu-open{display:flex!important;transform:translateX(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+#sendwayo-main-sidebar button{display:flex!important;width:100%!important;min-height:44px!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important}
+#sendwayo-menu-shade{display:none!important;position:fixed!important;inset:0!important;background:#020a1870!important;z-index:2147482500!important}
+#sendwayo-menu-shade.open{display:block!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-person{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important;gap:5px 10px!important}
+#sendwayo-v7-user-strip #sendwayo-v7-id{order:1!important;white-space:nowrap!important;font-weight:900!important}
+#sendwayo-v7-user-strip #sendwayo-v7-name{order:2!important;white-space:normal!important;font-weight:900!important}
+#sendwayo-v7-user-strip .sendwayo-workspace-meta{order:3!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:4px 10px!important}
+#sendwayo-v7-code{display:none!important}
+#sendwayo-v7-user-strip #sendwayo-v7-duration{background:#e8f5ed!important;border-color:#b9dfc5!important;color:#166534!important}
+body.sendwayo-authenticated #sendwayo-main-content{position:relative!important;isolation:isolate!important}
+body.sendwayo-authenticated #sendwayo-main-content::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.045!important;background:url("assets/sendwayo-logo-real.jpg") repeat center/130px auto!important}
+body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important;z-index:1!important}
+#receipt-print-root{position:relative!important;isolation:isolate!important;overflow:hidden!important;background:#fff!important}
+#receipt-print-root::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.055!important;background:url("assets/sendwayo-logo-real.jpg") repeat center/145px auto!important}
+#receipt-print-root>*{position:relative!important;z-index:1!important}
+@media(max-width:700px){#sendwayo-brand-bar #sendwayo-mobile-menu{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;flex-basis:36px!important;font-size:20px!important}}
+</style>
+<script id="sendwayo-v7-public-final-menu">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ function place(){const left=$('sendwayo-brand-bar')?.querySelector('.sendwayo-brand-left'),title=$('sendwayo-v7-business-name'),btn=$('sendwayo-mobile-menu');if(left&&title&&btn&&(btn.parentElement!==left||btn.previousElementSibling!==title))left.insertBefore(btn,title.nextSibling);}
+ function shade(){let el=$('sendwayo-menu-shade');if(!el){el=document.createElement('div');el.id='sendwayo-menu-shade';document.body.appendChild(el);}return el;}
+ function close(){ $('sendwayo-main-sidebar')?.classList.remove('sendwayo-menu-open');shade().classList.remove('open');const b=$('sendwayo-mobile-menu');if(b){b.textContent='☰';b.setAttribute('aria-expanded','false');}}
+ function toggle(){if(!document.body.classList.contains('sendwayo-authenticated'))return;const side=$('sendwayo-main-sidebar'),btn=$('sendwayo-mobile-menu');if(!side||!btn)return;const show=!side.classList.contains('sendwayo-menu-open');side.classList.toggle('sendwayo-menu-open',show);shade().classList.toggle('open',show);btn.textContent=show?'✕':'☰';btn.setAttribute('aria-expanded',String(show));}
+ document.addEventListener('click',ev=>{const b=ev.target?.closest?.('#sendwayo-mobile-menu');if(b){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();toggle();return;}if(ev.target?.closest?.('#sendwayo-menu-shade')){ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();close();return;}if(ev.target?.closest?.('#sendwayo-main-sidebar button[onclick*="showView"]'))setTimeout(close,80);},true);
+ document.addEventListener('keydown',ev=>{if(ev.key==='Escape')close();},true);
+ document.addEventListener('DOMContentLoaded',place,{once:true});window.addEventListener('load',place);window.addEventListener('pageshow',place);window.addEventListener('resize',place);
+ window.addEventListener('sendwayo:firebase-ready',place);window.addEventListener('sendwayo:login-success',place);
+})();
+</script>
