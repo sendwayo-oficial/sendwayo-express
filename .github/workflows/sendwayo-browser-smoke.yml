@@ -6,7 +6,7 @@ on:
     paths:
       - '.github/workflows/sendwayo-browser-smoke.yml'
   workflow_run:
-    workflows: ["Publish approved SENDWAYO EXPRESS - shared balances"]
+    workflows: ["Publish approved SENDWAYO EXPRESS - shared balances", "pages build and deployment"]
     types: [completed]
     branches: [main]
 
