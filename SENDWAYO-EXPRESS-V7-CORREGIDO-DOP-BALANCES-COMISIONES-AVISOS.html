@@ -344,12 +344,12 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     <div class="space-y-4">
       <div>
         <label class="block text-[11px] font-bold mb-1">Usuario</label>
-        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
+        <input id="login-usuario" type="text" placeholder="ID, usuario o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
       </div>
       <div>
         <label class="block text-[11px] font-bold mb-1">Contraseña</label>
         <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
-        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
+        <div class="text-[9px] text-gray-500 mt-1">Entre con su ID, usuario o teléfono registrado; la contraseña se verifica en Firebase Authentication</div>
       </div>
       <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
       <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
@@ -5153,7 +5153,7 @@ window.sendwayoShareReceipt=async function(){
     return Array.isArray(window.TRANSACCIONES) ? window.TRANSACCIONES : [];
   }
   function accountNameForId(id) {
-    const a = accountById(id); return a ? `${txt(a.nombre || a.name)} (${txt(a.id)}${a.codigo ? ` · ${txt(a.codigo)}` : ''})` : txt(id || '—');
+    const a = accountById(id); return a ? `${txt(a.nombre || a.name)} (ID ${txt(a.id)})` : txt(id || '—');
   }
   function moduleTransactions(view) {
     const wanted = moduleTypes[view];
@@ -7060,7 +7060,7 @@ window.sendwayoShareReceipt=async function(){
     const old=document.getElementById('sendwayo-force-first-password');if(old)old.remove();
     const overlay=document.createElement('div');overlay.id='sendwayo-force-first-password';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
     overlay.style.cssText='position:fixed;inset:0;z-index:2147483646;background:rgba(7,18,38,.92);display:flex;align-items:center;justify-content:center;padding:18px;font-family:Arial,sans-serif';
-    overlay.innerHTML='<form id="sendwayo-force-first-password-form" style="width:100%;max-width:440px;background:#fff;border-radius:18px;padding:24px;box-shadow:0 20px 60px #0006"><div style="font-size:22px;font-weight:900;color:#102847;margin-bottom:8px">Cambie su contraseña inicial</div><p style="font-size:13px;line-height:1.5;color:#475569;margin-bottom:18px">Por seguridad, la contraseña provisional <b>12345678</b> solo se puede utilizar para el primer acceso. Cree una contraseña personal para continuar.</p><label style="display:block;font-size:12px;font-weight:800;margin-bottom:5px">Nueva contraseña</label><input id="sendwayo-force-password-1" type="password" autocomplete="new-password" minlength="8" required style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;margin-bottom:12px;box-sizing:border-box"><label style="display:block;font-size:12px;font-weight:800;margin-bottom:5px">Repita la nueva contraseña</label><input id="sendwayo-force-password-2" type="password" autocomplete="new-password" minlength="8" required style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;margin-bottom:12px;box-sizing:border-box"><p id="sendwayo-force-password-error" role="alert" style="display:none;color:#b91c1c;font-size:12px;margin:0 0 12px"></p><button id="sendwayo-force-password-submit" type="submit" style="width:100%;min-height:46px;border:0;border-radius:999px;background:#0f2440;color:#fff;font-weight:800;font-size:14px">Guardar contraseña y continuar</button></form>';
+    overlay.innerHTML='<form id="sendwayo-force-first-password-form" style="width:100%;max-width:440px;background:#fff;border-radius:18px;padding:24px;box-shadow:0 20px 60px #0006"><div style="font-size:22px;font-weight:900;color:#102847;margin-bottom:8px">Cambie su contraseña inicial</div><p style="font-size:13px;line-height:1.5;color:#475569;margin-bottom:18px">Por seguridad, la contraseña temporal entregada por Administración solo sirve para el primer acceso. Cree una contraseña personal para continuar.</p><label style="display:block;font-size:12px;font-weight:800;margin-bottom:5px">Nueva contraseña</label><input id="sendwayo-force-password-1" type="password" autocomplete="new-password" minlength="8" required style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;margin-bottom:12px;box-sizing:border-box"><label style="display:block;font-size:12px;font-weight:800;margin-bottom:5px">Repita la nueva contraseña</label><input id="sendwayo-force-password-2" type="password" autocomplete="new-password" minlength="8" required style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;margin-bottom:12px;box-sizing:border-box"><p id="sendwayo-force-password-error" role="alert" style="display:none;color:#b91c1c;font-size:12px;margin:0 0 12px"></p><button id="sendwayo-force-password-submit" type="submit" style="width:100%;min-height:46px;border:0;border-radius:999px;background:#0f2440;color:#fff;font-weight:800;font-size:14px">Guardar contraseña y continuar</button></form>';
     document.body.appendChild(overlay);
     const form=overlay.querySelector('#sendwayo-force-first-password-form'),p1=overlay.querySelector('#sendwayo-force-password-1'),p2=overlay.querySelector('#sendwayo-force-password-2'),error=overlay.querySelector('#sendwayo-force-password-error'),button=overlay.querySelector('#sendwayo-force-password-submit');
     p1.focus();
@@ -7069,7 +7069,7 @@ window.sendwayoShareReceipt=async function(){
         event.preventDefault();const first=String(p1.value||''),second=String(p2.value||'');
         const showError=message=>{error.textContent=message;error.style.display='block';};
         if(first.length<8){showError('La nueva contraseña debe tener al menos 8 caracteres.');return;}
-        if(first==='12345678'){showError('No puede conservar la contraseña provisional.');return;}
+        if(first==='12345678'||first==='0000000000'){showError('Elija una contraseña personal distinta de las claves temporales comunes.');return;}
         if(first!==second){showError('Las dos contraseñas no coinciden.');return;}
         button.disabled=true;button.textContent='Actualizando contraseña…';error.style.display='none';
         try{
@@ -7096,7 +7096,7 @@ window.sendwayoShareReceipt=async function(){
     document.body.classList.remove('sendwayo-login-open');
     document.body.classList.add('sendwayo-authenticated');
     const top = document.getElementById('user-top');
-    if (top) top.textContent = `${user.nombre || user.name || 'Usuario'} — ${user.codigo || user.id || ''}`;
+    if (top) top.textContent = `${user.nombre || user.name || 'Usuario'} — ID ${user.id || user.uid || ''}`;
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-tablero')?.classList.remove('hidden');
   }
@@ -8372,7 +8372,7 @@ window.sendwayoShareReceipt=async function(){
     try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))out.push(...REMITENTES);}catch(e){};
     return out;
   };
-  const findAccount=id=>accountArrays().find(a=>[a.id,a.idAnterior,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.dbUserKey,a.codigo,a.email,a.username].some(v=>text(v)===text(id)))||null;
+  const findAccount=id=>accountArrays().find(a=>[a.id,a.idAnterior,a.legacyId,a.accountId,...(Array.isArray(a.idAliases)?a.idAliases:[]),a.dbUserKey,a.rtdbUserKey].some(v=>text(v)===text(id)))||null;
   function accountModal(title,body){let m=$('sendwayo-admin-account-modal');if(!m){m=document.createElement('div');m.id='sendwayo-admin-account-modal';m.className='fixed inset-0 z-[30000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(m);}m.innerHTML=`<div class="w-full max-w-xl max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>${esc(title)}</b><button type="button" onclick="document.getElementById('sendwayo-admin-account-modal').remove()">✕</button></div><div class="p-4 space-y-3">${body}<button type="button" id="sendwayo-admin-account-save" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Guardar</button></div></div>`;return m;}
   window.sendwayoOpenAccountForm=function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede crear o modificar cuentas.');
@@ -8382,10 +8382,10 @@ window.sendwayoShareReceipt=async function(){
     const idReserved=value=>accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(value)));
     while(idReserved(nextId()))next++;
     if(ag&&next>9)throw new Error('Se agotó la serie AGE400I1–AGE400I9; Administración debe asignar manualmente el siguiente ID.');
-    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||nextId(),
+    const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',ident=a?.id||nextId(),
       password='';
     const f=(field,label,value='',type='text',ro=false)=>`<label class="block text-xs font-bold">${label}<input id="v7-admin-${field}" type="${type}" value="${esc(value)}" ${ro?'readonly':''} class="mt-1 w-full border rounded-xl px-3 py-2.5 font-normal ${ro?'bg-slate-100':''}"></label>`;
-    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','','password')}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
+    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre completo y apellido',name)}${f('id','ID de la persona',ident)}${f('username','Usuario',username)}${f('email','Correo de acceso',email,'email',!!a)}${f('phone','Teléfono',phone,'tel')}${a?'':f('password','Contraseña temporal (10 dígitos)','','text')}</div><label style="display:none!important" aria-hidden="true">ID interno de compatibilidad<input id="v7-admin-code" type="text" value="${esc(ident)}"></label><p class="text-[11px] text-slate-600">La cuenta se crea en Firebase. Cada usuario recibe una contraseña temporal única de 10 dígitos y deberá cambiarla en su primer acceso.</p>`;
     const modal=accountModal((a?'Modificar ':'Crear nuevo ')+(ag?'agente':'remitente'),body);
     $('sendwayo-admin-account-save').onclick=()=>window.sendwayoSaveAccountForm(view,id);
   };
@@ -8401,14 +8401,14 @@ window.sendwayoShareReceipt=async function(){
 
   window.sendwayoSaveAccountForm=async function(view,id=''){
     if(!isAdmin())return deny('Solo el administrador puede guardar cuentas.');
-    const name=$('v7-admin-name')?.value.trim()||'',ident=$('v7-admin-id')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',code=$('v7-admin-code')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';
-    if(!name||!ident||!username||!code||!email||!phone)return deny('Complete ID, nombre, usuario, código, correo y celular.');
+    const name=$('v7-admin-name')?.value.trim()||'',ident=$('v7-admin-id')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';
+    if(!name||!ident||!username||!email||!phone)return deny('Complete el ID, nombre completo, usuario, correo y teléfono.');
     if(!/^[A-Za-z0-9_-]{3,32}$/.test(ident))return deny('El ID debe tener entre 3 y 32 caracteres: letras, números, guion o guion bajo.');
     if(!/^\S+@\S+\.\S+$/.test(email))return deny('El correo no es válido.');
     const fb=window.sendwayoFirebase;if(!fb?.db||!fb?.auth?.currentUser)return deny('No hay una sesión administrativa confirmada en Firebase.');
     let a=id?findAccount(id):null;const ag=view==='agentes',roleValue=ag?'agente':'remitente';
-    const duplicate=accountArrays().find(x=>x!==a&&(norm(x.id)===norm(ident)||(Array.isArray(x.idAliases)&&x.idAliases.some(v=>norm(v)===norm(ident)))||norm(x.username)===norm(username)||norm(x.codigo||x.code)===norm(code)));
-    if(duplicate)return deny('Ese usuario o código ya está asignado a otra cuenta.');
+    const duplicate=accountArrays().find(x=>x!==a&&(norm(x.id)===norm(ident)||(Array.isArray(x.idAliases)&&x.idAliases.some(v=>norm(v)===norm(ident)))||norm(x.username||x.login)===norm(username)||norm(x.email)===norm(email)));
+    if(duplicate)return deny('Ese ID, usuario o correo ya está asignado a otra cuenta.');
     const btn=$('sendwayo-admin-account-save');if(btn){btn.disabled=true;btn.textContent='Guardando en Firebase…';}
     try{
       if(!a){
@@ -8425,13 +8425,13 @@ window.sendwayoShareReceipt=async function(){
         const idDuplicate=accountArrays().some(x=>[x.id,x.idAnterior,x.legacyId,...(Array.isArray(x.idAliases)?x.idAliases:[])].some(v=>norm(v)===norm(ident)));
         if(idDuplicate)throw new Error('Ese ID ya existe o fue utilizado anteriormente.');
         const idNew=ident;
-        const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',mustChangePassword:true,passwordChangeRequired:true,forcePasswordChange:true,balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid};
+        const profile={id:idNew,legacyId:idNew,accountId:idNew,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',mustChangePassword:true,passwordChangeRequired:true,forcePasswordChange:true,balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).set(profile);
         if(ag)await fb.db.ref('sendwayo_express_v2/agentAuth/'+uid).set({authUid:uid,active:true,userId:dbKey,role:'agente',createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid});
       }else{
         const dbKey=text(a.dbUserKey||a.rtdbUserKey);if(!dbKey)throw new Error('No se encontró el identificador Firebase de esta cuenta; no se modificó.');
         const oldId=String(a.id||'');const idAliases=[...new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),String(a.idAnterior||''),oldId].filter(v=>v&&v!==ident))];
-        const patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases,name,nombre:name,displayName:name,username,login:username,code,codigo:code,staffId:code,phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:fb.auth.currentUser.uid};
+        const patch={id:ident,legacyId:ident,accountId:ident,idAnterior:oldId!==ident?oldId:String(a.idAnterior||''),idAliases,name,nombre:name,displayName:name,username,login:username,phone,telefono:phone,celular:phone,updatedAtMs:Date.now(),updatedByAuthUid:fb.auth.currentUser.uid};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).update(patch);
         Object.assign(a,patch);
       }
