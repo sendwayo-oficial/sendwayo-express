@@ -3,40 +3,34 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
+const finalScriptAt = html.lastIndexOf('<script id="sendwayo-v7-final-id-only-controller">');
+const finalScriptOpen = html.indexOf('>', finalScriptAt) + 1;
+const finalScriptEnd = html.indexOf('</script>', finalScriptOpen);
+assert.ok(finalScriptAt >= 0 && finalScriptEnd > finalScriptOpen, 'debe existir un único controlador final de la cabecera');
 
-assert.match(html, /id="sendwayo-brand-bar"/, 'la marca debe tener una barra superior dedicada');
-assert.match(html, /id="sendwayo-v7-business-name"[^>]*>SENDWAYO EXPRESS/, 'el nombre del negocio debe mostrarse arriba');
-assert.match(html, /id="sendwayo-v7-user-strip"/, 'la identidad debe estar en una franja superior');
-assert.match(html, /id="sendwayo-v7-name"/, 'el nombre del usuario debe estar en la franja');
-assert.match(html, /id="sendwayo-v7-role"/, 'el rol ADMINISTRADOR/AGENTE/REMITENTE debe estar en la franja');
-assert.match(html, /id="sendwayo-v7-id"/, 'el ID debe estar en la franja');
-assert.match(html, /id="sendwayo-v7-code"/, 'el código debe estar en la franja');
-assert.match(html, /id="sendwayo-v7-clock"/, 'la hora debe estar en la franja');
-assert.match(html, /id="sendwayo-v7-duration"/, 'la duración de sesión debe estar en la franja');
-assert.match(html, /function refreshIdentity\(\)/, 'el controlador debe refrescar la identidad activa');
-const refreshIdentity = html.match(/function refreshIdentity\(\)\{[\s\S]*?\n \}/)?.[0] || '';
-assert.match(refreshIdentity, /'sendwayo-v7-name':txt\(u&&\(u\.nombre\|\|u\.name\|\|u\.email\)/, 'el nombre visible debe proceder de la cuenta activa');
-assert.match(refreshIdentity, /'sendwayo-v7-role':u\?roleLabel\(u\)/, 'el rol visible debe proceder del perfil activo');
-assert.ok(refreshIdentity.includes("'sendwayo-v7-id':txt(u&&(u.id||u.accountId)"), 'el ID visible debe proceder del perfil activo');
-assert.ok(refreshIdentity.includes("'sendwayo-v7-code':txt(u&&(u.codigo||u.code||u.codigo2)"), 'el código visible debe proceder del perfil activo');
-assert.match(html, /id="sendwayo-main-content"/, 'el contenido principal debe usar un único contenedor');
-const layoutCss=html.slice(html.indexOf('<style id="sendwayo-v7-no-side-identity-final">'));
-assert.ok(layoutCss.includes('#sendwayo-main-sidebar{\n display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;'), 'el menú no debe reservar una columna mientras está cerrado');
-assert.ok(layoutCss.includes('#sendwayo-main-sidebar.sendwayo-menu-open{display:grid!important;transform:translateY(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}'), 'el menú debe aparecer solo cuando se abra');
-assert.match(layoutCss, /#sendwayo-main-content\{[\s\S]*?width:100%!important[\s\S]*?max-width:100%!important/s, 'el módulo activo debe ocupar todo el ancho');
-assert.match(html, /id="sendwayo-mobile-menu"/, 'el botón del menú debe estar en la franja superior');
-assert.match(html, /id="sendwayo-top-logout"/, 'Salir debe estar en la franja superior');
-const finalLayout = html.slice(html.indexOf('<style id="sendwayo-v7-no-side-identity-final">'));
-assert.ok(finalLayout.includes('#sendwayo-v7-user-strip{\n display:none!important;\n flex-direction:column!important;'),
-  'la identidad y el horario deben apilarse verticalmente en una franja superior');
-assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-person{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;'),
-  'el nombre y los datos de la cuenta deben ocupar filas superiores completas');
-assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-time{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;\n align-items:flex-start!important;\n justify-content:flex-start!important;'),
-  'fecha, hora y duración deben ir debajo de la identidad y no a su lado');
-assert.ok(finalLayout.includes('#sendwayo-v7-user-strip .sendwayo-workspace-meta{\n display:flex!important;\n width:100%!important;\n flex-direction:column!important;'),
-  'el rol, ID y código deben aparecer en líneas verticales completas');
-assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-controller/, 'no debe quedar un segundo controlador de identidad');
-assert.doesNotMatch(html, /sendwayo-v7-unified-workspace-header/, 'no debe quedar una segunda hoja de cabecera');
-assert.doesNotMatch(html, /sendwayo-v7-top-only-workspace-layout/, 'no debe quedar otra hoja de distribución contradictoria');
+const finalScript = html.slice(finalScriptOpen, finalScriptEnd);
+assert.doesNotThrow(() => new Function(finalScript), 'el controlador final no debe contener errores de sintaxis');
 
-console.log('SENDWAYO workspace header: cabecera superior y área de trabajo completa verificadas.');
+for (const id of ['sendwayo-brand-bar','sendwayo-v7-business-name','sendwayo-mobile-menu','sendwayo-v7-user-strip','sendwayo-v7-name','sendwayo-v7-role','sendwayo-v7-id','sendwayo-v7-username','sendwayo-v7-phone','sendwayo-v7-date','sendwayo-v7-clock','sendwayo-v7-duration']) {
+  assert.ok(html.includes('id="' + id + '"'), 'falta el elemento de cabecera ' + id);
+}
+assert.match(finalScript, /function ensureIdentityMarkup\(\)/);
+assert.match(finalScript, /function updateIdentity\(\)/);
+assert.match(finalScript, /sendwayo-v7-username/);
+assert.match(finalScript, /sendwayo-v7-phone/);
+assert.match(finalScript, /function tickSession\(\)/);
+assert.match(finalScript, /window\.setInterval\(tickSession,1000\)/);
+assert.match(finalScript, /function moveMenuButton\(\)/);
+assert.match(finalScript, /left\.insertBefore\(btn,title\.nextSibling\)/);
+assert.match(finalScript, /function fixSidebar\(\)/);
+assert.match(finalScript, /function installAllCountrySearch\(\)/);
+assert.match(finalScript, /function scrubVisibleLegacyCodes\(\)/);
+
+const css = html.slice(html.lastIndexOf('<style id="sendwayo-v7-final-user-experience">'), html.lastIndexOf('</style>'));
+assert.match(css, /#sendwayo-main-sidebar\{[^}]*left:0!important[^}]*width:260px!important/s);
+assert.match(css, /#sendwayo-main-sidebar\.sendwayo-menu-open\{display:flex!important;flex-direction:column!important;transform:translateX\(0\)!important;/);
+assert.match(css, /#sendwayo-brand-bar #sendwayo-mobile-menu\{order:3!important;/);
+assert.match(css, /#sendwayo-v7-code\{display:none!important\}/);
+assert.match(css, /body\.sendwayo-authenticated #sendwayo-main-content::before/);
+
+console.log('PASS: V7 header fields, left slide-out navigation, session timer and ID-only view.');
