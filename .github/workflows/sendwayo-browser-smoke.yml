@@ -114,6 +114,7 @@ jobs:
               });
               const response = await page.goto(process.env.PAGE_URL, {
                 waitUntil: 'domcontentloaded',
+                timeout: 90000,
                 timeout: 60000
               });
               if (!response || !response.ok()) {
@@ -168,7 +169,7 @@ jobs:
               });
               console.log('INITIAL PAGE STATE:', JSON.stringify(initial, null, 2));
               if (!initial.welcomeExists || initial.welcomeDisplay === 'none' || initial.welcomeVisibility === 'hidden' ||
-                  !initial.loginButtonExists || !initial.registerButtonExists || !initial.photoAbsent ||
+                  !initial.loginButtonExists || initial.registerButtonExists || !initial.photoAbsent ||
                   !initial.logoVisible || initial.businessName !== 'SENDWAYO EXPRESS') {
                 console.error('PAGE ERRORS:', JSON.stringify(pageErrors, null, 2));
                 console.error('FAILED SCRIPTS:', JSON.stringify(failedScripts, null, 2));
@@ -177,32 +178,10 @@ jobs:
                 throw new Error('La bienvenida no se muestra en la página pública.');
               }
 
-              const registerButton = page.locator('#sendwayo-home-register');
-              await registerButton.click({ timeout: 15000 });
-              await page.waitForFunction(() => {
-                const modal = document.querySelector('#sendwayo-v7-modal');
-                return !!(modal && getComputedStyle(modal).display !== 'none' &&
-                  getComputedStyle(modal).visibility !== 'hidden' && !modal.classList.contains('hidden'));
-              }, { timeout: 5000 });
-              const registrationState = await page.evaluate(() => {
-                const modal = document.querySelector('#sendwayo-v7-modal');
-                return {
-                  visible: !!modal && getComputedStyle(modal).display !== 'none' &&
-                    getComputedStyle(modal).visibility !== 'hidden' && !modal.classList.contains('hidden'),
-                  hasName: !!modal?.querySelector('#v7-public-name'),
-                  hasPhone: !!modal?.querySelector('#v7-public-phone'),
-                  hasEmail: !!modal?.querySelector('#v7-public-email')
-                };
-              });
-              console.log('PUBLIC REGISTRATION STATE:', JSON.stringify(registrationState, null, 2));
-              if (!registrationState.visible || !registrationState.hasName || !registrationState.hasPhone || !registrationState.hasEmail) {
-                throw new Error('El botón Registrar no abrió una ventanilla pública visible y utilizable.');
+              if (initial.registerButtonExists) {
+                throw new Error('La portada solo debe presentar el botón Ingresar.');
               }
-              await page.locator('#sendwayo-v7-modal header button').first().click();
-              await page.waitForTimeout(100);
-              const loginButton = page.locator(
-                '#sendwayo-home-login'
-              ).first();
+              const loginButton = page.locator('#sendwayo-home-login').first();
               await loginButton.click({ timeout: 15000 });
               await page.waitForTimeout(1500);
               const loginState = await page.evaluate(() => {

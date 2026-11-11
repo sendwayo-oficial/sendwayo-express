@@ -76,6 +76,21 @@ jobs:
           print('PASS: correo administrador, limpieza no repetitiva y logo/diseño V7 aplicados.')
           PY
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build local Tailwind CSS for reliable page loading
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save tailwindcss@3.4.17
+          printf '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n' > /tmp/sendwayo-tailwind-input.css
+          mkdir -p site/assets
+          npx tailwindcss -i /tmp/sendwayo-tailwind-input.css -o site/assets/sendwayo-tailwind.css --content site/index.html --minify
+          test -s site/assets/sendwayo-tailwind.css
+          echo "PASS: Tailwind se sirve desde el propio sitio, sin esperar al CDN."
+
       - name: Verify the selected shared-balance version
         shell: bash
         run: |
@@ -115,10 +130,14 @@ jobs:
           assert 'sendwayo-v7-no-side-identity-final' in html and 'sendwayo-v7-top-identity-and-width-final' in html
           assert '<section class="sendwayo-landing-photo-panel"' not in html, 'La portada minimalista no debe mostrar una fotografía adicional'
           assert 'class="sendwayo-landing-logo"' in html and 'class="sendwayo-landing-title"' in html, 'El logo y nombre SENDWAYO deben verse en la portada'
-          assert 'id="sendwayo-home-login"' in html and 'id="sendwayo-home-register"' in html, 'Ingresar y Registrar deben estar presentes'
+          assert 'id="sendwayo-home-login"' in html and 'id="sendwayo-home-register"' not in html, 'La portada debe tener únicamente Ingresar'
+          assert 'href="assets/sendwayo-tailwind.css"' in html, 'Tailwind debe cargarse desde el propio sitio'
+          assert 'https://cdn.tailwindcss.com' not in html, 'La página no debe depender del CDN de Tailwind'
           assert 'sendwayo-v7-minimal-welcome-final' in html, 'La portada mínima debe tener el estilo final'
-          assert "loginButton.addEventListener('click'" in html and "registerButton.addEventListener('click'" in html, 'Los dos botones deben tener acciones activas'
-          assert 'body:not(.sendwayo-authenticated)>#sendwayo-v7-modal' in html, 'El formulario público de registro no debe quedar oculto'
+          assert "loginButton.addEventListener('click'" in html, 'Ingresar debe tener una acción activa'
+          assert 'window.v162_showLogin()' in html, 'Ingresar debe abrir el formulario real'
+          assert 'body:not(.sendwayo-authenticated)>#sendwayo-v7-modal' not in html, 'El modal de registro no debe cubrir la portada'
+          assert 'width:124px!important;height:88px!important' in html, 'El logo debe ser compacto'
           assert 'const perPage=10;' in html
           assert "const num=String(i-start+1).padStart(2,'0')" in html
           assert "String(i+1).padStart(2,'0')" in html
@@ -134,7 +153,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html
+          git add SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html site/assets/sendwayo-tailwind.css
           if git diff --cached --quiet; then
             echo "The published V7 source already contains the verified SENDWAYO login."
           else
