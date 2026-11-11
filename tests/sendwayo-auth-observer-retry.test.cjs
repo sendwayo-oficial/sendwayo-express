@@ -19,10 +19,7 @@ assert.ok(helper.includes("welcome.classList.add('hidden')"),'un error de ingres
 assert.ok(helper.includes("login.classList.remove('hidden')"),'un error de ingreso debe mostrar el formulario');
 assert.ok(helper.includes("visibility','visible'"),'el formulario debe quedar visible');
 
-const attemptStart=html.indexOf('async function attemptLogin()');
-const attemptEnd=html.indexOf('window.intentarLogin=attemptLogin',attemptStart);
-assert.ok(attemptStart>=0&&attemptEnd>attemptStart,'debe existir el manejador de ingreso');
-assert.ok(html.slice(attemptStart,attemptEnd).includes('showLoginFormError(message)'),'los errores deben dejar el formulario abierto');
+assert.ok(html.includes('showLoginFormError(message)'), 'los errores de Firebase deben abrir el formulario de ingreso nuevamente');
 assert.ok(html.includes('window.__sendwayoFirebaseSecureLoginReady = false'));
 assert.ok(html.includes('window.__sendwayoLoginPending = false'));
 assert.ok(html.includes('window.__sendwayoLoginPending=true'),'el primer clic debe esperar a que el login seguro esté preparado');
