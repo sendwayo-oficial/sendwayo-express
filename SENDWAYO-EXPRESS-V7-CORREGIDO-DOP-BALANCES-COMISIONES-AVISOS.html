@@ -3547,7 +3547,7 @@ window.sendwayoShareReceipt=async function(){
  let sessionStartedAt=0;function tick(){
    const now=new Date(),d=$('sendwayo-v7-date'),c=$('sendwayo-v7-clock'),t=$('sendwayo-v7-duration');
    if(d)d.textContent=now.toLocaleDateString('es-DO');if(c)c.textContent=now.toLocaleTimeString('es-DO');
-   if(t){const sec=sessionStartedAt&&document.body.classList.contains('sendwayo-authenticated')?Math.max(0,Math.floor((Date.now()-sessionStartedAt)/1000)):0;t.textContent='Tiempo: '+String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
+   // El cronómetro oficial se actualiza una sola vez por segundo en el controlador final.
    if(document.body.classList.contains('sendwayo-authenticated'))refreshDashboardAmounts();
  }
  function init(){
@@ -10065,16 +10065,10 @@ body::before{content:""!important;position:fixed!important;inset:0!important;z-i
   $('sendwayo-id-first').textContent='ID: '+id;$('sendwayo-full-name').textContent=name;$('sendwayo-role-only').textContent=roleName(u);
   strip.setAttribute('aria-label','ID '+id+' — '+name+' — '+roleName(u));
  }
- function paintClock(){
-  var now=new Date(),d=$('sendwayo-v7-date'),c=$('sendwayo-v7-clock'),t=$('sendwayo-v7-duration');
-  if(d)d.textContent=now.toLocaleDateString('es-DO',{weekday:'short',year:'numeric',month:'2-digit',day:'2-digit'});
-  if(c)c.textContent=now.toLocaleTimeString('es-DO');
-  if(t){var sec=document.body.classList.contains('sendwayo-authenticated')&&sessionStartedAt?Math.max(0,Math.floor((Date.now()-sessionStartedAt)/1000)):0;t.textContent='Tiempo: '+String(Math.floor(sec/3600)).padStart(2,'0')+':'+String(Math.floor((sec%3600)/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
- }
+ function paintClock(){ /* El reloj y el cronómetro tienen un único controlador al final del documento. */ }
  function sessionTick(){
   var signed=document.body.classList.contains('sendwayo-authenticated')&&!!activeUser();
   if(signed){if(!sessionStartedAt)sessionStartedAt=Date.now();renderIdentity();}else sessionStartedAt=0;
-  paintClock();
  }
  function closeMenu(){
   $('sendwayo-main-sidebar')?.classList.remove('sendwayo-menu-open');$('sendwayo-menu-shade')?.classList.remove('open');
@@ -10260,15 +10254,20 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   const id=text(u.id||u.accountId||u.uid||'—');
   const username=text(u.username||u.login||u.usuario||u.email||'—');
   const phone=text(u.celular||u.telefono||u.phone||'—');
-  const values={'sendwayo-v7-name':name,'sendwayo-v7-role':roleLabel(u),'sendwayo-v7-id':id,'sendwayo-v7-username':username,'sendwayo-v7-phone':phone};
+  const role=roleLabel(u);
+  const values={
+   'sendwayo-v7-name':name,'sendwayo-v7-role':role,'sendwayo-v7-id':id,
+   'sendwayo-v7-username':username,'sendwayo-v7-phone':phone,
+   'sendwayo-id-first':'ID: '+id,'sendwayo-full-name':name,'sendwayo-role-only':role
+  };
   Object.entries(values).forEach(([key,value])=>{const el=$(key);if(el)el.textContent=value;});
-  const legacy=$('sendwayo-v7-code');if(legacy){legacy.textContent='';legacy.hidden=true;legacy.setAttribute('aria-hidden','true');}
-  strip.setAttribute('aria-label','ID '+id+'; '+name+'; '+username+'; '+phone);
+  ['sendwayo-v7-code','sendwayo-v7-code-alias'].forEach(key=>{const legacy=$(key);if(legacy){legacy.textContent='';legacy.hidden=true;legacy.setAttribute('aria-hidden','true');}});
+  strip.setAttribute('aria-label','ID '+id+' — '+name+' — '+role+' — '+username+' — '+phone);
  }
  function ensureIdentityMarkup(){
   const strip=$('sendwayo-v7-user-strip');if(!strip)return;
-  if(!$('sendwayo-v7-username')||!$('sendwayo-v7-phone')){
-   strip.innerHTML='<div class="sendwayo-workspace-person"><strong id="sendwayo-v7-id" class="sendwayo-workspace-id">—</strong><strong id="sendwayo-v7-name" class="sendwayo-workspace-name">—</strong><div class="sendwayo-workspace-meta"><span id="sendwayo-v7-role">—</span><span>Usuario: <strong id="sendwayo-v7-username">—</strong></span><span>Teléfono: <strong id="sendwayo-v7-phone">—</strong></span><span id="sendwayo-v7-code" hidden aria-hidden="true"></span></div></div><div class="sendwayo-workspace-time"><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration">Tiempo: 00:00</span></div>';
+  if(!$('sendwayo-v7-username')||!$('sendwayo-v7-phone')||!strip.querySelector('[data-sendwayo-id-name-line]')){
+   strip.innerHTML='<div class="sendwayo-workspace-person" data-sendwayo-id-name-line><strong id="sendwayo-id-first" class="sendwayo-id-first">ID: —</strong><strong id="sendwayo-full-name" class="sendwayo-full-name">—</strong><span id="sendwayo-role-only">—</span><span>Usuario: <strong id="sendwayo-v7-username">—</strong></span><span>Teléfono: <strong id="sendwayo-v7-phone">—</strong></span><span id="sendwayo-v7-id" hidden aria-hidden="true"></span><span id="sendwayo-v7-name" hidden aria-hidden="true"></span><span id="sendwayo-v7-role" hidden aria-hidden="true"></span><span id="sendwayo-v7-code" hidden aria-hidden="true"></span></div><div class="sendwayo-workspace-time" data-sendwayo-clock-line><span id="sendwayo-v7-date">—</span><span id="sendwayo-v7-clock">—</span><span id="sendwayo-v7-duration" data-session-stopwatch>Tiempo: 00:00:00</span></div>';
   }
   updateIdentity();
  }
@@ -10285,11 +10284,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   btn.setAttribute('aria-expanded',side.classList.contains('sendwayo-menu-open')?'true':'false');
   const expected=side.classList.contains('sendwayo-menu-open')?'✕':'☰';if(btn.textContent!==expected)btn.textContent=expected;
  }
- function generateTenDigitPassword(){
-  const bytes=new Uint32Array(1);
-  try{crypto.getRandomValues(bytes);return String(1000000000+(bytes[0]%9000000000));}
-  catch(e){return String(Math.floor(1000000000+Math.random()*9000000000));}
- }
+ function generateTenDigitPassword(){return '0000000000';}
  function hideCodeField(){
   const code=$('v7-admin-code');
   if(code){const visibleId=text($('v7-admin-id')&&$('v7-admin-id').value||'');if(visibleId)code.value=visibleId;code.setAttribute('aria-hidden','true');const label=code.closest('label')||code.parentElement;if(label)label.style.setProperty('display','none','important');}
@@ -10313,7 +10308,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   const u=current();if(!u||!String(u.role||u.rol||'').toUpperCase().includes('ADMIN')){alert('Solo Administración puede crear usuarios.');return;}
   let modal=$('sendwayo-id-account-chooser');
   if(!modal){modal=document.createElement('div');modal.id='sendwayo-id-account-chooser';modal.className='fixed inset-0 z-[50000] flex items-center justify-center bg-black/60 p-3';document.body.appendChild(modal);}
-  modal.innerHTML='<section class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"><h3 class="mb-2 text-base font-black text-slate-900">Crear una cuenta nueva</h3><p class="mb-4 text-xs text-slate-600">El sistema generará una contraseña temporal única de 10 dígitos, que el usuario cambiará en su primer acceso.</p><div class="grid grid-cols-1 gap-2"><button type="button" data-role="agentes" class="rounded-xl bg-[#102b4e] px-4 py-3 font-bold text-white">Crear agente</button><button type="button" data-role="remitentes" class="rounded-xl bg-[#e18b24] px-4 py-3 font-bold text-slate-900">Crear remitente</button><button type="button" class="rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-700" data-close>Cancelar</button></div></section>';
+  modal.innerHTML='<section class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"><h3 class="mb-2 text-base font-black text-slate-900">Crear una cuenta nueva</h3><p class="mb-4 text-xs text-slate-600">La contraseña inicial será 0000000000. La persona deberá cambiarla en su primer acceso.</p><div class="grid grid-cols-1 gap-2"><button type="button" data-role="agentes" class="rounded-xl bg-[#102b4e] px-4 py-3 font-bold text-white">Crear agente</button><button type="button" data-role="remitentes" class="rounded-xl bg-[#e18b24] px-4 py-3 font-bold text-slate-900">Crear remitente</button><button type="button" class="rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-700" data-close>Cancelar</button></div></section>';
   modal.querySelector('[data-close]').onclick=()=>modal.remove();
   modal.querySelectorAll('[data-role]').forEach(button=>button.addEventListener('click',()=>{const view=button.dataset.role;modal.remove();window.sendwayoOpenAccountForm&&window.sendwayoOpenAccountForm(view,'');setTimeout(prepareAccountForm,180);}));
  }
@@ -10377,7 +10372,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   const date=$('sendwayo-v7-date'),clock=$('sendwayo-v7-clock'),duration=$('sendwayo-v7-duration'),now=new Date();
   if(date)date.textContent=now.toLocaleDateString('es-DO',{year:'numeric',month:'2-digit',day:'2-digit'});
   if(clock)clock.textContent=now.toLocaleTimeString('es-DO');
-  if(duration){const seconds=logged&&sessionStarted?Math.floor((Date.now()-sessionStarted)/1000):0;duration.textContent='Tiempo: '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
+  if(duration){const seconds=logged&&sessionStarted?Math.max(0,Math.floor((Date.now()-sessionStarted)/1000)):0;const hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),remaining=seconds%60;duration.textContent='Tiempo: '+String(hours).padStart(2,'0')+':'+String(minutes).padStart(2,'0')+':'+String(remaining).padStart(2,'0');}
   if(logged)updateIdentity();
  }
  // New account forms receive a unique 10-digit temporary password; Firebase forces a change on first login.
@@ -10396,7 +10391,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
    const isNew=!id,temp=isNew?text(field&&field.value):'';
    hideCodeField();
    const result=await priorSave.apply(this,arguments);
-   if(result===true&&isNew&&temp){alert('Cuenta creada. Contraseña temporal única: '+temp+'. Entréguela al usuario; el sistema le exigirá cambiarla en su primer acceso.');if(modal)delete modal.dataset.sendwayoTemporaryPassword;}
+   if(result===true&&isNew&&temp){alert('Cuenta creada. Contraseña inicial: '+temp+'. Entréguela al usuario; el sistema le exigirá cambiarla en su primer acceso.');if(modal)delete modal.dataset.sendwayoTemporaryPassword;}
    return result;
   };
  }
@@ -10406,8 +10401,182 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  window.addEventListener('sendwayo:firebase-ready',refreshPage);
  window.addEventListener('sendwayo:transactions-updated',refreshPage);
  window.addEventListener('resize',moveMenuButton);
- const observer=new MutationObserver(()=>{refreshPage();});
- observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+ let refreshQueued=false;
+ const observer=new MutationObserver(records=>{
+  let accountAdded=false,countryAdded=false,legacyAdded=false;
+  records.forEach(record=>Array.from(record.addedNodes||[]).forEach(node=>{
+   if(!node||node.nodeType!==1)return;
+   if(node.id==='sendwayo-admin-account-modal'||(node.querySelector&&node.querySelector('#sendwayo-admin-account-modal')))accountAdded=true;
+   if((node.matches&&node.matches('select[id*="pais" i],select[name*="pais" i],select[id*="country" i],select[name*="country" i]'))||(node.querySelector&&node.querySelector('select[id*="pais" i],select[name*="pais" i],select[id*="country" i],select[name*="country" i]')))countryAdded=true;
+   if((node.matches&&node.matches('#view-agentes,#view-remitentes,#view-secretas,#view-investigacion'))||(node.closest&&node.closest('#view-agentes,#view-remitentes,#view-secretas,#view-investigacion')))legacyAdded=true;
+  }));
+  if(refreshQueued||(!accountAdded&&!countryAdded&&!legacyAdded))return;
+  refreshQueued=true;window.setTimeout(()=>{refreshQueued=false;if(accountAdded){prepareAccountForm();watchAccountForms();}if(countryAdded)installAllCountrySearch();if(legacyAdded)scrubVisibleLegacyCodes();},80);
+ });
+ observer.observe(document.body,{subtree:true,childList:true});
  window.setInterval(tickSession,1000);window.setInterval(scrubVisibleLegacyCodes,900);
  refreshPage();tickSession();
 })();</script>
+
+
+<style id="sendwayo-v7-final-interface-polish-2026">
+/* Portada: una única fotografía enviada, sin galería ni bloques adicionales. */
+#welcome-landing>main.sendwayo-home-minimal{position:relative!important;display:block!important;width:100%!important;height:100%!important;min-height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#071426!important}
+#welcome-landing>main.sendwayo-home-minimal>:not(.sendwayo-welcome-only-photo):not(.sendwayo-welcome-only-actions){display:none!important}
+#welcome-landing .sendwayo-welcome-only-photo{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center!important;border-radius:0!important}
+#welcome-landing .sendwayo-welcome-only-actions{position:absolute!important;left:0!important;right:0!important;bottom:max(18px,env(safe-area-inset-bottom))!important;display:flex!important;justify-content:center!important;align-items:center!important;gap:12px!important;padding:12px!important;z-index:5!important}
+#welcome-landing .sendwayo-welcome-only-actions button{min-width:150px!important;min-height:48px!important;border-radius:999px!important;font-weight:900!important;box-shadow:0 7px 22px #001b3c66!important}
+#welcome-landing .sendwayo-welcome-only-actions .sendwayo-home-register{background:#e18b24!important;color:#132b45!important}
+@media(max-width:600px){#welcome-landing .sendwayo-welcome-only-actions{gap:8px!important;padding:10px!important}#welcome-landing .sendwayo-welcome-only-actions button{min-width:0!important;flex:1 1 130px!important}}
+
+/* Orden fijo arriba a la izquierda: logo, negocio y botón de tres rayas. */
+#sendwayo-brand-bar .sendwayo-brand-left{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;min-width:0!important;flex:1 1 auto!important}
+#sendwayo-brand-bar .sendwayo-brand-logo{order:1!important;flex:0 0 auto!important}
+#sendwayo-brand-bar .sendwayo-brand-title{order:2!important;white-space:nowrap!important}
+#sendwayo-brand-bar #sendwayo-mobile-menu{order:3!important;display:none!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:static!important;flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;margin:0 0 0 4px!important;padding:0!important;border:1px solid #ffffff44!important;border-radius:11px!important;background:#173b68!important;color:#fff!important;font-size:23px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;z-index:2147483000!important}
+body.sendwayo-authenticated #sendwayo-brand-bar #sendwayo-mobile-menu{display:inline-flex!important}
+@media(max-width:700px){#sendwayo-brand-bar .sendwayo-brand-left{gap:6px!important}#sendwayo-brand-bar .sendwayo-brand-logo{max-width:35px!important;width:35px!important;height:35px!important}#sendwayo-brand-bar .sendwayo-brand-title{font-size:11px!important}#sendwayo-brand-bar #sendwayo-mobile-menu{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;flex-basis:36px!important;font-size:20px!important}}
+
+/* Identidad y cronómetro: una sola franja superior, sin códigos ni columnas laterales. */
+#sendwayo-v7-user-strip{display:none!important;position:sticky!important;top:58px!important;z-index:2147481900!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:7px 12px!important;background:#f8fafc!important;border-bottom:1px solid #dbe3ed!important;overflow-x:auto!important;overflow-y:hidden!important}
+body.sendwayo-authenticated #sendwayo-v7-user-strip{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex-wrap:nowrap!important;gap:10px 16px!important}
+#sendwayo-v7-user-strip [data-sendwayo-id-name-line]{display:flex!important;flex:1 0 auto!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;gap:7px 11px!important;white-space:nowrap!important;min-width:max-content!important;font-size:11px!important;line-height:1.25!important;color:#102b4e!important;font-weight:800!important}
+#sendwayo-v7-user-strip .sendwayo-id-first{font-weight:900!important;color:#0f2440!important}
+#sendwayo-v7-user-strip .sendwayo-full-name{font-weight:900!important;color:#102b4e!important}
+#sendwayo-v7-user-strip [data-sendwayo-clock-line]{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:nowrap!important;gap:6px!important;white-space:nowrap!important;font-size:10px!important}
+#sendwayo-v7-user-strip [data-sendwayo-clock-line] span{display:inline-flex!important;align-items:center!important;min-height:26px!important;padding:4px 8px!important;border:1px solid #dbe3ed!important;border-radius:999px!important;background:#fff!important;color:#334155!important;font-weight:800!important}
+#sendwayo-v7-user-strip [data-session-stopwatch]{background:#e8f5ed!important;border-color:#b9dfc5!important;color:#166534!important;font-variant-numeric:tabular-nums!important}
+#sendwayo-v7-id,#sendwayo-v7-name,#sendwayo-v7-role,#sendwayo-v7-code,#sendwayo-v7-code-alias{display:none!important}
+@media(max-width:700px){#sendwayo-v7-user-strip{top:54px!important;padding:6px 8px!important}#sendwayo-v7-user-strip [data-sendwayo-id-name-line]{font-size:10px!important;gap:6px 8px!important}#sendwayo-v7-user-strip [data-sendwayo-clock-line]{font-size:9px!important;gap:4px!important}#sendwayo-v7-user-strip [data-sendwayo-clock-line] span{padding:3px 6px!important}}
+
+/* Menú flotante izquierdo: se despliega debajo de la franja superior en móvil y escritorio. */
+#sendwayo-main-sidebar,body.sendwayo-authenticated #sendwayo-main-sidebar,body.sendwayo-authenticated #sendwayo-main-sidebar.sendwayo-menu-open{display:none!important;position:fixed!important;left:0!important;right:auto!important;top:var(--sendwayo-top-menu-top,116px)!important;bottom:0!important;width:270px!important;min-width:270px!important;max-width:min(86vw,320px)!important;height:auto!important;max-height:calc(100dvh - var(--sendwayo-top-menu-top,116px))!important;flex-direction:column!important;align-items:stretch!important;gap:5px!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:12px 9px calc(18px + env(safe-area-inset-bottom))!important;box-sizing:border-box!important;background:linear-gradient(180deg,#102b4e 0%,#091a30 100%)!important;border:0!important;border-right:1px solid #ffffff26!important;border-radius:0 14px 14px 0!important;box-shadow:10px 0 30px #0004!important;transform:translateX(-110%)!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;z-index:2147482600!important;transition:transform .2s ease,opacity .2s ease,visibility .2s ease!important}
+body.sendwayo-authenticated #sendwayo-main-sidebar.sendwayo-menu-open{display:flex!important;transform:translateX(0)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+body.sendwayo-authenticated #sendwayo-main-sidebar button{display:flex!important;width:100%!important;min-height:44px!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;padding:10px 12px!important;border-radius:9px!important;white-space:normal!important;text-align:left!important;color:#fff!important;background:#ffffff0c!important}
+#sendwayo-menu-shade{display:none!important;position:fixed!important;inset:0!important;background:#020a1870!important;z-index:2147482500!important}
+#sendwayo-menu-shade.open{display:block!important}
+body.sendwayo-authenticated #sendwayo-main-content{display:block!important;position:relative!important;isolation:isolate!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;float:none!important;flex:none!important;box-sizing:border-box!important}
+body.sendwayo-authenticated #sendwayo-workspace-shell{display:block!important;width:100%!important;max-width:100%!important;margin:0!important}
+body.sendwayo-authenticated #sendwayo-main-content::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.045!important;background:url("assets/sendwayo-logo-real.jpg") repeat 18px 18px/125px auto!important}
+body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important;z-index:1!important}
+
+/* Marca de agua de logo en cada comprobante, también al imprimir o compartir PNG. */
+#receipt-print-root{position:relative!important;isolation:isolate!important;overflow:hidden!important;background:#fff!important}
+#receipt-print-root::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.065!important;background:url("assets/sendwayo-logo-real.jpg") repeat center/145px auto!important}
+#receipt-print-root>*{position:relative!important;z-index:1!important}
+@media print{#receipt-print-root::before{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;opacity:.075!important}}
+</style>
+<script id="sendwayo-v7-final-one-header-route-separation">
+(function(){
+ 'use strict';
+ var $=function(id){return document.getElementById(id);};
+ var txt=function(v){return String(v==null?'':v).trim();};
+ var norm=function(v){return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();};
+ var routeFilters=window.__sendwayoRouteFilters||(window.__sendwayoRouteFilters={envios:'ALL',retiros:'ALL'});
+ function activeUser(){return window.currentUser||(typeof currentUser!=='undefined'?currentUser:null);}
+ function moveMenu(){var bar=$('sendwayo-brand-bar'),left=bar&&bar.querySelector('.sendwayo-brand-left'),title=$('sendwayo-v7-business-name'),button=$('sendwayo-mobile-menu');if(left&&title&&button&&button.previousElementSibling!==title)left.insertBefore(button,title.nextSibling);}
+ function routeInfo(t){
+  t=t||{};var raw=t._cloudRaw||{},from=txt((t.countryFrom&&t.countryFrom.iso2)||t.paisOrigenISO2||raw.paisOrigenISO2||raw.countryFromISO2).toUpperCase(),to=txt((t.countryTo&&t.countryTo.iso2)||t.paisDestinoISO2||raw.paisDestinoISO2||raw.countryToISO2).toUpperCase();
+  var route=txt(t.ruta||t.rutaExacta||t.detalle||raw.ruta||raw.rutaExacta||''),details=txt(t.rutaExacta||t.detalleRutaInternacional||raw.rutaExacta||''),whole=norm([route,details,t.paisOrigen,t.paisDestino].join(' '));
+  var arrow=route+' '+details,match=arrow.match(/\b(HT|DO|RD|US|USA|CA|FR|ES)\s*(?:→|->|➜|a|hacia)\s*(HT|DO|RD|US|USA|CA|FR|ES)\b/i);
+  if((!from||!to)&&match){from=from||match[1].toUpperCase();to=to||match[2].toUpperCase();}
+  if(!from){var fm=details.match(/pais de origen\s*:\s*[^;(]+\s*\(([A-Z]{2})\)/i);if(fm)from=fm[1].toUpperCase();}
+  if(!to){var tm=details.match(/pais de destino\s*:\s*[^;(]+\s*\(([A-Z]{2})\)/i);if(tm)to=tm[1].toUpperCase();}
+  if(!from&&/\bhaiti\b|\bht\b/.test(whole))from='HT';
+  if(!to&&/\bhaiti\b|\bht\b/.test(whole)&&/haiti.*haiti|\bht\s*(?:→|->|a)\s*ht\b/.test(whole))to='HT';
+  var provider=txt(t.proveedorDestino||t.provider||t.metodo||raw.proveedorDestino||raw.provider||raw.metodo||'');
+  if(!provider){var pm=whole.match(/\b(natcash|moncash|transferencia|ventanilla|efectivo|cash pickup|deposito bancario|banco)\b/i);if(pm)provider=pm[1];}
+  var prettyProvider=provider?(/natcash/i.test(provider)?'NatCash':/moncash/i.test(provider)?'MonCash':provider):'General';
+  var routeName=function(code){var map={HT:'Haití',DO:'República Dominicana',RD:'República Dominicana',US:'Estados Unidos',USA:'Estados Unidos',CA:'Canadá',FR:'Francia',ES:'España'};if(map[code])return map[code];var countries=window.SENDWAYO_V7_COUNTRIES||[];var c=countries.find(function(x){return String(x.alpha2).toUpperCase()===code;});return c?c.name:code||'Ruta no indicada';};
+  var label=(from&&to?routeName(from)+' → '+routeName(to):route||'Ruta no especificada')+' · '+prettyProvider;
+  var key=(from&&to?from+'>'+to:norm(route||details||'sin-ruta'))+'|'+norm(prettyProvider);
+  return {key:key,label:label,from:from,to:to,provider:prettyProvider};
+ }
+ function transactions(){return Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES)?TRANSACCIONES:[]);}
+ function escapeHtml(v){return txt(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+ function groupedBody(tbody,tableRows,recordMap,view,colspan){
+  var groups=new Map();tableRows.forEach(function(row){var rec=recordMap(row);if(!rec)return;var info=routeInfo(rec);row.dataset.sendwayoRouteKey=info.key;row.dataset.sendwayoRouteLabel=info.label;var key=info.key;if(routeFilters[view]!=='ALL'&&routeFilters[view]!==key){row.style.display='none';return;}row.style.display='';if(!groups.has(key))groups.set(key,{label:info.label,rows:[]});groups.get(key).rows.push(row);});
+  var nodes=[];groups.forEach(function(group,key){var heading=document.createElement('tr');heading.dataset.sendwayoRouteHeading='1';heading.innerHTML='<td colspan="'+colspan+'" style="padding:9px 12px;background:#eaf1fa;color:#12365a;font-size:11px;font-weight:900;border-top:2px solid #cbd8e8">RUTA / MODALIDAD: '+escapeHtml(group.label)+'</td>';nodes.push(heading);group.rows.forEach(function(row){nodes.push(row);});});
+  if(nodes.length)tbody.replaceChildren.apply(tbody,nodes);
+ }
+ function ensureFilter(parent,id,label,options,view,selectHandler){
+  var select=$(id);if(!select){select=document.createElement('select');select.id=id;select.className='border rounded-full px-3 py-2 text-xs bg-white';select.setAttribute('aria-label',label);parent.insertBefore(select,parent.firstChild);}
+  var old=routeFilters[view]||'ALL';var optionHtml='<option value="ALL">Todas las rutas</option>';
+  options.forEach(function(item){optionHtml+='<option value="'+escapeHtml(item.key)+'">'+escapeHtml(item.label)+'</option>';});
+  select.innerHTML=optionHtml;select.value=options.some(function(x){return x.key===old;})?old:'ALL';routeFilters[view]=select.value;
+  if(select.dataset.sendwayoRouteBound!=='1'){select.dataset.sendwayoRouteBound='1';select.addEventListener('change',function(){routeFilters[view]=select.value;selectHandler();});}
+  return select;
+ }
+ function decorateModuleEnvios(){
+  var body=$('tabla-sendwayo-envios-body'),search=$('sendwayo-module-search-envios');if(!body||!search)return;
+  var records=transactions().filter(function(t){return norm(t.tipo)==='envio'||norm(t.tipo)==='envios';}),options=new Map();
+  records.forEach(function(t){var r=routeInfo(t);options.set(r.key,r.label);});
+  var parent=search.parentElement;ensureFilter(parent,'sendwayo-envios-route-filter','Filtrar envíos por ruta',Array.from(options,([key,label])=>({key:key,label:label})),'envios',function(){if(typeof window.sendwayoRenderModule==='function')window.sendwayoRenderModule('envios',search.value);});
+  var rows=Array.from(body.querySelectorAll('tr[data-transaction-id]'));
+  if(!rows.length)return;
+  groupedBody(body,rows,function(row){var id=row.getAttribute('data-transaction-id');return records.find(function(t){return String(t.id)===String(id);});},'envios',8);
+ }
+ function decorateRetiros(){
+  var body=$('tabla-retiros-body'),view=$('view-retiros'),search=$('sendwayo-retiros-buscar');if(!body||!view||!search)return;
+  var records=transactions().filter(function(t){return norm(t.tipo)==='retiro'||norm(t.tipo)==='retiros';}),options=new Map();
+  records.forEach(function(t){var r=routeInfo(t);options.set(r.key,r.label);});
+  var parent=search.parentElement;ensureFilter(parent,'sendwayo-retiros-route-filter','Filtrar retiros por ruta',Array.from(options,([key,label])=>({key:key,label:label})),'retiros',function(){window.sendwayoFiltrarRetiros(search.value);});
+  var rows=Array.from(body.querySelectorAll('tr')).filter(function(row){return !row.dataset.sendwayoRouteHeading;});
+  if(!rows.length)return;
+  groupedBody(body,rows,function(row){var idCell=row.cells&&row.cells[1],idNode=idCell&&idCell.querySelector('div');var id=txt(idNode&&idNode.textContent);return records.find(function(t){return String(t.id)===id;});},'retiros',7);
+ }
+ function filterRetiros(query){
+  var body=$('tabla-retiros-body');if(!body)return;var q=norm(query),filter=routeFilters.retiros||'ALL';
+  body.querySelectorAll('tr').forEach(function(row){
+   if(row.dataset.sendwayoRouteHeading)return;
+   var text=norm(row.textContent),route=row.dataset.sendwayoRouteKey||'';
+   row.style.display=(!q||text.indexOf(q)>=0)&&(filter==='ALL'||filter===route)?'':'none';
+  });
+  decorateRetiros();
+ }
+ var priorRetiroFilter=window.sendwayoFiltrarRetiros;
+ window.sendwayoFiltrarRetiros=function(query){filterRetiros(query);if(typeof priorRetiroFilter==='function'&&priorRetiroFilter.__sendwayoRouteAware!==true){};};
+ window.sendwayoFilterRetireRoute=function(value){routeFilters.retiros=value||'ALL';filterRetiros(($('sendwayo-retiros-buscar')||{}).value||'');};
+ var priorModuleRender=window.sendwayoRenderModule;
+ if(typeof priorModuleRender==='function'&&!priorModuleRender.__sendwayoRouteAware){
+  var wrappedModuleRender=function(view,query){var result=priorModuleRender.apply(this,arguments);if(view==='envios')window.setTimeout(decorateModuleEnvios,30);return result;};
+  wrappedModuleRender.__sendwayoRouteAware=true;window.sendwayoRenderModule=wrappedModuleRender;
+ }
+ var priorPage=window.sendwayoSetModulePage;
+ if(typeof priorPage==='function'){window.sendwayoSetModulePage=function(){var result=priorPage.apply(this,arguments);window.setTimeout(decorateModuleEnvios,30);return result;};}
+ var priorSeparate=window.renderModuloSeparado;
+ if(typeof priorSeparate==='function'){window.renderModuloSeparado=function(view){var result=priorSeparate.apply(this,arguments);if(view==='retiros')window.setTimeout(decorateRetiros,40);return result;};}
+ var priorShow=window.showView;
+ if(typeof priorShow==='function'){window.showView=function(view){var result=priorShow.apply(this,arguments);if(view==='retiros')window.setTimeout(decorateRetiros,60);if(view==='envios')window.setTimeout(decorateModuleEnvios,60);return result;};}
+ window.addEventListener('sendwayo:transactions-updated',function(){window.setTimeout(decorateRetiros,40);window.setTimeout(decorateModuleEnvios,40);});
+ window.addEventListener('sendwayo:firebase-ready',function(){window.setTimeout(decorateRetiros,40);window.setTimeout(decorateModuleEnvios,40);});
+ document.addEventListener('DOMContentLoaded',function(){moveMenu();});
+ window.addEventListener('load',function(){moveMenu();decorateModuleEnvios();decorateRetiros();});
+ document.addEventListener('click',function(ev){
+  var button=ev.target&&ev.target.closest?ev.target.closest('#sendwayo-mobile-menu'):null;if(!button)return;
+  ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+  var side=$('sendwayo-main-sidebar'),shade=$('sendwayo-menu-shade');if(!side)return;
+  if(!shade){shade=document.createElement('div');shade.id='sendwayo-menu-shade';document.body.appendChild(shade);}
+  var open=!side.classList.contains('sendwayo-menu-open');side.classList.toggle('sendwayo-menu-open',open);shade.classList.toggle('open',open);
+  button.setAttribute('aria-expanded',open?'true':'false');button.textContent=open?'✕':'☰';
+ },true);
+ document.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('#sendwayo-menu-shade')){ev.preventDefault();ev.stopPropagation();closeMenu();} },true);
+ function closeMenu(){var side=$('sendwayo-main-sidebar'),shade=$('sendwayo-menu-shade'),button=$('sendwayo-mobile-menu');side&&side.classList.remove('sendwayo-menu-open');shade&&shade.classList.remove('open');if(button){button.textContent='☰';button.setAttribute('aria-expanded','false');}}
+ document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeMenu();},true);
+ // Show account details without legacy codes or plaintext passwords. Existing IDs remain the account identifiers.
+ window.renderSecretas=function(){
+  var root=$('lista-secretas')||$('view-secretas');if(!root)return;
+  var admin=null,agents=[],senders=[];
+  try{admin=typeof ADMIN!=='undefined'?ADMIN:window.ADMIN||null;agents=typeof AGENTES!=='undefined'?AGENTES:window.AGENTES||[];senders=typeof REMITENTES!=='undefined'?REMITENTES:window.REMITENTES||[];}catch(e){}
+  var rows=[];if(admin)rows.push({account:admin,role:'ADMINISTRADOR'});(agents||[]).forEach(function(a){rows.push({account:a,role:'AGENTE'});});(senders||[]).forEach(function(a){rows.push({account:a,role:'REMITENTE'});});
+  var money=function(a,key){var b=a.balances||{},c=a.commissions||a.comisiones||{};return 'Balance: RD$ '+Number(b.DOP||a.balanceDOP||0).toLocaleString('es-DO')+' · HTG '+Number(b.HTG||a.balanceHTG||0).toLocaleString('es-DO')+' | Comisión: RD$ '+Number(c.DOP||a.commissionDOP||0).toLocaleString('es-DO')+' · HTG '+Number(c.HTG||a.commissionHTG||0).toLocaleString('es-DO');};
+  var html='<section class="space-y-3 p-3"><header class="rounded-xl border bg-white p-4"><h2 class="text-sm font-black text-slate-900">Expedientes de usuarios</h2><p class="mt-1 text-xs text-slate-500">Identificación por ID, nombre completo, usuario y teléfono. Las contraseñas no se muestran en esta sección.</p></header>';
+  rows.forEach(function(row){var a=row.account||{},id=txt(a.id||a.accountId||'—'),name=txt(a.nombre||a.name||'Nombre no registrado'),username=txt(a.username||a.usuario||a.email||'—'),phone=txt(a.telefono||a.celular||'—');
+   var actionId=String(row.role==='ADMIN'?(a.idAnterior||'ADMINADMIN'):id);
+   html+='<article class="rounded-xl border bg-white p-3 shadow-sm"><div class="flex flex-wrap items-center gap-2 text-sm"><strong class="text-blue-900">ID: '+escapeHtml(id)+'</strong><strong>'+escapeHtml(name)+'</strong><span class="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold">'+row.role+'</span></div><div class="mt-2 grid gap-1 text-xs text-slate-600 sm:grid-cols-2"><div>Usuario: <strong>'+escapeHtml(username)+'</strong></div><div>Teléfono: <strong>'+escapeHtml(phone)+'</strong></div></div><div class="mt-2 text-xs font-semibold text-slate-700">'+escapeHtml(money(a))+'</div><div class="mt-3 flex flex-wrap gap-2"><button type="button" class="rounded-full bg-[#1e3a5f] px-3 py-2 text-[10px] font-bold text-white" onclick="ajustarBalance(\\''+escapeHtml(actionId)+'\\')">Ajustar balance</button><button type="button" class="rounded-full bg-orange-500 px-3 py-2 text-[10px] font-bold text-white" onclick="ajustarComision(\\''+escapeHtml(actionId)+'\\')">Ajustar comisión</button></div></article>';
+  });
+  html+='</section>';root.innerHTML=html;
+ };
+})();
+</script>
+
