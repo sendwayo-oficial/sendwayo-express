@@ -3,9 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'), 'utf8');
-const publicHtml = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), 'utf8');
-
-for (const source of [html, publicHtml]) {
+for (const source of [html]) {
   const start = source.indexOf('<div id="welcome-landing"');
   const end = source.indexOf('<style id="sendwayo-v7-welcome-actions">', start);
   assert.ok(start >= 0 && end > start, 'la portada pública debe existir');
@@ -38,3 +36,8 @@ for (const source of [html, publicHtml]) {
   assert.ok(source.includes('CLOUD_SYNC_INTERVAL_MS=15000'));
 }
 console.log('PASS: portada con logo, acceso, registro, ID, cabecera, menú lateral, reloj, búsqueda de países y marcas de agua.');
+
+const fastEntry = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V7-FAST-ENTRY.html'), 'utf8');
+assert.ok(fastEntry.includes('assets/sendwayo-logo-transparent.webp'));
+assert.ok(!fastEntry.includes('assets/sendwayo-logo-real.jpg'));
+assert.equal(fastEntry.split('<script').length - 1, 1);

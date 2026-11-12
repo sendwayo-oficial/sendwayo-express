@@ -20,7 +20,6 @@ for(const text of [
  'sendwayoExpressOfficialV7',
  'signInWithEmailAndPassword',
  'sendPasswordResetEmail',
- 'sendwayo_express_v2/requests',
  'sendwayo_remember',
  'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
 ]){
@@ -42,4 +41,6 @@ assert.ok(workflow.includes("app_path = Path('site/SENDWAYO-EXPRESS-V7-CORREGIDO
 assert.ok(workflow.includes("landing_source = Path('SENDWAYO-V7-FAST-ENTRY.html')"),'la URL pública debe tomar la portada ligera');
 assert.ok(workflow.includes('sendwayoRememberedPersistence'),'el panel debe conservar la opción Recordarme');
 
+assert.ok(entry.includes("const ROOT='sendwayo_express_v2';"),'Registrar debe usar la raíz oficial de Firebase');
+assert.ok(entry.includes("db.ref(ROOT+'/requests/'+id).set(row)"),'Registrar debe guardar solicitudes en sendwayo_express_v2/requests');
 console.log('PASS: portada rápida e interactiva; panel V7 completo e independiente.');

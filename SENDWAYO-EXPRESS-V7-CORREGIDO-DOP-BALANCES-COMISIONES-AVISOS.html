@@ -318,6 +318,33 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
+<div id="sendwayo-fast-entry-loading" role="status" aria-live="polite" style="display:none;position:fixed;inset:0;z-index:2147483647;align-items:center;justify-content:center;padding:24px;background:rgba(10,35,61,.97);color:#fff;font:700 15px/1.5 Arial,sans-serif;text-align:center">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <span aria-hidden="true" style="width:38px;height:38px;border:4px solid rgba(255,255,255,.28);border-top-color:#f3b63f;border-radius:50%;animation:sendwayoFastEntrySpin .8s linear infinite"></span>
+    <span>Verificando su cuenta y preparando SENDWAYO EXPRESS…</span>
+  </div>
+</div>
+<style id="sendwayo-fast-entry-loading-style">@keyframes sendwayoFastEntrySpin{to{transform:rotate(360deg)}}</style>
+<script id="sendwayo-fast-entry-loading-controller">
+(function(){
+  var overlay=document.getElementById('sendwayo-fast-entry-loading');
+  var active=false;
+  try{active=sessionStorage.getItem('sendwayo:entry-redirect')==='1';}catch(_){}
+  if(!overlay||!active)return;
+  overlay.style.display='flex';
+  var finished=false;
+  function finish(){
+    if(finished)return;
+    finished=true;
+    overlay.remove();
+    try{sessionStorage.removeItem('sendwayo:entry-redirect');}catch(_){}
+  }
+  window.sendwayoFinishFastEntryLoading=finish;
+  window.addEventListener('sendwayo:firebase-ready',finish,{once:true});
+  window.setTimeout(finish,22000);
+})();
+</script>
+
 <script id="sendwayo-early-notice-fallback">
   // Available before any older form handler can request a notice.
   // The financial audit module replaces this fallback with the styled notice later.
@@ -7129,6 +7156,8 @@ window.sendwayoShareReceipt=async function(){
     else window.alert(message);
   }
   function showLoginFormError(message) {
+    try{window.sendwayoFinishFastEntryLoading?.();}catch(_){}
+    try{sessionStorage.removeItem('sendwayo:entry-redirect');}catch(_){}
     if (typeof window.v162_showLogin === 'function') {
       window.v162_showLogin();
     } else {
@@ -8244,7 +8273,8 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+  const sendwayoRememberedPersistence = (()=>{try{return sessionStorage.getItem('sendwayo_remember')==='1'?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION;}catch(_){return firebase.auth.Auth.Persistence.SESSION;}})();
+  state.authReadyPromise = auth.setPersistence(sendwayoRememberedPersistence).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy||state.sessionEstablished)return;
