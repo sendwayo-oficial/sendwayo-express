@@ -4196,16 +4196,90 @@ window.sendwayoShareReceipt=async function(){
   };
   // Replace welcome approval logic only for service requests; registration requests still become accounts after approval.
   const oldActionGeneric=window.sendwayoActionGeneric;
-  window.sendwayoActionGeneric=function(view,action,id){
+  window.sendwayoActionGeneric=async function(view,action,id){
     if(view==='bienvenida'){
       const rows=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]),r=rows.find(x=>String(x.id)===String(id));if(!r)return;
-      if(action==='ver'){alert(['ID: '+r.id,'Nombre: '+r.nombre,'Correo: '+r.email,'Celular: '+r.celular,'Servicio: '+(r.servicio||''),'Detalle: '+(r.detalle||''),'Estado: '+r.estado].join('\n'));return;}
-      if(action==='borrar'){if(!isAdmin())return;if(confirm('¿Borrar esta solicitud?')){writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows.filter(x=>String(x.id)!==String(id)));renderCustom(view);}return;}
+      if(action==='ver'){alert(['ID: '+r.id,'Nombre: '+r.nombre,'Correo: '+r.email,'Celular: '+(r.celular||r.telefono||r.phone||''),'Servicio: '+(r.servicio||''),'Detalle: '+(r.detalle||''),'Estado: '+r.estado].join('\n'));return;}
+      if(action==='borrar'){
+        if(!isAdmin())return;
+        if(!confirm('¿Borrar esta solicitud?'))return;
+        try{const fb=window.sendwayoFirebase;if(r.authUid&&fb?.db&&fb?.auth?.currentUser)await fb.db.ref('sendwayo_express_v2/requests/'+String(r.id)).remove();}catch(error){alert('No se pudo retirar la solicitud de Firebase: '+(error?.message||'error'));return;}
+        writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows.filter(x=>String(x.id)!==String(id)));renderCustom(view);return;
+      }
       if((action==='aprobar'||action==='rechazar')&&!isAdmin()){alert('Solo el administrador puede revisar solicitudes.');return;}
       if(action==='aprobar'&&r.tipoSolicitud!=='SERVICIO'){
-        r.estado='Aprobado';r.aprobadoPor=user()?.id;const name=text(r.nombre).trim().split(/\s+/);let next=1;while(accountById('REM'+String(next).padStart(5,'0')))next++;if(next===11)next++;
-        const idNew='REM'+String(next).padStart(5,'0'),code='REM-'+(name[0]||'REM').slice(0,3).toUpperCase()+(name.length>1?name[name.length-1]:name[0]||'REM').slice(0,3).toUpperCase();const a={id:idNew,codigo:code,codigo2:code,numero:String(next).padStart(2,'0'),nombre:r.nombre,name:r.nombre,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password||'',contrasena:r.password||'',role:'REMITENTE',estado:'Activo',activo:true,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;senders().push(a);
-      }else r.estado=action==='aprobar'?'Aprobado':'Rechazado';writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);saveAccountValues();renderCustom(view);return;
+        const fb=window.sendwayoFirebase,authUser=fb?.auth?.currentUser;
+        if(!fb?.db||!authUser?.uid){alert('No hay una sesión administrativa confirmada en Firebase.');return;}
+        const applicantUid=txt(r.authUid||r.createdByAuthUid||'');
+        const applicantEmail=txt(r.email||'').toLowerCase();
+        const applicantPhone=txt(r.celular||r.telefono||r.phone||'');
+        if(!applicantUid||!applicantEmail.includes('@')){alert('Esta solicitud es antigua o incompleta. Pida al solicitante que vuelva a registrarse desde la página actual.');return;}
+        const name=txt(r.nombre||r.name||'').trim();
+        if(!name||!applicantPhone){alert('La solicitud no tiene nombre o celular completo.');return;}
+        try{
+          const userRef=fb.db.ref('sendwayo_express_v2/users/'+applicantUid);
+          const previousSnap=await userRef.once('value');
+          const previous=previousSnap.exists()&&previousSnap.val()&&typeof previousSnap.val()==='object'?previousSnap.val():{};
+          if(previous.authUid&&String(previous.authUid)!==applicantUid)throw new Error('La identidad Firebase de la solicitud no coincide.');
+          const parts=name.split(/\s+/);
+          let next=1;
+          while(accountById('REM'+String(next).padStart(5,'0')))next++;
+          if(next===11){next++;while(accountById('REM'+String(next).padStart(5,'0')))next++;}
+          const newId='REM'+String(next).padStart(5,'0');
+          const code='REM-'+(parts[0]||'REM').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'REM').slice(0,3).toUpperCase();
+          const balances=previous.balances&&typeof previous.balances==='object'?previous.balances:{DOP:Number(previous.balanceDOP??previous.balance??0)||0,HTG:Number(previous.balanceHTG||0)||0};
+          const commissions=previous.commissions&&typeof previous.commissions==='object'?previous.commissions:{DOP:Number(previous.commissionDOP??previous.commission??0)||0,HTG:Number(previous.commissionHTG||0)||0};
+          const now=Date.now();
+          const profile={
+            id:newId,legacyId:newId,accountId:newId,staffId:code,code,codigo:code,
+            name,nombre:name,displayName:name,username:applicantEmail,login:applicantEmail,
+            email:applicantEmail,authEmail:applicantEmail,authUid:applicantUid,
+            phone:applicantPhone,telefono:applicantPhone,celular:applicantPhone,
+            role:'remitente',active:true,status:'active',mustChangePassword:false,
+            passwordChangeRequired:false,forcePasswordChange:false,
+            balance:Number(previous.balance??balances.DOP??0)||0,
+            balanceDOP:Number(previous.balanceDOP??balances.DOP??0)||0,
+            balanceRD:Number(previous.balanceRD??balances.DOP??0)||0,
+            balanceHTG:Number(previous.balanceHTG??balances.HTG??0)||0,
+            commission:Number(previous.commission??commissions.DOP??0)||0,
+            commissionDOP:Number(previous.commissionDOP??commissions.DOP??0)||0,
+            commissionHTG:Number(previous.commissionHTG??commissions.HTG??0)||0,
+            balances,commissions,comisiones:commissions,
+            createdAtMs:Number(previous.createdAtMs)||now,
+            createdByAuthUid:previous.createdByAuthUid||authUser.uid,
+            approvedAtMs:now,approvedByAuthUid:authUser.uid
+          };
+          await userRef.set(profile);
+          await fb.db.ref('sendwayo_express_v2/requests/'+String(r.id)).update({
+            status:'Approved',estado:'Aprobado',approvedAtMs:now,approvedByAuthUid:authUser.uid,
+            assignedUserId:newId,assignedCode:code
+          });
+          r.estado='Aprobado';r.status='Approved';r.aprobadoPor=user()?.id||'ADMINISTRADOR';r.idAsignado=newId;r.codigoAsignado=code;
+          const localAccount={...profile,dbUserKey:applicantUid,rtdbUserKey:applicantUid,activo:true,estado:'Activo'};
+          const prior=senders().find(x=>String(x.dbUserKey||x.authUid||'')===applicantUid||String(x.id)===newId);
+          if(prior)Object.assign(prior,localAccount);else senders().push(localAccount);
+          writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);
+          saveAccountValues();renderCustom(view);
+          alert('Registro aprobado. Se creó el perfil Firebase '+newId+' para '+name+'. La persona ya puede ingresar con el correo y la contraseña que creó al registrarse.');
+          return;
+        }catch(error){
+          console.error('[SENDWAYO] No se pudo aprobar el registro Firebase:',error);
+          alert('No se pudo aprobar el registro: '+(error?.message||'error de Firebase')+'. La solicitud sigue pendiente.');
+          return;
+        }
+      }
+      const newState=action==='aprobar'?'Aprobado':'Rechazado';
+      try{
+        const fb=window.sendwayoFirebase;
+        if(fb?.db&&fb?.auth?.currentUser?.uid){
+          await fb.db.ref('sendwayo_express_v2/requests/'+String(r.id)).update({
+            status:action==='aprobar'?'Approved':'Rejected',estado:newState,
+            reviewedAtMs:Date.now(),reviewedByAuthUid:fb.auth.currentUser.uid
+          });
+        }
+        r.estado=newState;r.status=action==='aprobar'?'Approved':'Rejected';
+        writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);renderCustom(view);
+      }catch(error){alert('No se pudo actualizar la solicitud en Firebase: '+(error?.message||'error'));}return;
     }
     if(view==='secretas'&&['modificar','editar'].includes(action)){const a=accountById(id);if(a)window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);return;}
     if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nCódigo: '+a.codigo+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
