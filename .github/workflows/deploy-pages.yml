@@ -101,6 +101,16 @@ jobs:
           </div>'''
           base_html = base_html[:landing_start] + minimal_welcome + base_html[landing_end:]
           base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
+          # Remove prior welcome-style/listener copies so the public page receives exactly one final version.
+          for tag_name, element_id in [('style', 'sendwayo-v7-minimal-welcome-final'), ('script', 'sendwayo-v7-minimal-welcome-login')]:
+              opening = f'<{tag_name} id="{element_id}">'
+              closing = f'</{tag_name}>'
+              while opening in base_html:
+                  element_start = base_html.find(opening)
+                  element_close = base_html.find(closing, element_start)
+                  if element_close < 0:
+                      raise SystemExit(f'No se pudo retirar una copia anterior de {element_id}.')
+                  base_html = base_html[:element_start] + base_html[element_close + len(closing):]
           # Remove prior copies first: a '</body>' string also appears inside the PDF export script.
           base_html = base_html.replace(css + '\n', '')
           if 'sendwayo-v7-brand-and-login-performance-fix' in base_html:
