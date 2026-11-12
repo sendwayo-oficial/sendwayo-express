@@ -64,13 +64,25 @@ jobs:
                   const response=await page.goto(process.env.PAGE_URL+'?smoke='+Date.now(),{waitUntil:'domcontentloaded',timeout:20000});
                   if(response&&response.status()===200){
                     const src=await page.locator('.brand-logo').getAttribute('src').catch(()=>null);
-                    if(src&&src.includes('sendwayo-logo-real.jpg')){
+                    if(src&&src.includes('sendwayo-logo-transparent.webp')){
                       await page.waitForFunction(()=>{
                         const img=document.querySelector('.brand-logo');
                         return !!img&&img.complete&&img.naturalWidth>0;
                       },null,{timeout:5000}).catch(()=>{});
                       const loaded=await page.locator('.brand-logo').evaluate(img=>img.complete&&img.naturalWidth>0).catch(()=>false);
-                      if(loaded){deployed=true;break;}
+                      if(loaded){
+                        const alpha=await page.locator('.brand-logo').evaluate(img=>{
+                          const canvas=document.createElement('canvas');
+                          canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+                          const context=canvas.getContext('2d',{willReadFrequently:true});
+                          context.drawImage(img,0,0);
+                          const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;
+                          for(let i=3;i<pixels.length;i+=4)if(pixels[i]<250)return true;
+                          return false;
+                        }).catch(()=>false);
+                        if(!alpha)throw new Error('El logo público no contiene transparencia real.');
+                        deployed=true;break;
+                      }
                     }
                   }
                 }catch(e){}
@@ -106,7 +118,7 @@ jobs:
               const mobile=await page.locator('.entry-card').evaluate(el=>el.getBoundingClientRect().width<=375);
               if(!mobile)throw new Error('La tarjeta de acceso se desborda en móvil.');
               if(errors.length)throw new Error('Errores JavaScript: '+errors.join(' | '));
-              console.log('PASS: logo oficial original cargado; alias de administrador vinculado a Firebase; campos, Ver, Recordarme, recuperación única, Registrar, Ingresar y móvil verificados.');
+              console.log('PASS: logo oficial transparente cargado; alias de administrador vinculado a Firebase; campos, Ver, Recordarme, recuperación única, Registrar, Ingresar y móvil verificados.');
             }finally{await browser.close();}
           })().catch(e=>{console.error(e);process.exit(1);});
           NODE
