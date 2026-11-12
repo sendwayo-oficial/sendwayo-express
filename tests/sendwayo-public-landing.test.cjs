@@ -20,7 +20,7 @@ for (const id of ['register-name','register-phone','register-email','register-pa
 }
 assert.match(fast, /if\(password!==confirmPassword\)/, 'el registro debe impedir contraseñas diferentes');
 assert.match(fast, /createUserWithEmailAndPassword\(email,password\)/, 'el registro debe crear la autenticación con la contraseña elegida');
-assert.match(fast, /database\.ref\(ROOT\+'\/requests\/'+id\)\.set\(row\)/, 'la solicitud debe guardarse en Firebase para Administración');
+assert.ok(fast.includes("database.ref(ROOT+'/requests/'+id).set(row)"), 'la solicitud debe guardarse en Firebase para Administración');
 assert.match(fast, /targetUserId:'admin',targetRole:'ADMIN',targetView:'bienvenida'/, 'la solicitud debe generar un aviso dirigido al administrador');
 
 assert.match(app, /const ADMIN_EMAIL = 'ideletteismorin@gmail\.com';/, 'V7 debe reconocer el correo real de Firebase');
