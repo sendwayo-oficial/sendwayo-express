@@ -8,7 +8,7 @@ const login=html.indexOf('<div id="login-screen"',start);
 const end=html.indexOf('</section>',login);
 assert.ok(login>start&&end>login,'el formulario completo debe estar dentro de la bienvenida');
 const welcome=html.slice(start,end+'</section>'.length);
-assert.match(welcome,/<img class="sendwayo-entry-logo" src="assets\/sendwayo-logo-real\.jpg"/,'debe utilizar el logo oficial');
+assert.match(welcome,/<img class="sendwayo-entry-logo" src="assets\/sendwayo-logo-transparent\.webp"/,'debe utilizar el logo oficial transparente');
 assert.match(welcome,/<h1 id="sendwayo-entry-title">SENDWAYO EXPRESS<\/h1>/,'debe mostrar el nombre del negocio debajo del logo');
 assert.ok(welcome.indexOf('class="sendwayo-entry-logo"')<welcome.indexOf('<h1 id="sendwayo-entry-title"'),'el logo debe aparecer antes del nombre');
 for(const marker of ['id="login-usuario"','id="login-password"','id="sendwayo-toggle-password"','id="sendwayo-remember-credentials"','id="sendwayo-recover-button"']){
