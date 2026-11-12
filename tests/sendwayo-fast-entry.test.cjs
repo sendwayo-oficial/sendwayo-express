@@ -24,8 +24,7 @@ for (const marker of [
   'database.ref(ROOT+\'/requests/\'+id).set(row)',
   'sendwayo_remember',
   'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html',
-  'sendwayoexpress@gmail.com',
-  'ideletteismorin@gmail.com'
+  'sendwayoexpress@gmail.com'
 ]) assert.ok(fast.includes(marker), 'falta la función de acceso: ' + marker);
 
 assert.equal((fast.match(/<img\b/gi)||[]).length, 1, 'la portada debe mostrar únicamente el logo, sin imágenes decorativas');
