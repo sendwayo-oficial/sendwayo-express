@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: \${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout SENDWAYO
         uses: actions/checkout@v4
@@ -66,8 +66,8 @@ jobs:
           fs.writeFileSync(app,html);
           const page=fs.readFileSync(fast,'utf8');
           if(Buffer.byteLength(page,'utf8')>30000) throw new Error('La bienvenida ligera supera 30 KB.');
-          if((page.match(/<script\b/g)||[]).length!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
-          if((page.match(/<img\\b/g)||[]).length!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
+          if((page.split('<script').length-1)!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
+          if((page.split('<img').length-1)!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
           if(!page.includes('src="assets/sendwayo-logo-transparent.webp"')) throw new Error('Falta el logo oficial transparente.');
           if(page.includes('sendwayo-logo-real.jpg')) throw new Error('La portada todavía usa el logo JPG con fondo.');
           if(page.includes('cdn.tailwindcss.com')) throw new Error('La bienvenida no debe depender de Tailwind CDN.');
@@ -77,9 +77,10 @@ jobs:
           for(const marker of ['signInWithEmailAndPassword','sendPasswordResetEmail','setPersistence','sendwayo_express_v2/requests','sendwayoExpressOfficialV7','sendwayoexpress@gmail.com']) {
             if(!page.includes(marker)) throw new Error('Falta función real de acceso: '+marker);
           }
-          const scripts=[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-          if(scripts.length!==1) throw new Error('No se encontró el script único de la portada.');
-          new Function(scripts[0][1]);
+          const scriptStart=page.indexOf('<script>');
+          const scriptEnd=page.indexOf('</script>',scriptStart);
+          if(scriptStart<0||scriptEnd<0||page.indexOf('<script>',scriptStart+1)>=0) throw new Error('No se encontró el script único de la portada.');
+          new Function(page.slice(scriptStart+8,scriptEnd));
           if(!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se copió el logo transparente.');
           if(!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se conservaron los recursos del panel V7.');
           if(!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('No se generó Tailwind local para V7.');
@@ -102,7 +103,7 @@ jobs:
       - name: Verify the public entry and transparent logo
         env:
           PAGE_URL: \${{ steps.deployment.outputs.page_url }}
-          RELEASE_SHA: \${{ github.sha }}
+          RELEASE_SHA: ${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
