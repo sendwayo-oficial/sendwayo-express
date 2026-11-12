@@ -164,7 +164,7 @@ jobs:
           minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
             <main class="sendwayo-home sendwayo-minimal-welcome-inner">
               <section class="sendwayo-landing-brand-panel" aria-label="SENDWAYO EXPRESS">
-                <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" width="150" height="108" fetchpriority="high" decoding="async">
+                <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-transparent.webp" alt="Logo SENDWAYO EXPRESS" width="150" height="108" fetchpriority="high" decoding="async">
                 <h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>
               </section>
               <nav class="sendwayo-welcome-only-actions" aria-label="Acceso a la plataforma">
