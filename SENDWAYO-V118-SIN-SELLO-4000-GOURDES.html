@@ -311,6 +311,22 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 #login-screen input{display:block!important;width:100%!important;min-height:48px!important;box-sizing:border-box!important;background:#fff!important;color:#10243d!important;border:1px solid #cbd5e1!important;opacity:1!important;font-size:16px!important;filter:none!important}
 #login-screen button{min-height:44px!important;opacity:1!important;filter:none!important;pointer-events:auto!important}
 </style>
+<style id="sendwayo-v7-entry-first-paint">
+  html,body{min-height:100%;background:#0b1a2f!important}
+  body::before{content:none!important;background:none!important;background-image:none!important}
+  #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+  body:not(.sendwayo-authenticated) img,
+  body:not(.sendwayo-authenticated) video,
+  body:not(.sendwayo-authenticated) iframe,
+  body:not(.sendwayo-authenticated) picture,
+  body:not(.sendwayo-authenticated) object,
+  body:not(.sendwayo-authenticated) embed{display:none!important;visibility:hidden!important}
+  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
+  body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
+  body:not(.sendwayo-authenticated) #login-screen>div{display:none!important}
+  body.sendwayo-authenticated #login-screen,
+  body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
