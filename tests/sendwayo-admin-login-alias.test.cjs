@@ -7,7 +7,7 @@ const html = fs.readFileSync(
 );
 
 // El correo configurado por el archivo V7 para Authentication no es el correo de GitHub.
-const adminEmail = 'sendwayoexpress@gmail.com';
+const adminEmail = 'ideletteismorin@gmail.com';
 assert.ok(html.includes("email:'" + adminEmail + "'"), 'el perfil ADMIN debe conservar su correo Firebase');
 assert.ok(html.includes("const ADMIN_EMAIL = '" + adminEmail + "';"), 'el correo de Authentication y el perfil ADMIN deben coincidir');
 assert.ok(html.includes("username:'sendwayoexpress@gmail.com'"), 'el usuario de acceso SENDWAYO debe seguir disponible como alias');
