@@ -7006,6 +7006,11 @@ window.sendwayoShareReceipt=async function(){
     window.__sendwayoLoginPending = false;
     const message=sdkError?.message||'No se pudo cargar Firebase.';
     window.sendwayoFirebaseSdkError=sdkError;
+    const visibleLoginError=document.getElementById('login-error');
+    if(visibleLoginError){
+      visibleLoginError.textContent=message+' Recargue la página cuando recupere la conexión.';
+      visibleLoginError.classList.remove('hidden');
+    }
     window.intentarLogin=function(){
       const error=document.getElementById('login-error');
       if(error){error.textContent=message+' Recargue la página cuando recupere la conexión.';error.classList.remove('hidden');}
@@ -11121,7 +11126,8 @@ body::before{display:none!important;content:none!important;background-image:none
     var target=event.target;
     if(!target||!target.closest)return;
     var compactLogin=target.closest('#sendwayo-home-login');
-    if(compactLogin){
+    var fullCardLogin=target.closest('#welcome-landing #sendwayo-entry-login-button');
+    if(compactLogin||fullCardLogin){
       event.preventDefault();
       event.stopImmediatePropagation();
       openLogin();
@@ -11133,7 +11139,6 @@ body::before{display:none!important;content:none!important;background-image:none
       event.stopImmediatePropagation();
       openRegister();
     }
-    // The full-card INGRESAR button keeps its existing secure intentarLogin() handler.
   },true);
 })();
 </script>

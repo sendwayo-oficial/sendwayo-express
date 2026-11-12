@@ -29,6 +29,9 @@ assert.match(html, /font-size:clamp\(25px,5vw,30px\)!important/, 'el nombre del 
 assert.match(html, /#welcome-landing>main\.sendwayo-home-minimal[\s\S]*?align-items:center!important;justify-content:center!important/, 'el contenido principal debe quedar centrado');
 assert.match(html, /option \$\{service==='Quiero ser remitente'\?'selected':''\}>Quiero ser remitente/, 'el registro debe abrir con la solicitud de remitente seleccionada');
 assert.match(html, /window\.sendwayoFirebaseLoginReady=attemptLogin/, 'Ingresar debe conservar el inicio de sesión Firebase');
+assert.match(html, /target\.closest\('#welcome-landing #sendwayo-entry-login-button'\)/, 'Ingresar desde la tarjeta debe abrir el formulario de acceso separado');
+assert.match(html, /if\(compactLogin\|\|fullCardLogin\)/, 'el clic de acceso de la tarjeta no debe quedarse dentro de una portada que se oculta');
+assert.match(html, /const visibleLoginError=document\.getElementById\('login-error'\)/, 'si Firebase no carga, el usuario debe recibir un error visible y no una pantalla congelada');
 assert.match(html, /sendPasswordResetEmail\(resetEmail\)/, 'la recuperación debe conservar el envío de enlace por Firebase');
 assert.doesNotMatch(html, /https:\/\/cdn\.tailwindcss\.com/, 'la página no debe depender del CDN externo');
 
