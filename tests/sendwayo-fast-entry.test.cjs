@@ -31,7 +31,7 @@ assert.equal((fast.match(/<img\b/gi)||[]).length, 1, 'la portada debe mostrar ú
 assert.ok(fast.includes('assets/sendwayo-logo-real.jpg'), 'la portada debe usar el logo oficial y original');
 assert.ok(!fast.includes('cdn.tailwindcss.com'), 'la portada no debe esperar a una librería visual externa');
 assert.ok(fullApp.length > 500000, 'el panel completo V7 debe seguir presente detrás del acceso');
-assert.ok(fullApp.includes("const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';"), 'se debe conservar el correo real de Firebase');
+assert.ok(fullApp.includes("const ADMIN_EMAIL = 'ideletteismorin@gmail.com';"), 'se debe conservar el correo real de Firebase');
 assert.ok(fullApp.includes('sendwayoRememberedPersistence'), 'el panel debe respetar la preferencia Recordarme');
 assert.ok(fullApp.includes('sendwayo-logo-real.jpg'), 'el panel también debe utilizar el logo oficial original');
 
