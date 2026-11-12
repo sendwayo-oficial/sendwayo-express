@@ -3323,7 +3323,54 @@ document.addEventListener('DOMContentLoaded', function(){
     if(formato==='pdf'){
       const w=window.open('','_blank');
       if(!w){ alert('Permite las ventanas emergentes para guardar el PDF.'); return; }
-      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'</body></html>';
+      const html='<!doctype html><html><head><meta charset="utf-8"><title>'+nombre+'</title><style>body{font-family:Arial,sans-serif;padding:18px}h2{font-size:18px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}}</style></head><body><h2>'+nombre+'</h2>'+tabla.outerHTML+'
+<style id="sendwayo-v7-login-final-20261112">
+/* Logo limpio: sin marco ni fondo visible. */
+#welcome-landing .sendwayo-entry-logo{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;padding:0!important;mix-blend-mode:multiply!important;
+  filter:brightness(1.08) contrast(1.12)!important;object-fit:contain!important;
+}
+/* La tarjeta de acceso conserva el formulario real; evitar que el script antiguo
+   lo reconstruya y duplique enlaces o deje controles sin respuesta. */
+#welcome-landing .sendwayo-entry-card,
+#welcome-landing #login-screen,
+#welcome-landing #login-screen input,
+#welcome-landing #login-screen button{pointer-events:auto!important}
+#welcome-landing #sendwayo-recover-button{display:inline-flex!important}
+</style>
+<script id="sendwayo-v7-preserve-functional-login">
+(function(){
+  'use strict';
+  // Mantener el formulario original integrado en la bienvenida.
+  // El constructor heredado v162 reemplazaba el DOM y duplicaba controles.
+  window.v162_showLogin=function(){
+    var login=document.getElementById('login-screen');
+    var welcome=document.getElementById('welcome-landing');
+    if(!login)return false;
+    if(welcome){
+      welcome.classList.remove('hidden');
+      welcome.style.removeProperty('display');
+      welcome.style.removeProperty('visibility');
+    }
+    login.classList.remove('hidden');
+    login.style.setProperty('display','block','important');
+    login.style.setProperty('visibility','visible','important');
+    login.style.setProperty('pointer-events','auto','important');
+    var user=document.getElementById('login-usuario');
+    if(user)window.setTimeout(function(){user.focus();},40);
+    return true;
+  };
+  // Los campos deben permanecer editables y los controles deben conservar
+  // sus manejadores de autenticación, recuperación y registro.
+  document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('#welcome-landing #login-usuario,#welcome-landing #login-password')
+      .forEach(function(el){el.disabled=false;el.readOnly=false;el.removeAttribute('disabled');});
+  });
+})();
+</script>
+
+</body></html>';
       w.document.open(); w.document.write(html); w.document.close(); w.focus();
       window.setTimeout(function(){ try{w.print();}catch(_){} },300);
       return;
