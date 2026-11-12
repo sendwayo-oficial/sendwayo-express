@@ -11,6 +11,7 @@
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#102b49;background:#edf3fa;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
+img,video,picture,iframe,object,embed{display:none!important;visibility:hidden!important}
 html,body{margin:0;min-height:100%;width:100%}
 body{min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#edf3fa 0%,#f9fbfe 55%,#eaf1f8 100%)}
 button,input{font:inherit}
@@ -59,7 +60,7 @@ button{cursor:pointer;touch-action:manipulation}
   <header class="brand">
     <img class="brand-logo" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" width="180" height="112" fetchpriority="high" decoding="async">
     <h1 id="brand-title">SENDWAYO EXPRESS</h1>
-    <p>Bienvenido</p>
+    
   </header>
   <form id="login-form" novalidate>
     <div class="field">
@@ -112,7 +113,7 @@ button{cursor:pointer;touch-action:manipulation}
  const APP_PAGE='SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html';
  const CONFIG={apiKey:'AIzaSyDvnBbSRqtGsBlIiX_hJXrtj2Drl_nlDT0',authDomain:'sendwayo-express.firebaseapp.com',databaseURL:'https://sendwayo-express-default-rtdb.firebaseio.com',projectId:'sendwayo-express',storageBucket:'sendwayo-express.firebasestorage.app',messagingSenderId:'191723694148',appId:'1:191723694148:web:1540d1670c4ce5a167b411',measurementId:'G-3PFSJZF0MN'};
  const ROOT='sendwayo_express_v2';
- const ADMIN_EMAIL='sendwayoexpress@gmail.com';
+ const ADMIN_EMAIL='ideletteismorin@gmail.com';
  const aliasMap=new Map();
  function key(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9@]/g,'');}
  function addAliases(email,values){values.concat([email]).forEach(v=>{if(!v)return;aliasMap.set(key(v),email);const digits=String(v).replace(/\D/g,'');if(digits.length>=7)aliasMap.set(digits,email);});}
