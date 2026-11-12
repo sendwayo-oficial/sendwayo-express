@@ -338,7 +338,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
     <div class="text-center mb-6">
-      <img src="assets/sendwayo-logo-transparent.webp" alt="Logo SENDWAYO EXPRESS" style="display:block;width:180px;height:120px;object-fit:contain;margin:0 auto 12px;background:transparent;">
+      <img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" style="display:block;width:180px;height:120px;object-fit:contain;margin:0 auto 12px;background:transparent;">
       <h2 class="font-extrabold text-[18px]">SENDWAYO EXPRESS</h2>
     </div>
     <div class="space-y-4">
@@ -360,7 +360,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
+    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
     <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
@@ -526,7 +526,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <div id="modal-comprobante" class="hidden fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-3">
   <div id="receipt-print-root" class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border-[3px] border-amber-400">
     <div class="p-4 flex items-center gap-3 border-b">
-      <img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" class="w-14 h-14 object-contain bg-white rounded-full border">
+      <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" class="w-14 h-14 object-contain bg-white rounded-full border">
       <div class="flex-1"><h3 class="font-extrabold text-[16px]">SENDWAYO EXPRESS</h3><p class="text-[11px] text-slate-600">Servicio de calidad que conecta contigo con confianza y seguridad. ✓</p></div>
       <div class="w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-green-600 font-bold">✓</div>
     </div>
@@ -555,7 +555,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 // DATOS CORREGIDOS - 5 AGENTES + ADMIN CON CODIGO - RECUERDA QUE ESTOS SON LOS 5 AGENTES, TIENES QUE PONERLO CON SU CODIGO
 let ADMIN = {
   id:'ADMIN-ADMINISTRADOR', idAnterior:'ADMINADMIN',
-  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN'],
+  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','sendwayoexpress@gmail.com'],
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
@@ -2710,7 +2710,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     if(!ls) return;
     ls.innerHTML=`<div class="w-full max-w-[420px] mx-auto bg-white rounded-[24px] p-6 shadow-2xl border mt-10">
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
-      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
+      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
         <div><label class="block text-[11px] font-bold mb-1">ID o correo electrónico</label><input id="login-usuario" type="text" autocomplete="username" placeholder="ID o correo electrónico" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
