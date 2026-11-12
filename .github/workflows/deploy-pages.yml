@@ -38,7 +38,7 @@ jobs:
           set -euo pipefail
           test -s SENDWAYO-V7-FAST-ENTRY.html
           test -s SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
-          test -s assets/sendwayo-logo-transparent.webp
+          test -s assets/sendwayo-logo-real.jpg
           rm -rf site
           mkdir -p site/assets
           cp SENDWAYO-V7-FAST-ENTRY.html site/index.html
@@ -68,8 +68,8 @@ jobs:
           if(Buffer.byteLength(page,'utf8')>30000) throw new Error('La bienvenida ligera supera 30 KB.');
           if((page.split('<script').length-1)!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
           if((page.split('<img').length-1)!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
-          if(!page.includes('src="assets/sendwayo-logo-transparent.webp"')) throw new Error('Falta el logo oficial transparente.');
-          if(page.includes('sendwayo-logo-real.jpg')) throw new Error('La portada todavía usa el logo JPG con fondo.');
+          if(!page.includes('src="assets/sendwayo-logo-real.jpg"')) throw new Error('Falta el logo oficial original.');
+          
           if(page.includes('cdn.tailwindcss.com')) throw new Error('La bienvenida no debe depender de Tailwind CDN.');
           for(const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form','register-name','register-phone','register-email']) {
             if(!page.includes('id="'+id+'"')) throw new Error('Falta control funcional: '+id);
@@ -81,11 +81,11 @@ jobs:
           const scriptEnd=page.indexOf('</script>',scriptStart);
           if(scriptStart<0||scriptEnd<0||page.indexOf('<script>',scriptStart+1)>=0) throw new Error('No se encontró el script único de la portada.');
           new Function(page.slice(scriptStart+8,scriptEnd));
-          if(!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se copió el logo transparente.');
+          if(!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se copió el logo oficial original.');
           if(!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se conservaron los recursos del panel V7.');
           if(!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('No se generó Tailwind local para V7.');
           if(fs.statSync(app).size<500000) throw new Error('El panel V7 completo no está presente.');
-          console.log('PASS: bienvenida '+Buffer.byteLength(page,'utf8')+' bytes; 1 script; controles editables; logo transparente; panel V7 separado.');
+          console.log('PASS: bienvenida '+Buffer.byteLength(page,'utf8')+' bytes; 1 script; controles editables; logo oficial original; panel V7 separado.');
           NODE
 
       - name: Configure GitHub Pages
@@ -100,7 +100,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify the public entry and transparent logo
+      - name: Verify the public entry and official original logo
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           RELEASE_SHA: ${{ github.sha }}
@@ -131,12 +131,12 @@ jobs:
               if attempt<18: time.sleep(5)
           else:
               raise SystemExit('Public page verification failed: '+last)
-          asset=f"{base}/assets/sendwayo-logo-transparent.webp?sendwayo_release={release}"
+          asset=f"{base}/assets/sendwayo-logo-real.jpg?sendwayo_release={release}"
           req=urllib.request.Request(asset,headers=headers)
           with urllib.request.urlopen(req,timeout=20) as response:
               if response.status!=200: raise SystemExit('Transparent logo is not reachable.')
               logo=response.read()
-          if not logo.startswith(b'RIFF') or b'WEBP' not in logo[:16]:
-              raise SystemExit('The deployed logo is not a valid WebP image.')
-          print(f'PASS: transparent logo served ({len(logo)} bytes).')
+          if not logo.startswith(b'\xff\xd8\xff'):
+              raise SystemExit('The deployed original logo is not a valid JPEG image.')
+          print(f'PASS: official original logo served ({len(logo)} bytes).')
           PY
