@@ -34,7 +34,10 @@ assert.ok(!html.includes('received=net/2.30'));
 assert.ok(!html.includes("rec=formatMoney(net/2.3)+' DOP'"));
 
 // Sesión y rendimiento: conservar la duración por inactividad y sincronización con un intervalo moderado.
-assert.ok(html.includes('auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)'));
+assert.ok(html.includes('auth.setPersistence(sendwayoRememberedPersistence)'));
+assert.ok(html.includes('sendwayoRememberedPersistence'));
+assert.ok(html.includes('firebase.auth.Auth.Persistence.SESSION'));
+assert.ok(html.includes('firebase.auth.Auth.Persistence.LOCAL'));
 assert.ok(html.includes('IDLE_LIMIT=40*60*1000'));
 assert.ok(html.includes('CLOUD_SYNC_INTERVAL_MS=15000'));
 assert.ok(!html.includes('setInterval(syncStorage,2500)'));
