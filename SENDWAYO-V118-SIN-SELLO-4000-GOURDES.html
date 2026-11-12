@@ -365,7 +365,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </script>
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo" style="object-fit:contain;background:transparent;border-radius:0">
+    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo" style="object-fit:contain;background:transparent;border-radius:0">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
     <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
@@ -2475,7 +2475,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
   <main class="sendwayo-home sendwayo-home-minimal sendwayo-auth-landing">
     <section class="sendwayo-entry-card" aria-labelledby="sendwayo-entry-title">
       <header class="sendwayo-entry-brand">
-        <img class="sendwayo-entry-logo" src="assets/sendwayo-logo-transparent.webp" alt="Logo oficial de SENDWAYO EXPRESS" width="180" height="112" loading="eager" decoding="async" style="object-fit:contain;background:transparent">
+        <img class="sendwayo-entry-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo oficial de SENDWAYO EXPRESS" width="180" height="112" loading="eager" decoding="async" style="object-fit:contain;background:transparent">
         <h1 id="sendwayo-entry-title">SENDWAYO EXPRESS</h1>
         <p>Bienvenido</p>
       </header>
@@ -11158,8 +11158,7 @@ body::before{display:none!important;content:none!important;background-image:none
     var target=event.target;
     if(!target||!target.closest)return;
     var compactLogin=target.closest('#sendwayo-home-login');
-    var fullCardLogin=target.closest('#welcome-landing #sendwayo-entry-login-button');
-    if(compactLogin||fullCardLogin){
+    if(compactLogin){
       event.preventDefault();
       event.stopImmediatePropagation();
       openLogin();
