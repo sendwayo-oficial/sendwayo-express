@@ -114,6 +114,19 @@ jobs:
               await page.locator('#login-password').fill('');
               await page.locator('#login-button').click();
               await page.waitForFunction(()=>document.querySelector('#login-status')?.textContent.includes('Escriba su correo o código'));
+
+              // Use a reserved, fictitious address to verify the Firebase endpoint
+              // responds without touching any real SENDWAYO account.
+              const probeEmail='sendwayo-entry-smoke-'+Date.now()+'@example.invalid';
+              await page.locator('#login-email').fill(probeEmail);
+              await page.locator('#login-password').fill('EntrySmoke-NoRealAccount-2026!');
+              await page.locator('#login-button').click();
+              await page.waitForFunction(
+                ()=>document.querySelector('#login-status')?.textContent.includes('correo o la contraseña no son válidos'),
+                null,
+                {timeout:25000}
+              );
+
               await page.setViewportSize({width:375,height:812});
               const mobile=await page.locator('.entry-card').evaluate(el=>el.getBoundingClientRect().width<=375);
               if(!mobile)throw new Error('La tarjeta de acceso se desborda en móvil.');
