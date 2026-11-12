@@ -71,13 +71,13 @@ jobs:
 
           # Replace the complete public welcome container with only logo, business name and Ingresar.
           import re
-          landing = re.search(r'<div\\b(?=[^>]*\\bid=["\\']welcome-landing["\\'])[^>]*>', base_html, re.I)
+          landing = re.search(r"""<div\\b(?=[^>]*\\bid=["']welcome-landing["'])[^>]*>""", base_html, re.I)
           if not landing:
               raise SystemExit('No se encontró el contenedor de bienvenida V7.')
           landing_start = landing.start()
           depth = 0
           landing_end = None
-          for token in re.finditer(r'<div\\b[^>]*>|</div\\s*>', base_html[landing_start:], re.I):
+          for token in re.finditer(r"""<div\\b[^>]*>|</div\\s*>""", base_html[landing_start:], re.I):
               if token.group(0).lower().startswith('</div'):
                   depth -= 1
               else:
@@ -141,7 +141,7 @@ jobs:
           assert "username:'sendwayoexpress@gmail.com'" in html, 'El usuario SENDWAYO no está configurado'
           assert "aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','sendwayoexpress@gmail.com']" in html, 'El alias de acceso SENDWAYO no está configurado'
           assert 'if(match) return match.email;' in html, 'El alias debe resolverse antes del correo Firebase'
-          assert html.count('sendwayo-v7-brand-and-login-performance-fix') == 1, 'El CSS de bienvenida debe aparecer una sola vez'
+          assert html.count('sendwayo-v7-minimal-welcome-final') == 1, 'El diseño mínimo de bienvenida debe aparecer una sola vez'
           assert html.rfind('</body>') > html.rfind('</script>'), 'El CSS final debe estar fuera de los scripts'
           assert "email:'ideletteismorin@gmail.com'" in html, 'El perfil administrador debe conservar su correo real de Firebase'
           assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
@@ -167,6 +167,12 @@ jobs:
           assert 'href="assets/sendwayo-tailwind.css"' in html, 'Tailwind debe cargarse desde el propio sitio'
           assert 'https://cdn.tailwindcss.com' not in html, 'La página no debe depender del CDN de Tailwind'
           assert 'sendwayo-v7-minimal-welcome-final' in html, 'La portada mínima debe tener el estilo final'
+          welcome_start = html.index('id="welcome-landing"')
+          welcome_end = html.index('</div>', welcome_start) + len('</div>')
+          welcome = html[welcome_start:welcome_end]
+          assert welcome.count('<img') == 1 and 'sendwayo-landing-logo' in welcome, 'La bienvenida debe mostrar únicamente el logo, sin fotografías'
+          assert 'SENDWAYO EXPRESS</h1>' in welcome and 'INGRESAR' in welcome, 'La bienvenida debe mostrar logo, nombre e ingresar'
+          assert 'sendwayo-home-register' not in welcome and 'REGISTRARSE' not in welcome, 'No mostrar botones adicionales en bienvenida'
           assert "loginButton.addEventListener('click'" in html, 'Ingresar debe tener una acción activa'
           assert 'window.v162_showLogin()' in html, 'Ingresar debe abrir el formulario real'
           assert 'body:not(.sendwayo-authenticated)>#sendwayo-v7-modal' not in html, 'El modal de registro no debe cubrir la portada'
