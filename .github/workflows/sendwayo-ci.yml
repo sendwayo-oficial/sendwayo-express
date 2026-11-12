@@ -52,17 +52,18 @@ jobs:
           if(menu!==22)failed=true;
           if(failed)process.exit(1);
           NODE
-      - name: Check critical hardening markers
+      - name: Check secure entry and Firebase registration approval
         run: |
-          if grep -q 'SW_POINT_A_RECOVERY_REDIRECT' index.html; then
-            grep -q 'https://sendwayo-express-app-101.web.app/' index.html
-            echo "SENDWAYO recovery redirect target OK"
-            exit 0
-          fi
-          grep -q 'SENDWAYO_LEGACY_FIREBASE_CONFIG' index.html
-          grep -q 'balanceDOP' index.html
-          grep -q 'SENDWAYO EXPRESS — Plataforma oficial' index.html
-          echo "SENDWAYO official fusion and balance markers OK"
+          set -euo pipefail
+          grep -q 'register-password-confirm' SENDWAYO-V7-FAST-ENTRY.html
+          grep -q 'createUserWithEmailAndPassword' SENDWAYO-V7-FAST-ENTRY.html
+          grep -q 'sendPasswordResetEmail' SENDWAYO-V7-FAST-ENTRY.html
+          grep -q 'sendwayoexpress@gmail.com' SENDWAYO-V7-FAST-ENTRY.html
+          grep -q 'sendwayo-v7-self-registration-approval' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          grep -q 'sendwayo_express_v2/users/' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          grep -q 'sendwayo_express_v2/requests/' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          grep -q 'balanceDOP' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          echo "SENDWAYO secure registration, admin approval and Firebase identity markers OK"
       - name: Run V7 regression tests
         run: |
           set -euo pipefail
