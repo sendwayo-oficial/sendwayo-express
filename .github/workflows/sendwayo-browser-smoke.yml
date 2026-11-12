@@ -87,6 +87,7 @@ jobs:
               await page.locator('#remember-me').check();
               if(!await page.locator('#remember-me').isChecked())throw new Error('Recordarme no responde.');
               if(await page.locator('#forgot-password').count()!==1)throw new Error('Hay más de un control de recuperación.');
+              await page.locator('#login-email').fill('');
               await page.locator('#forgot-password').click();
               await page.waitForFunction(()=>document.querySelector('#login-status')?.textContent.includes('Escriba primero su correo'));
               await page.locator('#register-button').click();
