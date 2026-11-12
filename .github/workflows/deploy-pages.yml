@@ -37,25 +37,20 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           css = r'''<style id="sendwayo-v7-minimal-welcome-final">
-          #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important;background:#f5f7fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
-          #welcome-landing>main.sendwayo-minimal-welcome-inner{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:10px!important;width:min(100%,520px)!important;min-height:0!important;margin:0 auto!important;padding:28px 20px!important;background:transparent!important;text-align:center!important}
-          #welcome-landing .sendwayo-landing-logo{display:block!important;width:124px!important;height:88px!important;max-width:124px!important;max-height:88px!important;object-fit:contain!important;margin:0 auto!important}
-          #welcome-landing .sendwayo-landing-title{display:block!important;margin:0!important;color:#10243d!important;font-size:clamp(25px,4vw,32px)!important;line-height:1.15!important;font-weight:900!important;letter-spacing:.02em!important}
-          #welcome-landing #sendwayo-home-login{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:160px!important;min-height:48px!important;margin-top:12px!important;padding:13px 28px!important;border:0!important;border-radius:12px!important;background:#12365b!important;color:#fff!important;font-size:15px!important;font-weight:800!important;cursor:pointer!important;box-shadow:0 7px 18px rgba(18,54,91,.18)!important}
-          @media(max-width:600px){#welcome-landing>main.sendwayo-minimal-welcome-inner{gap:8px!important;padding:20px 16px!important}#welcome-landing .sendwayo-landing-logo{width:112px!important;height:76px!important}#welcome-landing .sendwayo-landing-title{font-size:26px!important}#welcome-landing #sendwayo-home-login{width:min(100%,220px)!important}}
-          </style>
-          <script id="sendwayo-v7-minimal-welcome-login">
-          (function(){
-            var loginButton=document.getElementById('sendwayo-home-login');
-            if(loginButton&&!loginButton.dataset.sendwayoBound){
-              loginButton.dataset.sendwayoBound='1';
-              loginButton.addEventListener('click',function(event){
-                event.preventDefault();
-                if(typeof window.v162_showLogin==='function')window.v162_showLogin();
-              });
-            }
-          })();
-          </script>'''
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:auto!important;padding:24px!important;background:linear-gradient(135deg,#edf3fa 0%,#f9fbfe 55%,#eaf1f8 100%)!important;color:#102b49!important;font-family:Arial,sans-serif!important;box-sizing:border-box!important}
+#welcome-landing>.sendwayo-minimal-welcome-inner{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:28px!important;width:min(100%,790px)!important;min-height:0!important;margin:0 auto!important;padding:42px 34px!important;background:#fff!important;border:1px solid #e4eaf1!important;border-radius:28px!important;box-shadow:0 22px 60px rgba(16,43,73,.13)!important;text-align:center!important;box-sizing:border-box!important}
+#welcome-landing .sendwayo-landing-brand-panel{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:22px!important;width:100%!important;max-width:100%!important;margin:0 auto!important}
+#welcome-landing .sendwayo-landing-logo{display:block!important;flex:0 0 auto!important;width:150px!important;height:108px!important;max-width:150px!important;max-height:108px!important;object-fit:contain!important;margin:0!important;padding:4px!important;background:#fff!important;border-radius:12px!important;opacity:1!important;visibility:visible!important}
+#welcome-landing .sendwayo-landing-title{display:block!important;margin:0!important;padding:0!important;color:#102b49!important;font-size:clamp(28px,4vw,40px)!important;line-height:1.12!important;font-weight:900!important;letter-spacing:.025em!important;text-align:left!important;white-space:normal!important}
+#welcome-landing .sendwayo-welcome-only-actions{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:14px!important;width:min(100%,440px)!important;margin:0 auto!important;padding:0!important}
+#welcome-landing .sendwayo-public-action{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;min-width:160px!important;min-height:52px!important;margin:0!important;padding:14px 24px!important;border:0!important;border-radius:13px!important;font-family:Arial,sans-serif!important;font-size:15px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:.045em!important;cursor:pointer!important;pointer-events:auto!important;opacity:1!important;visibility:visible!important;box-shadow:0 8px 20px rgba(16,43,73,.14)!important;transition:transform .15s ease,filter .15s ease!important}
+#welcome-landing .sendwayo-public-login{background:#12365b!important;color:#fff!important}
+#welcome-landing .sendwayo-public-register{background:#f3b63f!important;color:#152f4b!important}
+#welcome-landing .sendwayo-public-action:hover{transform:translateY(-2px)!important;filter:brightness(1.04)!important}
+#welcome-landing .sendwayo-public-action:focus-visible{outline:3px solid #1684bd!important;outline-offset:4px!important}
+@media(max-width:600px){#welcome-landing{padding:14px!important}#welcome-landing>.sendwayo-minimal-welcome-inner{gap:22px!important;width:100%!important;padding:26px 18px!important;border-radius:20px!important}#welcome-landing .sendwayo-landing-brand-panel{gap:12px!important}#welcome-landing .sendwayo-landing-logo{width:104px!important;height:78px!important;max-width:104px!important;max-height:78px!important}#welcome-landing .sendwayo-landing-title{font-size:clamp(21px,6vw,29px)!important;letter-spacing:.01em!important}#welcome-landing .sendwayo-welcome-only-actions{gap:9px!important;width:100%!important}#welcome-landing .sendwayo-public-action{min-width:0!important;min-height:48px!important;padding:12px 12px!important;font-size:13px!important}}
+@media(max-width:360px){#welcome-landing>.sendwayo-minimal-welcome-inner{padding:20px 12px!important}#welcome-landing .sendwayo-landing-logo{width:88px!important;height:68px!important}#welcome-landing .sendwayo-landing-title{font-size:20px!important}}
+</style>'''
           source = Path('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
           base_html = source.read_text(encoding='utf-8')
           if "username:'sendwayoexpress@gmail.com'" not in base_html:
@@ -94,9 +89,14 @@ jobs:
               raise SystemExit('No se pudo cerrar de forma segura el contenedor de bienvenida.')
           minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
             <main class="sendwayo-home sendwayo-minimal-welcome-inner">
-              <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" width="124" height="88">
-              <h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>
-              <button id="sendwayo-home-login" type="button">INGRESAR</button>
+              <section class="sendwayo-landing-brand-panel" aria-label="SENDWAYO EXPRESS">
+                <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" width="150" height="108" fetchpriority="high" decoding="async">
+                <h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>
+              </section>
+              <nav class="sendwayo-welcome-only-actions" aria-label="Acceso a la plataforma">
+                <button id="sendwayo-home-login" class="sendwayo-public-action sendwayo-public-login" type="button">INGRESAR</button>
+                <button id="sendwayo-home-register" class="sendwayo-public-action sendwayo-public-register" type="button">REGISTRAR</button>
+              </nav>
             </main>
           </div>'''
           base_html = base_html[:landing_start] + minimal_welcome + base_html[landing_end:]
@@ -176,29 +176,28 @@ jobs:
           assert html.rstrip().endswith('</html>')
           assert html.index('id="sendwayo-brand-bar"') < html.index('id="sendwayo-v7-user-strip"') < html.index('id="sendwayo-workspace-shell"')
           assert 'sendwayo-v7-no-side-identity-final' in html and 'sendwayo-v7-top-identity-and-width-final' in html
-          assert '<section class="sendwayo-landing-photo-panel"' not in html, 'La portada minimalista no debe mostrar una fotografía adicional'
           assert 'class="sendwayo-landing-logo"' in html and 'class="sendwayo-landing-title"' in html, 'El logo y nombre SENDWAYO deben verse en la portada'
-          assert 'id="sendwayo-home-login"' in html and 'id="sendwayo-home-register"' not in html, 'La portada debe tener únicamente Ingresar'
+          assert 'id="sendwayo-home-login"' in html and 'id="sendwayo-home-register"' in html, 'La portada debe tener Ingresar y Registrar'
           assert 'href="assets/sendwayo-tailwind.css"' in html, 'Tailwind debe cargarse desde el propio sitio'
           assert 'https://cdn.tailwindcss.com' not in html, 'La página no debe depender del CDN de Tailwind'
           assert 'sendwayo-v7-minimal-welcome-final' in html, 'La portada mínima debe tener el estilo final'
           welcome_start = html.index('id="welcome-landing"')
           welcome_end = html.index('</div>', welcome_start) + len('</div>')
           welcome = html[welcome_start:welcome_end]
-          assert welcome.count('<img') == 1 and 'sendwayo-landing-logo' in welcome, 'La bienvenida debe mostrar únicamente el logo, sin fotografías'
-          assert 'SENDWAYO EXPRESS</h1>' in welcome and 'INGRESAR' in welcome, 'La bienvenida debe mostrar logo, nombre e ingresar'
-          assert 'sendwayo-home-register' not in welcome and 'REGISTRARSE' not in welcome, 'No mostrar botones adicionales en bienvenida'
-          assert "loginButton.addEventListener('click'" in html, 'Ingresar debe tener una acción activa'
-          assert 'window.v162_showLogin()' in html, 'Ingresar debe abrir el formulario real'
-          assert 'body:not(.sendwayo-authenticated)>#sendwayo-v7-modal' not in html, 'El modal de registro no debe cubrir la portada'
-          assert 'width:124px!important;height:88px!important' in html, 'El logo debe ser compacto'
+          assert welcome.count('<img') == 1 and 'sendwayo-landing-logo' in welcome, 'La bienvenida debe mostrar únicamente el logo'
+          assert '<h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>' in welcome, 'La bienvenida debe mostrar el nombre del negocio'
+          assert welcome.count('<button') == 2 and 'INGRESAR' in welcome and 'REGISTRAR' in welcome, 'La bienvenida debe mostrar exactamente dos botones'
+          assert 'window.sendwayoOpenWelcomeLogin=openLogin;' in html, 'Ingresar debe tener un manejador activo'
+          assert 'window.sendwayoOpenWelcomeRegister=openRegister;' in html, 'Registrar debe tener un manejador activo'
+          assert "window.sendwayoOpenPublicRequest('Quiero ser remitente')" in html, 'Registrar debe abrir la solicitud existente'
+          assert 'width:150px!important;height:108px!important' in html, 'El logo debe verse claro y proporcionado'
           assert 'const perPage=10;' in html
           assert "const num=String(i-start+1).padStart(2,'0')" in html
           assert "String(i+1).padStart(2,'0')" in html
           assert 'aria-label="Página posterior"' in html and 'sendwayoSetModulePage' in html
           assert "const specialTables=new Set(['tabla-sendwayo-envios','tabla-sendwayo-recargas','tabla-sendwayo-paquetikos']);" in html
           assert 'sw-pay-save-settlement' in html and 'settings/paymentSettlement' in html
-          print('PASS: V7, 5 agentes, 15 remitentes, cabecera superior, paginación de 10 y tesorería.')
+          print('PASS: V7, portada con logo, nombre, Ingresar y Registrar; 5 agentes, 15 remitentes, paginación y tesorería.')
           PY
 
       - name: Persist the verified SENDWAYO login in the Pages source
