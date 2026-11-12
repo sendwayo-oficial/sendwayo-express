@@ -11037,5 +11037,22 @@ body::before{display:none!important;content:none!important;background-image:none
  #welcome-landing #sendwayo-entry-login-button,#welcome-landing #sendwayo-entry-register-button{min-height:48px!important}
 }
 </style>
+
+<style id="sendwayo-v7-fix-landing-hidden-card-20261112">
+/* La regla antigua de portada ocultaba esta tarjeta y solo dejaba ver el fondo azul. */
+#welcome-landing>main.sendwayo-home-minimal>:not(.sendwayo-welcome-only-photo):not(.sendwayo-welcome-only-actions).sendwayo-entry-card{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+}
+#welcome-landing .sendwayo-entry-card,
+#welcome-landing .sendwayo-entry-brand,
+#welcome-landing #login-screen,
+#welcome-landing .sendwayo-entry-actions{
+  visibility:visible!important;
+  opacity:1!important;
+}
+</style>
 </body>
 </html>
