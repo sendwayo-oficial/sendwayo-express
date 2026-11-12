@@ -109,7 +109,7 @@ jobs:
             const preferred = instances.find(x => x.databaseUrl && /default|sendwayo/i.test(x.name || x.databaseUrl)) || instances.find(x => x.databaseUrl);
             if (!preferred?.databaseUrl) throw new Error('The Realtime Database instance did not include a database URL.');
             const dbBase = String(preferred.databaseUrl).replace(/\/$/, '');
-            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, adminAuthUid = '', sendwayoAuthExists = false, pageToken = '';
+            let authUsers = 0, adminAuthExists = false, adminAuthDisabled = null, adminAuthUid = '', sendwayoAuthExists = false, canonicalAdminAuthExists = false, canonicalAdminAuthDisabled = null, canonicalAdminAuthUid = '', pageToken = '';
             const authUserEmails = new Set(), authUserUids = new Set();
             do {
               const qs = new URLSearchParams({ maxResults: '1000' });
@@ -122,6 +122,7 @@ jobs:
                 if (userEmail) authUserEmails.add(userEmail);
                 if (String(user.localId || '').trim()) authUserUids.add(String(user.localId));
                 if (userEmail === 'sendwayoexpress@gmail.com') sendwayoAuthExists = true;
+                if (userEmail === 'ideletteismorin@gmail.com') { canonicalAdminAuthExists = true; canonicalAdminAuthDisabled = Boolean(user.disabled); canonicalAdminAuthUid = String(user.localId || ''); }
                 if (userEmail === 'sendwayoexpress@gmail.com') {
                   adminAuthExists = true;
                   adminAuthDisabled = Boolean(user.disabled);
@@ -212,6 +213,9 @@ jobs:
             console.log('Legacy profile UID matches any Firebase Authentication account: ' + (adminProfileUidMatchesAnyAuth ? 'yes' : 'no'));
             console.log('Legacy profile email matches its known legacy auth candidate: ' + (adminProfileEmailMatchesSendwayoAuth ? 'yes' : 'no'));
             console.log('Legacy auth candidate exists: ' + (sendwayoAuthExists ? 'yes' : 'no'));
+            console.log('Canonical Firebase admin account exists: ' + (canonicalAdminAuthExists ? 'yes' : 'no'));
+            console.log('Canonical Firebase admin account disabled: ' + (canonicalAdminAuthDisabled === null ? 'not applicable' : (canonicalAdminAuthDisabled ? 'yes' : 'no')));
+            console.log('Admin profile UID matches canonical Firebase account: ' + (Boolean(adminUidMatchesAuth && canonicalAdminAuthUid && adminAuthUid === canonicalAdminAuthUid) ? 'yes' : 'no'));
             console.log('Admin Authentication account disabled: ' + (adminAuthDisabled === null ? 'not applicable' : (adminAuthDisabled ? 'yes' : 'no')));
             console.log('Admin profile email matches Authentication email: ' + (adminEmailMatchesAuth ? 'yes' : 'no'));
             console.log('Admin profile UID matches Authentication UID: ' + (adminUidMatchesAuth ? 'yes' : 'no'));
