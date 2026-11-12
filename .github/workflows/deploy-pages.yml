@@ -70,21 +70,26 @@ jobs:
               raise SystemExit('El usuario SENDWAYO debe resolverse antes del correo de Firebase.')
 
           # Replace the complete public welcome container with only logo, business name and Ingresar.
-          import re
-          landing = re.search(r"""<div\\b(?=[^>]*\\bid=["']welcome-landing["'])[^>]*>""", base_html, re.I)
-          if not landing:
+          landing_start = base_html.find('<div id="welcome-landing"')
+          if landing_start < 0:
               raise SystemExit('No se encontró el contenedor de bienvenida V7.')
-          landing_start = landing.start()
           depth = 0
+          cursor = landing_start
           landing_end = None
-          for token in re.finditer(r"""<div\\b[^>]*>|</div\\s*>""", base_html[landing_start:], re.I):
-              if token.group(0).lower().startswith('</div'):
-                  depth -= 1
-              else:
-                  depth += 1
-              if depth == 0:
-                  landing_end = landing_start + token.end()
+          while True:
+              open_at = base_html.find('<div', cursor)
+              close_at = base_html.find('</div>', cursor)
+              if close_at < 0:
                   break
+              if open_at >= 0 and open_at < close_at:
+                  depth += 1
+                  cursor = open_at + 4
+              else:
+                  depth -= 1
+                  cursor = close_at + 6
+                  if depth == 0:
+                      landing_end = cursor
+                      break
           if landing_end is None:
               raise SystemExit('No se pudo cerrar de forma segura el contenedor de bienvenida.')
           minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
