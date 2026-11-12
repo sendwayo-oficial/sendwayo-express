@@ -16,7 +16,7 @@ for (const id of ['login-email','login-password','show-password','forgot-passwor
   assert.ok(fast.includes('id="' + id + '"'), 'falta el control funcional: ' + id);
 }
 for (const marker of [
-  'assets/sendwayo-logo-transparent.webp',
+  'assets/sendwayo-logo-real.jpg',
   'addEventListener(\'click\'', 
   'addEventListener(\'submit\'',
   'signInWithEmailAndPassword',
@@ -29,11 +29,11 @@ for (const marker of [
 ]) assert.ok(fast.includes(marker), 'falta la función de acceso: ' + marker);
 
 assert.equal((fast.match(/<img\b/gi)||[]).length, 1, 'la portada debe mostrar únicamente el logo, sin imágenes decorativas');
-assert.ok(!fast.includes('sendwayo-logo-real.jpg'), 'el logo con fondo no debe aparecer en la portada');
+assert.ok(fast.includes('assets/sendwayo-logo-real.jpg'), 'la portada debe usar el logo oficial y original');
 assert.ok(!fast.includes('cdn.tailwindcss.com'), 'la portada no debe esperar a una librería visual externa');
 assert.ok(fullApp.length > 500000, 'el panel completo V7 debe seguir presente detrás del acceso');
-assert.ok(fullApp.includes("const ADMIN_EMAIL = 'ideletteismorin@gmail.com';"), 'se debe conservar el correo real de Firebase');
+assert.ok(fullApp.includes("const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';"), 'se debe conservar el correo real de Firebase');
 assert.ok(fullApp.includes('sendwayoRememberedPersistence'), 'el panel debe respetar la preferencia Recordarme');
-assert.ok(fullApp.includes('sendwayo-logo-transparent.webp'), 'el panel también debe utilizar el logo transparente');
+assert.ok(fullApp.includes('sendwayo-logo-real.jpg'), 'el panel también debe utilizar el logo oficial original');
 
 console.log('PASS: V118 ligero; correo, contraseña, Ver, recuperación, Ingresar y Registrar; logo transparente; panel V7 conservado.');
