@@ -313,6 +313,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </style>
 <style id="sendwayo-v7-entry-first-paint">
   html,body{min-height:100%;background:#0b1a2f!important}
+  img,video,picture,iframe,object,embed{display:none!important;visibility:hidden!important}
   body::before{content:none!important;background:none!important;background-image:none!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
   body:not(.sendwayo-authenticated) img,
@@ -9161,8 +9162,12 @@ window.sendwayoShareReceipt=async function(){
        login.style.setProperty('visibility','visible','important');
        login.style.setProperty('pointer-events','auto','important');
      }
-   }else if(login){
-     login.style.setProperty('display','none','important');
+   }else{
+     document.querySelectorAll('body > *').forEach(function(node){
+       if(node===login||node.tagName==='SCRIPT'||node.tagName==='STYLE')return;
+       if(node.id!=='sendwayo-v7-drawer')node.style.removeProperty('display');
+     });
+     if(login)login.style.setProperty('display','none','important');
    }
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforceSingleEntry,{once:true});
