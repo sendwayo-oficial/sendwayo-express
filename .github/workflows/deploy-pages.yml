@@ -66,7 +66,7 @@ jobs:
           fs.writeFileSync(app,html);
           const page=fs.readFileSync(fast,'utf8');
           if(Buffer.byteLength(page,'utf8')>30000) throw new Error('La bienvenida ligera supera 30 KB.');
-          if((page.match(/<script\\b/g)||[]).length!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
+          if((page.match(/<script\b/g)||[]).length!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
           if((page.match(/<img\\b/g)||[]).length!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
           if(!page.includes('src="assets/sendwayo-logo-transparent.webp"')) throw new Error('Falta el logo oficial transparente.');
           if(page.includes('sendwayo-logo-real.jpg')) throw new Error('La portada todavía usa el logo JPG con fondo.');
@@ -77,7 +77,7 @@ jobs:
           for(const marker of ['signInWithEmailAndPassword','sendPasswordResetEmail','setPersistence','sendwayo_express_v2/requests','sendwayoExpressOfficialV7','sendwayoexpress@gmail.com']) {
             if(!page.includes(marker)) throw new Error('Falta función real de acceso: '+marker);
           }
-          const scripts=[...page.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
+          const scripts=[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)];
           if(scripts.length!==1) throw new Error('No se encontró el script único de la portada.');
           new Function(scripts[0][1]);
           if(!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se copió el logo transparente.');
