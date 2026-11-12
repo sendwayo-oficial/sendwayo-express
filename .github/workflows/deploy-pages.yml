@@ -10,7 +10,7 @@ on:
       - '.github/workflows/deploy-pages.yml'
       - 'SENDWAYO-V7-FAST-ENTRY.html'
       - 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'
-      - 'assets/sendwayo-logo-transparent.webp'
+      - 'assets/sendwayo-logo-real.jpg'
       - 'assets/sendwayo-logo-real.jpg'
   workflow_dispatch:
 
@@ -166,7 +166,7 @@ jobs:
           minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
             <main class="sendwayo-home sendwayo-minimal-welcome-inner">
               <section class="sendwayo-landing-brand-panel" aria-label="SENDWAYO EXPRESS">
-                <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-transparent.webp" alt="Logo SENDWAYO EXPRESS" width="150" height="108" fetchpriority="high" decoding="async">
+                <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" width="150" height="108" fetchpriority="high" decoding="async">
                 <h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>
               </section>
               <nav class="sendwayo-welcome-only-actions" aria-label="Acceso a la plataforma">
@@ -208,7 +208,7 @@ jobs:
               path.write_text(landing_html, encoding='utf-8')
 
           Path('site/assets').mkdir(parents=True, exist_ok=True)
-          Path('site/assets/sendwayo-logo-transparent.webp').write_bytes(Path('assets/sendwayo-logo-transparent.webp').read_bytes())
+          Path('site/assets/sendwayo-logo-real.jpg').write_bytes(Path('assets/sendwayo-logo-real.jpg').read_bytes())
           Path('site/assets/sendwayo-logo-real.jpg').write_bytes(Path('assets/sendwayo-logo-real.jpg').read_bytes())
           print('PASS: bienvenida ligera separada; aplicación V7 detrás del acceso; logo transparente copiado.')
           PY
@@ -250,7 +250,7 @@ jobs:
           for (const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form']) {
             if (!landing.includes('id="' + id + '"')) throw new Error('Falta control de acceso: ' + id);
           }
-          for (const marker of ['assets/sendwayo-logo-transparent.webp','sendwayoExpressOfficialV7','signInWithEmailAndPassword','sendPasswordResetEmail','sendwayo_express_v2/requests','sendwayo_remember','SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html']) {
+          for (const marker of ['assets/sendwayo-logo-real.jpg','sendwayoExpressOfficialV7','signInWithEmailAndPassword','sendPasswordResetEmail','sendwayo_express_v2/requests','sendwayo_remember','SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html']) {
             if (!landing.includes(marker)) throw new Error('Falta función de bienvenida: ' + marker);
           }
           if (landing.split('<img').length - 1 !== 1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
@@ -261,7 +261,7 @@ jobs:
           if (!app.includes('sendwayo_remember')) throw new Error('El panel V7 no respeta Recordarme.');
           if (!app.includes('const perPage=10;')) throw new Error('Falta la paginación V7.');
           if (!app.includes('sw-pay-save-settlement')) throw new Error('Falta la conciliación V7.');
-          if (!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se publicó el logo transparente.');
+          if (!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se publicó el logo transparente.');
           if (!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('Falta Tailwind local.');
           console.log('PASS: bienvenida ligera (' + Buffer.byteLength(landing,'utf8') + ' bytes), un script, campos accesibles, acciones Firebase y panel V7 separado.');
           NODE
@@ -271,7 +271,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SENDWAYO-V7-FAST-ENTRY.html assets/sendwayo-logo-transparent.webp SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html site/assets/sendwayo-logo-transparent.webp site/assets/sendwayo-tailwind.css
+          git add SENDWAYO-V7-FAST-ENTRY.html assets/sendwayo-logo-real.jpg SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html site/assets/sendwayo-logo-real.jpg site/assets/sendwayo-tailwind.css
           if git diff --cached --quiet; then
             echo "The published V7 source already contains the verified SENDWAYO login."
           else
