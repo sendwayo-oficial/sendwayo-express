@@ -151,34 +151,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
   // Así, el primer clic no cae en una versión local anterior del login.
   window.__sendwayoFirebaseSecureLoginReady = false;
   window.__sendwayoLoginPending = false;
-  function holdEarlyLogin(event){
-    const button=event.target&&event.target.closest
-      ? event.target.closest('#login-screen button[onclick*="intentarLogin"], #login-screen button[type="submit"]')
-      : null;
-    if(!button||window.__sendwayoFirebaseSecureLoginReady)return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    window.__sendwayoLoginPending=true;
-    const error=document.getElementById('login-error');
-    if(error){
-      error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
-      error.classList.remove('hidden');
-    }
-  }
-  document.addEventListener('click',holdEarlyLogin,true);
-  document.addEventListener('keydown',function(event){
-    if(event.key!=='Enter'||window.__sendwayoFirebaseSecureLoginReady)return;
-    const input=event.target&&event.target.closest?event.target.closest('#login-screen input'):null;
-    if(!input)return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    window.__sendwayoLoginPending=true;
-    const error=document.getElementById('login-error');
-    if(error){
-      error.textContent='Preparando el acceso seguro. Su entrada continuará automáticamente.';
-      error.classList.remove('hidden');
-    }
-  },true);
+  // Los manejadores normales conservan el clic mientras se prepara Firebase; no bloquear la interfaz.
   function loadScript(src){
     return new Promise(function(resolve,reject){
       var script=document.createElement('script');
@@ -11054,5 +11027,83 @@ body::before{display:none!important;content:none!important;background-image:none
   opacity:1!important;
 }
 </style>
+
+<script id="sendwayo-v7-public-entry-actions">
+(function(){
+  'use strict';
+  function showEntryError(message){
+    var welcome=document.getElementById('welcome-landing');
+    if(!welcome)return;
+    var box=document.getElementById('sendwayo-landing-action-error');
+    if(!box){
+      box=document.createElement('div');
+      box.id='sendwayo-landing-action-error';
+      box.setAttribute('role','alert');
+      box.style.cssText='width:min(100%,440px);margin:14px auto 0;padding:10px 12px;border:1px solid #fecaca;border-radius:10px;background:#fff7f7;color:#991b1b;font:600 12px/1.45 Arial,sans-serif;text-align:center';
+      welcome.querySelector('nav')?.insertAdjacentElement('afterend',box);
+    }
+    box.textContent=message;
+  }
+  function openLogin(){
+    var opener=window.v162_showLogin;
+    if(typeof opener==='function'){
+      opener();
+      return true;
+    }
+    var login=document.getElementById('login-screen');
+    if(!login){
+      showEntryError('El formulario de acceso todavía no está disponible. Recargue la página e inténtelo otra vez.');
+      return false;
+    }
+    var welcome=document.getElementById('welcome-landing');
+    document.body.classList.remove('sendwayo-authenticated');
+    document.body.classList.add('sendwayo-login-open');
+    if(login.parentElement!==document.body)document.body.appendChild(login);
+    if(welcome){
+      welcome.classList.add('hidden');
+      welcome.style.setProperty('display','none','important');
+      welcome.style.setProperty('visibility','hidden','important');
+      welcome.style.setProperty('pointer-events','none','important');
+    }
+    login.classList.remove('hidden');
+    login.style.setProperty('display','flex','important');
+    login.style.setProperty('visibility','visible','important');
+    login.style.setProperty('pointer-events','auto','important');
+    login.style.setProperty('z-index','2147483000','important');
+    login.querySelectorAll('input').forEach(function(field){
+      field.disabled=false;
+      field.readOnly=false;
+      field.style.setProperty('pointer-events','auto','important');
+    });
+    window.setTimeout(function(){document.getElementById('login-usuario')?.focus();},60);
+    return true;
+  }
+  function openRegister(){
+    if(typeof window.sendwayoOpenPublicRequest==='function'){
+      window.sendwayoOpenPublicRequest('Quiero ser remitente');
+      return true;
+    }
+    showEntryError('El formulario de registro todavía no está disponible. Recargue la página e inténtelo otra vez.');
+    return false;
+  }
+  window.sendwayoOpenWelcomeLogin=openLogin;
+  window.sendwayoOpenWelcomeRegister=openRegister;
+  document.addEventListener('click',function(event){
+    var target=event.target;
+    var login=target&&target.closest?target.closest('#sendwayo-home-login'):null;
+    if(login){
+      event.preventDefault();
+      openLogin();
+      return;
+    }
+    var register=target&&target.closest?target.closest('#sendwayo-home-register'):null;
+    if(register){
+      event.preventDefault();
+      openRegister();
+    }
+  },true);
+})();
+</script>
+
 </body>
 </html>
