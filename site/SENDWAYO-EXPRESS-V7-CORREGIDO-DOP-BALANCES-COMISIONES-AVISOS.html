@@ -338,7 +338,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
     <div class="text-center mb-6">
-      <img src="assets/sendwayo-logo-transparent.webp" alt="Logo SENDWAYO EXPRESS" style="display:block;width:180px;height:120px;object-fit:contain;margin:0 auto 12px;background:transparent;">
+      <img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" style="display:block;width:180px;height:120px;object-fit:contain;margin:0 auto 12px;background:transparent;">
       <h2 class="font-extrabold text-[18px]">SENDWAYO EXPRESS</h2>
     </div>
     <div class="space-y-4">
@@ -360,7 +360,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 
 <div id="sendwayo-brand-bar" class="sendwayo-brand-bar sticky top-0">
   <div class="sendwayo-brand-left">
-    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
+    <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" class="sendwayo-brand-logo">
     <span id="sendwayo-v7-business-name" class="sendwayo-brand-title">SENDWAYO EXPRESS</span>
     <button id="sendwayo-mobile-menu" class="sendwayo-top-menu-toggle" type="button" aria-label="Abrir menú de navegación" aria-controls="sendwayo-main-sidebar" aria-expanded="false" title="Menú">☰</button>
   </div>
@@ -526,7 +526,7 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 <div id="modal-comprobante" class="hidden fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-3">
   <div id="receipt-print-root" class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border-[3px] border-amber-400">
     <div class="p-4 flex items-center gap-3 border-b">
-      <img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" class="w-14 h-14 object-contain bg-white rounded-full border">
+      <img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" class="w-14 h-14 object-contain bg-white rounded-full border">
       <div class="flex-1"><h3 class="font-extrabold text-[16px]">SENDWAYO EXPRESS</h3><p class="text-[11px] text-slate-600">Servicio de calidad que conecta contigo con confianza y seguridad. ✓</p></div>
       <div class="w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-green-600 font-bold">✓</div>
     </div>
@@ -555,11 +555,11 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 // DATOS CORREGIDOS - 5 AGENTES + ADMIN CON CODIGO - RECUERDA QUE ESTOS SON LOS 5 AGENTES, TIENES QUE PONERLO CON SU CODIGO
 let ADMIN = {
   id:'ADMIN-ADMINISTRADOR', idAnterior:'ADMINADMIN',
-  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN'],
+  codigo:'ADMIN-ADMINISTRADOR', codigoAnterior:'ADMIN-000', aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','sendwayoexpress@gmail.com'],
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
-  email:'ideletteismorin@gmail.com',
+  email:'sendwayoexpress@gmail.com',
   username:'sendwayoexpress@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
@@ -2710,7 +2710,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     if(!ls) return;
     ls.innerHTML=`<div class="w-full max-w-[420px] mx-auto bg-white rounded-[24px] p-6 shadow-2xl border mt-10">
       <div class="flex justify-between items-center mb-3"><button onclick="v162_goWelcome()" class="text-[11px] bg-gray-100 px-4 py-1.5 rounded-full">← Bienvenida</button><span class="bg-slate-900 text-white text-[10px] px-3 py-1 rounded-full">${new Date().toLocaleTimeString('es-DO')}</span></div>
-      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-transparent.webp" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
+      <div class="text-center mb-4"><img loading="lazy" decoding="async" src="assets/sendwayo-logo-real.jpg" style="width:156px; height:112px; object-fit:contain; margin:0 auto; border-radius:16px;"><p class="text-[10px] text-gray-500 mt-2">Acceso seguro a SENDWAYO EXPRESS</p></div>
       <div class="space-y-3">
         <div><label class="block text-[11px] font-bold mb-1">ID o correo electrónico</label><input id="login-usuario" type="text" autocomplete="username" placeholder="ID o correo electrónico" class="w-full border rounded-full px-4 py-3 text-[14px]"></div>
         <div><label class="block text-[11px] font-bold mb-1">Contraseña</label><div class="relative"><input id="login-password" type="password" placeholder="" class="w-full border rounded-full px-4 py-3 pr-12 text-[14px]"><button type="button" onclick="v162_togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">👁</button></div></div>
@@ -4196,16 +4196,90 @@ window.sendwayoShareReceipt=async function(){
   };
   // Replace welcome approval logic only for service requests; registration requests still become accounts after approval.
   const oldActionGeneric=window.sendwayoActionGeneric;
-  window.sendwayoActionGeneric=function(view,action,id){
+  window.sendwayoActionGeneric=async function(view,action,id){
     if(view==='bienvenida'){
       const rows=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]),r=rows.find(x=>String(x.id)===String(id));if(!r)return;
-      if(action==='ver'){alert(['ID: '+r.id,'Nombre: '+r.nombre,'Correo: '+r.email,'Celular: '+r.celular,'Servicio: '+(r.servicio||''),'Detalle: '+(r.detalle||''),'Estado: '+r.estado].join('\n'));return;}
-      if(action==='borrar'){if(!isAdmin())return;if(confirm('¿Borrar esta solicitud?')){writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows.filter(x=>String(x.id)!==String(id)));renderCustom(view);}return;}
+      if(action==='ver'){alert(['ID: '+r.id,'Nombre: '+r.nombre,'Correo: '+r.email,'Celular: '+(r.celular||r.telefono||r.phone||''),'Servicio: '+(r.servicio||''),'Detalle: '+(r.detalle||''),'Estado: '+r.estado].join('\n'));return;}
+      if(action==='borrar'){
+        if(!isAdmin())return;
+        if(!confirm('¿Borrar esta solicitud?'))return;
+        try{const fb=window.sendwayoFirebase;if(r.authUid&&fb?.db&&fb?.auth?.currentUser)await fb.db.ref('sendwayo_express_v2/requests/'+String(r.id)).remove();}catch(error){alert('No se pudo retirar la solicitud de Firebase: '+(error?.message||'error'));return;}
+        writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows.filter(x=>String(x.id)!==String(id)));renderCustom(view);return;
+      }
       if((action==='aprobar'||action==='rechazar')&&!isAdmin()){alert('Solo el administrador puede revisar solicitudes.');return;}
       if(action==='aprobar'&&r.tipoSolicitud!=='SERVICIO'){
-        r.estado='Aprobado';r.aprobadoPor=user()?.id;const name=text(r.nombre).trim().split(/\s+/);let next=1;while(accountById('REM'+String(next).padStart(5,'0')))next++;if(next===11)next++;
-        const idNew='REM'+String(next).padStart(5,'0'),code='REM-'+(name[0]||'REM').slice(0,3).toUpperCase()+(name.length>1?name[name.length-1]:name[0]||'REM').slice(0,3).toUpperCase();const a={id:idNew,codigo:code,codigo2:code,numero:String(next).padStart(2,'0'),nombre:r.nombre,name:r.nombre,email:r.email,usuario:r.email,celular:r.celular,telefono:r.celular,password:r.password||'',contrasena:r.password||'',role:'REMITENTE',estado:'Activo',activo:true,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;senders().push(a);
-      }else r.estado=action==='aprobar'?'Aprobado':'Rechazado';writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);saveAccountValues();renderCustom(view);return;
+        const fb=window.sendwayoFirebase,authUser=fb?.auth?.currentUser;
+        if(!fb?.db||!authUser?.uid){alert('No hay una sesión administrativa confirmada en Firebase.');return;}
+        const applicantUid=txt(r.authUid||r.createdByAuthUid||'');
+        const applicantEmail=txt(r.email||'').toLowerCase();
+        const applicantPhone=txt(r.celular||r.telefono||r.phone||'');
+        if(!applicantUid||!applicantEmail.includes('@')){alert('Esta solicitud es antigua o incompleta. Pida al solicitante que vuelva a registrarse desde la página actual.');return;}
+        const name=txt(r.nombre||r.name||'').trim();
+        if(!name||!applicantPhone){alert('La solicitud no tiene nombre o celular completo.');return;}
+        try{
+          const userRef=fb.db.ref('sendwayo_express_v2/users/'+applicantUid);
+          const previousSnap=await userRef.once('value');
+          const previous=previousSnap.exists()&&previousSnap.val()&&typeof previousSnap.val()==='object'?previousSnap.val():{};
+          if(previous.authUid&&String(previous.authUid)!==applicantUid)throw new Error('La identidad Firebase de la solicitud no coincide.');
+          const parts=name.split(/\s+/);
+          let next=1;
+          while(accountById('REM'+String(next).padStart(5,'0')))next++;
+          if(next===11){next++;while(accountById('REM'+String(next).padStart(5,'0')))next++;}
+          const newId='REM'+String(next).padStart(5,'0');
+          const code='REM-'+(parts[0]||'REM').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'REM').slice(0,3).toUpperCase();
+          const balances=previous.balances&&typeof previous.balances==='object'?previous.balances:{DOP:Number(previous.balanceDOP??previous.balance??0)||0,HTG:Number(previous.balanceHTG||0)||0};
+          const commissions=previous.commissions&&typeof previous.commissions==='object'?previous.commissions:{DOP:Number(previous.commissionDOP??previous.commission??0)||0,HTG:Number(previous.commissionHTG||0)||0};
+          const now=Date.now();
+          const profile={
+            id:newId,legacyId:newId,accountId:newId,staffId:code,code,codigo:code,
+            name,nombre:name,displayName:name,username:applicantEmail,login:applicantEmail,
+            email:applicantEmail,authEmail:applicantEmail,authUid:applicantUid,
+            phone:applicantPhone,telefono:applicantPhone,celular:applicantPhone,
+            role:'remitente',active:true,status:'active',mustChangePassword:false,
+            passwordChangeRequired:false,forcePasswordChange:false,
+            balance:Number(previous.balance??balances.DOP??0)||0,
+            balanceDOP:Number(previous.balanceDOP??balances.DOP??0)||0,
+            balanceRD:Number(previous.balanceRD??balances.DOP??0)||0,
+            balanceHTG:Number(previous.balanceHTG??balances.HTG??0)||0,
+            commission:Number(previous.commission??commissions.DOP??0)||0,
+            commissionDOP:Number(previous.commissionDOP??commissions.DOP??0)||0,
+            commissionHTG:Number(previous.commissionHTG??commissions.HTG??0)||0,
+            balances,commissions,comisiones:commissions,
+            createdAtMs:Number(previous.createdAtMs)||now,
+            createdByAuthUid:previous.createdByAuthUid||authUser.uid,
+            approvedAtMs:now,approvedByAuthUid:authUser.uid
+          };
+          await userRef.set(profile);
+          await fb.db.ref('sendwayo_express_v2/requests/'+String(r.id)).update({
+            status:'Approved',estado:'Aprobado',approvedAtMs:now,approvedByAuthUid:authUser.uid,
+            assignedUserId:newId,assignedCode:code
+          });
+          r.estado='Aprobado';r.status='Approved';r.aprobadoPor=user()?.id||'ADMINISTRADOR';r.idAsignado=newId;r.codigoAsignado=code;
+          const localAccount={...profile,dbUserKey:applicantUid,rtdbUserKey:applicantUid,activo:true,estado:'Activo'};
+          const prior=senders().find(x=>String(x.dbUserKey||x.authUid||'')===applicantUid||String(x.id)===newId);
+          if(prior)Object.assign(prior,localAccount);else senders().push(localAccount);
+          writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);
+          saveAccountValues();renderCustom(view);
+          alert('Registro aprobado. Se creó el perfil Firebase '+newId+' para '+name+'. La persona ya puede ingresar con el correo y la contraseña que creó al registrarse.');
+          return;
+        }catch(error){
+          console.error('[SENDWAYO] No se pudo aprobar el registro Firebase:',error);
+          alert('No se pudo aprobar el registro: '+(error?.message||'error de Firebase')+'. La solicitud sigue pendiente.');
+          return;
+        }
+      }
+      const newState=action==='aprobar'?'Aprobado':'Rechazado';
+      try{
+        const fb=window.sendwayoFirebase;
+        if(fb?.db&&fb?.auth?.currentUser?.uid){
+          await fb.db.ref('sendwayo_express_v2/requests/'+String(r.id)).update({
+            status:action==='aprobar'?'Approved':'Rejected',estado:newState,
+            reviewedAtMs:Date.now(),reviewedByAuthUid:fb.auth.currentUser.uid
+          });
+        }
+        r.estado=newState;r.status=action==='aprobar'?'Approved':'Rejected';
+        writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);renderCustom(view);
+      }catch(error){alert('No se pudo actualizar la solicitud en Firebase: '+(error?.message||'error'));}return;
     }
     if(view==='secretas'&&['modificar','editar'].includes(action)){const a=accountById(id);if(a)window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);return;}
     if(view==='secretas'&&action==='ver'){const a=accountById(id);if(a)alert('ID: '+a.id+'\nCódigo: '+a.codigo+'\nNombre: '+acctName(a)+'\nCorreo: '+(a.email||'')+'\nCelular: '+(a.celular||'')+'\nEstado: '+(a.estado||'Activo'));return;}
@@ -5735,7 +5809,7 @@ window.sendwayoShareReceipt=async function(){
     try{
       const a=allAccounts().find(x=>String(x.role||'').toUpperCase().includes('ADMIN')||String(x.id||'').toUpperCase()==='ADMINADMIN');
       if(a){const previousId=String(a.id||'');const previousCode=String(a.codigo||'');if(!a.id||['ADMINADMIN'].includes(previousId.toUpperCase()))a.id='ADMIN-ADMINISTRADOR';if(!a.codigo||previousCode.toUpperCase()==='ADMIN-000')a.codigo=a.id;a.codigo2=a.codigo;if(previousId&&previousId!==a.id){a.idAnterior=a.idAnterior||previousId;a.idAliases=[...new Set([...(Array.isArray(a.idAliases)?a.idAliases:[]),previousId].filter(Boolean))];}if(previousCode&&previousCode!==a.codigo)a.codeAliases=[...new Set([...(Array.isArray(a.codeAliases)?a.codeAliases:[]),previousCode].filter(Boolean))];a.role='ADMIN';}
-      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='ideletteismorin@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
+      (window.USUARIOS_LOGIN||[]).forEach(u=>{if(String(u.role||'').toUpperCase().includes('ADMIN')||String(u.email||u.usuario||'').toLowerCase()==='sendwayoexpress@gmail.com'||['ADMINADMIN','ADMIN-ADMINISTRADOR'].includes(String(u.id||'').toUpperCase())){const prior=String(u.id||'');u.id=a?.id||'ADMIN-ADMINISTRADOR';u.codigo=a?.codigo||u.id;u.codigo2=u.codigo;if(!Array.isArray(u.aliases))u.aliases=[];[prior,'ADMINADMIN','ADMIN-000'].forEach(x=>{if(x&&!u.aliases.some(y=>norm(y)===norm(x)))u.aliases.push(x);});}});
     }catch(_){ }
   }
 
@@ -6951,7 +7025,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
+  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -7482,7 +7556,7 @@ window.sendwayoShareReceipt=async function(){
     const {key, data}=profileRow;
     const currentUid=txt(data.authUid);
     const loginEmail=norm(firebaseUser.email);
-    // Cuenta administrativa confirmada: ideletteismorin@gmail.com.
+    // Cuenta administrativa confirmada: sendwayoexpress@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
       const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
@@ -8152,7 +8226,8 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+  const sendwayoRememberedPersistence = (()=>{try{return sessionStorage.getItem('sendwayo_remember')==='1'?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION;}catch(_){return firebase.auth.Auth.Persistence.SESSION;}})();
+  state.authReadyPromise = auth.setPersistence(sendwayoRememberedPersistence).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy||state.sessionEstablished)return;
@@ -9018,7 +9093,7 @@ window.sendwayoShareReceipt=async function(){
  function senderAccounts(){try{return typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES)?REMITENTES:(window.REMITENTES||[]);}catch(e){return window.REMITENTES||[];}}
  function accounts(){return [adminAccount(),...agentAccounts(),...senderAccounts()].filter(Boolean);}
  function current(){return window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();}
- function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
+ function isAdmin(){const u=current();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));}
  function role(a){return txt(a&&(a.role||a.rol)).toUpperCase();}
  function identityValues(a){
   return [a.id,a.idAnterior,a.legacyId,a.accountId,a.codigo,a.codigo2,a.codigoAnterior,a.code,a.staffId,a.username,a.login,a.usuario,a.email,a.authEmail,a.dbUserKey,a.rtdbUserKey,a.firebaseKey,a.authUid,a.phone,a.telefono,a.celular]
@@ -9138,7 +9213,7 @@ window.sendwayoShareReceipt=async function(){
   const a=adminAccount();if(!a)return alert('No se encontró el perfil de Administración.');
   let modal=$('sendwayo-admin-profile-editor');
   if(!modal){modal=document.createElement('div');modal.id='sendwayo-admin-profile-editor';modal.className='fixed inset-0 z-[40000] bg-black/60 p-3 flex items-center justify-center';document.body.appendChild(modal);}
-  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'ideletteismorin@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
+  modal.innerHTML='<div class="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"><div class="p-4 bg-[#0f2440] text-white rounded-t-2xl flex justify-between"><b>Modificar datos de Administración</b><button type="button" id="sendwayo-admin-profile-close">✕</button></div><div class="p-4 space-y-3"><label class="block text-xs font-bold">Nombre del administrador<input id="sendwayo-admin-profile-name" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.nombre||a.name||'')+'"></label><label class="block text-xs font-bold">ID de Administración<input id="sendwayo-admin-profile-id" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.id||'ADMIN-ADMINISTRADOR')+'"></label><label class="block text-xs font-bold">Código de Administración<input id="sendwayo-admin-profile-code" class="mt-1 w-full border rounded-xl px-3 py-3 font-normal" value="'+esc(a.codigo||a.id||'ADMIN-ADMINISTRADOR')+'"></label><div class="text-xs text-slate-500">Correo de acceso protegido: '+esc(a.email||'sendwayoexpress@gmail.com')+'. La clave interna y el historial de Firebase se conservan.</div><button id="sendwayo-admin-profile-save" class="w-full bg-green-700 text-white rounded-full py-3 font-bold">Guardar datos en Firebase</button></div></div>';
   $('sendwayo-admin-profile-close').onclick=()=>modal.remove();
   $('sendwayo-admin-profile-save').onclick=saveAdminProfile;
  }
@@ -9261,7 +9336,7 @@ window.sendwayoShareReceipt=async function(){
  const readRows=()=>{try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
  const writeRows=rows=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch(e){console.error('[SENDWAYO registration approval]',e);}};
  const user=()=>window.currentUser||(function(){try{return typeof currentUser!=='undefined'?currentUser:null;}catch(e){return null;}})();
- const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
+ const admin=()=>{const u=user();return !!u&&(norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com'||['adminadmin','admin-administrador'].includes(norm(u.id)));};
  const allAccounts=()=>{let rows=[];try{if(typeof ADMIN!=='undefined'&&ADMIN)rows.push(ADMIN);}catch(e){}try{if(typeof AGENTES!=='undefined'&&Array.isArray(AGENTES))rows=rows.concat(AGENTES);}catch(e){}try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))rows=rows.concat(REMITENTES);}catch(e){}return rows;};
  const priorAction=window.sendwayoActionGeneric;
  const priorSave=window.sendwayoSaveAccountForm;
@@ -10183,6 +10258,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  }
  function installAllCountrySearch(){
   ['sendwayo-v7-envio-from','sendwayo-v7-envio-to','sendwayo-v7-retiro-from','sendwayo-v7-retiro-to'].forEach(id=>installCountrySearch($(id)));
+  document.querySelectorAll('select[id*="pais" i],select[name*="pais" i],select[id*="country" i],select[name*="country" i]').forEach(select=>{if(select.id!=='v162-ben-pais')installCountrySearch(select);});
   const phoneCountry=$('v162-ben-pais');
   if(phoneCountry&&phoneCountry.dataset.sendwayoCountrySearch!=='1'){
    phoneCountry.dataset.sendwayoCountrySearch='1';
@@ -10250,9 +10326,20 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  window.addEventListener('sendwayo:firebase-ready',refreshPage);
  window.addEventListener('sendwayo:transactions-updated',refreshPage);
  window.addEventListener('resize',moveMenuButton);
- const observer=new MutationObserver(()=>{refreshPage();});
+ // Evita un ciclo de refrescos: refreshPage modifica clases que el observador también vigila.
+ let refreshQueued=false;
+ const observer=new MutationObserver(()=>{
+  if(refreshQueued)return;
+  refreshQueued=true;
+  observer.disconnect();
+  window.setTimeout(()=>{
+   refreshQueued=false;
+   refreshPage();
+   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  },180);
+ });
  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
- window.setInterval(tickSession,1000);window.setInterval(scrubVisibleLegacyCodes,900);
+ window.setInterval(tickSession,1000);
  refreshPage();tickSession();
 })();</script>
 <style id="sendwayo-v7-public-final-overrides">
@@ -10292,5 +10379,54 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  document.addEventListener('keydown',ev=>{if(ev.key==='Escape')close();},true);
  document.addEventListener('DOMContentLoaded',place,{once:true});window.addEventListener('load',place);window.addEventListener('pageshow',place);window.addEventListener('resize',place);
  window.addEventListener('sendwayo:firebase-ready',place);window.addEventListener('sendwayo:login-success',place);
+})();
+</script>
+
+<!-- SENDWAYO V7: Firebase Auth account approval for self-registered requests -->
+<script id="sendwayo-v7-self-registration-approval">
+(function(){
+ 'use strict';
+ const REQUEST_KEY='sendwayo_express_oficial_20261029_registros_pendientes_v5';
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const read=()=>{try{const v=JSON.parse(localStorage.getItem(REQUEST_KEY)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
+ const write=rows=>{try{localStorage.setItem(REQUEST_KEY,JSON.stringify(rows));}catch(e){}};
+ const isAdmin=()=>{const u=window.currentUser||{};return norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='sendwayoexpress@gmail.com';};
+ const oldAction=window.sendwayoActionGeneric;
+ window.sendwayoActionGeneric=async function(view,action,id){
+  if(view!=='bienvenida'||!['aprobar','rechazar'].includes(action))return oldAction&&oldAction.apply(this,arguments);
+  if(!isAdmin()){window.alert('Solo el administrador puede revisar solicitudes.');return;}
+  const rows=read(),r=rows.find(x=>String(x.id)===String(id));
+  if(!r||!r.authUid)return oldAction&&oldAction.apply(this,arguments);
+  if(norm(r.estado)==='aprobado'||norm(r.estado)==='rechazado'){window.alert('Esta solicitud ya fue atendida.');return;}
+  const fb=window.sendwayoFirebase,db=fb&&fb.db,adminAuth=fb&&fb.auth&&fb.auth.currentUser;
+  if(!db||!adminAuth){window.alert('No hay una sesión administrativa confirmada en Firebase. La solicitud permanece pendiente.');return;}
+  const requestKey=String(r.id).replace(/[.#$\[\]\/]/g,'_');
+  const requestPatch=action==='aprobar'?{estado:'Aprobado',status:'approved',approvedByAuthUid:adminAuth.uid,approvedAtMs:Date.now()}:{estado:'Rechazado',status:'rejected',rejectedByAuthUid:adminAuth.uid,rejectedAtMs:Date.now()};
+  try{
+   const updates={};
+   if(action==='aprobar'){
+    let senders=[];try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))senders=REMITENTES;}catch(e){}
+    let n=1;for(const a of senders){const m=String(a.id||'').match(/^REM(\d{5})$/i);if(m)n=Math.max(n,Number(m[1])+1);}
+    while(senders.some(a=>norm(a.id)==='rem'+String(n).padStart(5,'0')))n++;
+    const idNew='REM'+String(n).padStart(5,'0');
+    const fullName=String(r.nombre||r.name||'').trim();
+    const parts=fullName.split(/\s+/);
+    const code='REM-'+(parts[0]||'REM').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'REM').slice(0,3).toUpperCase();
+    const phone=String(r.celular||r.phone||'');
+    const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name:fullName,nombre:fullName,displayName:fullName,username:r.email,login:r.email,email:r.email,authEmail:r.email,authUid:r.authUid,phone,telefono:phone,celular:phone,role:'remitente',active:true,activo:true,status:'active',estado:'Activo',mustChangePassword:false,passwordChangeRequired:false,forcePasswordChange:false,balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:adminAuth.uid};
+    updates['sendwayo_express_v2/users/'+r.authUid]=profile;
+    const local={id:idNew,codigo:code,codigo2:code,nombre:fullName,name:fullName,email:r.email,usuario:r.email,celular:phone,telefono:phone,authUid:r.authUid,dbUserKey:r.authUid,rtdbUserKey:r.authUid,role:'REMITENTE',estado:'Activo',activo:true,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};
+    try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))REMITENTES.push(local);}catch(e){}
+    try{if(Array.isArray(window.USUARIOS_LOGIN))window.USUARIOS_LOGIN.push({usuario:r.email,email:r.email,id:idNew,codigo:code,aliases:[idNew,code],celular:phone,telefono:phone,nombre:fullName,role:'REMITENTE',authUid:r.authUid});}catch(e){}
+    try{localStorage.setItem('sendwayo_express_oficial_20261029_registered_accounts_v5',JSON.stringify([...(JSON.parse(localStorage.getItem('sendwayo_express_oficial_20261029_registered_accounts_v5')||'[]')),local]));}catch(e){}
+    r.accountId=idNew;r.codigo=code;r.firebaseAccountProvisioned=true;
+   }
+   updates['sendwayo_express_v2/requests/'+requestKey]={...r,...requestPatch};
+   await db.ref().update(updates);
+   Object.assign(r,requestPatch);write(rows);
+   window.alert(action==='aprobar'?'Solicitud aprobada. La cuenta ya puede entrar con el correo y la contraseña que creó durante el registro.':'Solicitud rechazada. La solicitud quedó marcada en Firebase.');
+   if(typeof window.showView==='function')window.showView('bienvenida');else if(typeof window.renderCustom==='function')window.renderCustom('bienvenida');
+  }catch(error){window.alert('No se pudo completar la revisión en Firebase. La solicitud sigue pendiente: '+(error&&error.message||'error de conexión'));}
+ };
 })();
 </script>
