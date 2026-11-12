@@ -10250,9 +10250,20 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  window.addEventListener('sendwayo:firebase-ready',refreshPage);
  window.addEventListener('sendwayo:transactions-updated',refreshPage);
  window.addEventListener('resize',moveMenuButton);
- const observer=new MutationObserver(()=>{refreshPage();});
+ // Evita un ciclo de refrescos: refreshPage modifica clases que el observador también vigila.
+ let refreshQueued=false;
+ const observer=new MutationObserver(()=>{
+  if(refreshQueued)return;
+  refreshQueued=true;
+  observer.disconnect();
+  window.setTimeout(()=>{
+   refreshQueued=false;
+   refreshPage();
+   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  },180);
+ });
  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
- window.setInterval(tickSession,1000);window.setInterval(scrubVisibleLegacyCodes,900);
+ window.setInterval(tickSession,1000);
  refreshPage();tickSession();
 })();</script>
 <style id="sendwayo-v7-public-final-overrides">
