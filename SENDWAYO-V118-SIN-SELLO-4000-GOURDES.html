@@ -7018,10 +7018,14 @@ window.sendwayoShareReceipt=async function(){
   }
   function resolveEmail(identifier) {
     const entered=txt(identifier);
-    if(entered.includes('@')) return entered.toLowerCase();
     const key=norm(entered);
+    // Alias administrativo histórico: siempre autenticar con el correo real de Firebase.
+    if (key === 'sendwayoexpress@gmail.com') return ADMIN_EMAIL;
+    // Resolver primero los alias registrados, incluso cuando el usuario escribe un correo.
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
-    return match ? match.email : '';
+    if (match) return match.email;
+    // Si no es alias, permitir el correo real introducido.
+    return entered.includes('@') ? entered.toLowerCase() : '';
   }
   async function queryOne(field, value) {
     if (!value) return null;
@@ -8964,7 +8968,7 @@ window.sendwayoShareReceipt=async function(){
     const login=document.getElementById('login-screen');
     if(!login) return;
     login.innerHTML=`
-      <section data-sendwayo-v7-form style="box-sizing:border-box;width:min(100%,430px);margin:auto;padding:30px 26px;background:#fff;border-radius:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:Arial,sans-serif">
+      <section style="box-sizing:border-box;width:min(100%,430px);margin:auto;padding:30px 26px;background:#fff;border-radius:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:Arial,sans-serif">
         <h1 style="margin:0 0 8px;text-align:center;color:#0f2440;font-size:25px;font-weight:800">SENDWAYO EXPRESS</h1>
         <p style="margin:0 0 26px;text-align:center;color:#64748b;font-size:13px">Acceso seguro a su cuenta</p>
         <label for="login-usuario" style="display:block;margin:0 0 7px;color:#1e293b;font-size:13px;font-weight:700">Usuario o correo electrónico</label>
@@ -9045,7 +9049,7 @@ window.sendwayoShareReceipt=async function(){
 <style id="sendwayo-v7-final-layout-polish">
   /* Acceso limpio: sin fotografías, vídeos ni portada pública. */
   body::before{content:none!important;background:none!important}
-  body:not(.sendwayo-authenticated) #login-screen img,body:not(.sendwayo-authenticated) #login-screen video,body:not(.sendwayo-authenticated) #login-screen picture{display:none!important;visibility:hidden!important}
+  body img,body video,body picture{display:none!important;visibility:hidden!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
   body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:18px!important}
   body.sendwayo-authenticated #login-screen,body.sendwayo-authenticated #welcome-landing{display:none!important}
