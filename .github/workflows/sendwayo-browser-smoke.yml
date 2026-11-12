@@ -8,6 +8,7 @@ on:
       - 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'
       - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
       - 'assets/sendwayo-logo-real.jpg'
+      - '.github/workflows/deploy-pages.yml'
       - '.github/workflows/sendwayo-browser-smoke.yml'
   workflow_dispatch:
 
