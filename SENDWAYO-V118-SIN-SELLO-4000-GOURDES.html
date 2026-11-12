@@ -7018,10 +7018,14 @@ window.sendwayoShareReceipt=async function(){
   }
   function resolveEmail(identifier) {
     const entered=txt(identifier);
-    if(entered.includes('@')) return entered.toLowerCase();
     const key=norm(entered);
+    // Alias administrativo histórico: siempre autenticar con el correo real de Firebase.
+    if (key === 'sendwayoexpress@gmail.com') return ADMIN_EMAIL;
+    // Resolver primero los alias registrados, incluso cuando el usuario escribe un correo.
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
-    return match ? match.email : '';
+    if (match) return match.email;
+    // Si no es alias, permitir el correo real introducido.
+    return entered.includes('@') ? entered.toLowerCase() : '';
   }
   async function queryOne(field, value) {
     if (!value) return null;
