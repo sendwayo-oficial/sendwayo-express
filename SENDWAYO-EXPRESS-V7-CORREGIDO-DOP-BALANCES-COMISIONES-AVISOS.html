@@ -10305,3 +10305,52 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  window.addEventListener('sendwayo:firebase-ready',place);window.addEventListener('sendwayo:login-success',place);
 })();
 </script>
+
+<!-- SENDWAYO V7: Firebase Auth account approval for self-registered requests -->
+<script id="sendwayo-v7-self-registration-approval">
+(function(){
+ 'use strict';
+ const REQUEST_KEY='sendwayo_express_oficial_20261029_registros_pendientes_v5';
+ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const read=()=>{try{const v=JSON.parse(localStorage.getItem(REQUEST_KEY)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
+ const write=rows=>{try{localStorage.setItem(REQUEST_KEY,JSON.stringify(rows));}catch(e){}};
+ const isAdmin=()=>{const u=window.currentUser||{};return norm(u.role||u.rol).includes('admin')||norm(u.email||u.usuario)==='ideletteismorin@gmail.com';};
+ const oldAction=window.sendwayoActionGeneric;
+ window.sendwayoActionGeneric=async function(view,action,id){
+  if(view!=='bienvenida'||!['aprobar','rechazar'].includes(action))return oldAction&&oldAction.apply(this,arguments);
+  if(!isAdmin()){window.alert('Solo el administrador puede revisar solicitudes.');return;}
+  const rows=read(),r=rows.find(x=>String(x.id)===String(id));
+  if(!r||!r.authUid)return oldAction&&oldAction.apply(this,arguments);
+  if(norm(r.estado)==='aprobado'||norm(r.estado)==='rechazado'){window.alert('Esta solicitud ya fue atendida.');return;}
+  const fb=window.sendwayoFirebase,db=fb&&fb.db,adminAuth=fb&&fb.auth&&fb.auth.currentUser;
+  if(!db||!adminAuth){window.alert('No hay una sesión administrativa confirmada en Firebase. La solicitud permanece pendiente.');return;}
+  const requestKey=String(r.id).replace(/[.#$\[\]\/]/g,'_');
+  const requestPatch=action==='aprobar'?{estado:'Aprobado',status:'approved',approvedByAuthUid:adminAuth.uid,approvedAtMs:Date.now()}:{estado:'Rechazado',status:'rejected',rejectedByAuthUid:adminAuth.uid,rejectedAtMs:Date.now()};
+  try{
+   const updates={};
+   if(action==='aprobar'){
+    let senders=[];try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))senders=REMITENTES;}catch(e){}
+    let n=1;for(const a of senders){const m=String(a.id||'').match(/^REM(\d{5})$/i);if(m)n=Math.max(n,Number(m[1])+1);}
+    while(senders.some(a=>norm(a.id)==='rem'+String(n).padStart(5,'0')))n++;
+    const idNew='REM'+String(n).padStart(5,'0');
+    const fullName=String(r.nombre||r.name||'').trim();
+    const parts=fullName.split(/\s+/);
+    const code='REM-'+(parts[0]||'REM').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'REM').slice(0,3).toUpperCase();
+    const phone=String(r.celular||r.phone||'');
+    const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name:fullName,nombre:fullName,displayName:fullName,username:r.email,login:r.email,email:r.email,authEmail:r.email,authUid:r.authUid,phone,telefono:phone,celular:phone,role:'remitente',active:true,activo:true,status:'active',estado:'Activo',mustChangePassword:false,passwordChangeRequired:false,forcePasswordChange:false,balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:adminAuth.uid};
+    updates['sendwayo_express_v2/users/'+r.authUid]=profile;
+    const local={id:idNew,codigo:code,codigo2:code,nombre:fullName,name:fullName,email:r.email,usuario:r.email,celular:phone,telefono:phone,authUid:r.authUid,dbUserKey:r.authUid,rtdbUserKey:r.authUid,role:'REMITENTE',estado:'Activo',activo:true,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0}};
+    try{if(typeof REMITENTES!=='undefined'&&Array.isArray(REMITENTES))REMITENTES.push(local);}catch(e){}
+    try{if(Array.isArray(window.USUARIOS_LOGIN))window.USUARIOS_LOGIN.push({usuario:r.email,email:r.email,id:idNew,codigo:code,aliases:[idNew,code],celular:phone,telefono:phone,nombre:fullName,role:'REMITENTE',authUid:r.authUid});}catch(e){}
+    try{localStorage.setItem('sendwayo_express_oficial_20261029_registered_accounts_v5',JSON.stringify([...(JSON.parse(localStorage.getItem('sendwayo_express_oficial_20261029_registered_accounts_v5')||'[]')),local]));}catch(e){}
+    r.accountId=idNew;r.codigo=code;r.firebaseAccountProvisioned=true;
+   }
+   updates['sendwayo_express_v2/requests/'+requestKey]={...r,...requestPatch};
+   await db.ref().update(updates);
+   Object.assign(r,requestPatch);write(rows);
+   window.alert(action==='aprobar'?'Solicitud aprobada. La cuenta ya puede entrar con el correo y la contraseña que creó durante el registro.':'Solicitud rechazada. La solicitud quedó marcada en Firebase.');
+   if(typeof window.showView==='function')window.showView('bienvenida');else if(typeof window.renderCustom==='function')window.renderCustom('bienvenida');
+  }catch(error){window.alert('No se pudo completar la revisión en Firebase. La solicitud sigue pendiente: '+(error&&error.message||'error de conexión'));}
+ };
+})();
+</script>
