@@ -10937,5 +10937,24 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
   }
 </style>
 
+
+<script id="sendwayo-v7-login-visibility-handler">
+(function(){
+  'use strict';
+  const password=document.getElementById('login-password');
+  const toggle=document.getElementById('sendwayo-toggle-password');
+  if(!password||!toggle||toggle.dataset.sendwayoVisibilityBound==='1') return;
+  toggle.dataset.sendwayoVisibilityBound='1';
+  toggle.addEventListener('click',function(event){
+    event.preventDefault();
+    const visible=password.type==='password';
+    password.type=visible?'text':'password';
+    toggle.textContent=visible?'Ocultar':'Ver';
+    toggle.setAttribute('aria-label',visible?'Ocultar contraseña':'Mostrar contraseña');
+    toggle.setAttribute('aria-pressed',visible?'true':'false');
+  });
+})();
+</script>
+
 </body>
 </html>
