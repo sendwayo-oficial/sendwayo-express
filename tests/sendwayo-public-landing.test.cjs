@@ -28,7 +28,7 @@ assert.match(html, /font-size:clamp\(25px,5vw,30px\)!important/, 'el nombre del 
 assert.match(html, /#welcome-landing>main\.sendwayo-home-minimal[\s\S]*?align-items:center!important;justify-content:center!important/, 'el contenido principal debe quedar centrado');
 assert.match(html, /option \$\{service==='Quiero ser remitente'\?'selected':''\}>Quiero ser remitente/, 'el registro debe abrir con la solicitud de remitente seleccionada');
 assert.match(html, /window\.sendwayoFirebaseLoginReady=attemptLogin/, 'Ingresar debe conservar el inicio de sesión Firebase');
-assert.match(html, /const recoverButton=document\\.getElementById\\('sendwayo-recover-button'\\);[\\s\\S]*?recoverButton\\.onclick=async/, 'la recuperación debe conservar el envío de enlace por Firebase');
+assert.match(html, /sendPasswordResetEmail\\(resetEmail\\)/, 'la recuperación debe conservar el envío de enlace por Firebase');
 assert.doesNotMatch(html, /https:\/\/cdn\.tailwindcss\.com/, 'la página no debe depender del CDN externo');
 
 console.log('PASS: bienvenida centrada con logo oficial, nombre del negocio, acceso directo, recuperación y registro.');
