@@ -4,21 +4,19 @@ const path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'),'utf8');
 const start=html.indexOf('<div id="welcome-landing"');
 assert.ok(start>=0,'la versión V7 debe tener bienvenida');
-let depth=0,cursor=start,end=-1;
-while(true){const o=html.indexOf('<div',cursor),c=html.indexOf('</div>',cursor);assert.ok(c>=0,'la bienvenida debe cerrar');if(o>=0&&o<c){depth++;cursor=o+4;}else{depth--;cursor=c+6;if(depth===0){end=cursor;break;}}}
-const welcome=html.slice(start,end);
-assert.equal(welcome.split('<img').length-1,1,'solo debe mostrarse el logo');
-assert.ok(welcome.includes('src="assets/sendwayo-logo-real.jpg"'),'debe utilizar el logo oficial');
-assert.ok(welcome.includes('<h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>'),'debe mostrar el nombre del negocio');
-assert.ok(welcome.includes('id="sendwayo-home-login"')&&welcome.includes('>INGRESAR</button>'),'debe mostrar Ingresar');
-assert.ok(welcome.includes('id="sendwayo-home-register"')&&welcome.includes('>REGISTRAR</button>'),'debe mostrar Registrar');
-assert.equal(welcome.split('<button').length-1,2,'debe haber exactamente dos botones');
-const at=html.indexOf('<script id="sendwayo-v7-welcome-action-handlers">');
-assert.ok(at>=0,'los manejadores deben existir');
-const close=html.indexOf('</script>',at),actions=html.slice(at,close);
-assert.ok(close>at,'el script debe cerrar');
-assert.ok(actions.includes('window.sendwayoOpenWelcomeLogin=openLogin;'),'Ingresar debe tener manejador');
-assert.ok(actions.includes('window.sendwayoOpenWelcomeRegister=openRegister;'),'Registrar debe tener manejador');
-assert.ok(actions.includes("window.sendwayoOpenPublicRequest('Quiero ser remitente')"),'Registrar debe abrir la solicitud');
-assert.ok(actions.includes('event.stopImmediatePropagation()'),'no debe duplicar las acciones');
-console.log('PASS: bienvenida mínima con logo, nombre, Ingresar y Registrar.');
+const login=html.indexOf('<div id="login-screen"',start);
+const end=html.indexOf('</section>',login);
+assert.ok(login>start&&end>login,'el formulario completo debe estar dentro de la bienvenida');
+const welcome=html.slice(start,end+'</section>'.length);
+assert.match(welcome,/<img class="sendwayo-entry-logo" src="assets\/sendwayo-logo-real\.jpg"/,'debe utilizar el logo oficial');
+assert.match(welcome,/<h1 id="sendwayo-entry-title">SENDWAYO EXPRESS<\/h1>/,'debe mostrar el nombre del negocio debajo del logo');
+assert.ok(welcome.indexOf('class="sendwayo-entry-logo"')<welcome.indexOf('<h1 id="sendwayo-entry-title"'),'el logo debe aparecer antes del nombre');
+for(const marker of ['id="login-usuario"','id="login-password"','id="sendwayo-toggle-password"','id="sendwayo-remember-credentials"','id="sendwayo-recover-button"']){
+  assert.ok(welcome.includes(marker),'falta el control de acceso: '+marker);
+}
+assert.match(welcome,/id="sendwayo-entry-login-button"[^>]*onclick="intentarLogin\(\)"[^>]*>INGRESAR/,'INGRESAR debe llamar al acceso Firebase existente');
+assert.match(welcome,/id="sendwayo-entry-register-button"[^>]*onclick="sendwayoOpenPublicRequest\('Quiero ser remitente'\)"[^>]*>REGISTRAR/,'REGISTRAR debe abrir la solicitud pública');
+assert.doesNotMatch(welcome,/sendwayo-welcome-only-photo|sendwayo-home-main-photo|sendwayo-home-gallery|<video/i,'la bienvenida no debe mostrar fotografías ni vídeos');
+assert.ok(html.includes('sendwayo-v7-welcome-centered-logo-login-register-final'),'debe aplicar el diseño centrado de la bienvenida');
+assert.ok(html.includes('sendPasswordResetEmail(resetEmail)'),'la recuperación debe conservar Firebase Authentication');
+console.log('PASS: bienvenida centrada con logo oficial, nombre, acceso, recordar, recuperación y registro.');
