@@ -7141,7 +7141,6 @@ window.sendwayoShareReceipt=async function(){
   }
   function resolveEmail(identifier) {
     const entered=txt(identifier);
-    if(norm(entered)==='sendwayoexpress@gmail.com') return ADMIN_EMAIL;
     if(entered.includes('@')) return entered.toLowerCase();
     const key=norm(entered);
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
