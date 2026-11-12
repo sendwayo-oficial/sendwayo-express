@@ -10,7 +10,7 @@ for (const source of [html]) {
   const landing = source.slice(start, end);
   assert.equal(landing.split('<img').length - 1, 1, 'la portada debe tener solo el logo corporativo');
   assert.equal(landing.split('<button').length - 1, 4, 'la portada debe tener Ver contraseña, Recuperar, Ingresar y Registrar');
-  assert.ok(landing.includes('assets/sendwayo-logo-real.jpg'));
+  assert.ok(landing.includes('assets/sendwayo-logo-transparent.webp'));
   assert.ok(!landing.includes('assets/sendwayo-bienvenida.jpg'));
   assert.ok(landing.includes('id="sendwayo-entry-login-button"') && landing.includes('>INGRESAR</button>'));
   assert.ok(landing.includes('id="sendwayo-entry-register-button"') && landing.includes('>REGISTRAR</button>'));
