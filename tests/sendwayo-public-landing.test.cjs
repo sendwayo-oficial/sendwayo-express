@@ -9,7 +9,7 @@ const end = html.indexOf('</section>', start);
 assert.ok(end > start, 'la tarjeta pública debe estar completa');
 const welcome = html.slice(start, end + '</section>'.length);
 
-assert.match(welcome, /<img class="sendwayo-entry-logo" src="assets\/sendwayo-logo-real\.jpg"/, 'el logo oficial debe aparecer en la portada');
+assert.match(welcome, /<img class="sendwayo-entry-logo" src="assets\/sendwayo-logo-transparent\.webp"/, 'el logo oficial debe aparecer sin fondo en la portada');
 assert.match(welcome, /<h1 id="sendwayo-entry-title">SENDWAYO EXPRESS<\/h1>/, 'el nombre del negocio debe aparecer debajo del logo');
 assert.ok(welcome.indexOf('class="sendwayo-entry-logo"') < welcome.indexOf('<h1 id="sendwayo-entry-title"'), 'el logo debe aparecer antes del nombre');
 assert.match(welcome, /id="login-screen"/, 'el formulario de acceso debe mostrarse directamente en la portada');
@@ -29,8 +29,9 @@ assert.match(html, /font-size:clamp\(25px,5vw,30px\)!important/, 'el nombre del 
 assert.match(html, /#welcome-landing>main\.sendwayo-home-minimal[\s\S]*?align-items:center!important;justify-content:center!important/, 'el contenido principal debe quedar centrado');
 assert.match(html, /option \$\{service==='Quiero ser remitente'\?'selected':''\}>Quiero ser remitente/, 'el registro debe abrir con la solicitud de remitente seleccionada');
 assert.match(html, /window\.sendwayoFirebaseLoginReady=attemptLogin/, 'Ingresar debe conservar el inicio de sesión Firebase');
-assert.match(html, /target\.closest\('#welcome-landing #sendwayo-entry-login-button'\)/, 'Ingresar desde la tarjeta debe abrir el formulario de acceso separado');
-assert.match(html, /if\(compactLogin\|\|fullCardLogin\)/, 'el clic de acceso de la tarjeta no debe quedarse dentro de una portada que se oculta');
+const fastEntry = fs.readFileSync(path.join(__dirname, '..', 'SENDWAYO-V7-FAST-ENTRY.html'), 'utf8');
+assert.match(fastEntry, /id="login-button" type="submit"/, 'Ingresar debe enviar el formulario ligero de acceso');
+assert.match(fastEntry, /signInWithEmailAndPassword/, 'el acceso ligero debe autenticar directamente con Firebase');
 assert.match(html, /const visibleLoginError=document\.getElementById\('login-error'\)/, 'si Firebase no carga, el usuario debe recibir un error visible y no una pantalla congelada');
 assert.match(html, /sendPasswordResetEmail\(resetEmail\)/, 'la recuperación debe conservar el envío de enlace por Firebase');
 assert.doesNotMatch(html, /https:\/\/cdn\.tailwindcss\.com/, 'la página no debe depender del CDN externo');
