@@ -9,6 +9,7 @@ on:
       - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
       - '.github/workflows/deploy-pages.yml'
       - 'SENDWAYO-V7-FAST-ENTRY.html'
+      - 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'
       - 'assets/sendwayo-logo-transparent.webp'
       - 'assets/sendwayo-logo-real.jpg'
   workflow_dispatch:
