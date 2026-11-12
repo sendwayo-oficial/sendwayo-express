@@ -32,4 +32,11 @@ assert.match(html, /window\.sendwayoFirebaseLoginReady=attemptLogin/, 'Ingresar 
 assert.match(html, /sendPasswordResetEmail\(resetEmail\)/, 'la recuperación debe conservar el envío de enlace por Firebase');
 assert.doesNotMatch(html, /https:\/\/cdn\.tailwindcss\.com/, 'la página no debe depender del CDN externo');
 
+const deployWorkflow = fs.readFileSync('.github/workflows/deploy-pages.yml', 'utf8');
+assert.match(deployWorkflow, /login_start = base_html\.find\('<div id="login-screen"'/, 'el despliegue debe extraer el formulario antes de reemplazar la bienvenida');
+assert.match(deployWorkflow, /login_markup = base_html\[login_start:login_end\]/, 'el despliegue debe conservar el formulario completo');
+assert.match(deployWorkflow, /minimal_welcome \+ '\\n' \+ login_markup \+ base_html\[landing_end:\]/, 'el formulario debe quedar fuera del contenedor que se oculta');
+assert.match(deployWorkflow, /#login-screen\.sendwayo-login-visible/, 'el formulario separado debe tener una capa visible e interactiva');
+assert.match(deployWorkflow, /mix-blend-mode:multiply!important/, 'el logo de la bienvenida debe integrarse sin un recuadro blanco');
+
 console.log('PASS: bienvenida centrada con logo oficial, nombre del negocio, acceso directo, recuperación y registro.');
