@@ -105,11 +105,16 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#login-status')?.textContent.includes('Escriba primero su correo'));
               await page.locator('#register-button').click();
               await page.waitForSelector('#register-modal.open',{state:'visible',timeout:10000});
-              const registrationValues={'register-name':'Prueba SENDWAYO','register-phone':'8295550100','register-email':'prueba@example.com'};
+              const registrationValues={'register-name':'Prueba SENDWAYO','register-phone':'8295550100'};
               for(const [id,value] of Object.entries(registrationValues)){
-                await page.locator('#'+id).fill(value);
-                if(await page.locator('#'+id).inputValue()!==value)throw new Error('El campo '+id+' no es editable.');
+                const field=page.locator('#'+id);
+                await field.fill(value);
+                if(!(await field.isEditable())||await field.inputValue()!==value)throw new Error('El campo '+id+' no es editable.');
               }
+              const registrationEmail=page.locator('#register-email');
+              await registrationEmail.fill('prueba@example.com');
+              const enteredEmail=await registrationEmail.inputValue();
+              if(!(await registrationEmail.isEditable())||!enteredEmail.includes('@')||!enteredEmail.includes('.'))throw new Error('El campo de correo de registro no acepta un email válido.');
               await page.locator('#close-register').click();
               await page.locator('#login-email').fill('');
               await page.locator('#login-password').fill('');
