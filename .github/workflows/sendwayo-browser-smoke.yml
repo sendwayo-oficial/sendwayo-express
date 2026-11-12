@@ -42,7 +42,7 @@ jobs:
           const fs=require('node:fs');
           const app=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
           const admin=app.match(/let ADMIN = \{[\s\S]*?\n\};/);
-          if(!admin || !admin[0].includes("email:'ideletteismorin@gmail.com'") ||
+          if(!admin || !admin[0].includes("email:'sendwayoexpress@gmail.com'") ||
              !admin[0].includes("username:'sendwayoexpress@gmail.com'") ||
              !admin[0].includes("'sendwayoexpress@gmail.com'")) {
             throw new Error('El usuario visible del administrador no está vinculado al correo real de Firebase.');
@@ -64,23 +64,13 @@ jobs:
                   const response=await page.goto(process.env.PAGE_URL+'?smoke='+Date.now(),{waitUntil:'domcontentloaded',timeout:20000});
                   if(response&&response.status()===200){
                     const src=await page.locator('.brand-logo').getAttribute('src').catch(()=>null);
-                    if(src&&src.includes('sendwayo-logo-transparent.webp')){
+                    if(src&&src.includes('sendwayo-logo-real.jpg')){
                       await page.waitForFunction(()=>{
                         const img=document.querySelector('.brand-logo');
                         return !!img&&img.complete&&img.naturalWidth>0;
                       },null,{timeout:5000}).catch(()=>{});
                       const loaded=await page.locator('.brand-logo').evaluate(img=>img.complete&&img.naturalWidth>0).catch(()=>false);
                       if(loaded){
-                        const alpha=await page.locator('.brand-logo').evaluate(img=>{
-                          const canvas=document.createElement('canvas');
-                          canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
-                          const context=canvas.getContext('2d',{willReadFrequently:true});
-                          context.drawImage(img,0,0);
-                          const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;
-                          for(let i=3;i<pixels.length;i+=4)if(pixels[i]<250)return true;
-                          return false;
-                        }).catch(()=>false);
-                        if(!alpha)throw new Error('El logo público no contiene transparencia real.');
                         deployed=true;break;
                       }
                     }
@@ -88,7 +78,7 @@ jobs:
                 }catch(e){}
                 await new Promise(resolve=>setTimeout(resolve,5000));
               }
-              if(!deployed)throw new Error('La URL pública no está entregando el logo oficial JPG actualizado.');
+              if(!deployed)throw new Error('La URL pública no está entregando el logo oficial original.');
 
               await page.locator('#login-email').fill('sendwayoexpress@gmail.com');
               await page.locator('#login-password').fill('solo-prueba-de-interfaz');
@@ -112,9 +102,14 @@ jobs:
                 if(!(await field.isEditable())||await field.inputValue()!==value)throw new Error('El campo '+id+' no es editable.');
               }
               const registrationEmail=page.locator('#register-email');
-              await registrationEmail.fill('prueba@example.com');
+              await registrationEmail.fill('prueba@sendwayo.test');
+              await page.waitForFunction(()=>document.querySelector('#register-email')?.value==='prueba@sendwayo.test',null,{timeout:3000});
               const enteredEmail=await registrationEmail.inputValue();
-              if(!(await registrationEmail.isEditable())||!enteredEmail.includes('@')||!enteredEmail.includes('.'))throw new Error('El campo de correo de registro no acepta un email válido.');
+              if(!(await registrationEmail.isEditable())||enteredEmail!=='prueba@sendwayo.test')throw new Error('El campo de correo de registro no conserva el email escrito: '+enteredEmail);
+              for(const [id,value] of Object.entries({'register-password':'EntradaSmoke-2026!','register-password-confirm':'EntradaSmoke-2026!'})){
+                const field=page.locator('#'+id);await field.fill(value);
+                if(!(await field.isEditable())||await field.inputValue()!==value)throw new Error('El campo '+id+' no es editable.');
+              }
               await page.locator('#close-register').click();
               await page.locator('#login-email').fill('');
               await page.locator('#login-password').fill('');
@@ -137,7 +132,7 @@ jobs:
               const mobile=await page.locator('.entry-card').evaluate(el=>el.getBoundingClientRect().width<=375);
               if(!mobile)throw new Error('La tarjeta de acceso se desborda en móvil.');
               if(errors.length)throw new Error('Errores JavaScript: '+errors.join(' | '));
-              console.log('PASS: logo oficial transparente cargado; alias de administrador vinculado a Firebase; campos, Ver, Recordarme, recuperación única, Registrar, Ingresar y móvil verificados.');
+              console.log('PASS: logo oficial original cargado; alias de administrador vinculado a Firebase; campos, Ver, Recordarme, recuperación única, Registrar, Ingresar y móvil verificados.');
             }finally{await browser.close();}
           })().catch(e=>{console.error(e);process.exit(1);});
           NODE
