@@ -42,7 +42,7 @@ jobs:
           const fs=require('node:fs');
           const app=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
           const admin=app.match(/let ADMIN = \{[\s\S]*?\n\};/);
-          if(!admin || !admin[0].includes("email:'sendwayoexpress@gmail.com'") ||
+          if(!admin || !admin[0].includes("email:'ideletteismorin@gmail.com'") ||
              !admin[0].includes("username:'sendwayoexpress@gmail.com'") ||
              !admin[0].includes("'sendwayoexpress@gmail.com'")) {
             throw new Error('El usuario visible del administrador no está vinculado al correo real de Firebase.');
