@@ -5,7 +5,7 @@ const fast = fs.readFileSync('SENDWAYO-V7-FAST-ENTRY.html', 'utf8');
 const publicV118 = fs.readFileSync('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html', 'utf8');
 const siteIndex = fs.readFileSync('site/index.html', 'utf8');
 const rootV118 = fs.readFileSync('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html', 'utf8');
-const fullApp = fs.readFileSync('site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html', 'utf8');
+const fullApp = fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html', 'utf8');
 
 assert.ok(Buffer.byteLength(fast, 'utf8') < 30000, 'la pantalla pública debe ser ligera (menos de 30 KB)');
 assert.equal(publicV118, fast, 'el enlace V118 debe servir exactamente la pantalla rápida');
