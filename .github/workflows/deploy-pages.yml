@@ -68,7 +68,10 @@ jobs:
           if(Buffer.byteLength(page,'utf8')>30000) throw new Error('La bienvenida ligera supera 30 KB.');
           if((page.split('<script').length-1)!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
           if((page.split('<img').length-1)!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
-          if(!page.includes('src="assets/sendwayo-logo-real.jpg"')) throw new Error('Falta el logo oficial original.');
+          if(!page.includes('src="assets/sendwayo-logo-transparent.webp"')) throw new Error('Falta el logo original transparente en la portada.');
+          if(page.includes('src="assets/sendwayo-logo-real.jpg"')) throw new Error('La portada todavía muestra el logo JPG incorrecto.');
+          if(!page.includes("const ADMIN_EMAIL='ideletteismorin@gmail.com'")) throw new Error('El alias administrativo no apunta al correo Firebase real.');
+          if(!page.includes("addAliases(ADMIN_EMAIL,['sendwayoexpress@gmail.com'")) throw new Error('Falta el alias administrativo de inicio de sesión.');
           
           if(page.includes('cdn.tailwindcss.com')) throw new Error('La bienvenida no debe depender de Tailwind CDN.');
           for(const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form','register-name','register-phone','register-email']) {
@@ -81,11 +84,11 @@ jobs:
           const scriptEnd=page.indexOf('</script>',scriptStart);
           if(scriptStart<0||scriptEnd<0||page.indexOf('<script>',scriptStart+1)>=0) throw new Error('No se encontró el script único de la portada.');
           new Function(page.slice(scriptStart+8,scriptEnd));
-          if(!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se copió el logo oficial original.');
+          if(!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se copió el logo original transparente.');
           if(!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se conservaron los recursos del panel V7.');
           if(!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('No se generó Tailwind local para V7.');
           if(fs.statSync(app).size<500000) throw new Error('El panel V7 completo no está presente.');
-          console.log('PASS: bienvenida '+Buffer.byteLength(page,'utf8')+' bytes; 1 script; controles editables; logo oficial original; panel V7 separado.');
+          console.log('PASS: bienvenida '+Buffer.byteLength(page,'utf8')+' bytes; 1 script; controles editables; alias Firebase administrativo; logo transparente original; panel V7 separado.');
           NODE
 
       - name: Configure GitHub Pages
