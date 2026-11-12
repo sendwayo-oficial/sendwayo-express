@@ -7989,7 +7989,19 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut()).then(()=>{
+  // El acceso rápido ya autenticó en Firebase antes de abrir el panel.
+  // Consumir su marca de un solo uso y conservar esa sesión; el acceso directo al panel sigue exigiendo login.
+  const enteredFromFastLogin = (() => {
+    try {
+      const valid = sessionStorage.getItem('sendwayo:entry-redirect') === '1';
+      if (valid) sessionStorage.removeItem('sendwayo:entry-redirect');
+      return valid;
+    } catch (_) { return false; }
+  })();
+  state.authReadyPromise = (enteredFromFastLogin
+    ? Promise.resolve()
+    : auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut())
+  ).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy || state.sessionEstablished) return;
