@@ -9109,59 +9109,53 @@ window.sendwayoShareReceipt=async function(){
 </script>
 
 
-<!-- SENDWAYO V7: acceso directo sin portada, imágenes ni video -->
-<style id="sendwayo-v7-login-only">
+<!-- SENDWAYO V7: pantalla única de acceso, sin portada ni medios -->
+<style id="sendwayo-v7-entry-final">
   html,body{min-height:100%;background:#0b1a2f!important}
-  img,video,picture,iframe,object,embed{display:none!important;visibility:hidden!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
-  body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
-  body.sendwayo-authenticated #login-screen,body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important}
+  body:not(.sendwayo-authenticated)>:not(#login-screen):not(script):not(style){display:none!important;visibility:hidden!important}
+  body:not(.sendwayo-authenticated) #login-screen{
+    display:flex!important;visibility:visible!important;pointer-events:auto!important;
+    position:fixed!important;inset:0!important;z-index:2147483000!important;
+    align-items:center!important;justify-content:center!important;
+    background:#0b1a2f!important;padding:20px!important;overflow:auto!important
+  }
+  body:not(.sendwayo-authenticated) #login-screen img,
+  body:not(.sendwayo-authenticated) #login-screen video,
+  body:not(.sendwayo-authenticated) #login-screen picture,
+  body:not(.sendwayo-authenticated) #login-screen iframe{display:none!important;visibility:hidden!important}
+  body.sendwayo-authenticated #login-screen,
+  body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+  body.sendwayo-authenticated{overflow-x:hidden!important}
+  body.sendwayo-authenticated #sendwayo-v7-drawer{display:none}
+  body.sendwayo-authenticated #sendwayo-v7-drawer.open{display:block}
 </style>
-<script id="sendwayo-v7-login-only-script">
+<script id="sendwayo-v7-entry-final-script">
 (function(){
  'use strict';
- let busy=false;
- function enterOnly(){
-   if(document.body.classList.contains('sendwayo-authenticated')){
-     document.getElementById('welcome-landing')?.remove();
-     const old=document.getElementById('login-screen');
-     if(old)old.style.setProperty('display','none','important');
-     return;
+ function enforceSingleEntry(){
+   var authenticated=document.body.classList.contains('sendwayo-authenticated');
+   var welcome=document.getElementById('welcome-landing');
+   if(welcome)welcome.remove();
+   var login=document.getElementById('login-screen');
+   if(!authenticated){
+     document.querySelectorAll('body > *').forEach(function(node){
+       if(node===login||node.tagName==='SCRIPT'||node.tagName==='STYLE')return;
+       if(node.id!=='sendwayo-v7-drawer')node.style.setProperty('display','none','important');
+     });
+     if(login){
+       login.classList.remove('hidden');
+       login.style.setProperty('display','flex','important');
+       login.style.setProperty('visibility','visible','important');
+       login.style.setProperty('pointer-events','auto','important');
+     }
+   }else if(login){
+     login.style.setProperty('display','none','important');
    }
-   document.getElementById('welcome-landing')?.remove();
-   const login=document.getElementById('login-screen');
-   if(!login||busy)return;
-   if(!login.querySelector('[data-sendwayo-login-form]')){
-     busy=true;
-     login.innerHTML=`
-      <section data-sendwayo-login-form style="box-sizing:border-box;width:min(100%,430px);margin:auto;padding:30px 26px;background:#fff;border-radius:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:Arial,sans-serif">
-       <h1 style="margin:0 0 8px;text-align:center;color:#0f2440;font-size:25px;font-weight:800">SENDWAYO EXPRESS</h1>
-       <p style="margin:0 0 26px;text-align:center;color:#64748b;font-size:13px">Acceso seguro a su cuenta</p>
-       <label for="login-usuario" style="display:block;margin:0 0 7px;color:#1e293b;font-size:13px;font-weight:700">Usuario o correo electrónico</label>
-       <input id="login-usuario" type="text" autocomplete="username" placeholder="Correo, código o usuario" style="box-sizing:border-box;width:100%;height:48px;margin-bottom:18px;padding:0 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px">
-       <label for="login-password" style="display:block;margin:0 0 7px;color:#1e293b;font-size:13px;font-weight:700">Contraseña</label>
-       <input id="login-password" type="password" autocomplete="current-password" placeholder="Escriba su contraseña" style="box-sizing:border-box;width:100%;height:48px;margin-bottom:16px;padding:0 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px">
-       <div id="login-error" class="hidden" role="alert" style="display:none;margin:0 0 14px;padding:11px 13px;border-radius:10px;background:#fef2f2;color:#b91c1c;font-size:12px"></div>
-       <button type="button" onclick="intentarLogin()" style="width:100%;height:49px;border:0;border-radius:12px;background:#0f2440;color:#fff;font-size:15px;font-weight:800;cursor:pointer">Ingresar</button>
-      </section>`;
-     const err=document.getElementById('login-error');
-     if(err)new MutationObserver(()=>{err.style.display=err.classList.contains('hidden')?'none':'block'}).observe(err,{attributes:true,attributeFilter:['class']});
-     document.getElementById('login-password')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();window.intentarLogin?.()}});
-     busy=false;
-   }
-   login.classList.remove('hidden','sendwayo-login-visible');
-   login.style.setProperty('display','flex','important');
-   login.style.setProperty('visibility','visible','important');
-   login.style.setProperty('pointer-events','auto','important');
  }
- const oldShow=window.v162_showLogin;
- window.v162_showLogin=function(){enterOnly();document.getElementById('login-usuario')?.focus();};
- const oldWelcome=window.v162_goWelcome;
- window.v162_goWelcome=function(){enterOnly();};
- if(typeof window.showWelcome==='function')window.showWelcome=function(){enterOnly();};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enterOnly,{once:true});else enterOnly();
- const observer=new MutationObserver(enterOnly);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforceSingleEntry,{once:true});
+ else enforceSingleEntry();
+ var observer=new MutationObserver(enforceSingleEntry);
  observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 })();
 </script>
