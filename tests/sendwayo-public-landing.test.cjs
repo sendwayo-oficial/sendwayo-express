@@ -11,7 +11,7 @@ const welcome = html.slice(start, end + '</section>'.length);
 
 assert.match(welcome, /<img class="sendwayo-entry-logo" src="assets\/sendwayo-logo-real\.jpg"/, 'el logo oficial debe aparecer en la portada');
 assert.match(welcome, /<h1 id="sendwayo-entry-title">SENDWAYO EXPRESS<\/h1>/, 'el nombre del negocio debe aparecer debajo del logo');
-assert.ok(welcome.indexOf('sendwayo-entry-logo') < welcome.indexOf('sendwayo-entry-title'), 'el logo debe aparecer antes del nombre');
+assert.ok(welcome.indexOf('class="sendwayo-entry-logo"') < welcome.indexOf('<h1 id="sendwayo-entry-title"'), 'el logo debe aparecer antes del nombre');
 assert.match(welcome, /id="login-screen"/, 'el formulario de acceso debe mostrarse directamente en la portada');
 assert.match(welcome, /id="login-usuario"/, 'debe existir el campo de usuario o correo');
 assert.match(welcome, /id="login-password"/, 'debe existir el campo de contraseña');
