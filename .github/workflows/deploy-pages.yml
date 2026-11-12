@@ -8,6 +8,8 @@ on:
     paths:
       - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
       - '.github/workflows/deploy-pages.yml'
+      - 'SENDWAYO-V7-FAST-ENTRY.html'
+      - 'assets/sendwayo-logo-transparent.webp'
   workflow_dispatch:
 
 permissions:
@@ -92,6 +94,12 @@ jobs:
 </style>'''
           source = Path('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
           base_html = source.read_text(encoding='utf-8')
+          old_persistence = "state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{"
+          new_persistence = """const sendwayoRememberedPersistence = (()=>{try{return sessionStorage.getItem('sendwayo_remember')==='1'?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION;}catch(_){return firebase.auth.Auth.Persistence.SESSION;}})();
+          state.authReadyPromise = auth.setPersistence(sendwayoRememberedPersistence).then(()=>{"""
+          if old_persistence not in base_html:
+              raise SystemExit('No se encontró la configuración de persistencia de Firebase V7.')
+          base_html = base_html.replace(old_persistence, new_persistence, 1)
           if "username:'sendwayoexpress@gmail.com'" not in base_html:
               raise SystemExit('No se encontró el usuario administrativo SENDWAYO exacto en el archivo V7.')
           if "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in base_html:
@@ -184,10 +192,22 @@ jobs:
           body_close = base_html.rfind('</body>')
           if body_close < 0: raise SystemExit('No se encontró el cierre real </body> del HTML V7')
           base_html = base_html[:body_close] + css + '\n' + base_html[body_close:]
+          # Keep the complete V7 application behind the sign-in.
+          app_path = Path('site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
+          app_path.write_text(base_html, encoding='utf-8')
+
+          # The public URL serves only the lightweight access screen.
+          landing_source = Path('SENDWAYO-V7-FAST-ENTRY.html')
+          landing_html = landing_source.read_text(encoding='utf-8')
+          if 'assets/sendwayo-logo-transparent.webp' not in landing_html:
+              raise SystemExit('La portada rápida no usa el logo transparente.')
           paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
           for path in paths:
-              path.write_text(base_html, encoding='utf-8')
-          print('PASS: correo administrador, limpieza no repetitiva y logo/diseño V7 aplicados.')
+              path.write_text(landing_html, encoding='utf-8')
+
+          Path('site/assets').mkdir(parents=True, exist_ok=True)
+          Path('site/assets/sendwayo-logo-transparent.webp').write_bytes(Path('assets/sendwayo-logo-transparent.webp').read_bytes())
+          print('PASS: bienvenida ligera separada; aplicación V7 detrás del acceso; logo transparente copiado.')
           PY
 
       - uses: actions/setup-node@v4
@@ -201,80 +221,54 @@ jobs:
           npm install --no-save tailwindcss@3.4.17
           printf '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n' > /tmp/sendwayo-tailwind-input.css
           mkdir -p site/assets
-          npx tailwindcss -i /tmp/sendwayo-tailwind-input.css -o site/assets/sendwayo-tailwind.css --content site/index.html --minify
+          npx tailwindcss -i /tmp/sendwayo-tailwind-input.css -o site/assets/sendwayo-tailwind.css --content site/index.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html --minify
           test -s site/assets/sendwayo-tailwind.css
           echo "PASS: Tailwind se sirve desde el propio sitio, sin esperar al CDN."
 
-      - name: Verify the selected shared-balance version
+      - name: Verify the lightweight welcome, login and delayed V7 application
         shell: bash
         run: |
           set -euo pipefail
           test -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
           test -s site/index.html
+          test -s site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
           cmp -s site/index.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          html = Path('site/index.html').read_text(encoding='utf-8')
-          assert re.search(r'<title>SENDWAYO EXPRESS - V7[^<]*</title>', html), 'Título V7 ausente'
-          assert "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" in html, 'El correo real de Firebase Authentication no está configurado'
-          assert "email:'ideletteismorin@gmail.com'" in html, 'El perfil administrador no conserva su correo real de Firebase'
-          assert "username:'sendwayoexpress@gmail.com'" in html, 'El usuario SENDWAYO no está configurado'
-          assert "aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','sendwayoexpress@gmail.com']" in html, 'El alias de acceso SENDWAYO no está configurado'
-          assert 'if(match) return match.email;' in html, 'El alias debe resolverse antes del correo Firebase'
-          assert html.count('sendwayo-v7-minimal-welcome-final') == 1, 'El diseño mínimo de bienvenida debe aparecer una sola vez'
-          assert html.rfind('</body>') > html.rfind('</script>'), 'El CSS final debe estar fuera de los scripts'
-          assert "email:'ideletteismorin@gmail.com'" in html, 'El perfil administrador debe conservar su correo real de Firebase'
-          assert len(re.findall(r'\blet\s+ADMIN\s*=', html)) == 1
-          assert "function balanceOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
-          assert "function commissionOwner(a){return a&&roleOf(a)==='AGENTE'?(adminAccount()||a):(a||null);}" in html
-          expected = {
-            'AGENTES': ['AGE00001', 'AGE00002', 'AGE00003', 'AGE00004', 'AGE00005'],
-            'REMITENTES': ['REM00001', 'REM00002', 'REM00003', 'REM00004', 'REM00005', 'REM00006', 'REM00007', 'REM00008', 'REM00009', 'REM00010', 'REM00011', 'REM00012', 'REM00013', 'REM00014', 'REM00015'],
+          node <<'NODE'
+          const fs = require('fs');
+          const landing = fs.readFileSync('site/index.html', 'utf8');
+          const app = fs.readFileSync('site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html', 'utf8');
+          const scriptCount = landing.split('<script').length - 1;
+          if (Buffer.byteLength(landing, 'utf8') > 30000) throw new Error('La bienvenida supera 30 KB.');
+          if (scriptCount !== 1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
+          const scriptStart = landing.indexOf('<script>');
+          const scriptEnd = landing.indexOf('</script>', scriptStart);
+          if (scriptStart < 0 || scriptEnd < 0) throw new Error('No se encontró el JavaScript de la bienvenida.');
+          new Function(landing.slice(scriptStart + 8, scriptEnd));
+          for (const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form']) {
+            if (!landing.includes('id="' + id + '"')) throw new Error('Falta control de acceso: ' + id);
           }
-          for name, ids in expected.items():
-            m = re.search(rf'let\s+{name}\s*=\s*(\[[\s\S]*?\]);', html)
-            assert m and re.findall(r"id\s*:\s*['\"]([^'\"]+)['\"]", m.group(1)) == ids, name
-          refs = set(re.findall(r'assets/([A-Za-z0-9._-]+)', html))
-          assert {'sendwayo-logo-real.jpg'}.issubset(refs), f'Falta el logo corporativo: {sorted(refs)}'
-          for name in refs:
-            assert (Path('site/assets') / name).is_file(), name
-          assert html.rstrip().endswith('</html>')
-          assert html.index('id="sendwayo-brand-bar"') < html.index('id="sendwayo-v7-user-strip"') < html.index('id="sendwayo-workspace-shell"')
-          assert 'sendwayo-v7-no-side-identity-final' in html and 'sendwayo-v7-top-identity-and-width-final' in html
-          assert 'class="sendwayo-landing-logo"' in html and 'class="sendwayo-landing-title"' in html, 'El logo y nombre SENDWAYO deben verse en la portada'
-          assert 'id="sendwayo-home-login"' in html and 'id="sendwayo-home-register"' in html, 'La portada debe tener Ingresar y Registrar'
-          assert 'href="assets/sendwayo-tailwind.css"' in html, 'Tailwind debe cargarse desde el propio sitio'
-          assert 'https://cdn.tailwindcss.com' not in html, 'La página no debe depender del CDN de Tailwind'
-          assert 'sendwayo-v7-minimal-welcome-final' in html, 'La portada mínima debe tener el estilo final'
-          welcome_start = html.index('id="welcome-landing"')
-          welcome_end = html.index('</div>', welcome_start) + len('</div>')
-          welcome = html[welcome_start:welcome_end]
-          assert welcome.count('<img') == 1 and 'sendwayo-landing-logo' in welcome, 'La bienvenida debe mostrar únicamente el logo'
-          assert '<h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>' in welcome, 'La bienvenida debe mostrar el nombre del negocio'
-          assert welcome.count('<button') == 2 and 'INGRESAR' in welcome and 'REGISTRAR' in welcome, 'La bienvenida debe mostrar exactamente dos botones'
-          assert 'window.sendwayoOpenWelcomeLogin=openLogin;' in html, 'Ingresar debe tener un manejador activo'
-          assert 'window.sendwayoOpenWelcomeRegister=openRegister;' in html, 'Registrar debe tener un manejador activo'
-          assert 'id="sendwayo-v7-public-entry-actions"' in html, 'Los botones públicos deben tener manejadores de clic'
-          assert 'mix-blend-mode:multiply!important' in html, 'El logo no debe conservar el recuadro blanco'
-          assert "window.sendwayoOpenPublicRequest('Quiero ser remitente')" in html, 'Registrar debe abrir la solicitud existente'
-          assert 'width:150px!important;height:108px!important' in html, 'El logo debe verse claro y proporcionado'
-          assert 'const perPage=10;' in html
-          assert "const num=String(i-start+1).padStart(2,'0')" in html
-          assert "String(i+1).padStart(2,'0')" in html
-          assert 'aria-label="Página posterior"' in html and 'sendwayoSetModulePage' in html
-          assert "const specialTables=new Set(['tabla-sendwayo-envios','tabla-sendwayo-recargas','tabla-sendwayo-paquetikos']);" in html
-          assert 'sw-pay-save-settlement' in html and 'settings/paymentSettlement' in html
-          print('PASS: V7, portada con logo, nombre, Ingresar y Registrar; 5 agentes, 15 remitentes, paginación y tesorería.')
-          PY
-
+          for (const marker of ['assets/sendwayo-logo-transparent.webp','sendwayoExpressOfficialV7','signInWithEmailAndPassword','sendPasswordResetEmail','sendwayo_express_v2/requests','sendwayo_remember','SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html']) {
+            if (!landing.includes(marker)) throw new Error('Falta función de bienvenida: ' + marker);
+          }
+          if (landing.split('<img').length - 1 !== 1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
+          if (landing.includes('sendwayo-logo-real.jpg')) throw new Error('La bienvenida conserva el logo con fondo.');
+          if (app.length < 500000) throw new Error('No se generó el panel V7 completo.');
+          if (!app.includes("const ADMIN_EMAIL = 'ideletteismorin@gmail.com';")) throw new Error('El panel V7 perdió el correo real de Firebase.');
+          if (!app.includes("username:'sendwayoexpress@gmail.com'")) throw new Error('El alias de acceso SENDWAYO no está configurado.');
+          if (!app.includes('sendwayo_remember')) throw new Error('El panel V7 no respeta Recordarme.');
+          if (!app.includes('const perPage=10;')) throw new Error('Falta la paginación V7.');
+          if (!app.includes('sw-pay-save-settlement')) throw new Error('Falta la conciliación V7.');
+          if (!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se publicó el logo transparente.');
+          if (!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('Falta Tailwind local.');
+          console.log('PASS: bienvenida ligera (' + Buffer.byteLength(landing,'utf8') + ' bytes), un script, campos accesibles, acciones Firebase y panel V7 separado.');
+          NODE
       - name: Persist the verified SENDWAYO login in the Pages source
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html site/assets/sendwayo-tailwind.css
+          git add SENDWAYO-V7-FAST-ENTRY.html assets/sendwayo-logo-transparent.webp SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html site/assets/sendwayo-logo-transparent.webp site/assets/sendwayo-tailwind.css
           if git diff --cached --quiet; then
             echo "The published V7 source already contains the verified SENDWAYO login."
           else

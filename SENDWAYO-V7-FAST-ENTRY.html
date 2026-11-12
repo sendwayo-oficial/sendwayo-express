@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#edf3fa">
+<meta name="description" content="Acceso seguro a SENDWAYO EXPRESS">
+<title>SENDWAYO EXPRESS — Acceso</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#102b49;background:#edf3fa;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;width:100%}
+body{min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#edf3fa 0%,#f9fbfe 55%,#eaf1f8 100%)}
+button,input{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+.entry-card{width:min(100%,440px);padding:30px 30px 26px;background:#fff;border:1px solid #e4eaf1;border-radius:25px;box-shadow:0 18px 50px rgba(16,43,73,.12)}
+.brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;margin:0 0 25px}
+.brand-logo{display:block;width:180px;height:112px;max-width:70%;object-fit:contain;object-position:center;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;mix-blend-mode:normal}
+.brand h1{margin:0;color:#102b49;font-size:clamp(23px,5vw,29px);font-weight:900;line-height:1.1;letter-spacing:.035em}
+.brand p{margin:3px 0 0;color:#64748b;font-size:13px;font-weight:600}
+.field{margin:0 0 15px}
+.field label{display:block;margin:0 0 7px;color:#334155;font-size:12px;font-weight:800}
+.field input{display:block;width:100%;height:49px;padding:12px 14px;border:1px solid #cbd5e1;border-radius:11px;background:#f8fafc;color:#10243d;font-size:16px;outline:none;transition:border-color .12s,box-shadow .12s}
+.field input:focus{border-color:#2875ad;box-shadow:0 0 0 3px rgba(40,117,173,.14);background:#fff}
+.password-wrap{display:flex;gap:8px;align-items:center}
+.password-wrap input{flex:1;min-width:0}
+.show-pass{height:43px;padding:0 13px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#23496d;font-size:12px;font-weight:800}
+.extras{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:3px 0 20px}
+.remember{display:flex;align-items:center;gap:7px;color:#475569;font-size:12px;cursor:pointer}
+.remember input{width:16px;height:16px;margin:0;accent-color:#174a78}
+.forgot{border:0;padding:5px 0;background:transparent;color:#1768a5;font-size:12px;font-weight:700;text-decoration:underline}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.action{min-height:49px;padding:12px 15px;border-radius:11px;font-size:13px;font-weight:900;letter-spacing:.035em;transition:filter .12s,transform .12s}
+.action:focus-visible,.show-pass:focus-visible,.forgot:focus-visible{outline:3px solid #1684bd;outline-offset:3px}
+.action:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.login{border:1px solid #123b63;background:linear-gradient(135deg,#174b78,#0c2948);color:#fff;box-shadow:0 7px 16px rgba(16,43,73,.17)}
+.register{border:1px solid #cbd5e1;background:#f1f5f9;color:#173554}
+.status{min-height:0;margin:0;color:#475569;font-size:12px;line-height:1.45}
+.status:not(:empty){margin-top:14px;padding:10px 12px;border:1px solid #dbe5ef;border-radius:10px;background:#f8fafc}
+.status.error{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.status.success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+.modal-backdrop{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(7,20,38,.72)}
+.modal-backdrop.open{display:flex}
+.modal{width:min(100%,440px);max-height:calc(100svh - 32px);overflow:auto;padding:24px;background:#fff;border-radius:20px;box-shadow:0 22px 60px rgba(0,0,0,.28)}
+.modal h2{margin:0 0 6px;color:#102b49;font-size:20px}
+.modal p{margin:0 0 18px;color:#64748b;font-size:13px;line-height:1.5}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.modal-actions button{min-height:45px;border-radius:10px;font-size:13px;font-weight:800}
+.modal-save{border:0;background:#174b78;color:#fff}
+.modal-cancel{border:1px solid #cbd5e1;background:#f1f5f9;color:#173554}
+@media(max-width:520px){body{padding:12px}.entry-card{padding:24px 19px 21px;border-radius:21px}.brand{margin-bottom:21px}.brand-logo{width:155px;height:96px}.actions{grid-template-columns:1fr}.action{min-height:48px}.modal{padding:20px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="entry-card" aria-labelledby="brand-title">
+  <header class="brand">
+    <img class="brand-logo" src="assets/sendwayo-logo-transparent.webp" alt="SENDWAYO EXPRESS" width="180" height="112" fetchpriority="high" decoding="async">
+    <h1 id="brand-title">SENDWAYO EXPRESS</h1>
+    <p>Bienvenido</p>
+  </header>
+  <form id="login-form" novalidate>
+    <div class="field">
+      <label for="login-email">Correo electrónico o código</label>
+      <input id="login-email" name="username" type="text" inputmode="email" autocomplete="username" placeholder="Escriba su correo o código" required>
+    </div>
+    <div class="field">
+      <label for="login-password">Contraseña</label>
+      <div class="password-wrap">
+        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Escriba su contraseña" required>
+        <button class="show-pass" id="show-password" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+      </div>
+    </div>
+    <div class="extras">
+      <label class="remember"><input id="remember-me" type="checkbox"> Recordarme</label>
+      <button class="forgot" id="forgot-password" type="button">¿Olvidaste tu contraseña?</button>
+    </div>
+    <div class="actions">
+      <button class="action login" id="login-button" type="submit">INGRESAR</button>
+      <button class="action register" id="register-button" type="button">REGISTRAR</button>
+    </div>
+    <div class="status" id="login-status" role="status" aria-live="polite"></div>
+  </form>
+</main>
+
+<div class="modal-backdrop" id="register-modal" role="presentation" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="register-title">
+    <h2 id="register-title">Solicitud de registro</h2>
+    <p>Complete sus datos. Administración revisará su solicitud para crear la cuenta.</p>
+    <form id="register-form" novalidate>
+      <div class="field"><label for="register-name">Nombre y apellido</label><input id="register-name" autocomplete="name" placeholder="Nombre completo" required></div>
+      <div class="field"><label for="register-phone">Celular / WhatsApp</label><input id="register-phone" type="tel" autocomplete="tel" placeholder="Número de teléfono" required></div>
+      <div class="field"><label for="register-email">Correo electrónico</label><input id="register-email" type="email" autocomplete="email" placeholder="correo@ejemplo.com" required></div>
+      <div class="field"><label for="register-details">Información adicional (opcional)</label><input id="register-details" placeholder="Detalle de la solicitud"></div>
+      <div class="status" id="register-status" role="status" aria-live="polite"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="close-register" type="button">Volver</button>
+        <button class="modal-save" id="send-register" type="submit">Enviar solicitud</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script>
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const APP_PAGE='SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html';
+ const CONFIG={apiKey:'AIzaSyDvnBbSRqtGsBlIiX_hJXrtj2Drl_nlDT0',authDomain:'sendwayo-express.firebaseapp.com',databaseURL:'https://sendwayo-express-default-rtdb.firebaseio.com',projectId:'sendwayo-express',storageBucket:'sendwayo-express.firebasestorage.app',messagingSenderId:'191723694148',appId:'1:191723694148:web:1540d1670c4ce5a167b411',measurementId:'G-3PFSJZF0MN'};
+ const ROOT='sendwayo_express_v2';
+ const ADMIN_EMAIL='ideletteismorin@gmail.com';
+ const aliasMap=new Map();
+ function key(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9@]/g,'');}
+ function addAliases(email,values){values.concat([email]).forEach(v=>{if(!v)return;aliasMap.set(key(v),email);const digits=String(v).replace(/\D/g,'');if(digits.length>=7)aliasMap.set(digits,email);});}
+ addAliases(ADMIN_EMAIL,['sendwayoexpress@gmail.com','ADMINADMIN','ADMIN-000','ADMIN-ADMIN','ADMIN-ADMINISTRADOR']);
+ addAliases('fleuranvil@gmail.com',['AGE00001','AG-HERACE','AG-HERFLE','AG-001','AG-01','8292155657']);
+ addAliases('julie@gmail.com',['AGE00002','AG-JULIE','AG-JULOCC','AG-002','AG-02','4244461574']);
+ addAliases('betina@gmail.com',['AGE00003','AG-BETINA','AG-BETLIN','AG-003','AG-03','50944994263']);
+ addAliases('idelette@gmail.com',['AGE00004','AG-IDEISM','AGE-IDEISM','AG-004','AG-04','8094995193']);
+ addAliases('mike@gmail.com',['AGE00005','AG-MIKE','AG-MIKMYK','AG-005','AG-05','8298573044']);
+ addAliases('daniasainthilaire@gmail.com',['REM00001','REM-DANIA','REM-DANSAI','REM-001','18498493727884']);
+ addAliases('editaalberto@gmail.com',['REM00002','REM-EDITA','REM-EDIALB','REM-002','1829829054061']);
+ addAliases('nenesnenes@gmail.com',['REM00003','REM-NENES','REM-NENNEN','REM-003','18098092703291']);
+ addAliases('fleurancilherace@gmail.com',['REM00004','REM-FLEURANVIL','REM-FLEHER','REM-004','18298292155657']);
+ addAliases('wilnordhilairsaint@gmail.com',['REM00005','REM-WILNORD','REM-WILHIL','REM-005','1849849783078']);
+ addAliases('jeanmarie@gmail.com',['REM00006','ID65734453','REM-JEAMAR','REM-006','18298292155658']);
+ addAliases('pierrejacques@gmail.com',['REM00007','ID65734454','REM-PIEJAC','REM-007','18298292155659']);
+ addAliases('louisclaude@gmail.com',['REM00008','ID65734455','REM-LOUCLA','REM-008','18298292155660']);
+ addAliases('michelpaul@gmail.com',['REM00009','ID65734456','REM-MICPAU','REM-009','18298292155661']);
+ addAliases('dupontjean@gmail.com',['REM00010','ID65734457','REM-DUPJEA','REM-010','18298292155662']);
+ addAliases('remitente11@gmail.com',['REM00011','REM-011','18290000011']);
+ addAliases('remitente12@gmail.com',['REM00012','REM-012','18290000012']);
+ addAliases('remitente13@gmail.com',['REM00013','REM-013','18290000013']);
+ addAliases('remitente14@gmail.com',['REM00014','REM-014','18290000014']);
+ addAliases('remitente15@gmail.com',['REM00015','REM-015','18290000015']);
+ function resolveEmail(v){const raw=String(v||'').trim();return aliasMap.get(key(raw))||(raw.includes('@')?raw.toLowerCase():'');}
+ let app=null,auth=null,db=null,appPromise=null,dbPromise=null;
+ function loadScript(src){return new Promise((resolve,reject)=>{const found=[...document.scripts].find(s=>s.src===src);if(found?.dataset.loaded==='1'){resolve();return;}const script=found||document.createElement('script');let done=false;const finish=(err)=>{if(done)return;done=true;clearTimeout(timer);if(err)reject(err);else{script.dataset.loaded='1';resolve();}if(err)script.remove();};const timer=setTimeout(()=>finish(new Error('La conexión segura está tardando demasiado. Compruebe Internet e inténtelo otra vez.')),12000);script.onload=()=>finish();script.onerror=()=>finish(new Error('No se pudo cargar el servicio seguro de acceso. Compruebe su conexión.'));if(!found){script.src=src;script.async=true;document.head.appendChild(script);}});}
+ function ensureAuth(){if(!appPromise)appPromise=(async()=>{await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');app=firebase.apps.find(a=>a.name==='sendwayoExpressOfficialV7')||firebase.initializeApp(CONFIG,'sendwayoExpressOfficialV7');auth=app.auth();return auth;})().catch(err=>{appPromise=null;throw err;});return appPromise;}
+ function ensureDatabase(){if(!dbPromise)dbPromise=(async()=>{await ensureAuth();await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');db=app.database();return db;})().catch(err=>{dbPromise=null;throw err;});return dbPromise;}
+ function setStatus(message,kind){const node=$('login-status');node.textContent=message||'';node.className='status'+(kind?' '+kind:'');}
+ function setRegisterStatus(message,kind){const node=$('register-status');node.textContent=message||'';node.className='status'+(kind?' '+kind:'');}
+ function withTimeout(promise,ms,message){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]).finally(()=>clearTimeout(timer));}
+ function appUrl(){return APP_PAGE+'?sendwayo_release='+Date.now();}
+ $('show-password').addEventListener('click',()=>{const field=$('login-password'),visible=field.type==='password';field.type=visible?'text':'password';$('show-password').textContent=visible?'Ocultar':'Ver';$('show-password').setAttribute('aria-label',visible?'Ocultar contraseña':'Mostrar contraseña');$('show-password').setAttribute('aria-pressed',visible?'true':'false');});
+ $('login-form').addEventListener('submit',async event=>{event.preventDefault();const identifier=$('login-email').value.trim(),password=$('login-password').value;if(!identifier||!password){setStatus('Escriba su correo o código y su contraseña.','error');(!identifier?$('login-email'):$('login-password')).focus();return;}const email=resolveEmail(identifier);if(!email){setStatus('No se encontró ese correo o código. Revise el dato o utilice su correo registrado.','error');$('login-email').focus();return;}const button=$('login-button');button.textContent='CONECTANDO…';setStatus('Conectando con el acceso seguro. Puede mantener esta pantalla abierta.');try{const a=await ensureAuth();const remember=$('remember-me').checked;try{await a.setPersistence(remember?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION);}catch(persistenceError){if(!remember)throw persistenceError;await a.setPersistence(firebase.auth.Auth.Persistence.SESSION);$('remember-me').checked=false;}try{sessionStorage.setItem('sendwayo_remember',$('remember-me').checked?'1':'0');}catch(_){}const credential=await withTimeout(a.signInWithEmailAndPassword(email,password),20000,'Firebase no respondió a tiempo. Compruebe Internet e inténtelo otra vez.');if(!credential||!credential.user)throw new Error('No se pudo confirmar la cuenta.');setStatus('Acceso confirmado. Abriendo su plataforma…','success');window.location.replace(appUrl());}catch(error){const code=error&&error.code;const msg=code==='auth/invalid-credential'||code==='auth/wrong-password'||code==='auth/user-not-found'?'El correo o la contraseña no son válidos.':code==='auth/too-many-requests'?'Firebase bloqueó temporalmente los intentos. Espere antes de probar otra vez.':(error.message||'No se pudo completar el acceso.');setStatus(msg,'error');button.textContent='INGRESAR';}});
+ $('forgot-password').addEventListener('click',async()=>{const identifier=$('login-email').value.trim();if(!identifier){setStatus('Escriba primero su correo o código para recuperar la contraseña.','error');$('login-email').focus();return;}const email=resolveEmail(identifier);if(!email){setStatus('No se encontró un correo asociado a ese código. Escriba su correo registrado.','error');$('login-email').focus();return;}setStatus('Preparando el envío del enlace de recuperación…');try{const a=await ensureAuth();await withTimeout(a.sendPasswordResetEmail(email),15000,'Firebase no respondió al envío de recuperación.');setStatus('Firebase envió el enlace de recuperación al correo registrado.','success');}catch(error){setStatus(error.message||'No se pudo enviar el enlace de recuperación.','error');}});
+ function openRegister(){setRegisterStatus('');$('register-modal').classList.add('open');$('register-modal').setAttribute('aria-hidden','false');setTimeout(()=>$('register-name').focus(),30);}
+ function closeRegister(){$('register-modal').classList.remove('open');$('register-modal').setAttribute('aria-hidden','true');}
+ $('register-button').addEventListener('click',openRegister);$('close-register').addEventListener('click',closeRegister);
+ $('register-modal').addEventListener('click',event=>{if(event.target===$('register-modal'))closeRegister();});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeRegister();});
+ $('register-form').addEventListener('submit',async event=>{event.preventDefault();const nombre=$('register-name').value.trim(),celular=$('register-phone').value.trim(),email=$('register-email').value.trim().toLowerCase(),detalle=$('register-details').value.trim();if(!nombre||!celular||!email){setRegisterStatus('Complete nombre, celular y correo.','error');return;}const button=$('send-register');button.textContent='ENVIANDO…';setRegisterStatus('Conectando con el registro seguro…');try{const database=await ensureDatabase();const id='SOL-SERV-'+Date.now();const row={id,type:'SERVICIO',name:nombre,phone:celular,email,servicio:'Quiero ser remitente',detalle,tipoSolicitud:'SERVICIO',role:'REMITENTE',status:'Pendiente',estado:'Pendiente',fecha:new Date().toLocaleString('es-DO'),createdAtMs:Date.now()};await withTimeout(database.ref(ROOT+'/requests/'+id).set(row),15000,'La solicitud tardó demasiado. Compruebe Internet e inténtelo otra vez.');setRegisterStatus('Solicitud enviada. Administración la recibirá para su revisión.','success');$('register-form').reset();setTimeout(closeRegister,1600);}catch(error){setRegisterStatus(error.message||'No se pudo enviar la solicitud.','error');}finally{button.textContent='Enviar solicitud';}});
+ // Warm Firebase asynchronously after the first paint. The form remains usable while it loads.
+ if('requestIdleCallback'in window)requestIdleCallback(()=>ensureAuth().catch(()=>{}),{timeout:1800});else setTimeout(()=>ensureAuth().catch(()=>{}),900);
+})();
+</script>
+</body>
+</html>
