@@ -36,20 +36,26 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          css = r'''<style id="sendwayo-v7-brand-and-login-performance-fix">
-          .sendwayo-home-header-inner{padding:15px 28px!important;min-height:94px!important}
-          .sendwayo-home-brand{gap:17px!important}
-          .sendwayo-home-brand img{height:72px!important;max-height:72px!important;max-width:205px!important;width:auto!important;object-fit:contain!important;background:#fff!important;border-radius:12px!important;padding:3px!important}
-          .sendwayo-home-brand strong{font-size:19px!important;letter-spacing:.07em!important}
-          .sendwayo-home-brand span{font-size:12px!important}
-          .sendwayo-home-login{padding:14px 27px!important;font-size:14px!important;background:linear-gradient(135deg,#12365b,#087eae)!important;box-shadow:0 8px 22px rgba(8,65,105,.24)!important}
-          .sendwayo-home-content{padding-top:34px!important;padding-bottom:42px!important}
-          .sendwayo-home-main-photo{min-height:390px!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 18px 42px rgba(15,36,64,.19)!important}
-          .sendwayo-home-aside{border-top:4px solid #e4a83b!important}
-          .sendwayo-home-service-grid article{transition:transform .2s ease,box-shadow .2s ease!important;border:1px solid #e4eaf1!important;box-shadow:0 7px 20px rgba(15,36,64,.07)!important}
-          .sendwayo-home-service-grid article:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(15,36,64,.12)!important}
-          @media(max-width:760px){.sendwayo-home-header-inner{min-height:78px!important;padding:10px 14px!important;gap:8px!important}.sendwayo-home-brand{gap:9px!important}.sendwayo-home-brand img{height:54px!important;max-width:112px!important}.sendwayo-home-brand strong{font-size:13px!important}.sendwayo-home-brand span{font-size:9px!important}.sendwayo-home-login{padding:11px 14px!important;font-size:11px!important;white-space:nowrap!important}.sendwayo-home-content{padding:18px 14px 28px!important}.sendwayo-home-main-photo{height:340px!important;min-height:300px!important}}
-          </style>'''
+          css = r'''<style id="sendwayo-v7-minimal-welcome-final">
+          #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important;background:#f5f7fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
+          #welcome-landing>main.sendwayo-minimal-welcome-inner{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:10px!important;width:min(100%,520px)!important;min-height:0!important;margin:0 auto!important;padding:28px 20px!important;background:transparent!important;text-align:center!important}
+          #welcome-landing .sendwayo-landing-logo{display:block!important;width:124px!important;height:88px!important;max-width:124px!important;max-height:88px!important;object-fit:contain!important;margin:0 auto!important}
+          #welcome-landing .sendwayo-landing-title{display:block!important;margin:0!important;color:#10243d!important;font-size:clamp(25px,4vw,32px)!important;line-height:1.15!important;font-weight:900!important;letter-spacing:.02em!important}
+          #welcome-landing #sendwayo-home-login{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:160px!important;min-height:48px!important;margin-top:12px!important;padding:13px 28px!important;border:0!important;border-radius:12px!important;background:#12365b!important;color:#fff!important;font-size:15px!important;font-weight:800!important;cursor:pointer!important;box-shadow:0 7px 18px rgba(18,54,91,.18)!important}
+          @media(max-width:600px){#welcome-landing>main.sendwayo-minimal-welcome-inner{gap:8px!important;padding:20px 16px!important}#welcome-landing .sendwayo-landing-logo{width:112px!important;height:76px!important}#welcome-landing .sendwayo-landing-title{font-size:26px!important}#welcome-landing #sendwayo-home-login{width:min(100%,220px)!important}}
+          </style>
+          <script id="sendwayo-v7-minimal-welcome-login">
+          (function(){
+            var loginButton=document.getElementById('sendwayo-home-login');
+            if(loginButton&&!loginButton.dataset.sendwayoBound){
+              loginButton.dataset.sendwayoBound='1';
+              loginButton.addEventListener('click',function(event){
+                event.preventDefault();
+                if(typeof window.v162_showLogin==='function')window.v162_showLogin();
+              });
+            }
+          })();
+          </script>'''
           source = Path('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
           base_html = source.read_text(encoding='utf-8')
           if "username:'sendwayoexpress@gmail.com'" not in base_html:
@@ -62,6 +68,33 @@ jobs:
               raise SystemExit('Falta el alias de inicio de sesión SENDWAYO.')
           if "if(match) return match.email;" not in base_html:
               raise SystemExit('El usuario SENDWAYO debe resolverse antes del correo de Firebase.')
+
+          # Replace the complete public welcome container with only logo, business name and Ingresar.
+          import re
+          landing = re.search(r'<div\\b(?=[^>]*\\bid=["\\']welcome-landing["\\'])[^>]*>', base_html, re.I)
+          if not landing:
+              raise SystemExit('No se encontró el contenedor de bienvenida V7.')
+          landing_start = landing.start()
+          depth = 0
+          landing_end = None
+          for token in re.finditer(r'<div\\b[^>]*>|</div\\s*>', base_html[landing_start:], re.I):
+              if token.group(0).lower().startswith('</div'):
+                  depth -= 1
+              else:
+                  depth += 1
+              if depth == 0:
+                  landing_end = landing_start + token.end()
+                  break
+          if landing_end is None:
+              raise SystemExit('No se pudo cerrar de forma segura el contenedor de bienvenida.')
+          minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
+            <main class="sendwayo-home sendwayo-minimal-welcome-inner">
+              <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" width="124" height="88">
+              <h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>
+              <button id="sendwayo-home-login" type="button">INGRESAR</button>
+            </main>
+          </div>'''
+          base_html = base_html[:landing_start] + minimal_welcome + base_html[landing_end:]
           base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
           # Remove prior copies first: a '</body>' string also appears inside the PDF export script.
           base_html = base_html.replace(css + '\n', '')
