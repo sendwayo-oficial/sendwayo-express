@@ -559,7 +559,7 @@ let ADMIN = {
   numero: '01',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
-  email:'sendwayoexpress@gmail.com',
+  email:'ideletteismorin@gmail.com',
   username:'sendwayoexpress@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
@@ -7025,7 +7025,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -7556,7 +7556,7 @@ window.sendwayoShareReceipt=async function(){
     const {key, data}=profileRow;
     const currentUid=txt(data.authUid);
     const loginEmail=norm(firebaseUser.email);
-    // Cuenta administrativa confirmada: sendwayoexpress@gmail.com.
+    // Cuenta administrativa: correo real Firebase ideletteismorin@gmail.com; alias de acceso sendwayoexpress@gmail.com.
     // Firebase Authentication valida la contraseña antes de vincular el UID al perfil admin.
     if(role==='ADMIN' && key==='admin' && loginEmail===ADMIN_EMAIL){
       const oldId=txt(data.id||data.legacyId||'ADMINADMIN'),oldCode=txt(data.code||data.codigo||'ADMIN-000'),visibleId=!oldId||oldId.toUpperCase()==='ADMINADMIN'?'ADMIN-ADMINISTRADOR':oldId,visibleCode=!oldCode||oldCode==='ADMIN-000'?visibleId:oldCode;const updates={id:visibleId,accountId:visibleId,code:visibleCode,codigo:visibleCode,staffId:visibleCode,idAnterior:oldId!==visibleId?oldId:txt(data.idAnterior||''),idAliases:[...new Set([...(Array.isArray(data.idAliases)?data.idAliases:[]),oldId,'ADMINADMIN','ADMIN-000'].filter(Boolean))],codeAliases:[...new Set([...(Array.isArray(data.codeAliases)?data.codeAliases:[]),oldCode,'ADMIN-000'].filter(Boolean))]};
