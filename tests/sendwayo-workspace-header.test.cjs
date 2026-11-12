@@ -14,7 +14,7 @@ assert.doesNotThrow(() => new Function(controller), 'el controlador de cabecera 
 for (const id of ['sendwayo-brand-bar','sendwayo-v7-business-name','sendwayo-mobile-menu','sendwayo-v7-user-strip','sendwayo-v7-name','sendwayo-v7-role','sendwayo-v7-id','sendwayo-v7-username','sendwayo-v7-phone','sendwayo-v7-date','sendwayo-v7-clock','sendwayo-v7-duration']) {
   assert.ok(html.includes('id="' + id + '"'), 'falta elemento ' + id);
 }
-for (const term of ['function ensureIdentityMarkup()','function updateIdentity()','function tickSession()','window.setInterval(tickSession,5000)','function moveMenuButton()','left.insertBefore(btn,title.nextSibling)','function fixSidebar()','function installAllCountrySearch()','function scrubVisibleLegacyCodes()']) {
+for (const term of ['function ensureIdentityMarkup()','function updateIdentity()','function tickSession()','window.setInterval(tickSession,1000)','function moveMenuButton()','left.insertBefore(btn,title.nextSibling)','function fixSidebar()','function installAllCountrySearch()','function scrubVisibleLegacyCodes()']) {
   assert.ok(controller.includes(term), 'falta controlador ' + term);
 }
 const cssStart=html.lastIndexOf('<style id="sendwayo-v7-final-user-experience">');
