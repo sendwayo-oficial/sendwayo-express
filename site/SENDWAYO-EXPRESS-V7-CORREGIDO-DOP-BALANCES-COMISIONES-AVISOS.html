@@ -7141,10 +7141,10 @@ window.sendwayoShareReceipt=async function(){
   }
   function resolveEmail(identifier) {
     const entered=txt(identifier);
-    if(entered.includes('@')) return entered.toLowerCase();
     const key=norm(entered);
-    const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
-    return match ? match.email : '';
+    const match=collectAliases().find(a=>norm(a.email)===key || a.aliases.some(alias=>norm(alias)===key));
+    if(match) return match.email;
+    return entered.includes('@') ? entered.toLowerCase() : '';
   }
   async function queryOne(field, value) {
     if (!value) return null;
