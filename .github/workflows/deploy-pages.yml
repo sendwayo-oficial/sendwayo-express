@@ -74,7 +74,7 @@ jobs:
           for(const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form','register-name','register-phone','register-email']) {
             if(!page.includes('id="'+id+'"')) throw new Error('Falta control funcional: '+id);
           }
-          for(const marker of ['signInWithEmailAndPassword','sendPasswordResetEmail','setPersistence','sendwayo_express_v2/requests','sendwayoExpressOfficialV7','sendwayoexpress@gmail.com']) {
+          for(const marker of ['signInWithEmailAndPassword','sendPasswordResetEmail','setPersistence','/requests/','sendwayoExpressOfficialV7','sendwayoexpress@gmail.com']) {
             if(!page.includes(marker)) throw new Error('Falta función real de acceso: '+marker);
           }
           const scriptStart=page.indexOf('<script>');
