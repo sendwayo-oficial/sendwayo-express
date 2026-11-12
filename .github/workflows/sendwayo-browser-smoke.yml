@@ -1,8 +1,8 @@
-name: SENDWAYO browser smoke test
+name: SENDWAYO direct-login browser smoke test
 
 on:
   workflow_run:
-    workflows: ["Publish approved SENDWAYO EXPRESS - shared balances"]
+    workflows: ["pages build and deployment"]
     types: [completed]
     branches: [main]
 
@@ -10,90 +10,55 @@ permissions:
   contents: read
 
 jobs:
-  welcome-and-login:
+  direct-login:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the deployed revision
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Playwright client
+      - name: Install Playwright
         run: |
           npm init -y
           npm install --no-save playwright
 
-      - name: Verify the public welcome, Ingresar and Registrar buttons
+      - name: Verify the published login page in Chromium
         env:
           PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
-          DEPLOYED_SHA: \${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           node <<'NODE'
           const { chromium } = require('playwright');
           (async () => {
-            const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-            const target=new URL(process.env.PAGE_URL);
-            if(process.env.DEPLOYED_SHA)target.searchParams.set('sendwayo_release',process.env.DEPLOYED_SHA);
-            console.log('Smoke test URL:',target.toString());
-            async function openPage(){
-              const page=await browser.newPage({viewport:{width:1280,height:900}});
-              const errors=[],consoleErrors=[];
-              page.on('pageerror',e=>errors.push(e.message));
-              page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
-              const response=await page.goto(target.toString(),{waitUntil:'domcontentloaded',timeout:60000});
-              if(!response||response.status()!==200)throw new Error('La página pública no respondió HTTP 200.');
-              await page.waitForSelector('#welcome-landing .sendwayo-landing-logo',{state:'visible',timeout:45000});
-              try{await page.waitForFunction(()=>typeof window.sendwayoOpenWelcomeLogin==='function'&&
-                typeof window.sendwayoOpenWelcomeRegister==='function'&&typeof window.sendwayoOpenPublicRequest==='function',null,{timeout:30000});}
-              catch(e){
-                console.error('HANDLERS:',await page.evaluate(()=>({login:typeof window.sendwayoOpenWelcomeLogin,register:typeof window.sendwayoOpenWelcomeRegister,request:typeof window.sendwayoOpenPublicRequest,legacyLogin:typeof window.v162_showLogin,loginFn:typeof window.intentarLogin})));
-                console.error('PAGE ERRORS:',JSON.stringify(errors));console.error('CONSOLE ERRORS:',JSON.stringify(consoleErrors));throw e;
+            const browser = await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+            try {
+              const page = await browser.newPage({viewport:{width:1280,height:900}});
+              const errors = [];
+              page.on('pageerror', e => errors.push(e.message));
+              const response = await page.goto(process.env.PAGE_URL + '?smoke=' + Date.now(), {waitUntil:'domcontentloaded',timeout:60000});
+              if (!response || response.status() !== 200) throw new Error('La página pública no respondió HTTP 200.');
+              await page.waitForSelector('#login-email', {state:'visible',timeout:30000});
+              await page.locator('#login-email').fill('prueba@example.com');
+              await page.locator('#login-password').fill('prueba-no-valida');
+              await page.locator('#show-password').click();
+              if (await page.locator('#login-password').getAttribute('type') !== 'text') throw new Error('El botón Ver no muestra la contraseña.');
+              await page.locator('#show-password').click();
+              if (await page.locator('#login-password').getAttribute('type') !== 'password') throw new Error('El botón Ocultar no vuelve a ocultar la contraseña.');
+              await page.locator('#remember-me').check();
+              if (!await page.locator('#remember-me').isChecked()) throw new Error('Recordarme no responde.');
+              if (await page.locator('#forgot-password').count() !== 1) throw new Error('Debe existir un único enlace de recuperación.');
+              await page.locator('#register-button').click();
+              await page.waitForSelector('#register-modal.open', {state:'visible',timeout:10000});
+              for (const id of ['register-name','register-phone','register-email']) {
+                await page.locator('#'+id).fill('prueba');
+                if (await page.locator('#'+id).inputValue() !== 'prueba') throw new Error('El campo '+id+' no acepta escritura.');
               }
-              return {page,errors,consoleErrors};
-            }
-            try{
-              const landingRun=await openPage();
-              const landing=await landingRun.page.evaluate(()=>{
-                const w=document.querySelector('#welcome-landing'),logo=w&&w.querySelector('.sendwayo-landing-logo'),title=w&&w.querySelector('.sendwayo-landing-title');
-                const buttons=w?[...w.querySelectorAll('button')].filter(b=>getComputedStyle(b).display!=='none'&&getComputedStyle(b).visibility!=='hidden'):[];
-                return {visible:!!w&&getComputedStyle(w).display!=='none'&&getComputedStyle(w).visibility!=='hidden',
-                  logoLoaded:!!logo&&logo.complete&&logo.naturalWidth>0,name:title&&(title.textContent||'').trim(),
-                  buttonCount:buttons.length,login:!!w&&!!w.querySelector('#sendwayo-home-login'),register:!!w&&!!w.querySelector('#sendwayo-home-register'),
-                  imageCount:w?w.querySelectorAll('img').length:0,text:(w&&w.innerText||'').trim().replace(/\s+/g,' ')};
-              });
-              console.log('WELCOME:',JSON.stringify(landing,null,2));
-              if(!landing.visible||!landing.logoLoaded||landing.name!=='SENDWAYO EXPRESS'||landing.buttonCount!==2||!landing.login||!landing.register||landing.imageCount!==1||!landing.text.includes('INGRESAR')||!landing.text.includes('REGISTRAR'))throw new Error('La portada no coincide con el diseño mínimo solicitado.');
-              if(landingRun.errors.length)throw new Error('Errores JavaScript en portada: '+landingRun.errors.join(' | '));
-
-              const regRun=await openPage();
-              await regRun.page.locator('#sendwayo-home-register').click({timeout:15000});
-              await regRun.page.waitForSelector('#v7-public-name',{state:'visible',timeout:25000});
-              const reg=await regRun.page.evaluate(()=>({modal:!!document.querySelector('#sendwayo-v7-modal')&&getComputedStyle(document.querySelector('#sendwayo-v7-modal')).display!=='none',
-                name:!!document.querySelector('#v7-public-name'),phone:!!document.querySelector('#v7-public-phone'),email:!!document.querySelector('#v7-public-email')}));
-              console.log('REGISTER FORM:',JSON.stringify(reg));
-              if(!reg.modal||!reg.name||!reg.phone||!reg.email)throw new Error('Registrar no abrió el formulario.');
-              if(regRun.errors.length)throw new Error('Errores JavaScript en registro: '+regRun.errors.join(' | '));
-
-              const loginRun=await openPage();
-              await loginRun.page.locator('#sendwayo-home-login').click({timeout:15000});
-              await loginRun.page.waitForFunction(()=>{const l=document.querySelector('#login-screen');return !!l&&!l.classList.contains('hidden')&&getComputedStyle(l).display!=='none'&&!!document.querySelector('#login-usuario')&&!!document.querySelector('#login-password');},null,{timeout:25000});
-              await loginRun.page.waitForFunction(()=>typeof window.intentarLogin==='function',null,{timeout:35000});
-              await loginRun.page.locator('#login-screen button[onclick*="intentarLogin"]').click({timeout:15000});
-              await loginRun.page.waitForFunction(()=>{const e=document.querySelector('#login-error');return !!e&&!e.classList.contains('hidden')&&!!(e.textContent||'').trim();},null,{timeout:10000});
-              const login=await loginRun.page.evaluate(()=>({visible:getComputedStyle(document.querySelector('#login-screen')).display!=='none',
-                username:!!document.querySelector('#login-usuario'),password:!!document.querySelector('#login-password'),
-                handler:typeof window.intentarLogin==='function',error:!document.querySelector('#login-error').classList.contains('hidden')}));
-              console.log('LOGIN FORM:',JSON.stringify(login));
-              if(!login.visible||!login.username||!login.password||!login.handler||!login.error)throw new Error('Ingresar no abrió un formulario funcional.');
-              if(loginRun.errors.length)throw new Error('Errores JavaScript en acceso: '+loginRun.errors.join(' | '));
-              console.log('PASS: Registrar abre su formulario e Ingresar abre un acceso interactivo.');
-            }finally{await browser.close();}
-          })().catch(e=>{console.error(e);process.exit(1);});
+              await page.locator('#close-register').click();
+              await page.locator('#login-email').fill('');
+              await page.locator('#login-password').fill('');
+              await page.locator('#login-button').click();
+              await page.waitForFunction(() => (document.querySelector('#login-status')?.textContent || '').includes('Escriba su correo'));
+              const logo = await page.locator('.brand-logo').evaluate(img => ({complete:img.complete,width:img.naturalWidth}));
+              if (!logo.complete || logo.width < 1) throw new Error('El logo no cargó correctamente.');
+              if (errors.length) throw new Error('Errores JavaScript: '+errors.join(' | '));
+              console.log('PASS: campos editables, mostrar/ocultar, Recordarme, recuperación única, Registrar, validación de Ingresar y logo.');
+            } finally { await browser.close(); }
+          })().catch(e => { console.error(e); process.exit(1); });
           NODE
