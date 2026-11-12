@@ -8226,7 +8226,8 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+  const sendwayoRememberedPersistence = (()=>{try{return sessionStorage.getItem('sendwayo_remember')==='1'?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION;}catch(_){return firebase.auth.Auth.Persistence.SESSION;}})();
+  state.authReadyPromise = auth.setPersistence(sendwayoRememberedPersistence).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy||state.sessionEstablished)return;
