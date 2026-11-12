@@ -63,6 +63,32 @@ jobs:
           #sendwayo-v7-modal{z-index:2147483100!important;pointer-events:auto!important}
           #login-screen,#login-screen input,#login-screen button{pointer-events:auto!important}
 
+          /* El formulario Firebase debe vivir fuera de la bienvenida, para que ocultar
+             la portada no oculte también el acceso. */
+          #login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;box-sizing:border-box!important;background:rgba(5,18,36,.97)!important;visibility:hidden!important;pointer-events:none!important}
+          #login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+          #login-screen.sendwayo-login-visible>.sendwayo-entry-login-inner{display:block!important;width:min(100%,440px)!important;max-width:440px!important;margin:auto!important;padding:28px!important;border:1px solid #e2e8f0!important;border-radius:24px!important;background:#fff!important;color:#10243d!important;box-shadow:0 24px 70px rgba(0,0,0,.38)!important;box-sizing:border-box!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-login-inner h2{margin:0 0 17px!important;color:#173554!important;font-size:17px!important;font-weight:800!important;text-align:left!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-field{margin:0 0 14px!important;text-align:left!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-field label{display:block!important;margin:0 0 7px!important;color:#334155!important;font-size:12px!important;font-weight:800!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-field input{display:block!important;width:100%!important;min-width:0!important;min-height:48px!important;padding:12px 14px!important;border:1px solid #cbd5e1!important;border-radius:12px!important;background:#f8fafc!important;color:#10243d!important;font-size:16px!important;pointer-events:auto!important;box-sizing:border-box!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-password{display:flex!important;align-items:center!important;gap:8px!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-password input{flex:1 1 auto!important}
+          #login-screen.sendwayo-login-visible #sendwayo-toggle-password{min-height:42px!important;padding:0 12px!important;border:1px solid #cbd5e1!important;border-radius:10px!important;background:#fff!important;color:#23496d!important;font-weight:800!important}
+          #login-screen.sendwayo-login-visible #sendwayo-login-extras{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:wrap!important;margin:2px 0 18px!important}
+          #login-screen.sendwayo-login-visible #sendwayo-login-extras label{display:flex!important;align-items:center!important;gap:7px!important;color:#475569!important;font-size:12px!important}
+          #login-screen.sendwayo-login-visible #sendwayo-login-extras input{width:16px!important;height:16px!important;margin:0!important}
+          #login-screen.sendwayo-login-visible #sendwayo-login-extras button{border:0!important;background:transparent!important;color:#1768a5!important;font-size:12px!important;font-weight:700!important;text-decoration:underline!important;cursor:pointer!important}
+          #login-screen.sendwayo-login-visible .sendwayo-entry-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+          #login-screen.sendwayo-login-visible #sendwayo-entry-login-button,#login-screen.sendwayo-login-visible #sendwayo-entry-register-button{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:49px!important;padding:12px 16px!important;border-radius:12px!important;font-size:13px!important;font-weight:900!important;cursor:pointer!important;pointer-events:auto!important}
+          #login-screen.sendwayo-login-visible #sendwayo-entry-login-button{border:1px solid #123b63!important;background:linear-gradient(135deg,#174b78,#0c2948)!important;color:#fff!important}
+          #login-screen.sendwayo-login-visible #sendwayo-entry-register-button{border:1px solid #cbd5e1!important;background:#f1f5f9!important;color:#173554!important}
+          #login-screen.sendwayo-login-visible #login-error:not(.hidden){display:block!important;margin:14px 0 0!important;padding:11px 12px!important;border:1px solid #fecaca!important;border-radius:10px!important;background:#fef2f2!important;color:#991b1b!important;font-size:12px!important}
+          @media(max-width:520px){
+            #login-screen.sendwayo-login-visible>.sendwayo-entry-login-inner{padding:24px 18px!important;border-radius:20px!important}
+            #login-screen.sendwayo-login-visible .sendwayo-entry-actions{grid-template-columns:1fr!important}
+          }
+
 </style>'''
           source = Path('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
           base_html = source.read_text(encoding='utf-8')
@@ -100,6 +126,33 @@ jobs:
                       break
           if landing_end is None:
               raise SystemExit('No se pudo cerrar de forma segura el contenedor de bienvenida.')
+
+          # Preserve the Firebase login form: it originally lived inside the welcome
+          # container, which is replaced below. Move it intact to body-level so hiding
+          # the welcome page never hides the form together with its parent.
+          login_start = base_html.find('<div id="login-screen"', landing_start, landing_end)
+          if login_start < 0:
+              raise SystemExit('No se encontró el formulario Firebase dentro de la bienvenida.')
+          login_depth = 0
+          login_cursor = login_start
+          login_end = None
+          while True:
+              login_open = base_html.find('<div', login_cursor)
+              login_close = base_html.find('</div>', login_cursor)
+              if login_close < 0:
+                  break
+              if login_open >= 0 and login_open < login_close:
+                  login_depth += 1
+                  login_cursor = login_open + 4
+              else:
+                  login_depth -= 1
+                  login_cursor = login_close + 6
+                  if login_depth == 0:
+                      login_end = login_cursor
+                      break
+          if login_end is None:
+              raise SystemExit('No se pudo extraer el formulario de acceso sin dañar su estructura.')
+          login_markup = base_html[login_start:login_end]
           minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
             <main class="sendwayo-home sendwayo-minimal-welcome-inner">
               <section class="sendwayo-landing-brand-panel" aria-label="SENDWAYO EXPRESS">
@@ -112,7 +165,7 @@ jobs:
               </nav>
             </main>
           </div>'''
-          base_html = base_html[:landing_start] + minimal_welcome + base_html[landing_end:]
+          base_html = base_html[:landing_start] + minimal_welcome + '\n' + login_markup + base_html[landing_end:]
           base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
           # Remove prior welcome-style/listener copies so the public page receives exactly one final version.
           for tag_name, element_id in [('style', 'sendwayo-v7-minimal-welcome-final'), ('script', 'sendwayo-v7-minimal-welcome-login')]:
