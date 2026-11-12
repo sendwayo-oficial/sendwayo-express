@@ -1,371 +1,141 @@
-# Publish V7: keep the SENDWAYO login name separate from the existing Firebase administrator email.
-# Re-run the approved V7 static publication and URL hash verification.
-name: Publish approved SENDWAYO EXPRESS - shared balances
+name: Publish SENDWAYO EXPRESS fast entry and V7 application
 
 on:
   push:
     branches: [main]
     paths:
-      - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
-      - '.github/workflows/deploy-pages.yml'
       - 'SENDWAYO-V7-FAST-ENTRY.html'
+      - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
       - 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'
-      - 'assets/sendwayo-logo-real.jpg'
-      - 'assets/sendwayo-logo-real.jpg'
+      - 'assets/**'
+      - 'data/**'
+      - 'scripts/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
-  actions: read
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: sendwayo-pages
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+      url: \${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout SENDWAYO
+        uses: actions/checkout@v4
 
-
-      - name: Apply verified V7 login and welcome fixes
+      - name: Assemble the lightweight welcome page and full V7 application
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          css = r'''<style id="sendwayo-v7-minimal-welcome-final">
-          #welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:auto!important;padding:24px!important;background:linear-gradient(135deg,#edf3fa 0%,#f9fbfe 55%,#eaf1f8 100%)!important;color:#102b49!important;font-family:Arial,sans-serif!important;box-sizing:border-box!important}
-          #welcome-landing>.sendwayo-minimal-welcome-inner{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:28px!important;width:min(100%,790px)!important;min-height:0!important;margin:0 auto!important;padding:42px 34px!important;background:#fff!important;border:1px solid #e4eaf1!important;border-radius:28px!important;box-shadow:0 22px 60px rgba(16,43,73,.13)!important;text-align:center!important;box-sizing:border-box!important}
-          #welcome-landing .sendwayo-landing-brand-panel{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:22px!important;width:100%!important;max-width:100%!important;margin:0 auto!important}
-          #welcome-landing .sendwayo-landing-logo{display:block!important;flex:0 0 auto!important;width:150px!important;height:108px!important;max-width:150px!important;max-height:108px!important;object-fit:contain!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;mix-blend-mode:multiply!important;opacity:1!important;visibility:visible!important}
-          #welcome-landing .sendwayo-landing-title{display:block!important;margin:0!important;padding:0!important;color:#102b49!important;font-size:clamp(28px,4vw,40px)!important;line-height:1.12!important;font-weight:900!important;letter-spacing:.025em!important;text-align:left!important;white-space:normal!important}
-          #welcome-landing .sendwayo-welcome-only-actions{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:14px!important;width:min(100%,440px)!important;margin:0 auto!important;padding:0!important}
-          #welcome-landing .sendwayo-public-action{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;min-width:160px!important;min-height:52px!important;margin:0!important;padding:14px 24px!important;border:0!important;border-radius:13px!important;font-family:Arial,sans-serif!important;font-size:15px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:.045em!important;cursor:pointer!important;pointer-events:auto!important;opacity:1!important;visibility:visible!important;box-shadow:0 8px 20px rgba(16,43,73,.14)!important;transition:transform .15s ease,filter .15s ease!important}
-          #welcome-landing .sendwayo-public-login{background:#12365b!important;color:#fff!important}
-          #welcome-landing .sendwayo-public-register{background:#f3b63f!important;color:#152f4b!important}
-          #welcome-landing .sendwayo-public-action:hover{transform:translateY(-2px)!important;filter:brightness(1.04)!important}
-          #welcome-landing .sendwayo-public-action:focus-visible{outline:3px solid #1684bd!important;outline-offset:4px!important}
-          @media(max-width:600px){#welcome-landing{padding:14px!important}#welcome-landing>.sendwayo-minimal-welcome-inner{gap:22px!important;width:100%!important;padding:26px 18px!important;border-radius:20px!important}#welcome-landing .sendwayo-landing-brand-panel{gap:12px!important}#welcome-landing .sendwayo-landing-logo{width:104px!important;height:78px!important;max-width:104px!important;max-height:78px!important}#welcome-landing .sendwayo-landing-title{font-size:clamp(21px,6vw,29px)!important;letter-spacing:.01em!important}#welcome-landing .sendwayo-welcome-only-actions{gap:9px!important;width:100%!important}#welcome-landing .sendwayo-public-action{min-width:0!important;min-height:48px!important;padding:12px 12px!important;font-size:13px!important}}
-          @media(max-width:360px){#welcome-landing>.sendwayo-minimal-welcome-inner{padding:20px 12px!important}#welcome-landing .sendwayo-landing-logo{width:88px!important;height:68px!important}#welcome-landing .sendwayo-landing-title{font-size:20px!important}}
+          test -s SENDWAYO-V7-FAST-ENTRY.html
+          test -s SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          test -s assets/sendwayo-logo-transparent.webp
+          rm -rf site
+          mkdir -p site/assets
+          cp SENDWAYO-V7-FAST-ENTRY.html site/index.html
+          cp SENDWAYO-V7-FAST-ENTRY.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
+          cp SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          cp -R assets/. site/assets/
+          if [ -d data ]; then cp -R data site/; fi
+          if [ -d scripts ]; then cp -R scripts site/; fi
+          if [ -f SENDWAYO-V7-FISCAL-INTERNACIONAL.js ]; then cp SENDWAYO-V7-FISCAL-INTERNACIONAL.js site/; fi
+          if [ -f .nojekyll ]; then cp .nojekyll site/; else touch site/.nojekyll; fi
 
-          /* Portada pública interactiva: ningún menú/capa privada debe cubrir los botones. */
-          #welcome-landing{z-index:2147482600!important;pointer-events:auto!important}
-          #welcome-landing *{pointer-events:auto!important}
-          body:not(.sendwayo-authenticated) #sendwayo-menu-shade,
-          body:not(.sendwayo-authenticated) #sendwayo-main-sidebar,
-          body:not(.sendwayo-authenticated) #sendwayo-brand-bar,
-          body:not(.sendwayo-authenticated) #sendwayo-mobile-menu{
-           display:none!important;visibility:hidden!important;pointer-events:none!important
-          }
-          #sendwayo-v7-modal{z-index:2147483100!important;pointer-events:auto!important}
-          #login-screen,#login-screen input,#login-screen button{pointer-events:auto!important}
-
-          /* El formulario Firebase debe vivir fuera de la bienvenida, para que ocultar
-             la portada no oculte también el acceso. */
-          #login-screen{display:none!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow-y:auto!important;box-sizing:border-box!important;background:rgba(5,18,36,.97)!important;visibility:hidden!important;pointer-events:none!important}
-          #login-screen.sendwayo-login-visible{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
-          #login-screen.sendwayo-login-visible>.sendwayo-entry-login-inner{display:block!important;width:min(100%,440px)!important;max-width:440px!important;margin:auto!important;padding:28px!important;border:1px solid #e2e8f0!important;border-radius:24px!important;background:#fff!important;color:#10243d!important;box-shadow:0 24px 70px rgba(0,0,0,.38)!important;box-sizing:border-box!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-login-inner h2{margin:0 0 17px!important;color:#173554!important;font-size:17px!important;font-weight:800!important;text-align:left!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-field{margin:0 0 14px!important;text-align:left!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-field label{display:block!important;margin:0 0 7px!important;color:#334155!important;font-size:12px!important;font-weight:800!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-field input{display:block!important;width:100%!important;min-width:0!important;min-height:48px!important;padding:12px 14px!important;border:1px solid #cbd5e1!important;border-radius:12px!important;background:#f8fafc!important;color:#10243d!important;font-size:16px!important;pointer-events:auto!important;box-sizing:border-box!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-password{display:flex!important;align-items:center!important;gap:8px!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-password input{flex:1 1 auto!important}
-          #login-screen.sendwayo-login-visible #sendwayo-toggle-password{min-height:42px!important;padding:0 12px!important;border:1px solid #cbd5e1!important;border-radius:10px!important;background:#fff!important;color:#23496d!important;font-weight:800!important}
-          #login-screen.sendwayo-login-visible #sendwayo-login-extras{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:wrap!important;margin:2px 0 18px!important}
-          #login-screen.sendwayo-login-visible #sendwayo-login-extras label{display:flex!important;align-items:center!important;gap:7px!important;color:#475569!important;font-size:12px!important}
-          #login-screen.sendwayo-login-visible #sendwayo-login-extras input{width:16px!important;height:16px!important;margin:0!important}
-          #login-screen.sendwayo-login-visible #sendwayo-login-extras button{border:0!important;background:transparent!important;color:#1768a5!important;font-size:12px!important;font-weight:700!important;text-decoration:underline!important;cursor:pointer!important}
-          #login-screen.sendwayo-login-visible .sendwayo-entry-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
-          #login-screen.sendwayo-login-visible #sendwayo-entry-login-button,#login-screen.sendwayo-login-visible #sendwayo-entry-register-button{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:49px!important;padding:12px 16px!important;border-radius:12px!important;font-size:13px!important;font-weight:900!important;cursor:pointer!important;pointer-events:auto!important}
-          #login-screen.sendwayo-login-visible #sendwayo-entry-login-button{border:1px solid #123b63!important;background:linear-gradient(135deg,#174b78,#0c2948)!important;color:#fff!important}
-          #login-screen.sendwayo-login-visible #sendwayo-entry-register-button{border:1px solid #cbd5e1!important;background:#f1f5f9!important;color:#173554!important}
-          #login-screen.sendwayo-login-visible #login-error:not(.hidden){display:block!important;margin:14px 0 0!important;padding:11px 12px!important;border:1px solid #fecaca!important;border-radius:10px!important;background:#fef2f2!important;color:#991b1b!important;font-size:12px!important}
-          @media(max-width:520px){
-            #login-screen.sendwayo-login-visible>.sendwayo-entry-login-inner{padding:24px 18px!important;border-radius:20px!important}
-            #login-screen.sendwayo-login-visible .sendwayo-entry-actions{grid-template-columns:1fr!important}
-          }
-
-</style>'''
-          source = Path('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
-          base_html = source.read_text(encoding='utf-8')
-          old_persistence = "state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{"
-          new_persistence = """const sendwayoRememberedPersistence = (()=>{try{return sessionStorage.getItem('sendwayo_remember')==='1'?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION;}catch(_){return firebase.auth.Auth.Persistence.SESSION;}})();
-          state.authReadyPromise = auth.setPersistence(sendwayoRememberedPersistence).then(()=>{"""
-          if old_persistence not in base_html:
-              raise SystemExit('No se encontró la configuración de persistencia de Firebase V7.')
-          base_html = base_html.replace(old_persistence, new_persistence, 1)
-          if "username:'sendwayoexpress@gmail.com'" not in base_html:
-              raise SystemExit('No se encontró el usuario administrativo SENDWAYO exacto en el archivo V7.')
-          if "const ADMIN_EMAIL = 'ideletteismorin@gmail.com';" not in base_html:
-              raise SystemExit('Se debe conservar el correo real de Firebase Authentication.')
-          if "email:'ideletteismorin@gmail.com'" not in base_html:
-              raise SystemExit('El perfil ADMIN debe conservar el correo real de Firebase Authentication.')
-          if "aliases:['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','sendwayoexpress@gmail.com']" not in base_html:
-              raise SystemExit('Falta el alias de inicio de sesión SENDWAYO.')
-          if "if(match) return match.email;" not in base_html:
-              raise SystemExit('El usuario SENDWAYO debe resolverse antes del correo de Firebase.')
-
-          # Replace the complete public welcome container with only logo, business name and Ingresar.
-          landing_start = base_html.find('<div id="welcome-landing"')
-          if landing_start < 0:
-              raise SystemExit('No se encontró el contenedor de bienvenida V7.')
-          depth = 0
-          cursor = landing_start
-          landing_end = None
-          while True:
-              open_at = base_html.find('<div', cursor)
-              close_at = base_html.find('</div>', cursor)
-              if close_at < 0:
-                  break
-              if open_at >= 0 and open_at < close_at:
-                  depth += 1
-                  cursor = open_at + 4
-              else:
-                  depth -= 1
-                  cursor = close_at + 6
-                  if depth == 0:
-                      landing_end = cursor
-                      break
-          if landing_end is None:
-              raise SystemExit('No se pudo cerrar de forma segura el contenedor de bienvenida.')
-
-          # Preserve the Firebase login form: it originally lived inside the welcome
-          # container, which is replaced below. Move it intact to body-level so hiding
-          # the welcome page never hides the form together with its parent.
-          login_start = base_html.find('<div id="login-screen"', landing_start, landing_end)
-          if login_start < 0:
-              raise SystemExit('No se encontró el formulario Firebase dentro de la bienvenida.')
-          login_depth = 0
-          login_cursor = login_start
-          login_end = None
-          while True:
-              login_open = base_html.find('<div', login_cursor)
-              login_close = base_html.find('</div>', login_cursor)
-              if login_close < 0:
-                  break
-              if login_open >= 0 and login_open < login_close:
-                  login_depth += 1
-                  login_cursor = login_open + 4
-              else:
-                  login_depth -= 1
-                  login_cursor = login_close + 6
-                  if login_depth == 0:
-                      login_end = login_cursor
-                      break
-          if login_end is None:
-              raise SystemExit('No se pudo extraer el formulario de acceso sin dañar su estructura.')
-          login_markup = base_html[login_start:login_end]
-          minimal_welcome = '''<div id="welcome-landing" class="sendwayo-minimal-welcome">
-            <main class="sendwayo-home sendwayo-minimal-welcome-inner">
-              <section class="sendwayo-landing-brand-panel" aria-label="SENDWAYO EXPRESS">
-                <img class="sendwayo-landing-logo" src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" width="150" height="108" fetchpriority="high" decoding="async">
-                <h1 class="sendwayo-landing-title">SENDWAYO EXPRESS</h1>
-              </section>
-              <nav class="sendwayo-welcome-only-actions" aria-label="Acceso a la plataforma">
-                <button id="sendwayo-home-login" class="sendwayo-public-action sendwayo-public-login" type="button">INGRESAR</button>
-                <button id="sendwayo-home-register" class="sendwayo-public-action sendwayo-public-register" type="button">REGISTRAR</button>
-              </nav>
-            </main>
-          </div>'''
-          base_html = base_html[:landing_start] + minimal_welcome + '\n' + login_markup + base_html[landing_end:]
-          base_html = base_html.replace('  setInterval(scrubLegacyCredentials,500);', '  // Limpieza única: no escanear localStorage cada 500 ms y bloquear la interfaz.\n')
-          # Remove prior welcome-style/listener copies so the public page receives exactly one final version.
-          for tag_name, element_id in [('style', 'sendwayo-v7-minimal-welcome-final'), ('script', 'sendwayo-v7-minimal-welcome-login')]:
-              opening = f'<{tag_name} id="{element_id}">'
-              closing = f'</{tag_name}>'
-              while opening in base_html:
-                  element_start = base_html.find(opening)
-                  element_close = base_html.find(closing, element_start)
-                  if element_close < 0:
-                      raise SystemExit(f'No se pudo retirar una copia anterior de {element_id}.')
-                  base_html = base_html[:element_start] + base_html[element_close + len(closing):]
-          # Remove prior copies first: a '</body>' string also appears inside the PDF export script.
-          base_html = base_html.replace(css + '\n', '')
-          if 'sendwayo-v7-brand-and-login-performance-fix' in base_html:
-              raise SystemExit('La limpieza del CSS duplicado no terminó correctamente.')
-          body_close = base_html.rfind('</body>')
-          if body_close < 0: raise SystemExit('No se encontró el cierre real </body> del HTML V7')
-          base_html = base_html[:body_close] + css + '\n' + base_html[body_close:]
-          # Keep the complete V7 application behind the sign-in.
-          app_path = Path('site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html')
-          app_path.write_text(base_html, encoding='utf-8')
-
-          # The public URL serves only the lightweight access screen.
-          landing_source = Path('SENDWAYO-V7-FAST-ENTRY.html')
-          landing_html = landing_source.read_text(encoding='utf-8')
-          if 'assets/sendwayo-logo-transparent.webp' not in landing_html:
-              raise SystemExit('La portada rápida no usa el logo oficial sin fondo.')
-          if 'assets/sendwayo-logo-real.jpg' in landing_html:
-              raise SystemExit('La portada rápida todavía usa el logo JPG con fondo.')
-          paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
-          for path in paths:
-              path.write_text(landing_html, encoding='utf-8')
-
-          Path('site/assets').mkdir(parents=True, exist_ok=True)
-          Path('site/assets/sendwayo-logo-real.jpg').write_bytes(Path('assets/sendwayo-logo-real.jpg').read_bytes())
-          Path('site/assets/sendwayo-logo-real.jpg').write_bytes(Path('assets/sendwayo-logo-real.jpg').read_bytes())
-          print('PASS: bienvenida ligera separada; aplicación V7 detrás del acceso; logo transparente copiado.')
-          PY
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Build local Tailwind CSS for reliable page loading
-        shell: bash
-        run: |
-          set -euo pipefail
+          # Build Tailwind locally for the authenticated V7 workspace only.
+          # The public entry uses a tiny self-contained stylesheet and one script.
+          mkdir -p site/assets
           npm install --no-save tailwindcss@3.4.17
           printf '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n' > /tmp/sendwayo-tailwind-input.css
-          mkdir -p site/assets
-          npx tailwindcss -i /tmp/sendwayo-tailwind-input.css -o site/assets/sendwayo-tailwind.css --content site/index.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html --minify
-          test -s site/assets/sendwayo-tailwind.css
-          echo "PASS: Tailwind se sirve desde el propio sitio, sin esperar al CDN."
-
-      - name: Verify the lightweight welcome, login and delayed V7 application
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
-          test -s site/index.html
-          test -s site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
-          cmp -s site/index.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
+          npx tailwindcss -i /tmp/sendwayo-tailwind-input.css -o site/assets/sendwayo-tailwind.css --content site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html --minify
           node <<'NODE'
-          const fs = require('fs');
-          const landing = fs.readFileSync('site/index.html', 'utf8');
-          const app = fs.readFileSync('site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html', 'utf8');
-          const scriptCount = landing.split('<script').length - 1;
-          if (Buffer.byteLength(landing, 'utf8') > 30000) throw new Error('La bienvenida supera 30 KB.');
-          if (scriptCount !== 1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
-          const scriptStart = landing.indexOf('<script>');
-          const scriptEnd = landing.indexOf('</script>', scriptStart);
-          if (scriptStart < 0 || scriptEnd < 0) throw new Error('No se encontró el JavaScript de la bienvenida.');
-          new Function(landing.slice(scriptStart + 8, scriptEnd));
-          for (const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form']) {
-            if (!landing.includes('id="' + id + '"')) throw new Error('Falta control de acceso: ' + id);
+          const fs=require('node:fs');
+          const fast='site/index.html';
+          const app='site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html';
+          let html=fs.readFileSync(app,'utf8');
+          const cdn='<script src="https://cdn.tailwindcss.com" defer></script>';
+          if(html.includes(cdn)) html=html.replace(cdn,'<link rel="stylesheet" href="assets/sendwayo-tailwind.css">');
+          fs.writeFileSync(app,html);
+          const page=fs.readFileSync(fast,'utf8');
+          if(Buffer.byteLength(page,'utf8')>30000) throw new Error('La bienvenida ligera supera 30 KB.');
+          if((page.match(/<script\\b/g)||[]).length!==1) throw new Error('La bienvenida debe cargar un único bloque JavaScript.');
+          if((page.match(/<img\\b/g)||[]).length!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
+          if(!page.includes('src="assets/sendwayo-logo-transparent.webp"')) throw new Error('Falta el logo oficial transparente.');
+          if(page.includes('sendwayo-logo-real.jpg')) throw new Error('La portada todavía usa el logo JPG con fondo.');
+          if(page.includes('cdn.tailwindcss.com')) throw new Error('La bienvenida no debe depender de Tailwind CDN.');
+          for(const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form','register-name','register-phone','register-email']) {
+            if(!page.includes('id="'+id+'"')) throw new Error('Falta control funcional: '+id);
           }
-          for (const marker of ['assets/sendwayo-logo-real.jpg','sendwayoExpressOfficialV7','signInWithEmailAndPassword','sendPasswordResetEmail','sendwayo_express_v2/requests','sendwayo_remember','SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html']) {
-            if (!landing.includes(marker)) throw new Error('Falta función de bienvenida: ' + marker);
+          for(const marker of ['signInWithEmailAndPassword','sendPasswordResetEmail','setPersistence','sendwayo_express_v2/requests','sendwayoExpressOfficialV7','sendwayoexpress@gmail.com']) {
+            if(!page.includes(marker)) throw new Error('Falta función real de acceso: '+marker);
           }
-          if (landing.split('<img').length - 1 !== 1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
-          if (landing.includes('sendwayo-logo-real.jpg')) throw new Error('La bienvenida conserva el logo con fondo.');
-          if (app.length < 500000) throw new Error('No se generó el panel V7 completo.');
-          if (!app.includes("const ADMIN_EMAIL = 'ideletteismorin@gmail.com';")) throw new Error('El panel V7 perdió el correo real de Firebase.');
-          if (!app.includes("username:'sendwayoexpress@gmail.com'")) throw new Error('El alias de acceso SENDWAYO no está configurado.');
-          if (!app.includes('sendwayo_remember')) throw new Error('El panel V7 no respeta Recordarme.');
-          if (!app.includes('const perPage=10;')) throw new Error('Falta la paginación V7.');
-          if (!app.includes('sw-pay-save-settlement')) throw new Error('Falta la conciliación V7.');
-          if (!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se publicó el logo transparente.');
-          if (!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('Falta Tailwind local.');
-          console.log('PASS: bienvenida ligera (' + Buffer.byteLength(landing,'utf8') + ' bytes), un script, campos accesibles, acciones Firebase y panel V7 separado.');
+          const scripts=[...page.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
+          if(scripts.length!==1) throw new Error('No se encontró el script único de la portada.');
+          new Function(scripts[0][1]);
+          if(!fs.existsSync('site/assets/sendwayo-logo-transparent.webp')) throw new Error('No se copió el logo transparente.');
+          if(!fs.existsSync('site/assets/sendwayo-logo-real.jpg')) throw new Error('No se conservaron los recursos del panel V7.');
+          if(!fs.existsSync('site/assets/sendwayo-tailwind.css')) throw new Error('No se generó Tailwind local para V7.');
+          if(fs.statSync(app).size<500000) throw new Error('El panel V7 completo no está presente.');
+          console.log('PASS: bienvenida '+Buffer.byteLength(page,'utf8')+' bytes; 1 script; controles editables; logo transparente; panel V7 separado.');
           NODE
-      - name: Persist the verified SENDWAYO login in the Pages source
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SENDWAYO-V7-FAST-ENTRY.html assets/sendwayo-logo-real.jpg SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html site/index.html site/SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html site/assets/sendwayo-logo-real.jpg site/assets/sendwayo-tailwind.css
-          if git diff --cached --quiet; then
-            echo "The published V7 source already contains the verified SENDWAYO login."
-          else
-            git commit -m "Persist verified V7 page at the public SENDWAYO URL"
-            pushed=0
-            for attempt in 1 2 3 4 5; do
-              git fetch origin main
-              git rebase origin/main
-              if git push origin HEAD:main; then
-                pushed=1
-                echo "PASS: publicación estática guardada en main (intento $attempt)."
-                break
-              fi
-              echo "La rama main recibió otro cambio en paralelo; reintentando publicación (intento $attempt/5)."
-              sleep 2
-            done
-            if [ "$pushed" -ne 1 ]; then
-              echo "ERROR: no se pudo guardar la copia pública después de 5 intentos."
-              exit 1
-            fi
-          fi
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the static website
+        uses: actions/upload-pages-artifact@v4
         with:
           path: site
-      # Publish the verified artifact without waiting for the branch publisher.
-      # Both deploy from the same persisted V7 source; waiting here holds the github-pages environment lock.
 
-      - id: deployment
+      - name: Deploy to the existing public URL
+        id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify the existing public URL and wait for CDN propagation
+      - name: Verify the public entry and transparent logo
         env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PAGE_URL: \${{ steps.deployment.outputs.page_url }}
+          RELEASE_SHA: \${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib
-          import os
-          import time
-          import urllib.error
-          import urllib.request
+          import hashlib, os, time, urllib.request
           from pathlib import Path
-
-          base = os.environ["PAGE_URL"].rstrip("/")
-          sha = os.environ["GITHUB_SHA"]
-          target = f"{base}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release={sha}"
-          expected = hashlib.sha256(
-              Path("site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html").read_bytes()
-          ).hexdigest()
-          headers = {
-              "Cache-Control": "no-cache, no-store, max-age=0",
-              "Pragma": "no-cache",
-              "User-Agent": "SENDWAYO-Pages-Deployment-Verification",
-          }
-
-          last_status = "sin respuesta"
-          last_hash = "ninguno"
-          for attempt in range(1, 37):
+          base=os.environ['PAGE_URL'].rstrip('/')
+          release=os.environ['RELEASE_SHA']
+          expected=hashlib.sha256(Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html').read_bytes()).hexdigest()
+          target=f"{base}/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html?sendwayo_release={release}"
+          headers={'Cache-Control':'no-cache, no-store, max-age=0','Pragma':'no-cache','User-Agent':'SENDWAYO-Pages-Verification'}
+          last='no response'
+          for attempt in range(1,19):
               try:
-                  request = urllib.request.Request(target, headers=headers)
-                  with urllib.request.urlopen(request, timeout=20) as response:
-                      body = response.read()
-                      last_status = str(response.status)
-                  last_hash = hashlib.sha256(body).hexdigest()
-                  if last_hash == expected:
-                      print(f"PASS: URL pública coincide exactamente con V7 (intento {attempt}).")
+                  req=urllib.request.Request(target,headers=headers)
+                  with urllib.request.urlopen(req,timeout=20) as response:
+                      body=response.read()
+                      last=str(response.status)
+                  if hashlib.sha256(body).hexdigest()==expected:
+                      print(f'PASS: public entry matches the lightweight page (attempt {attempt}).')
                       break
-                  print(
-                      f"CDN todavía entrega otra copia (intento {attempt}/36); "
-                      f"esperando propagación. SHA esperado={expected}, recibido={last_hash}"
-                  )
-              except (urllib.error.URLError, TimeoutError, OSError) as error:
-                  last_status = repr(error)
-                  print(f"URL aún no disponible (intento {attempt}/36): {last_status}")
-              if attempt < 36:
-                  time.sleep(5)
+                  last='public content hash differs'
+              except Exception as error:
+                  last=repr(error)
+              if attempt<18: time.sleep(5)
           else:
-              raise SystemExit(
-                  "FAIL: GitHub Pages no entregó el HTML V7 exacto después de 3 minutos. "
-                  f"Último estado={last_status}; SHA recibido={last_hash}; esperado={expected}"
-              )
-
-          import re
-          html = body.decode("utf-8")
-          assets = sorted(set(re.findall(r"assets/([A-Za-z0-9._-]+)", html)))
-          for asset in assets:
-              asset_url = f"{base}/assets/{asset}?sendwayo_release={sha}"
-              request = urllib.request.Request(asset_url, headers=headers)
-              with urllib.request.urlopen(request, timeout=20) as response:
-                  if response.status != 200:
-                      raise SystemExit(f"FAIL: recurso no disponible: {asset}")
-          print(f"PASS: {len(assets)} recursos gráficos responden en la URL pública.")
+              raise SystemExit('Public page verification failed: '+last)
+          asset=f"{base}/assets/sendwayo-logo-transparent.webp?sendwayo_release={release}"
+          req=urllib.request.Request(asset,headers=headers)
+          with urllib.request.urlopen(req,timeout=20) as response:
+              if response.status!=200: raise SystemExit('Transparent logo is not reachable.')
+              logo=response.read()
+          if not logo.startswith(b'RIFF') or b'WEBP' not in logo[:16]:
+              raise SystemExit('The deployed logo is not a valid WebP image.')
+          print(f'PASS: transparent logo served ({len(logo)} bytes).')
           PY
