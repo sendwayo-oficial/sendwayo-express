@@ -10,6 +10,7 @@ on:
       - '.github/workflows/deploy-pages.yml'
       - 'SENDWAYO-V7-FAST-ENTRY.html'
       - 'assets/sendwayo-logo-transparent.webp'
+      - 'assets/sendwayo-logo-real.jpg'
   workflow_dispatch:
 
 permissions:
@@ -199,6 +200,8 @@ jobs:
           # The public URL serves only the lightweight access screen.
           landing_source = Path('SENDWAYO-V7-FAST-ENTRY.html')
           landing_html = landing_source.read_text(encoding='utf-8')
+          if 'assets/sendwayo-logo-real.jpg' not in landing_html:
+              raise SystemExit('La portada rápida no usa el logo oficial original.')
           if 'assets/sendwayo-logo-transparent.webp' not in landing_html:
               raise SystemExit('La portada rápida no usa el logo transparente.')
           paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
@@ -207,6 +210,7 @@ jobs:
 
           Path('site/assets').mkdir(parents=True, exist_ok=True)
           Path('site/assets/sendwayo-logo-transparent.webp').write_bytes(Path('assets/sendwayo-logo-transparent.webp').read_bytes())
+          Path('site/assets/sendwayo-logo-real.jpg').write_bytes(Path('assets/sendwayo-logo-real.jpg').read_bytes())
           print('PASS: bienvenida ligera separada; aplicación V7 detrás del acceso; logo transparente copiado.')
           PY
 
