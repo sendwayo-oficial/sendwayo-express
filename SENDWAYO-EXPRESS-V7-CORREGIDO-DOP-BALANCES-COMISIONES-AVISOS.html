@@ -4238,7 +4238,7 @@ window.sendwayoShareReceipt=async function(){
 
   // Welcome page: mission, vision, objective, service requests, contact details and slogans.
   window.sendwayoOpenPublicRequest=function(service='Solicitud de servicio'){
-    sendwayoModal('Solicitar servicio — '+service,`<div class="space-y-3">${inp('v7-public-name','Nombre y apellido','Nombre completo')}${inp('v7-public-phone','WhatsApp / celular','Número de teléfono','tel')}${inp('v7-public-email','Correo electrónico','correo@gmail.com','email')}${sel('v7-public-service','Servicio',`<option ${service==='Quiero enviar dinero'?'selected':''}>Quiero enviar dinero</option><option ${service==='Quiero enviar paquete'?'selected':''}>Quiero enviar paquete</option><option ${service==='Quiero recibir paquete'?'selected':''}>Quiero recibir paquete</option><option ${service==='Quiero hacer una recarga'?'selected':''}>Quiero hacer una recarga</option><option ${service==='Quiero hacer un paquetico'?'selected':''}>Quiero hacer un paquetico</option><option ${service==='Quiero pagar factura y servicio'?'selected':''}>Quiero pagar factura y servicio</option><option ${service==='Quiero recibir dinero'?'selected':''}>Quiero recibir dinero</option><option>Quiero ser remitente</option><option>Quiero ser agente</option>`)}${inp('v7-public-details','Datos de la solicitud','Número, referencia o detalles')}</div><button type="button" onclick="sendwayoSavePublicRequest()" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Enviar solicitud</button>`);
+    sendwayoModal('Solicitar servicio — '+service,`<div class="space-y-3">${inp('v7-public-name','Nombre y apellido','Nombre completo')}${inp('v7-public-phone','WhatsApp / celular','Número de teléfono','tel')}${inp('v7-public-email','Correo electrónico','correo@gmail.com','email')}${sel('v7-public-service','Servicio',`<option ${service==='Quiero enviar dinero'?'selected':''}>Quiero enviar dinero</option><option ${service==='Quiero enviar paquete'?'selected':''}>Quiero enviar paquete</option><option ${service==='Quiero recibir paquete'?'selected':''}>Quiero recibir paquete</option><option ${service==='Quiero hacer una recarga'?'selected':''}>Quiero hacer una recarga</option><option ${service==='Quiero hacer un paquetico'?'selected':''}>Quiero hacer un paquetico</option><option ${service==='Quiero pagar factura y servicio'?'selected':''}>Quiero pagar factura y servicio</option><option ${service==='Quiero recibir dinero'?'selected':''}>Quiero recibir dinero</option><option ${service==='Quiero ser remitente'?'selected':''}>Quiero ser remitente</option><option ${service==='Quiero ser agente'?'selected':''}>Quiero ser agente</option>`)}${inp('v7-public-details','Datos de la solicitud','Número, referencia o detalles')}</div><button type="button" onclick="sendwayoSavePublicRequest()" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Enviar solicitud</button>`);
   };
   window.sendwayoSavePublicRequest=function(){const nombre=$('v7-public-name')?.value.trim()||'',celular=$('v7-public-phone')?.value.trim()||'',email=$('v7-public-email')?.value.trim()||'',servicio=$('v7-public-service')?.value||'',detalle=$('v7-public-details')?.value.trim()||'';if(!nombre||!celular||!email){alert('Complete nombre, celular y correo.');return;}const rows=readJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',[]);rows.push({id:'SOL-SERV-'+Date.now(),nombre,email,celular,servicio,detalle,tipoSolicitud:'SERVICIO',role:'REMITENTE',fecha:new Date().toLocaleString('es-DO'),estado:'Pendiente'});writeJSON('sendwayo_express_oficial_20261029_registros_pendientes_v5',rows);$('sendwayo-v7-modal')?.classList.add('hidden');alert('Solicitud enviada al administrador para revisión.');};
   function installWelcomeExtras(){ return; }
@@ -10843,5 +10843,127 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
 @media(max-width:600px){#welcome-landing{padding:14px!important}#welcome-landing>.sendwayo-minimal-welcome-inner{gap:22px!important;width:100%!important;padding:26px 18px!important;border-radius:20px!important}#welcome-landing .sendwayo-landing-brand-panel{gap:12px!important}#welcome-landing .sendwayo-landing-logo{width:104px!important;height:78px!important;max-width:104px!important;max-height:78px!important}#welcome-landing .sendwayo-landing-title{font-size:clamp(21px,6vw,29px)!important;letter-spacing:.01em!important}#welcome-landing .sendwayo-welcome-only-actions{gap:9px!important;width:100%!important}#welcome-landing .sendwayo-public-action{min-width:0!important;min-height:48px!important;padding:12px 12px!important;font-size:13px!important}}
 @media(max-width:360px){#welcome-landing>.sendwayo-minimal-welcome-inner{padding:20px 12px!important}#welcome-landing .sendwayo-landing-logo{width:88px!important;height:68px!important}#welcome-landing .sendwayo-landing-title{font-size:20px!important}}
 </style>
+
+<style id="sendwayo-v7-welcome-centered-logo-login-register-final">
+  /* Portada final: un solo bloque centrado, sin fotografías y con el logo oficial. */
+  body::before{display:none!important;content:none!important;background-image:none!important}
+  #welcome-landing{
+    position:fixed!important;inset:0!important;z-index:15000!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    width:100%!important;min-height:100dvh!important;overflow-y:auto!important;
+    padding:22px 14px!important;
+    background:radial-gradient(ellipse at 50% 10%,#244b73 0%,#102b49 48%,#08172b 100%)!important;
+    color:#10243d!important;font-family:Arial,sans-serif!important
+  }
+  #welcome-landing>main.sendwayo-home-minimal{
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    width:100%!important;max-width:480px!important;min-width:0!important;min-height:0!important;height:auto!important;
+    margin:auto!important;padding:0!important;flex:0 0 auto!important;background:transparent!important
+  }
+  #welcome-landing .sendwayo-entry-card{
+    display:block!important;width:100%!important;max-width:440px!important;min-width:0!important;
+    margin:0 auto!important;padding:29px 30px 27px!important;
+    border:1px solid rgba(255,255,255,.8)!important;border-radius:26px!important;
+    background:#fff!important;box-shadow:0 24px 70px rgba(0,0,0,.32)!important;text-align:center!important
+  }
+  #welcome-landing .sendwayo-entry-brand{
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    gap:7px!important;margin:0 0 23px!important;text-align:center!important
+  }
+  #welcome-landing .sendwayo-entry-logo{
+    display:block!important;width:68px!important;height:56px!important;max-width:68px!important;max-height:56px!important;
+    object-fit:contain!important;margin:0 auto!important
+  }
+  #welcome-landing .sendwayo-entry-brand h1{
+    margin:3px 0 0!important;color:#102a48!important;
+    font-size:clamp(25px,5vw,30px)!important;font-weight:900!important;line-height:1.12!important;
+    letter-spacing:.025em!important;text-align:center!important
+  }
+  #welcome-landing .sendwayo-entry-brand p{
+    margin:0!important;color:#64748b!important;font-size:14px!important;font-weight:600!important
+  }
+  #welcome-landing #login-screen{
+    position:static!important;inset:auto!important;z-index:auto!important;display:block!important;
+    width:100%!important;min-width:0!important;min-height:0!important;height:auto!important;
+    margin:0!important;padding:0!important;overflow:visible!important;
+    align-items:initial!important;justify-content:initial!important;visibility:visible!important;
+    pointer-events:auto!important;background:transparent!important
+  }
+  #welcome-landing #login-screen.hidden{display:block!important;visibility:visible!important;pointer-events:auto!important}
+  #welcome-landing #login-screen>div{
+    display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
+    margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+    background:transparent!important;box-shadow:none!important
+  }
+  #welcome-landing .sendwayo-entry-login-inner h2{
+    margin:0 0 17px!important;color:#173554!important;font-size:17px!important;
+    font-weight:800!important;text-align:left!important
+  }
+  #welcome-landing .sendwayo-entry-field{margin:0 0 14px!important;text-align:left!important}
+  #welcome-landing .sendwayo-entry-field label{
+    display:block!important;margin:0 0 7px!important;color:#334155!important;
+    font-size:12px!important;font-weight:800!important
+  }
+  #welcome-landing .sendwayo-entry-field input{
+    display:block!important;width:100%!important;min-width:0!important;min-height:48px!important;
+    padding:12px 14px!important;border:1px solid #cbd5e1!important;border-radius:12px!important;
+    outline:none!important;background:#f8fafc!important;color:#10243d!important;font-size:15px!important;
+    box-shadow:none!important
+  }
+  #welcome-landing .sendwayo-entry-field input:focus{
+    border-color:#2f6eaa!important;box-shadow:0 0 0 3px rgba(47,110,170,.13)!important
+  }
+  #welcome-landing .sendwayo-entry-password{display:flex!important;align-items:center!important;gap:8px!important}
+  #welcome-landing .sendwayo-entry-password input{flex:1 1 auto!important}
+  #welcome-landing #sendwayo-toggle-password{
+    flex:0 0 auto!important;min-height:42px!important;padding:0 12px!important;
+    border:1px solid #cbd5e1!important;border-radius:10px!important;
+    background:#fff!important;color:#23496d!important;font-size:12px!important;font-weight:800!important
+  }
+  #welcome-landing #sendwayo-login-extras{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;
+    flex-wrap:wrap!important;margin:2px 0 18px!important;text-align:left!important
+  }
+  #welcome-landing #sendwayo-login-extras label{
+    display:flex!important;align-items:center!important;gap:7px!important;color:#475569!important;
+    font-size:12px!important;font-weight:600!important
+  }
+  #welcome-landing #sendwayo-login-extras input{width:16px!important;height:16px!important;margin:0!important;accent-color:#174a78!important}
+  #welcome-landing #sendwayo-login-extras button{
+    border:0!important;background:transparent!important;color:#1768a5!important;
+    font-size:12px!important;font-weight:700!important;text-decoration:underline!important;cursor:pointer!important
+  }
+  #welcome-landing .sendwayo-entry-actions{
+    display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important
+  }
+  #welcome-landing #sendwayo-entry-login-button,#welcome-landing #sendwayo-entry-register-button{
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    width:100%!important;min-height:49px!important;padding:12px 16px!important;
+    border-radius:12px!important;font-size:13px!important;font-weight:900!important;
+    letter-spacing:.04em!important;cursor:pointer!important
+  }
+  #welcome-landing #sendwayo-entry-login-button{
+    border:1px solid #123b63!important;background:linear-gradient(135deg,#174b78,#0c2948)!important;
+    color:#fff!important;box-shadow:0 8px 18px rgba(16,43,73,.18)!important
+  }
+  #welcome-landing #sendwayo-entry-register-button{
+    border:1px solid #cbd5e1!important;background:#f1f5f9!important;color:#173554!important
+  }
+  #welcome-landing #login-error:not(.hidden){
+    display:block!important;margin:14px 0 0!important;padding:11px 12px!important;
+    border:1px solid #fecaca!important;border-radius:10px!important;background:#fef2f2!important;
+    color:#991b1b!important;font-size:12px!important;line-height:1.45!important;text-align:left!important
+  }
+  #welcome-landing .sendwayo-welcome-only-photo,#welcome-landing .sendwayo-home-gallery,
+  #welcome-landing .sendwayo-home-main-photo,#welcome-landing .sendwayo-home-aside,
+  #welcome-landing .sendwayo-home-content{display:none!important}
+  @media(max-width:520px){
+    #welcome-landing{padding:14px 12px!important}
+    #welcome-landing .sendwayo-entry-card{padding:25px 20px 22px!important;border-radius:22px!important}
+    #welcome-landing .sendwayo-entry-brand{margin-bottom:21px!important}
+    #welcome-landing .sendwayo-entry-actions{grid-template-columns:1fr!important}
+  }
+</style>
+
 </body>
 </html>
