@@ -10257,6 +10257,7 @@ body.sendwayo-authenticated #sendwayo-main-content>*{position:relative!important
  }
  function installAllCountrySearch(){
   ['sendwayo-v7-envio-from','sendwayo-v7-envio-to','sendwayo-v7-retiro-from','sendwayo-v7-retiro-to'].forEach(id=>installCountrySearch($(id)));
+  document.querySelectorAll('select[id*="pais" i],select[name*="pais" i],select[id*="country" i],select[name*="country" i]').forEach(select=>{if(select.id!=='v162-ben-pais')installCountrySearch(select);});
   const phoneCountry=$('v162-ben-pais');
   if(phoneCountry&&phoneCountry.dataset.sendwayoCountrySearch!=='1'){
    phoneCountry.dataset.sendwayoCountrySearch='1';
