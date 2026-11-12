@@ -11,10 +11,11 @@ for (const source of [html, publicHtml]) {
   assert.ok(start >= 0 && end > start, 'la portada pública debe existir');
   const landing = source.slice(start, end);
   assert.equal(landing.split('<img').length - 1, 1, 'la portada debe tener solo el logo corporativo');
-  assert.equal(landing.split('<button').length - 1, 1, 'la portada debe tener solo el botón Ingresar');
+  assert.equal(landing.split('<button').length - 1, 4, 'la portada debe tener Ver contraseña, Recuperar, Ingresar y Registrar');
   assert.ok(landing.includes('assets/sendwayo-logo-real.jpg'));
   assert.ok(!landing.includes('assets/sendwayo-bienvenida.jpg'));
-  assert.ok(landing.includes('>INGRESAR</button>') && !landing.includes('>REGISTRAR</button>'));
+  assert.ok(landing.includes('id="sendwayo-entry-login-button"') && landing.includes('>INGRESAR</button>'));
+  assert.ok(landing.includes('id="sendwayo-entry-register-button"') && landing.includes('>REGISTRAR</button>'));
   assert.ok(!landing.includes('sendwayo-landing-photo-panel') && !landing.includes('v162-car-main') && !landing.includes('carouselImgs'));
   assert.ok(!landing.toLowerCase().includes('<video'));
 
@@ -36,4 +37,4 @@ for (const source of [html, publicHtml]) {
   for (const id of ['sendwayo-v7-bal-dop','sendwayo-v7-bal-htg','sendwayo-v7-com-dop','sendwayo-v7-com-htg']) assert.ok(source.includes('id="' + id + '"'));
   assert.ok(source.includes('CLOUD_SYNC_INTERVAL_MS=15000'));
 }
-console.log('PASS: portada de ingreso único, ID, cabecera, menú lateral, reloj, búsqueda de países y marcas de agua.');
+console.log('PASS: portada con logo, acceso, registro, ID, cabecera, menú lateral, reloj, búsqueda de países y marcas de agua.');
