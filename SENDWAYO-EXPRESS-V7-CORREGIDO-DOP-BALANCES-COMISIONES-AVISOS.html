@@ -313,7 +313,6 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 </style>
 <style id="sendwayo-v7-entry-first-paint">
   html,body{min-height:100%;background:#0b1a2f!important}
-  img,video,picture,iframe,object,embed{display:none!important;visibility:hidden!important}
   body::before{content:none!important;background:none!important;background-image:none!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
   body:not(.sendwayo-authenticated) img,
@@ -327,6 +326,16 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
   body:not(.sendwayo-authenticated) #login-screen>div{display:none!important}
   body.sendwayo-authenticated #login-screen,
   body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style>
+<style id="sendwayo-v7-first-paint">
+ html,body{min-height:100%;background:#0b1a2f!important}
+ body::before{content:none!important;background-image:none!important}
+ #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+ body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
+ body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
+ body:not(.sendwayo-authenticated) #login-screen> :not([data-sendwayo-v7-form]){display:none!important}
+ body:not(.sendwayo-authenticated) #login-screen img,body:not(.sendwayo-authenticated) #login-screen video,body:not(.sendwayo-authenticated) #login-screen picture,body:not(.sendwayo-authenticated) #login-screen iframe{display:none!important;visibility:hidden!important}
+ body.sendwayo-authenticated #login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
@@ -557,7 +566,6 @@ let ADMIN = {
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
   email:'ideletteismorin@gmail.com',
-  username:'sendwayoexpress@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
   balances:{DOP:0,HTG:0},
@@ -6816,8 +6824,6 @@ window.sendwayoShareReceipt=async function(){
 <!-- END SENDWAYO V7 DOP LEDGER FIX -->
 
 <script id="sendwayo-oficial-firebase-identity">
-// sendwayo-v7-self-registration-approval: solicitudes de autorregistro revisadas por Administración.
-// La bandeja de solicitudes usa la ruta Firebase sendwayo_express_v2/requests/.
 (async () => {
   'use strict';
   window.sendwayoFirebaseReady = false;
@@ -7015,8 +7021,7 @@ window.sendwayoShareReceipt=async function(){
     if(entered.includes('@')) return entered.toLowerCase();
     const key=norm(entered);
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
-    if(match) return match.email;
-    return '';
+    return match ? match.email : '';
   }
   async function queryOne(field, value) {
     if (!value) return null;
@@ -7994,19 +7999,7 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  // El acceso rápido ya autenticó en Firebase antes de abrir el panel.
-  // Consumir su marca de un solo uso y conservar esa sesión; el acceso directo al panel sigue exigiendo login.
-  const enteredFromFastLogin = (() => {
-    try {
-      const valid = sessionStorage.getItem('sendwayo:entry-redirect') === '1';
-      if (valid) sessionStorage.removeItem('sendwayo:entry-redirect');
-      return valid;
-    } catch (_) { return false; }
-  })();
-  state.authReadyPromise = (enteredFromFastLogin
-    ? Promise.resolve()
-    : auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut())
-  ).then(()=>{
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut()).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy || state.sessionEstablished) return;
@@ -9049,134 +9042,167 @@ window.sendwayoShareReceipt=async function(){
   body.sendwayo-authenticated .flex-1.p-4{min-width:0!important;width:100%!important;max-width:100%!important}
   @media(max-width:760px){#sendwayo-v7-topbar{gap:6px;padding:7px!important}#sendwayo-v7-account-top{flex-basis:calc(100% - 54px);font-size:10px}#sendwayo-v7-account-top span{padding:4px 7px}}
 </style>
+<style id="sendwayo-v7-final-layout-polish">
+  /* Acceso limpio: sin fotografías, vídeos ni portada pública. */
+  body::before{content:none!important;background:none!important}
+  body img,body video,body picture{display:none!important;visibility:hidden!important}
+  #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:18px!important}
+  body.sendwayo-authenticated #login-screen,body.sendwayo-authenticated #welcome-landing{display:none!important}
+  #sendwayo-v7-drawer{position:fixed!important;inset:0!important;z-index:2147482000!important;display:none!important;background:rgba(2,10,22,.62)!important}
+  #sendwayo-v7-drawer.open{display:block!important}
+  #sendwayo-v7-drawer-panel{position:absolute!important;inset:0 auto 0 0!important;width:min(340px,88vw)!important;max-height:100dvh!important;overflow:auto!important;background:#0f2440!important;color:#fff!important;padding:14px 10px calc(22px + env(safe-area-inset-bottom))!important;box-shadow:12px 0 38px #0005!important}
+  #sendwayo-v7-drawer-panel button{display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;min-height:44px!important;height:auto!important;padding:10px 12px!important;color:#fff!important;text-align:left!important;white-space:normal!important;line-height:1.35!important}
+  #sendwayo-v7-topbar{position:sticky!important;top:0!important;z-index:1000!important;width:100%!important;max-width:100%!important;min-height:58px!important;height:auto!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important;padding:8px 12px!important}
+  #sendwayo-v7-topbar #sendwayo-v7-top-menu{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 44px!important;width:44px!important;height:44px!important;border:1px solid #ffffff55!important;border-radius:10px!important;background:#ffffff18!important;color:white!important;font-size:27px!important;line-height:1!important;cursor:pointer!important}
+  #sendwayo-v7-account-top{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important;min-width:0!important;flex:1 1 420px!important;color:#fff!important;font:600 11px/1.35 Arial,sans-serif!important}
+  #sendwayo-v7-account-top span{display:inline-flex!important;align-items:center!important;min-height:27px!important;padding:4px 9px!important;border-radius:8px!important;background:#ffffff18!important}
+  #sendwayo-v7-drawer-panel .sendwayo-v7-drawer-title{font:800 13px Arial,sans-serif!important;letter-spacing:.08em!important;padding:10px 12px 16px!important;border-bottom:1px solid #ffffff25!important;margin-bottom:8px!important}
+  #sendwayo-mobile-menu,#sendwayo-menu-shade{display:none!important}
+  body.sendwayo-authenticated>.flex{min-width:0!important;width:100%!important;max-width:100%!important}
+  body.sendwayo-authenticated .flex-1.p-4{min-width:0!important;width:100%!important;max-width:100%!important}
+  @media(max-width:760px){#sendwayo-v7-topbar{gap:6px!important;padding:7px!important}#sendwayo-v7-account-top{flex-basis:calc(100% - 54px)!important;font-size:10px!important}#sendwayo-v7-account-top span{padding:4px 7px!important}}
+</style>
 <script id="sendwayo-v7-final-layout-script">
 (function(){
  'use strict';
- var drawer=null,sidebar=null,menuButton=null,startedAt=Date.now(),clockTimer=null;
+ var drawer=null,sidebar=null,menuButton=null,startedAt=null,clockTimer=null,refreshTimer=null,authObserver=null;
  function el(id){return document.getElementById(id);}
+ function isAuthenticated(){return document.body.classList.contains('sendwayo-authenticated');}
  function findSidebar(){
   if(sidebar&&sidebar.isConnected)return sidebar;
-  var candidates=Array.from(document.querySelectorAll('body > .flex, body > div.flex, body .flex'));
-  sidebar=candidates.map(function(w){return Array.from(w.children).find(function(c){return c.querySelector&&c.querySelector('button[onclick*="showView"]')&&c.querySelectorAll('button[onclick*="showView"]').length>=8;});}).find(Boolean)||null;
+  sidebar=el('sendwayo-main-sidebar');
+  if(sidebar)return sidebar;
+  var candidates=Array.from(document.querySelectorAll('body > .flex,body > div.flex,body .flex'));
+  sidebar=candidates.map(function(w){return Array.from(w.children).find(function(child){return child.querySelector&&child.querySelector('button[onclick*="showView"]')&&child.querySelectorAll('button[onclick*="showView"]').length>=8;});}).find(Boolean)||null;
   return sidebar;
+ }
+ function closeDrawer(){
+  if(drawer)drawer.classList.remove('open');
+  if(menuButton)menuButton.setAttribute('aria-expanded','false');
  }
  function buildDrawer(){
   if(drawer&&drawer.isConnected)return;
-  sidebar=findSidebar(); if(!sidebar)return;
+  sidebar=findSidebar();
+  if(!sidebar)return;
   drawer=document.createElement('div');drawer.id='sendwayo-v7-drawer';
   drawer.innerHTML='<div id="sendwayo-v7-drawer-panel" role="navigation" aria-label="Menú principal"><div class="sendwayo-v7-drawer-title">SENDWAYO EXPRESS · MENÚ</div></div>';
   document.body.appendChild(drawer);
   var panel=el('sendwayo-v7-drawer-panel');
   panel.appendChild(sidebar);
-  sidebar.style.cssText='display:block!important;position:static!important;inset:auto!important;width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;overflow:visible!important;padding:0!important;margin:0!important;box-shadow:none!important;';
-  drawer.addEventListener('click',function(e){if(e.target===drawer)closeDrawer();});
-  sidebar.addEventListener('click',function(e){if(e.target.closest('button'))closeDrawer();});
+  sidebar.style.cssText='display:block!important;position:static!important;inset:auto!important;float:none!important;width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;overflow:visible!important;padding:0!important;margin:0!important;box-shadow:none!important;';
+  drawer.addEventListener('click',function(event){if(event.target===drawer)closeDrawer();});
+  sidebar.addEventListener('click',function(event){if(event.target.closest&&event.target.closest('button'))closeDrawer();});
  }
- function closeDrawer(){if(drawer)drawer.classList.remove('open');if(menuButton)menuButton.setAttribute('aria-expanded','false');}
- function openDrawer(){buildDrawer();if(drawer){drawer.classList.add('open');if(menuButton)menuButton.setAttribute('aria-expanded','true');}}
- function formatDuration(ms){var n=Math.floor(ms/1000),h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return [h,m,s].map(function(v){return String(v).padStart(2,'0');}).join(':');}
+ function formatDuration(ms){
+  var seconds=Math.max(0,Math.floor(ms/1000)),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
+  return [hours,minutes,rest].map(function(v){return String(v).padStart(2,'0');}).join(':');
+ }
+ function addField(parent,label,value){
+  var span=document.createElement('span');
+  span.textContent=label+': '+(value||'—');
+  parent.appendChild(span);
+ }
  function topbar(){
-  var clock=el('hora-top');if(!clock)return;
-  var bar=clock.closest('.sticky')||clock.parentElement&&clock.parentElement.parentElement;
+  var clock=el('hora-top');
+  if(!clock)return;
+  var bar=clock.closest('.sticky')||(clock.parentElement&&clock.parentElement.parentElement);
   if(!bar)return;
   bar.id='sendwayo-v7-topbar';
   menuButton=el('sendwayo-v7-top-menu');
   if(!menuButton){
-   menuButton=document.createElement('button');menuButton.id='sendwayo-v7-top-menu';menuButton.type='button';menuButton.textContent='☰';menuButton.setAttribute('aria-label','Abrir menú');menuButton.setAttribute('aria-expanded','false');
-   menuButton.addEventListener('click',function(){if(drawer&&drawer.classList.contains('open'))closeDrawer();else openDrawer();});
+   menuButton=document.createElement('button');menuButton.id='sendwayo-v7-top-menu';menuButton.type='button';menuButton.textContent='☰';
+   menuButton.setAttribute('aria-label','Abrir menú');menuButton.setAttribute('aria-expanded','false');
+   menuButton.addEventListener('click',function(){if(drawer&&drawer.classList.contains('open'))closeDrawer();else{buildDrawer();if(drawer){drawer.classList.add('open');menuButton.setAttribute('aria-expanded','true');}}});
    bar.insertBefore(menuButton,bar.firstChild);
   }
   var strip=el('sendwayo-v7-account-top');
   if(!strip){strip=document.createElement('div');strip.id='sendwayo-v7-account-top';bar.appendChild(strip);}
-  var u=window.currentUser||window.ADMIN||{}, full=String(u.nombre||u.name||u.displayName||'').trim(),parts=full.split(/\s+/),first=parts.shift()||'—',last=parts.join(' ')||'—';
-  var username=u.username||u.login||u.email||'—',id=u.id||u.codigo||u.code||'—';
-  var timer=el('sendwayo-v7-stopwatch');if(!timer){timer=document.createElement('span');timer.id='sendwayo-v7-stopwatch';}
-  strip.innerHTML='';
-  [[ 'Nombre: '+first ],['Apellido: '+last],['Usuario: '+username],['ID: '+id],['Hora: ']].forEach(function(a){var x=document.createElement('span');x.textContent=a[0];strip.appendChild(x);});
-  var time=el('hora-top');if(time){time.style.display='none';var t=document.createElement('span');t.id='sendwayo-v7-clock';t.textContent='Hora: '+time.textContent;strip.appendChild(t);}
-  timer.textContent='Cronómetro: '+formatDuration(Date.now()-startedAt);strip.appendChild(timer);
+  var user=window.currentUser||window.ADMIN||{},full=String(user.nombre||user.name||user.displayName||user.nombreCompleto||'').trim();
+  var parts=full.split(/\s+/).filter(Boolean),first=parts.shift()||'—',last=parts.join(' ')||'—';
+  var username=user.username||user.usuario||user.login||user.email||user.correo||'—';
+  var identity=user.id||user.codigo||user.code||user.staffId||user.uid||'—';
+  strip.replaceChildren();
+  addField(strip,'Nombre',first);addField(strip,'Apellido',last);addField(strip,'Usuario',username);addField(strip,'ID',identity);
+  var now=new Date();
+  var timeText=now.toLocaleTimeString('es-DO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  addField(strip,'Hora',timeText);
+  var timer=el('sendwayo-v7-stopwatch');
+  if(!timer){timer=document.createElement('span');timer.id='sendwayo-v7-stopwatch';}
+  timer.textContent='Cronómetro: '+formatDuration(Date.now()-(startedAt||Date.now()));
+  strip.appendChild(timer);
+  clock.style.display='none';
   var userTop=el('user-top');if(userTop)userTop.style.display='none';
  }
  function authenticatedLayout(){
-  if(!document.body.classList.contains('sendwayo-authenticated'))return;
+  if(!isAuthenticated())return;
+  if(startedAt===null)startedAt=Date.now();
   var welcome=el('welcome-landing');if(welcome)welcome.remove();
   var login=el('login-screen');if(login)login.style.setProperty('display','none','important');
   topbar();buildDrawer();
-  if(!clockTimer)clockTimer=setInterval(function(){
-   var time=el('hora-top'),clock=el('sendwayo-v7-clock'),timer=el('sendwayo-v7-stopwatch');
-   if(time&&clock)clock.textContent='Hora: '+time.textContent;
-   if(timer)timer.textContent='Cronómetro: '+formatDuration(Date.now()-startedAt);
-  },1000);
  }
  function enforceEntry(){
-  if(!document.body.classList.contains('sendwayo-authenticated')){
-   var welcome=el('welcome-landing');if(welcome)welcome.remove();
-   var login=el('login-screen');if(login){login.classList.remove('hidden');login.style.setProperty('display','flex','important');login.style.setProperty('visibility','visible','important');}
-  }else authenticatedLayout();
+  if(isAuthenticated()){authenticatedLayout();return;}
+  var welcome=el('welcome-landing');if(welcome)welcome.remove();
+  var login=el('login-screen');
+  if(login){login.classList.remove('hidden');login.style.setProperty('display','flex','important');login.style.setProperty('visibility','visible','important');login.style.setProperty('pointer-events','auto','important');}
  }
  function init(){
   enforceEntry();
-  var mo=new MutationObserver(function(){if(document.body.classList.contains('sendwayo-authenticated'))authenticatedLayout();else enforceEntry();});
-  mo.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrawer();});
-  setInterval(function(){if(document.body.classList.contains('sendwayo-authenticated'))authenticatedLayout();},1800);
+  authObserver=new MutationObserver(function(records){
+   var changed=records.some(function(record){return record.type==='attributes'&&record.attributeName==='class';});
+   if(!changed)return;
+   if(isAuthenticated())authenticatedLayout();
+   else{startedAt=null;closeDrawer();enforceEntry();}
+  });
+  authObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('keydown',function(event){if(event.key==='Escape')closeDrawer();});
+  if(!refreshTimer)refreshTimer=window.setInterval(function(){if(isAuthenticated()){topbar();if(!drawer||!drawer.isConnected)buildDrawer();}},1000);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
 
 
-<!-- SENDWAYO V7: pantalla única de acceso, sin portada ni medios -->
+<!-- SENDWAYO V7: entrada única, sin portada, registro ni medios en el acceso -->
 <style id="sendwayo-v7-entry-final">
   html,body{min-height:100%;background:#0b1a2f!important}
+  body::before{content:none!important;background-image:none!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body:not(.sendwayo-authenticated)>:not(#login-screen):not(script):not(style){display:none!important;visibility:hidden!important}
-  body:not(.sendwayo-authenticated) #login-screen{
-    display:flex!important;visibility:visible!important;pointer-events:auto!important;
-    position:fixed!important;inset:0!important;z-index:2147483000!important;
-    align-items:center!important;justify-content:center!important;
-    background:#0b1a2f!important;padding:20px!important;overflow:auto!important
-  }
+  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
+  body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
+  body:not(.sendwayo-authenticated) #login-screen> :not([data-sendwayo-v7-form]){display:none!important}
   body:not(.sendwayo-authenticated) #login-screen img,
   body:not(.sendwayo-authenticated) #login-screen video,
   body:not(.sendwayo-authenticated) #login-screen picture,
   body:not(.sendwayo-authenticated) #login-screen iframe{display:none!important;visibility:hidden!important}
   body.sendwayo-authenticated #login-screen,
   body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body.sendwayo-authenticated{overflow-x:hidden!important}
-  body.sendwayo-authenticated #sendwayo-v7-drawer{display:none}
-  body.sendwayo-authenticated #sendwayo-v7-drawer.open{display:block}
 </style>
 <script id="sendwayo-v7-entry-final-script">
 (function(){
  'use strict';
- function enforceSingleEntry(){
+ function enforce(){
    var authenticated=document.body.classList.contains('sendwayo-authenticated');
    var welcome=document.getElementById('welcome-landing');
    if(welcome)welcome.remove();
    var login=document.getElementById('login-screen');
-   if(!authenticated){
-     document.querySelectorAll('body > *').forEach(function(node){
-       if(node===login||node.tagName==='SCRIPT'||node.tagName==='STYLE')return;
-       if(node.id!=='sendwayo-v7-drawer')node.style.setProperty('display','none','important');
-     });
-     if(login){
-       login.classList.remove('hidden');
-       login.style.setProperty('display','flex','important');
-       login.style.setProperty('visibility','visible','important');
-       login.style.setProperty('pointer-events','auto','important');
-     }
+   if(!login)return;
+   if(authenticated){
+     login.classList.add('hidden');
+     login.style.setProperty('display','none','important');
+     login.style.setProperty('visibility','hidden','important');
+     login.style.setProperty('pointer-events','none','important');
    }else{
-     document.querySelectorAll('body > *').forEach(function(node){
-       if(node===login||node.tagName==='SCRIPT'||node.tagName==='STYLE')return;
-       if(node.id!=='sendwayo-v7-drawer')node.style.removeProperty('display');
-     });
-     if(login)login.style.setProperty('display','none','important');
+     login.classList.remove('hidden');
+     login.style.setProperty('display','flex','important');
+     login.style.setProperty('visibility','visible','important');
+     login.style.setProperty('pointer-events','auto','important');
    }
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforceSingleEntry,{once:true});
- else enforceSingleEntry();
- var observer=new MutationObserver(enforceSingleEntry);
- observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforce,{once:true});
+ else enforce();
+ var observer=new MutationObserver(function(){enforce()});
+ observer.observe(document.body,{attributes:true,attributeFilter:['class']});
 })();
 </script>
