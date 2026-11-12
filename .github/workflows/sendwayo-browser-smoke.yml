@@ -1,64 +1,109 @@
-name: SENDWAYO direct-login browser smoke test
+name: SENDWAYO public login browser verification
 
 on:
-  workflow_run:
-    workflows: ["pages build and deployment"]
-    types: [completed]
+  push:
     branches: [main]
+    paths:
+      - 'SENDWAYO-V7-FAST-ENTRY.html'
+      - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
+      - 'assets/sendwayo-logo-real.jpg'
+      - '.github/workflows/sendwayo-browser-smoke.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  direct-login:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  login-screen:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node and Chromium
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install Playwright
         run: |
           npm init -y
           npm install --no-save playwright
+          npx playwright install --with-deps chromium
 
-      - name: Verify the published login page in Chromium
+      - name: Verify deployed original logo and interactive login fields
         env:
           PAGE_URL: https://sendwayo-oficial.github.io/sendwayo-express/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html
         run: |
           set -euo pipefail
           node <<'NODE'
-          const { chromium } = require('playwright');
-          (async () => {
-            const browser = await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-            try {
-              const page = await browser.newPage({viewport:{width:1280,height:900}});
-              const errors = [];
-              page.on('pageerror', e => errors.push(e.message));
-              const response = await page.goto(process.env.PAGE_URL + '?smoke=' + Date.now(), {waitUntil:'domcontentloaded',timeout:60000});
-              if (!response || response.status() !== 200) throw new Error('La página pública no respondió HTTP 200.');
-              await page.waitForSelector('#login-email', {state:'visible',timeout:30000});
-              await page.locator('#login-email').fill('prueba@example.com');
-              await page.locator('#login-password').fill('prueba-no-valida');
+          const fs=require('node:fs');
+          const app=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
+          const admin=app.match(/let ADMIN = \{[\s\S]*?\n\};/);
+          if(!admin || !admin[0].includes("email:'ideletteismorin@gmail.com'") ||
+             !admin[0].includes("username:'sendwayoexpress@gmail.com'") ||
+             !admin[0].includes("'sendwayoexpress@gmail.com'")) {
+            throw new Error('El usuario visible del administrador no está vinculado al correo real de Firebase.');
+          }
+          if(!app.includes('function resolveEmail(identifier)') || !app.includes('if(match) return match.email;')) {
+            throw new Error('Falta resolver el alias del administrador antes de autenticar con Firebase.');
+          }
+
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+            try{
+              const page=await browser.newPage({viewport:{width:1280,height:900}});
+              const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              let deployed=false;
+              for(let n=1;n<=24;n++){
+                try{
+                  const response=await page.goto(process.env.PAGE_URL+'?smoke='+Date.now(),{waitUntil:'domcontentloaded',timeout:20000});
+                  if(response&&response.status()===200){
+                    const src=await page.locator('.brand-logo').getAttribute('src').catch(()=>null);
+                    if(src&&src.includes('sendwayo-logo-real.jpg')){
+                      await page.waitForFunction(()=>{
+                        const img=document.querySelector('.brand-logo');
+                        return !!img&&img.complete&&img.naturalWidth>0;
+                      },null,{timeout:5000}).catch(()=>{});
+                      const loaded=await page.locator('.brand-logo').evaluate(img=>img.complete&&img.naturalWidth>0).catch(()=>false);
+                      if(loaded){deployed=true;break;}
+                    }
+                  }
+                }catch(e){}
+                await new Promise(resolve=>setTimeout(resolve,5000));
+              }
+              if(!deployed)throw new Error('La URL pública no está entregando el logo oficial JPG actualizado.');
+
+              await page.locator('#login-email').fill('sendwayoexpress@gmail.com');
+              await page.locator('#login-password').fill('solo-prueba-de-interfaz');
+              if(await page.locator('#login-email').inputValue()!=='sendwayoexpress@gmail.com')throw new Error('El usuario no acepta escritura.');
               await page.locator('#show-password').click();
-              if (await page.locator('#login-password').getAttribute('type') !== 'text') throw new Error('El botón Ver no muestra la contraseña.');
+              if(await page.locator('#login-password').getAttribute('type')!=='text')throw new Error('Ver contraseña no responde.');
               await page.locator('#show-password').click();
-              if (await page.locator('#login-password').getAttribute('type') !== 'password') throw new Error('El botón Ocultar no vuelve a ocultar la contraseña.');
+              if(await page.locator('#login-password').getAttribute('type')!=='password')throw new Error('Ocultar contraseña no responde.');
               await page.locator('#remember-me').check();
-              if (!await page.locator('#remember-me').isChecked()) throw new Error('Recordarme no responde.');
-              if (await page.locator('#forgot-password').count() !== 1) throw new Error('Debe existir un único enlace de recuperación.');
+              if(!await page.locator('#remember-me').isChecked())throw new Error('Recordarme no responde.');
+              if(await page.locator('#forgot-password').count()!==1)throw new Error('Hay más de un control de recuperación.');
+              await page.locator('#forgot-password').click();
+              await page.waitForFunction(()=>document.querySelector('#login-status')?.textContent.includes('Escriba primero su correo'));
               await page.locator('#register-button').click();
-              await page.waitForSelector('#register-modal.open', {state:'visible',timeout:10000});
-              for (const id of ['register-name','register-phone','register-email']) {
+              await page.waitForSelector('#register-modal.open',{state:'visible',timeout:10000});
+              for(const id of ['register-name','register-phone','register-email']){
                 await page.locator('#'+id).fill('prueba');
-                if (await page.locator('#'+id).inputValue() !== 'prueba') throw new Error('El campo '+id+' no acepta escritura.');
+                if(await page.locator('#'+id).inputValue()!=='prueba')throw new Error('El campo '+id+' no es editable.');
               }
               await page.locator('#close-register').click();
               await page.locator('#login-email').fill('');
               await page.locator('#login-password').fill('');
               await page.locator('#login-button').click();
-              await page.waitForFunction(() => (document.querySelector('#login-status')?.textContent || '').includes('Escriba su correo'));
-              const logo = await page.locator('.brand-logo').evaluate(img => ({complete:img.complete,width:img.naturalWidth}));
-              if (!logo.complete || logo.width < 1) throw new Error('El logo no cargó correctamente.');
-              if (errors.length) throw new Error('Errores JavaScript: '+errors.join(' | '));
-              console.log('PASS: campos editables, mostrar/ocultar, Recordarme, recuperación única, Registrar, validación de Ingresar y logo.');
-            } finally { await browser.close(); }
-          })().catch(e => { console.error(e); process.exit(1); });
+              await page.waitForFunction(()=>document.querySelector('#login-status')?.textContent.includes('Escriba su correo o código'));
+              await page.setViewportSize({width:375,height:812});
+              const mobile=await page.locator('.entry-card').evaluate(el=>el.getBoundingClientRect().width<=375);
+              if(!mobile)throw new Error('La tarjeta de acceso se desborda en móvil.');
+              if(errors.length)throw new Error('Errores JavaScript: '+errors.join(' | '));
+              console.log('PASS: logo oficial original cargado; alias de administrador vinculado a Firebase; campos, Ver, Recordarme, recuperación única, Registrar, Ingresar y móvil verificados.');
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1);});
           NODE
