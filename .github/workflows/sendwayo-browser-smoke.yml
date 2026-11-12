@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'SENDWAYO-V7-FAST-ENTRY.html'
+      - 'SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'
       - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
       - 'assets/sendwayo-logo-real.jpg'
       - '.github/workflows/sendwayo-browser-smoke.yml'
