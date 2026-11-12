@@ -57,7 +57,7 @@ button{cursor:pointer;touch-action:manipulation}
 <body>
 <main class="entry-card" aria-labelledby="brand-title">
   <header class="brand">
-    <img class="brand-logo" src="assets/sendwayo-logo-real.jpg" alt="SENDWAYO EXPRESS" width="180" height="112" fetchpriority="high" decoding="async">
+    <img class="brand-logo" src="assets/sendwayo-logo-transparent.webp" alt="SENDWAYO EXPRESS" width="180" height="112" fetchpriority="high" decoding="async">
     <h1 id="brand-title">SENDWAYO EXPRESS</h1>
     <p>Bienvenido</p>
   </header>
@@ -112,11 +112,11 @@ button{cursor:pointer;touch-action:manipulation}
  const APP_PAGE='SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html';
  const CONFIG={apiKey:'AIzaSyDvnBbSRqtGsBlIiX_hJXrtj2Drl_nlDT0',authDomain:'sendwayo-express.firebaseapp.com',databaseURL:'https://sendwayo-express-default-rtdb.firebaseio.com',projectId:'sendwayo-express',storageBucket:'sendwayo-express.firebasestorage.app',messagingSenderId:'191723694148',appId:'1:191723694148:web:1540d1670c4ce5a167b411',measurementId:'G-3PFSJZF0MN'};
  const ROOT='sendwayo_express_v2';
- const ADMIN_EMAIL='sendwayoexpress@gmail.com';
+ const ADMIN_EMAIL='ideletteismorin@gmail.com';
  const aliasMap=new Map();
  function key(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9@]/g,'');}
  function addAliases(email,values){values.concat([email]).forEach(v=>{if(!v)return;aliasMap.set(key(v),email);const digits=String(v).replace(/\D/g,'');if(digits.length>=7)aliasMap.set(digits,email);});}
- addAliases(ADMIN_EMAIL,['ADMINADMIN','ADMIN-000','ADMIN-ADMIN','ADMIN-ADMINISTRADOR']);
+ addAliases(ADMIN_EMAIL,['sendwayoexpress@gmail.com','ADMINADMIN','ADMIN-000','ADMIN-ADMIN','ADMIN-ADMINISTRADOR']);
  addAliases('fleuranvil@gmail.com',['AGE00001','AG-HERACE','AG-HERFLE','AG-001','AG-01','8292155657']);
  addAliases('julie@gmail.com',['AGE00002','AG-JULIE','AG-JULOCC','AG-002','AG-02','4244461574']);
  addAliases('betina@gmail.com',['AGE00003','AG-BETINA','AG-BETLIN','AG-003','AG-03','50944994263']);
