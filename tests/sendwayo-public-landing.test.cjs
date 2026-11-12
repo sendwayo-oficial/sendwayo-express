@@ -16,6 +16,7 @@ assert.match(welcome, /id="login-screen"/, 'el formulario de acceso debe mostrar
 assert.match(welcome, /id="login-usuario"/, 'debe existir el campo de usuario o correo');
 assert.match(welcome, /id="login-password"/, 'debe existir el campo de contraseña');
 assert.match(welcome, /id="sendwayo-toggle-password"/, 'debe existir el control para mostrar u ocultar la contraseña');
+assert.match(html, /id="sendwayo-v7-login-visibility-handler"[\s\S]*?toggle\.addEventListener\('click'/, 'Ver debe alternar la visibilidad de la contraseña');
 assert.match(welcome, /id="sendwayo-remember-credentials"/, 'debe existir Recordarme');
 assert.match(welcome, /id="sendwayo-recover-button"/, 'debe existir Recuperar contraseña');
 assert.match(welcome, /id="sendwayo-entry-login-button"[^>]*onclick="intentarLogin\(\)"[^>]*>INGRESAR/, 'Ingresar debe llamar al acceso real');
