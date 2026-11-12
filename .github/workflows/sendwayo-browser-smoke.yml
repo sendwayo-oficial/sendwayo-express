@@ -10,6 +10,10 @@ on:
       - 'assets/sendwayo-logo-real.jpg'
       - '.github/workflows/deploy-pages.yml'
       - '.github/workflows/sendwayo-browser-smoke.yml'
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
