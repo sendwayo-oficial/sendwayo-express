@@ -42,5 +42,5 @@ assert.ok(workflow.includes("landing_source = Path('SENDWAYO-V7-FAST-ENTRY.html'
 assert.ok(workflow.includes('sendwayoRememberedPersistence'),'el panel debe conservar la opción Recordarme');
 
 assert.ok(entry.includes("const ROOT='sendwayo_express_v2';"),'Registrar debe usar la raíz oficial de Firebase');
-assert.ok(entry.includes("db.ref(ROOT+'/requests/'+id).set(row)"),'Registrar debe guardar solicitudes en sendwayo_express_v2/requests');
+assert.ok(entry.includes("db.ref(ROOT+'/requests/'+safeDbKey(id)).set(row)"),'Registrar debe guardar solicitudes en sendwayo_express_v2/requests');
 console.log('PASS: portada rápida e interactiva; panel V7 completo e independiente.');
