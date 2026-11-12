@@ -105,9 +105,10 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#login-status')?.textContent.includes('Escriba primero su correo'));
               await page.locator('#register-button').click();
               await page.waitForSelector('#register-modal.open',{state:'visible',timeout:10000});
-              for(const id of ['register-name','register-phone','register-email']){
-                await page.locator('#'+id).fill('prueba');
-                if(await page.locator('#'+id).inputValue()!=='prueba')throw new Error('El campo '+id+' no es editable.');
+              const registrationValues={'register-name':'Prueba SENDWAYO','register-phone':'8295550100','register-email':'prueba@example.com'};
+              for(const [id,value] of Object.entries(registrationValues)){
+                await page.locator('#'+id).fill(value);
+                if(await page.locator('#'+id).inputValue()!==value)throw new Error('El campo '+id+' no es editable.');
               }
               await page.locator('#close-register').click();
               await page.locator('#login-email').fill('');
