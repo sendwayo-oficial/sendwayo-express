@@ -327,6 +327,16 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
   body.sendwayo-authenticated #login-screen,
   body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
+<style id="sendwayo-v7-first-paint">
+ html,body{min-height:100%;background:#0b1a2f!important}
+ body::before{content:none!important;background-image:none!important}
+ #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
+ body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
+ body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
+ body:not(.sendwayo-authenticated) #login-screen> :not([data-sendwayo-v7-form]){display:none!important}
+ body:not(.sendwayo-authenticated) #login-screen img,body:not(.sendwayo-authenticated) #login-screen video,body:not(.sendwayo-authenticated) #login-screen picture,body:not(.sendwayo-authenticated) #login-screen iframe{display:none!important;visibility:hidden!important}
+ body.sendwayo-authenticated #login-screen{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style>
 </head>
 <body class="bg-[#f5f6f8] text-[12px]">
 <script id="sendwayo-early-notice-fallback">
@@ -9154,53 +9164,45 @@ window.sendwayoShareReceipt=async function(){
 </script>
 
 
-<!-- SENDWAYO V7: pantalla única de acceso, sin portada ni medios -->
+<!-- SENDWAYO V7: entrada única, sin portada, registro ni medios en el acceso -->
 <style id="sendwayo-v7-entry-final">
   html,body{min-height:100%;background:#0b1a2f!important}
+  body::before{content:none!important;background-image:none!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body:not(.sendwayo-authenticated)>:not(#login-screen):not(script):not(style){display:none!important;visibility:hidden!important}
-  body:not(.sendwayo-authenticated) #login-screen{
-    display:flex!important;visibility:visible!important;pointer-events:auto!important;
-    position:fixed!important;inset:0!important;z-index:2147483000!important;
-    align-items:center!important;justify-content:center!important;
-    background:#0b1a2f!important;padding:20px!important;overflow:auto!important
-  }
+  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
+  body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
+  body:not(.sendwayo-authenticated) #login-screen> :not([data-sendwayo-v7-form]){display:none!important}
   body:not(.sendwayo-authenticated) #login-screen img,
   body:not(.sendwayo-authenticated) #login-screen video,
   body:not(.sendwayo-authenticated) #login-screen picture,
   body:not(.sendwayo-authenticated) #login-screen iframe{display:none!important;visibility:hidden!important}
   body.sendwayo-authenticated #login-screen,
   body.sendwayo-authenticated #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body.sendwayo-authenticated{overflow-x:hidden!important}
-  body.sendwayo-authenticated #sendwayo-v7-drawer{display:none}
-  body.sendwayo-authenticated #sendwayo-v7-drawer.open{display:block}
 </style>
 <script id="sendwayo-v7-entry-final-script">
 (function(){
  'use strict';
- function enforceSingleEntry(){
+ function enforce(){
    var authenticated=document.body.classList.contains('sendwayo-authenticated');
    var welcome=document.getElementById('welcome-landing');
    if(welcome)welcome.remove();
    var login=document.getElementById('login-screen');
-   if(!authenticated){
-     document.querySelectorAll('body > *').forEach(function(node){
-       if(node===login||node.tagName==='SCRIPT'||node.tagName==='STYLE')return;
-       if(node.id!=='sendwayo-v7-drawer')node.style.setProperty('display','none','important');
-     });
-     if(login){
-       login.classList.remove('hidden');
-       login.style.setProperty('display','flex','important');
-       login.style.setProperty('visibility','visible','important');
-       login.style.setProperty('pointer-events','auto','important');
-     }
-   }else if(login){
+   if(!login)return;
+   if(authenticated){
+     login.classList.add('hidden');
      login.style.setProperty('display','none','important');
+     login.style.setProperty('visibility','hidden','important');
+     login.style.setProperty('pointer-events','none','important');
+   }else{
+     login.classList.remove('hidden');
+     login.style.setProperty('display','flex','important');
+     login.style.setProperty('visibility','visible','important');
+     login.style.setProperty('pointer-events','auto','important');
    }
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforceSingleEntry,{once:true});
- else enforceSingleEntry();
- var observer=new MutationObserver(enforceSingleEntry);
- observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforce,{once:true});
+ else enforce();
+ var observer=new MutationObserver(function(){enforce()});
+ observer.observe(document.body,{attributes:true,attributeFilter:['class']});
 })();
 </script>
