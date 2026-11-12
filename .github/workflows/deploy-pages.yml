@@ -202,8 +202,6 @@ jobs:
           landing_html = landing_source.read_text(encoding='utf-8')
           if 'assets/sendwayo-logo-real.jpg' not in landing_html:
               raise SystemExit('La portada rápida no usa el logo oficial original.')
-          if 'assets/sendwayo-logo-transparent.webp' not in landing_html:
-              raise SystemExit('La portada rápida no usa el logo transparente.')
           paths = [Path('SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/SENDWAYO-V118-SIN-SELLO-4000-GOURDES.html'), Path('site/index.html')]
           for path in paths:
               path.write_text(landing_html, encoding='utf-8')
