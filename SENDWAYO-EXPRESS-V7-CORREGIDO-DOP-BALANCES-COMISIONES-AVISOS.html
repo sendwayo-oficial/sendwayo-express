@@ -6977,7 +6977,17 @@ window.sendwayoShareReceipt=async function(){
     if (top) top.textContent = `${user.nombre || user.name || 'Usuario'} — ${user.codigo || user.id || ''}`;
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const board = document.getElementById('view-tablero');
-    if (board) { board.classList.remove('hidden'); board.style.setProperty('display','block','important'); board.style.setProperty('visibility','visible','important'); board.style.setProperty('opacity','1','important'); }
+    if (board) {
+      let node = board;
+      while (node && node !== document.body) {
+        node.classList.remove('hidden');
+        if (node.style && node.style.display === 'none') node.style.removeProperty('display');
+        node.style.setProperty('visibility','visible','important');
+        node = node.parentElement;
+      }
+      board.style.setProperty('display','block','important');
+      board.style.setProperty('opacity','1','important');
+    }
     const workspace = document.querySelector('body > .flex > .flex-1');
     if (workspace) { workspace.classList.remove('hidden'); workspace.style.setProperty('display','block','important'); workspace.style.setProperty('visibility','visible','important'); workspace.style.setProperty('opacity','1','important'); }
     const sidebar = document.getElementById('sendwayo-main-sidebar');
@@ -8974,7 +8984,7 @@ window.sendwayoShareReceipt=async function(){
     const login=document.getElementById('login-screen');
     if(!login) return;
     login.innerHTML=`
-      <section style="box-sizing:border-box;width:min(100%,430px);margin:auto;padding:30px 26px;background:#fff;border-radius:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:Arial,sans-serif">
+      <section data-sendwayo-v7-form style="box-sizing:border-box;width:min(100%,430px);margin:auto;padding:30px 26px;background:#fff;border-radius:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:Arial,sans-serif">
         <h1 style="margin:0 0 8px;text-align:center;color:#0f2440;font-size:25px;font-weight:800">SENDWAYO EXPRESS</h1>
         <p style="margin:0 0 26px;text-align:center;color:#64748b;font-size:13px">Acceso seguro a su cuenta</p>
         <label for="login-usuario" style="display:block;margin:0 0 7px;color:#1e293b;font-size:13px;font-weight:700">Usuario o correo electrónico</label>
