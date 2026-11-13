@@ -46,7 +46,7 @@ jobs:
           const fs=require('node:fs');
           const entry=fs.readFileSync('SENDWAYO-V7-FAST-ENTRY.html','utf8');
           if(!entry.includes("const ADMIN_EMAIL='sendwayoexpress@gmail.com'") ||
-             !entry.includes("addAliases(ADMIN_EMAIL,['sendwayoexpress@gmail.com'") ||
+             !entry.includes("addAliases(ADMIN_EMAIL,['ideletteismorin@gmail.com'") ||
              !entry.includes("'ADMIN-ADMINISTRADOR'")) {
             throw new Error('La pantalla pública no vincula los identificadores administrativos al correo real de Firebase.');
           }
