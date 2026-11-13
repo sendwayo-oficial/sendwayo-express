@@ -7020,7 +7020,7 @@ window.sendwayoShareReceipt=async function(){
     const entered=txt(identifier);
     const key=norm(entered);
     // Alias administrativo histórico: siempre autenticar con el correo real de Firebase.
-    if (key === 'sendwayoexpress@gmail.com') return ADMIN_EMAIL;
+    if (key === 'sendwayoexpress@gmail.com' || key === 'admin-administrador') return ADMIN_EMAIL;
     // Resolver primero los alias registrados, incluso cuando el usuario escribe un correo.
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
     if (match) return match.email;
@@ -7926,13 +7926,16 @@ window.sendwayoShareReceipt=async function(){
   // Never create accounts or reset credentials in localStorage; Firebase Authentication is the sole identity source.
   window.v162_registrar=function(){loginError('El registro local está desactivado por seguridad. El administrador debe habilitar su cuenta en Firebase Authentication.');};
   // v162_goWelcome conserva el retorno funcional a la página pública.
-  const recoverButton=document.getElementById('sendwayo-recover-password');
-  if(recoverButton) recoverButton.onclick=async()=>{
+  window.sendwayoRecoverPassword=async function(){
     const candidate=txt(document.getElementById('login-usuario')?.value);
-    if(!candidate.includes('@')){loginError('Escriba primero el correo registrado en Firebase Authentication para recibir el enlace de recuperación.');return;}
-    try{await auth.sendPasswordResetEmail(candidate.toLowerCase());loginError('Si el correo está registrado, Firebase enviará un enlace para restablecer la contraseña.');}
-    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe el correo y la configuración de Authentication.');}
+    if(!candidate){loginError('Escriba primero su usuario o correo.');return;}
+    const email=resolveEmail(candidate);
+    if(!email){loginError('No se reconoce ese usuario para recuperar la cuenta. Use el correo o alias administrativo registrado.');return;}
+    try{await auth.sendPasswordResetEmail(email);loginError('Se solicitó el enlace de recuperación para el correo administrativo registrado. Revise la bandeja de entrada y el correo no deseado.');}
+    catch(error){loginError(error?.code==='auth/too-many-requests'?'Firebase limitó temporalmente los intentos de recuperación. Espere e inténtelo más tarde.':'Firebase no pudo enviar el enlace. Compruebe la conexión y la configuración del correo.');}
   };
+  const recoverButton=document.getElementById('sendwayo-recover-password');
+  if(recoverButton) recoverButton.onclick=window.sendwayoRecoverPassword;
   // Guardar beneficiarios en Firebase antes de confirmar al usuario; no dejarlos solo en este navegador.
   window.v162_guardarBen = async function(){
     const nombre=txt(document.getElementById('v162-ben-nom')?.value), pais=txt(document.getElementById('v162-ben-pais')?.value||'+509');
@@ -8979,6 +8982,7 @@ window.sendwayoShareReceipt=async function(){
           style="box-sizing:border-box;width:100%;height:48px;margin-bottom:16px;padding:0 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline-color:#0f2440">
         <div id="login-error" class="hidden" role="alert" style="display:none;margin:0 0 14px;padding:11px 13px;border-radius:10px;background:#fef2f2;color:#b91c1c;font-size:12px"></div>
         <button type="button" onclick="intentarLogin()" style="width:100%;height:49px;border:0;border-radius:12px;background:#0f2440;color:#fff;font-size:15px;font-weight:800;cursor:pointer">Ingresar</button>
+        <button type="button" onclick="window.sendwayoRecoverPassword?.()" style="display:block;width:100%;margin-top:13px;border:0;background:transparent;color:#0f2440;font-size:12px;text-decoration:underline;cursor:pointer">Olvidé mi contraseña</button>
       </section>`;
     const error=document.getElementById('login-error');
     if(error){
