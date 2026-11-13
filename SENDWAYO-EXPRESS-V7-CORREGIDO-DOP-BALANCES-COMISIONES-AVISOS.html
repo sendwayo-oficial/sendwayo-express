@@ -3736,6 +3736,16 @@ window.sendwayoShareReceipt=async function(){
  const updateViews=()=>{try{if(typeof window.renderPrincipal==='function')window.renderPrincipal()}catch(e){};try{const v=getCurrentView();if(v==='retiros'&&window.renderModuloSeparado)window.renderModuloSeparado('retiros');else if(window.renderModuloSeparado)window.renderModuloSeparado(v)}catch(e){}};
  const persistTx=()=>writeJSON('sendwayo_express_oficial_20261029_transacciones',txs());
  const refreshTx=()=>{persistTx();updateViews()};
+ // API interna mínima para la liquidación RD→HT; conserva las cuentas y reglas en este mismo cierre.
+ window.sendwayoGetTransactions=()=>txs();
+ window.sendwayoGetAdminAccount=()=>admin();
+ window.sendwayoAccountById=id=>accountById(id);
+ window.sendwayoBalanceObject=a=>balanceObject(a);
+ window.sendwayoCommissionObject=a=>commissionObject(a);
+ window.sendwayoIsAdmin=()=>isAdmin();
+ window.sendwayoCurrencyFor=t=>currencyFor(t);
+ window.sendwayoPersistFinancialState=()=>{persistTx();saveAccountValues();updateViews();};
+
 
  // Los perfiles, códigos, balances y comisiones se cargan exclusivamente desde Firebase después de autenticar.
  // No se importan ni reescriben cuentas del navegador.
@@ -7495,7 +7505,23 @@ window.sendwayoShareReceipt=async function(){
       beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone||''),receiptId:txt(t.comprobanteId||t.receiptId||''),
       receivedAmount:txt(t.montoRecibido||t.receivedAmount||t.neto||''),accountId:txt(t.cuentaBancaria||t.accountId||''),
       createdAt:txt(t.fecha||t.date||new Date().toISOString()),createdByUserName:txt(window.currentUser?.nombre||window.currentUser?.name||''),
-      debitAccountId:canonicalRole(state.profile,state.profileKey)==='REMITENTE'?state.profileKey:'admin'
+      debitAccountId:canonicalRole(state.profile,state.profileKey)==='REMITENTE'?state.profileKey:'admin',
+      parentTransactionId:txt(t.parentTransactionId||''),
+      autoSettlement:t.autoSettlement===true,
+      autoSettlementId:txt(t.autoSettlementId||''),
+      autoSettlementStatus:txt(t.autoSettlementStatus||''),
+      autoSettlementLedgerId:txt(t.autoSettlementLedgerId||''),
+      settlementExchangeRate:Number(t.settlementExchangeRate)||0,
+      originalAmountDOP:Number(t.originalAmountDOP)||0,
+      originalCommissionDOP:Number(t.originalCommissionDOP)||0,
+      netAmountDOP:Number(t.netAmountDOP)||0,
+      grossAmountHTG:Number(t.grossAmountHTG)||0,
+      localCommissionHTG:Number(t.localCommissionHTG)||0,
+      payoutAmountHTG:Number(t.payoutAmountHTG)||0,
+      approvedByUserId:txt(t.aprobadoPor||t.approvedByUserId||''),
+      approvedByName:txt(t.aprobadoPorNombre||t.approvedByName||''),
+      approvedAtMs:Number(t.approvedAtMs||0)
+
     };
     if(category==='deposits')payload.accountingType='DEPOSITO_CAPITAL';
     return payload;
@@ -7544,6 +7570,23 @@ window.sendwayoShareReceipt=async function(){
         const payload=transactionPayload(t,category,targetKey,status);
         updates[ROOT+'/'+category+'/'+key]=payload;
         created.push({t,category,key,payload,targetKey});
+        if(t.autoSettlement===true){
+          if(actorRole!=='ADMIN')throw new Error('La liquidación automática Haití→Haití debe ser confirmada por Administración.');
+          const auditKey=safeDbKey(t.autoSettlementLedgerId||t.id);
+          const parentId=txt(t.parentTransactionId);
+          if(!parentId)throw new Error('Falta la transacción RD→Haití vinculada a la liquidación.');
+          updates[ROOT+'/audit/'+auditKey]={
+            id:auditKey,createdByAuthUid:uid,createdAt:new Date().toISOString(),
+            action:'LIQUIDACION_AUTOMATICA_RD_HT_A_HT',
+            sourceCollection:'envios',sourceId:parentId,recordId:parentId,
+            internalTransactionId:id,route:txt(t.ruta),service:txt(t.proveedorDestino||t.ruta),
+            currency:'HTG',grossAmount:Number(t.montoValue)||0,
+            commissionHTG:Number(t.fee)||0,payoutHTG:Number(t.neto)||0,
+            approvedByUserId:txt(t.aprobadoPor||''),approvedByName:txt(t.aprobadoPorNombre||''),
+            approvedAtMs:Number(t.approvedAtMs)||Date.now(),status:'Aprobado',
+            immutable:true
+          };
+        }
         if(actorRole==='REMITENTE'&&category!=='deposits')reservedRemitterTx.push({t,category,key,payload,targetKey});
       } else if(oldSig!==sig && t.firebaseCategory && t.firebaseKey){
         const category=String(t.firebaseCategory), key=safeDbKey(t.firebaseKey), status=txt(t.estado||t.status||'Pendiente');
@@ -9205,3 +9248,5 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+
+<script src="assets/sendwayo-v7-rd-haiti-auto-settlement.js" defer></script>
