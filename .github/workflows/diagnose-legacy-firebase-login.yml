@@ -3,6 +3,7 @@ name: SENDWAYO — Diagnose legacy login data (read only)
 # Forced read-only login audit requested on 2026-10-16; inspect account/profile alignment only, never write credentials or financial data.
 # Re-run read-only audit after reported production login failure; no account or financial writes.
 # 2026-11-12: re-check the actual Firebase admin email vs login alias after administrator-only sign-in failures; read-only.
+# 2026-11-13: owner reports persistent admin login rejection; repeat the same read-only identity check only.
 # 2026-11-09: trigger the existing read-only audit after the latest login report.
 # 2026-11-09: repeat the read-only audit after repairing profile identity synchronization.
 # 2026-11-09: user explicitly authorized another automatic read-only diagnostic run.
