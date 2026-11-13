@@ -24,7 +24,19 @@ jobs:
           node <<'NODE'
           const fs=require('node:fs');
           const html=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
-          const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
+          const blocks=[];
+          let cursor=0;
+          while(true){
+            const scriptStart=html.indexOf('<script',cursor);
+            if(scriptStart<0) break;
+            const open=html.indexOf('>',scriptStart);
+            if(open<0) break;
+            const close=html.indexOf('</script>',open);
+            if(close<0) throw new Error('Hay un script sin cierre.');
+            const body=html.slice(open+1,close);
+            if(body.trim()) blocks.push(body);
+            cursor=close+9;
+          }
           if(!blocks.length) throw new Error('No se encontraron scripts inline de V7.');
           blocks.forEach((source,index)=>new Function(source));
           const external=fs.readFileSync('assets/sendwayo-v7-rd-haiti-auto-settlement.js','utf8');
