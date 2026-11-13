@@ -96,7 +96,7 @@
      neto:calc.payoutHTG,feeText:'Comisión Haití → Haití 3%: '+money(calc.localCommissionHTG)+' HTG',
      moneda:'HTG',esHT:true,beneficiario:t.beneficiario||'',beneficiarioTel:t.beneficiarioTel||'',
      montoRecibido:money(calc.payoutHTG)+' HTG',estado:'Aprobado',status:'Aprobado',
-     creadorId:adminId,remitenteId:adminId,remitenteNombre:approvedName,
+     creadorId:adminId,remitenteId:adminId,dbUserKey:String(admin.dbUserKey||admin.rtdbUserKey||adminId),firebaseOwnerKey:String(admin.dbUserKey||admin.rtdbUserKey||adminId),remitenteNombre:approvedName,
      aprobadoPor:approvedBy,aprobadoPorNombre:approvedName,fechaAprobacion:new Date(approvedAt).toLocaleString('es-DO'),
      approvedAtMs:approvedAt,parentTransactionId:String(t.id),autoSettlement:true,
      autoSettlementAuditId:auditId,settlementExchangeRate:calc.exchangeRate,
