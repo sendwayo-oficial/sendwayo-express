@@ -9174,14 +9174,22 @@ window.sendwayoShareReceipt=async function(){
 </script>
 
 
-<!-- SENDWAYO V7: entrada única, sin portada, registro ni medios en el acceso -->
+<!-- SENDWAYO V7: entrada única, formulario visible y fondo claro -->
 <style id="sendwayo-v7-entry-final">
-  html,body{min-height:100%;background:#0b1a2f!important}
+  html,body{min-height:100%;background:#f3f5f8!important}
   body::before{content:none!important;background-image:none!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
+  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#f3f5f8!important;padding:20px!important;overflow:auto!important}
   body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
   body:not(.sendwayo-authenticated) #login-screen> :not([data-sendwayo-v7-form]){display:none!important}
+  body:not(.sendwayo-authenticated) #login-screen > div[data-sendwayo-v7-form]{display:block!important;visibility:visible!important;opacity:1!important;width:min(100%,440px)!important;max-width:440px!important;min-height:0!important;margin:auto!important;padding:28px!important;background:#fff!important;color:#102b49!important;border-radius:18px!important;box-shadow:0 12px 36px rgba(15,35,60,.12)!important}
+  body:not(.sendwayo-authenticated) #login-screen h1,
+  body:not(.sendwayo-authenticated) #login-screen p,
+  body:not(.sendwayo-authenticated) #login-screen label,
+  body:not(.sendwayo-authenticated) #login-screen button,
+  body:not(.sendwayo-authenticated) #login-screen input{visibility:visible!important;opacity:1!important}
+  body:not(.sendwayo-authenticated) #login-screen input{display:block!important;width:100%!important;min-height:48px!important;box-sizing:border-box!important;background:#fff!important;color:#102b49!important;border:1px solid #cbd5e1!important;border-radius:9px!important;padding:12px!important;font-size:16px!important}
+  body:not(.sendwayo-authenticated) #login-screen button{pointer-events:auto!important;cursor:pointer!important}
   body:not(.sendwayo-authenticated) #login-screen img,
   body:not(.sendwayo-authenticated) #login-screen video,
   body:not(.sendwayo-authenticated) #login-screen picture,
