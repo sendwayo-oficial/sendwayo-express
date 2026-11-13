@@ -205,7 +205,7 @@ body:not(.sendwayo-authenticated) > #login-screen.hidden { display:none !importa
 
 <style id="sendwayo-v7-landing-critical-layout">
 /* V7 landing: diseño crítico independiente de Tailwind/CDN */
-#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#071426!important;color:#fff!important;font-family:Arial,sans-serif!important}
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:none!important;visibility:hidden!important;pointer-events:none!important;overflow-y:auto!important;background:#071426!important;color:#fff!important;font-family:Arial,sans-serif!important}
 #welcome-landing *{box-sizing:border-box}
 #welcome-landing>main{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:linear-gradient(135deg,#071426 0%,#102b4b 52%,#17466a 100%)!important}
 #welcome-landing header{display:block!important;width:100%!important;border-bottom:1px solid rgba(255,255,255,.12)!important}
@@ -2525,7 +2525,7 @@ console.log('V149 bueno sin burlarse - login, guardar activado, sugerencia, nume
   </main>
 </div>
 <style id="sendwayo-v7-public-landing-clean">
-#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:block!important;visibility:visible!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
+#welcome-landing{position:fixed!important;inset:0!important;z-index:15000!important;display:none!important;visibility:hidden!important;pointer-events:none!important;overflow-y:auto!important;background:#f3f6fb!important;color:#10243d!important;font-family:Arial,sans-serif!important}
 #welcome-landing>main.sendwayo-home{min-height:100vh!important;display:flex!important;flex-direction:column!important;width:100%!important;background:#f3f6fb!important;color:#10243d!important}
 .sendwayo-home *{box-sizing:border-box}
 .sendwayo-home-header{background:#fff!important;border-bottom:1px solid #e6ebf2!important;box-shadow:0 3px 16px rgba(15,36,64,.07)!important}
@@ -6981,7 +6981,12 @@ window.sendwayoShareReceipt=async function(){
     const top = document.getElementById('user-top');
     if (top) top.textContent = `${user.nombre || user.name || 'Usuario'} — ${user.codigo || user.id || ''}`;
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-    document.getElementById('view-tablero')?.classList.remove('hidden');
+    const board = document.getElementById('view-tablero');
+    if (board) { board.classList.remove('hidden'); board.style.setProperty('display','block','important'); board.style.setProperty('visibility','visible','important'); board.style.setProperty('opacity','1','important'); }
+    const workspace = document.querySelector('body > .flex > .flex-1');
+    if (workspace) { workspace.classList.remove('hidden'); workspace.style.setProperty('display','block','important'); workspace.style.setProperty('visibility','visible','important'); workspace.style.setProperty('opacity','1','important'); }
+    const sidebar = document.getElementById('sendwayo-main-sidebar');
+    if (sidebar) sidebar.style.setProperty('visibility','visible','important');
   }
   function showLogin() {
     document.body.classList.remove('sendwayo-authenticated');
