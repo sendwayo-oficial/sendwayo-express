@@ -1,6 +1,8 @@
 name: SENDWAYO RD-Haiti NatCash/MonCash settlement checks
 
 on:
+  push:
+    branches: [feat/rd-haiti-auto-settlement-natcash-moncash]
   pull_request:
     branches: [main]
     paths:
