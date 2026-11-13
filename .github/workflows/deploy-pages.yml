@@ -71,7 +71,7 @@ jobs:
           if(!page.includes('src="assets/sendwayo-logo-real.jpg"')) throw new Error('Falta el logo oficial original JPG en la portada.');
           
           if(!page.includes("const ADMIN_EMAIL='sendwayoexpress@gmail.com'")) throw new Error('El acceso administrativo no apunta a la cuenta Firebase existente.');
-          if(!page.includes("addAliases(ADMIN_EMAIL,['ideletteismorin@gmail.com'")) throw new Error('Falta el alias administrativo de inicio de sesión.');
+          if(!page.includes("addAliases(ADMIN_EMAIL,['admin-administrador','ideletteismorin@gmail.com'")) throw new Error('Falta el nombre de usuario admin-administrador enlazado a Firebase Authentication.');
           
           if(page.includes('cdn.tailwindcss.com')) throw new Error('La bienvenida no debe depender de Tailwind CDN.');
           for(const id of ['login-email','login-password','show-password','forgot-password','remember-me','login-button','register-button','register-modal','register-form','register-name','register-phone','register-email']) {
