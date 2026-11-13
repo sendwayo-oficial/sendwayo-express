@@ -7577,7 +7577,7 @@ window.sendwayoShareReceipt=async function(){
           const parentId=txt(t.parentTransactionId);
           if(!parentId)throw new Error('Falta la transacción RD→Haití vinculada a la liquidación.');
           updates[ROOT+'/audit/'+auditKey]={
-            id:auditKey,createdByAuthUid:uid,createdAt:new Date().toISOString(),
+            id:auditKey,createdByAuthUid:actorUid,createdAt:new Date().toISOString(),
             action:'LIQUIDACION_AUTOMATICA_RD_HT_A_HT',
             sourceCollection:'envios',sourceId:parentId,recordId:parentId,
             internalTransactionId:id,route:txt(t.ruta),service:txt(t.proveedorDestino||t.ruta),
