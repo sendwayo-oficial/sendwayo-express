@@ -2958,9 +2958,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     if(isHTHT){
       // Para NatCash/MonCash Haití→Haití, el importe ingresado ya está en HTG.
       // La tarifa se consulta directamente en la tabla HTG, sin conversión DOP.
-      fee = typeof window.v162_getFeeRetiroHT === 'function'
-        ? Math.max(0, Number(window.v162_getFeeRetiroHT(monto)) || 0)
-        : (monto >= 2000 && monto <= 3999 ? 25 : 0);
+      fee = /natcash|moncash/i.test(ruta) ? Math.round(monto*0.03*100)/100 : (typeof window.v162_getFeeRetiroHT === 'function' ? Math.max(0, Number(window.v162_getFeeRetiroHT(monto)) || 0) : (monto >= 2000 && monto <= 3999 ? 25 : 0));
       neto = Math.max(0, monto - fee);
       if(netoEl) netoEl.textContent = neto.toFixed(2) + ' HTG';
       if(comEl) comEl.textContent = fee.toFixed(2) + ' HTG';
@@ -3172,7 +3170,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(esHTHT){
       moneda='HTG';
       // Usa la tabla Haití-Haití por rango existente (p. ej. 2,000 HTG → 81 HTG de comisión).
-      fee = typeof window.v162_getFeeRetiroHT==='function' ? (Number(window.v162_getFeeRetiroHT(monto))||0) : (monto<=1000?25:monto<=1999?25:monto<=3999?25:monto<=7999?130:monto<=11999?248:monto<=19999?342:monto<=39999?576:monto<=59999?945:monto<=74999?1260:monto<=99999?1440:Math.round(monto*0.06));
+      fee = /natcash|moncash/i.test(ruta) ? Math.round(monto*0.03*100)/100 : (typeof window.v162_getFeeRetiroHT==='function' ? (Number(window.v162_getFeeRetiroHT(monto))||0) : (monto<=1000?25:monto<=1999?25:monto<=3999?25:monto<=7999?130:monto<=11999?248:monto<=19999?342:monto<=39999?576:monto<=59999?945:monto<=74999?1260:monto<=99999?1440:Math.round(monto*0.06)));
       neto=Math.max(0,monto-fee);
       tasa='Tarifa Haití a Haití por rango - Gourdes HTG';
       const label=document.getElementById('v162-retiro-monto-label');
@@ -3617,7 +3615,7 @@ window.sendwayoShareReceipt=async function(){
       const ht=!!t.esHT || /HT\s*→\s*HT|Naca a Naca|Montcash a Montcash|MonCash.*Tarifa por rango/i.test(normaliza(t.ruta)+' '+normaliza(t.rutaExacta));
       let fee=0;
       if(ht){
-        if(typeof window.v162_getFeeRetiroHT==='function') fee=Number(window.v162_getFeeRetiroHT(monto))||0;
+        if(/natcash|moncash/i.test(normaliza(t.ruta)+' '+normaliza(t.rutaExacta))) fee=Math.round(monto*0.03*100)/100; else if(typeof window.v162_getFeeRetiroHT==='function') fee=Number(window.v162_getFeeRetiroHT(monto))||0;
         else fee=monto<=1000?25:monto<=2000?50:monto<=3999?81:monto<=7999?130:monto<=11999?248:monto<=19999?342:monto<=39999?576:monto<=59999?945:monto<=74999?1260:monto<=99999?1440:Math.round(monto*.06);
       } else fee=Math.round(monto*.08);
       const neto=Math.max(0,monto-fee); const moneda=ht?'HTG':'DOP';
@@ -3838,7 +3836,7 @@ window.sendwayoShareReceipt=async function(){
  window.guardarEnvioCompacto=function(){const route=$('envio-ruta')?.value||'';const sender=chooseSender($('envio-remitente')?.value||'');const amount=Number($('envio-monto')?.value);const ben=$('envio-ben-nombre-manual')?.value.trim()||$('envio-beneficiario')?.value||'';const phone=$('envio-ben-tel-manual')?.value.trim()||'';const cur=/^\s*HT\s*(?:→|->)/i.test(route)?'HTG':'DOP';const t=buildMoneyTx('Envío',{route,sender,amount,beneficiary:ben,phone,currency:cur,detail:'Remitente '+acctName(sender)+'; destinatario '+ben+' '+phone});if(t){mhide('modal-envio-compacto');persistTx();updateViews();alert('Envío guardado como Pendiente.');}};
  // Use the exact HT->HT Haitian tariff also for the compact retirement form.
  const oldCompactRet=window.guardarRetiroCompacto;
- window.guardarRetiroCompacto=function(){const route=$('retiro-ruta')?.value||'';const sender=chooseSender($('retiro-remitente')?.value||'');const amount=Number($('retiro-monto')?.value);const beneficiary=$('retiro-beneficiario')?.value||$('retiro-ben-nombre-manual')?.value||'';const isHTHT=/HT\s*→\s*HT|Naca a Naca|Montcash a Montcash/i.test(route);const cur=isHTHT||/^\s*HT\s*(?:→|->)/i.test(route)?'HTG':'DOP';const t=buildMoneyTx('Retiro',{route,sender,amount,beneficiary,currency:cur});if(t){if(isHTHT){t.esHT=true;t.moneda='HTG';t.monto=formatMoney(amount)+' HTG';t.fee=Number(window.v162_getFeeRetiroHT?.(amount))||0;t.neto=Math.max(0,amount-t.fee);t.montoRecibido=formatMoney(t.neto)+' HTG';}persistTx();mhide('modal-retiro-compacto');updateViews();alert('Retiro guardado como Pendiente.');}else if(typeof oldCompactRet==='function'){/* Keep invalid attempts blocked; no fallback that bypasses balance checks. */}};
+ window.guardarRetiroCompacto=function(){const route=$('retiro-ruta')?.value||'';const sender=chooseSender($('retiro-remitente')?.value||'');const amount=Number($('retiro-monto')?.value);const beneficiary=$('retiro-beneficiario')?.value||$('retiro-ben-nombre-manual')?.value||'';const isHTHT=/HT\s*→\s*HT|Naca a Naca|Montcash a Montcash/i.test(route);const cur=isHTHT||/^\s*HT\s*(?:→|->)/i.test(route)?'HTG':'DOP';const t=buildMoneyTx('Retiro',{route,sender,amount,beneficiary,currency:cur});if(t){if(isHTHT){t.esHT=true;t.moneda='HTG';t.monto=formatMoney(amount)+' HTG';t.fee=/natcash|moncash/i.test(route)?round2(amount*.03):(Number(window.v162_getFeeRetiroHT?.(amount))||0);t.neto=Math.max(0,amount-t.fee);t.montoRecibido=formatMoney(t.neto)+' HTG';}persistTx();mhide('modal-retiro-compacto');updateViews();alert('Retiro guardado como Pendiente.');}else if(typeof oldCompactRet==='function'){/* Keep invalid attempts blocked; no fallback that bypasses balance checks. */}};
 
  // Approvals and reversals are role-checked; deposits credit only the selected destination account.
  window.aprobar=function(id){const t=txs().find(x=>String(x.id)===String(id));if(!t)return;if(!isAdmin()){
@@ -5969,6 +5967,7 @@ window.sendwayoShareReceipt=async function(){
     const amount=amountOf(t),k=typeKey(t);
     // Haitian domestic transfers always use the configured local tariff table, never the international 8% rule.
     if(isHTHT(t)){
+      if(/natcash|moncash/i.test(normalize((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''))))return round2(amount*.03);
       const fn=k.startsWith('retiro')?window.v162_getFeeRetiroHT:window.v162_getFeeEnvioHT;
       if(typeof fn==='function'){
         try{const localFee=Number(fn(amount));if(Number.isFinite(localFee)&&localFee>=0)return round2(localFee);}catch(_){}
@@ -6060,7 +6059,7 @@ window.sendwayoShareReceipt=async function(){
         if(wasApproved){undoAccounting(t);t.estado='Pendiente';t.fondosDebitados=false;t.fondosDevueltos=false;t.comisionAplicada=false;t.comisionAdminAplicada=0;t.comisionRemitenteAplicada=0;t.saldoAcreditado=false;t.saldoAcreditadoMonto=0;t.pagoComisionAplicado=false;}
         else if(isSpend(t)&&t.fondosDebitados&&!t.fondosDevueltos){const src=sourceOf(t),cash=spendingOwner(src),b=balances(cash),cur0=currencyOf(t),delta=round2(newAmount-oldAmount);if(delta>0&&num(b[cur0])-reservedByOthers(cash,cur0,t.id)<delta){announce('Fondos insuficientes para aumentar este monto. No se modificó la operación.');return;}b[cur0]=round2(num(b[cur0])-delta);t.debitAmount=newAmount;t.fondosDebitados=true;t.fondosDevueltos=false;}
         t.montoValue=newAmount;const cur=currencyOf(t);t.monto=newAmount.toFixed(2)+' '+cur;t.neto=newAmount-num(t.fee||0);t.actualizadoEn=new Date().toLocaleString('es-DO');
-        if(isSpend(t)){if(['recarga','recargas','paquetiko','paquetikos','factura','facturas','servicio','servicios'].includes(typeKey(t)))t.fee=round2(newAmount*.05);else if(isHTHT(t)){const fn=typeKey(t).startsWith('retiro')?window.v162_getFeeRetiroHT:window.v162_getFeeEnvioHT;t.fee=typeof fn==='function'?round2(num(fn(newAmount))):0;}else if(['envio','envios','retiro','retiros'].includes(typeKey(t)))t.fee=round2(newAmount*.08);t.neto=round2(newAmount-num(t.fee||0));t.feeText='Comisión '+num(t.fee).toFixed(2)+' '+cur;}
+        if(isSpend(t)){if(['recarga','recargas','paquetiko','paquetikos','factura','facturas','servicio','servicios'].includes(typeKey(t)))t.fee=round2(newAmount*.05);else if(isHTHT(t)){if(/natcash|moncash/i.test(normalize((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''))))t.fee=round2(newAmount*.03);else{const fn=typeKey(t).startsWith('retiro')?window.v162_getFeeRetiroHT:window.v162_getFeeEnvioHT;t.fee=typeof fn==='function'?round2(num(fn(newAmount))):0;}}else if(['envio','envios','retiro','retiros'].includes(typeKey(t)))t.fee=round2(newAmount*.08);t.neto=round2(newAmount-num(t.fee||0));t.feeText='Comisión '+num(t.fee).toFixed(2)+' '+cur;}
         if(wasRejected){t.fondosDebitados=false;t.fondosDevueltos=false;t.debitAmount=0;}if(wasRejected||wasNoCoincide)t.estado='Pendiente';t.reservaAplicada=false;if(wasApproved){t.fechaAprobacion='';refreshAll();approve(t.id);return;}
         if(isSpend(t)&&(!t.fondosDebitados||t.fondosDevueltos)){const r=debit(t,true);if(!r.ok){announce(r.reason||'No se pudo aplicar el nuevo monto.');return;}refreshAll();}else refreshAll();return;
       }
