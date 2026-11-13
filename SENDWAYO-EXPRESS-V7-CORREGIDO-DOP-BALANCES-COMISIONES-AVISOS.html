@@ -6881,7 +6881,24 @@ window.sendwayoShareReceipt=async function(){
     }
   }
   const state = { profile: null, profileKey: null, directory: [], listeners: [], remoteTransactions: {}, lastRemoteArray: [], readReady: false, loginBusy: false, sessionEstablished: false, authReadyPromise: null, syncBusy: false, syncTimer: null, lastTxSnapshot: new Map(), lastAccountSnapshot: new Map(), lastAccountValues: new Map(), lastSyncError: '' };
-  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;} };
+  window.sendwayoFirebase = { app: authApp, auth, db, get profile(){return state.profile;}, get profileKey(){return state.profileKey;}, get readReady(){return state.readReady;}, refreshSettlement: async function(parentKey, settlementKey){
+    const safeParent=safeDbKey(parentKey), safeSettlement=safeDbKey(settlementKey);
+    const results=await Promise.all([db.ref(ROOT+'/envios/'+safeParent).once('value'),db.ref(ROOT+'/internalSettlements/'+safeSettlement).once('value'),userRoot.child('admin').once('value')]);
+    const pSnap=results[0],iSnap=results[1],aSnap=results[2];
+    if(!pSnap.exists()||!iSnap.exists())throw new Error('Firebase no devolvió la operación y su liquidación interna.');
+    const p=mapTransaction('envios',safeParent,pSnap.val()),i=mapTransaction('internalSettlements',safeSettlement,iSnap.val());
+    state.remoteTransactions.envios=(state.remoteTransactions.envios||[]).filter(x=>String(x.firebaseKey||x.id)!==safeParent).concat(p);
+    state.remoteTransactions.internalSettlements=(state.remoteTransactions.internalSettlements||[]).filter(x=>String(x.firebaseKey||x.id)!==safeSettlement).concat(i);
+    if(aSnap.exists()){
+      const adminData=aSnap.val(),adminRow=state.directory.find(x=>x.key==='admin');
+      if(adminRow)adminRow.data=adminData;
+      if(state.profileKey==='admin')state.profile=adminData;
+      hydrateFrontendAccount('admin',adminData,'ADMINADMIN','ADMIN');
+    }
+    renderCloudTransactions();
+    state.lastTxSnapshot=makeTransactionSnapshot();state.lastAccountSnapshot=makeAccountSnapshot();state.lastAccountValues=makeAccountValueSnapshot();
+    return {parent:p,internal:i};
+  } };
 
   const norm = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   const txt = v => String(v ?? '').trim();
@@ -7349,7 +7366,7 @@ window.sendwayoShareReceipt=async function(){
   }
   function mapTransaction(category, key, d) {
     if(!d || typeof d!=='object') return null;
-    const categoryType={envios:'Envío',accountWithdrawals:'Retiro',deposits:'Depósito',recargas:'Recarga',paqueticos:'Paqueticos',pagos:'Servicios',paquetes:'Paquetes',commissions:'Comisión',credits:'Crédito'}[category] || d.tipo || d.type || 'Transacción';
+    const categoryType={envios:'Envío',internalSettlements:'Envío',accountWithdrawals:'Retiro',deposits:'Depósito',recargas:'Recarga',paqueticos:'Paqueticos',pagos:'Servicios',paquetes:'Paquetes',commissions:'Comisión',credits:'Crédito'}[category] || d.tipo || d.type || 'Transacción';
     const amountRaw=d.amount ?? d.montoValue ?? d.monto ?? d.amountValue ?? 0;
     const amount=Number(String(amountRaw).replace(/[^0-9.\-]/g,'')) || 0;
     const fee=Number(d.commission ?? d.fee ?? d.comision ?? 0) || 0;    const createdAt=Number(d.createdAtMs ?? d.timestamp ?? d.createdAt ?? d.fechaMs ?? 0) || Date.now();
@@ -7369,7 +7386,7 @@ window.sendwayoShareReceipt=async function(){
       _cloudRaw:d
     };
   }
-  const CATEGORIES=['envios','accountWithdrawals','deposits','recargas','paqueticos','pagos','paquetes','commissions','credits'];
+  const CATEGORIES=['envios','internalSettlements','accountWithdrawals','deposits','recargas','paqueticos','pagos','paquetes','commissions','credits'];
   function stopListeners(){ state.listeners.forEach(off=>{try{off()}catch(e){}}); state.listeners=[]; }
   function renderCloudTransactions(){
     const rows=Object.values(state.remoteTransactions).flat().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -7393,12 +7410,12 @@ window.sendwayoShareReceipt=async function(){
   }
   async function loadCloudTransactions(profileRow, role, uid) {
     state.remoteTransactions={};
-    const agentCategories=['envios','accountWithdrawals','recargas','paqueticos','pagos','paquetes'];
-    const categories=role==='AGENTE'?agentCategories:(role==='REMITENTE'?CATEGORIES.filter(c=>!['credits','commissions'].includes(c)):CATEGORIES);
+    const agentCategories=['envios','accountWithdrawals','recargas','paqueticos','pagos','paquetes','internalSettlements'];
+    const categories=role==='AGENTE'?agentCategories:(role==='REMITENTE'?CATEGORIES.filter(c=>!['credits','commissions','internalSettlements'].includes(c)):CATEGORIES);
     const qFor=category=>{
       const ref=db.ref(ROOT+'/'+category);
       if(role==='REMITENTE') return ref.orderByChild('userId').equalTo(profileRow.key);
-      if(role==='AGENTE') return ref.orderByChild('status').equalTo('Pendiente');
+      if(role==='AGENTE') return category==='internalSettlements'?ref.orderByChild('settlementRoleScope').equalTo('ADMIN_AGENT'):ref.orderByChild('status').equalTo('Pendiente');
       return ref;
     };
     let successfulReads=0;
@@ -7491,7 +7508,7 @@ window.sendwayoShareReceipt=async function(){
       userId:userKey,ownerLegacyId:txt(t.remitenteId||t.cuentaOrigenId||t.depositanteId||userKey),
       ownerName:txt(t.remitenteNombre||t.nombreRemitente||''),createdByAuthUid:uid,createdByUserId:state.profileKey,
       createdByRole:canonicalRole(state.profile,state.profileKey),createdAtMs:Number(t.timestamp)||Date.now(),updatedAtMs:Date.now(),
-      route:txt(t.rutaExacta||t.ruta||t.route||t.tipo),beneficiary:txt(t.beneficiario||t.beneficiary||''),
+      route:txt(t.ruta||t.route||t.tipo),routeExact:txt(t.rutaExacta||t.routeExact||''),beneficiary:txt(t.beneficiario||t.beneficiary||''),
       beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone||''),receiptId:txt(t.comprobanteId||t.receiptId||''),
       receivedAmount:txt(t.montoRecibido||t.receivedAmount||t.neto||''),accountId:txt(t.cuentaBancaria||t.accountId||''),
       createdAt:txt(t.fecha||t.date||new Date().toISOString()),createdByUserName:txt(window.currentUser?.nombre||window.currentUser?.name||''),
@@ -8348,6 +8365,7 @@ window.sendwayoShareReceipt=async function(){
   window.addEventListener('load', reapplyLanguage);
 })();
 </script>
+
 </body>
 </html>
 
@@ -9205,3 +9223,4 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+<script src="./assets/sendwayo-rdht-settlement.js"></script>

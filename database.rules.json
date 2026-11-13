@@ -251,6 +251,13 @@
           ".write": "auth != null && (auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || (auth.token.email === 'sendwayoexpress@gmail.com' || auth.token.email === 'ideletteismorin@gmail.com')) || ((root.child('sendwayo_express_v2/users').child($userId).child('authUid').val() === auth.uid || root.child('sendwayo_express_v2/users').child($userId).child('authEmail').val() === auth.token.email || root.child('sendwayo_express_v2/users').child($userId).child('email').val() === auth.token.email) && newData.child('ownerUserId').val() === $userId && newData.child('ownerAuthUid').val() === auth.uid))",
           ".validate": "!newData.exists() || (newData.child('ownerUserId').val() === $userId && newData.child('banco').isString() && newData.child('cuenta').isString() && newData.child('titular').isString() && newData.child('documento').isString() && newData.child('moneda').isString() && (auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || (auth.token.email === 'sendwayoexpress@gmail.com' || auth.token.email === 'ideletteismorin@gmail.com')) || newData.child('ownerAuthUid').val() === auth.uid))"
         }
+      },
+      "internalSettlements": {
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || auth.token.email === 'ideletteismorin@gmail.com' || (root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('authUid').val() === auth.uid && root.child('sendwayo_express_v2/users').child(root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()).child('authUid').val() === auth.uid && root.child('sendwayo_express_v2/users').child(root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()).child('active').val() !== false && root.child('sendwayo_express_v2/users').child(root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()).child('role').val() === 'agente'))",
+        ".write": false,
+        ".indexOn": [
+          "settlementRoleScope"
+        ]
       }
     }
   }
