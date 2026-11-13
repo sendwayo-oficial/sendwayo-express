@@ -70,7 +70,7 @@ jobs:
           if((page.split('<img').length-1)!==1) throw new Error('La bienvenida debe mostrar únicamente el logo.');
           if(!page.includes('src="assets/sendwayo-logo-real.jpg"')) throw new Error('Falta el logo oficial original JPG en la portada.');
           
-          if(!page.includes("const ADMIN_EMAIL='ideletteismorin@gmail.com'")) throw new Error('El acceso administrativo no apunta a la cuenta Firebase existente.');
+          if(!page.includes("const ADMIN_EMAIL='sendwayoexpress@gmail.com'")) throw new Error('El acceso administrativo no apunta a la cuenta Firebase existente.');
           if(!page.includes("addAliases(ADMIN_EMAIL,['sendwayoexpress@gmail.com'")) throw new Error('Falta el alias administrativo de inicio de sesión.');
           
           if(page.includes('cdn.tailwindcss.com')) throw new Error('La bienvenida no debe depender de Tailwind CDN.');
