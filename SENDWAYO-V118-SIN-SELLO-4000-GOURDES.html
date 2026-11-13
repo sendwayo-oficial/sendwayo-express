@@ -117,7 +117,7 @@ button{cursor:pointer;touch-action:manipulation}
  const aliasMap=new Map();
  function key(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9@]/g,'');}
  function addAliases(email,values){values.concat([email]).forEach(v=>{if(!v)return;aliasMap.set(key(v),email);const digits=String(v).replace(/\D/g,'');if(digits.length>=7)aliasMap.set(digits,email);});}
- addAliases(ADMIN_EMAIL,['ideletteismorin@gmail.com','ADMINADMIN','ADMIN-000','ADMIN-ADMIN','ADMIN-ADMINISTRADOR']);
+ addAliases(ADMIN_EMAIL,['ideletteismorin@gmail.com','ADMINADMIN','ADMIN-000','ADMIN-ADMIN','ADMIN-ADMINISTRADOR','admin-administrador']);
  addAliases('fleuranvil@gmail.com',['AGE00001','AG-HERACE','AG-HERFLE','AG-001','AG-01','8292155657']);
  addAliases('julie@gmail.com',['AGE00002','AG-JULIE','AG-JULOCC','AG-002','AG-02','4244461574']);
  addAliases('betina@gmail.com',['AGE00003','AG-BETINA','AG-BETLIN','AG-003','AG-03','50944994263']);
