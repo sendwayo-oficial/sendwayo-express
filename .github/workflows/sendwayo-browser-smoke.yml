@@ -44,15 +44,14 @@ jobs:
           set -euo pipefail
           node <<'NODE'
           const fs=require('node:fs');
-          const app=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
-          const admin=app.match(/let ADMIN = \{[\s\S]*?\n\};/);
-          if(!admin || !admin[0].includes("email:'ideletteismorin@gmail.com'") ||
-             !admin[0].includes("username:'sendwayoexpress@gmail.com'") ||
-             !admin[0].includes("'sendwayoexpress@gmail.com'")) {
-            throw new Error('El usuario visible del administrador no está vinculado al correo real de Firebase.');
+          const entry=fs.readFileSync('SENDWAYO-V7-FAST-ENTRY.html','utf8');
+          if(!entry.includes("const ADMIN_EMAIL='ideletteismorin@gmail.com'") ||
+             !entry.includes("addAliases(ADMIN_EMAIL,['sendwayoexpress@gmail.com'") ||
+             !entry.includes("'ADMIN-ADMINISTRADOR'")) {
+            throw new Error('La pantalla pública no vincula los identificadores administrativos al correo real de Firebase.');
           }
-          if(!app.includes('function resolveEmail(identifier)') || !app.includes('if(match) return match.email;')) {
-            throw new Error('Falta resolver el alias del administrador antes de autenticar con Firebase.');
+          if(!entry.includes('function resolveEmail(v)') || !entry.includes('return aliasMap.get(key(raw))')) {
+            throw new Error('La pantalla pública no resuelve el alias antes de autenticar con Firebase.');
           }
 
           const {chromium}=require('playwright');
