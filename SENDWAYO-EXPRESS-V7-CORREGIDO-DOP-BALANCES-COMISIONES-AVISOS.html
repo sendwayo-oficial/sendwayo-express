@@ -1168,8 +1168,8 @@ window.guardarComisionExacto = function(){
     if(!/wallet/i.test(method)){if(typeof oldExact==='function')return oldExact.apply(this,arguments);alert('Para aplicar la comisión al balance, seleccione Wallet.');return;}
     const u=(typeof currentUser!=='undefined'&&currentUser)||window.currentUser||null;
     const role=String(u&&(u.role||u.rol)||'').toUpperCase();
-    const remitter=(role.includes('REMITENTE'))||(Array.isArray(typeof REMITENTES!=='undefined'?REMITENTES:window.REMITENTES)&&((typeof REMITENTES!=='undefined'?REMITENTES:window.REMITENTES).some(r=>String(r.id)===String(u&&u.id))));
-    if(!u||!remitter){alert('El traslado de comisión a balance solo está disponible para el remitente de la sesión. Administración puede acreditar balances desde su módulo correspondiente.');return;}
+    const remitter=(role.includes('REMITENTE'))||(role.includes('ADMIN'))||(Array.isArray(typeof REMITENTES!=='undefined'?REMITENTES:window.REMITENTES)&&((typeof REMITENTES!=='undefined'?REMITENTES:window.REMITENTES).some(r=>String(r.id)===String(u&&u.id))));
+    if(!u||!remitter){alert('El traslado de comisión a balance está disponible para el remitente titular o la administración.');return;}
     const rawCurrency=String(document.getElementById('com-moneda-exacto')?.value||'DOP');
     const currency=/HTG|GOURD/i.test(rawCurrency)?'HTG':'DOP';
     const amount=Number(document.getElementById('com-monto-exacto')?.value);
@@ -6581,7 +6581,7 @@ window.sendwayoShareReceipt=async function(){
   function transferCommissionToBalance(target,amount,currency,actor){
     if(walletBusy){toast('La operación está procesándose. Espere un momento.', 'error');return false}walletBusy=true;
     try{
-      const dest=ensureMoney(target);if(!dest||role(dest)!=='REMITENTE'){toast('Seleccione un remitente válido.', 'error');return false}
+      const dest=ensureMoney(target);if(!dest||!['REMITENTE','ADMIN'].includes(role(dest))){toast('Seleccione su cuenta de remitente o administración.', 'error');return false}
       const cur=/HTG|GOURD/i.test(String(currency||''))?'HTG':'DOP';const amt=round(amount);if(!(amt>0)){toast('Introduzca un monto válido.', 'error');return false}
       if(num(dest.commissions[cur])+0.000001<amt){toast('La comisión disponible no alcanza. Disponible: '+num(dest.commissions[cur]).toFixed(2)+' '+cur+'.','error');return false}
       // Apply a single ledger transfer. The principal is never drawn from the administration balance.
@@ -6592,7 +6592,7 @@ window.sendwayoShareReceipt=async function(){
     finally{setTimeout(()=>{walletBusy=false},700)}
   }
   window.sendwayoMoveCommissionToBalance=function(amountOverride,currencyOverride){
-    const me=active();if(!me||role(me)!=='REMITENTE'){toast('Esta operación directa está disponible únicamente para el remitente titular.','error');return false}
+    const me=active();if(!me||!['REMITENTE','ADMIN'].includes(role(me))){toast('Esta operación está disponible para el remitente titular o la administración.','error');return false}
     const walletForm=!!$('sendwayo-wallet-method');
     const amountField=walletForm?$('sendwayo-wallet-amount'):$('v162-com-monto');
     const currencyField=walletForm?$('sendwayo-wallet-cur'):$('v162-com-moneda');
@@ -6604,7 +6604,7 @@ window.sendwayoShareReceipt=async function(){
   window.v162_guardarCom=function(){
     if(isAdmin()){
       const target=findAccount($('v162-com-rem')?.value||'');const amount=Number($('v162-com-monto')?.value);const cur=$('v162-com-moneda')?.value||'DOP';
-      if(!target||role(target)!=='REMITENTE'){toast('Seleccione un remitente registrado.', 'error');return false}
+      if(!target)target=active();if(!target||!['REMITENTE','ADMIN'].includes(role(target))){toast('Seleccione un remitente o la cuenta de administración.', 'error');return false}
       return transferCommissionToBalance(target,amount,cur,active());
     }
     if(role(active())==='REMITENTE')return window.sendwayoMoveCommissionToBalance();
