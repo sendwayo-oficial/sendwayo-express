@@ -7647,6 +7647,7 @@ window.sendwayoShareReceipt=async function(){
           accountChanges.push({key:state.profileKey,account:localAccountByDbKey(state.profileKey)||{},patch:walletPatch,signature:moneySignature(localAccountByDbKey(state.profileKey)||{})});
         }
         if(['aprobado','rechazado','no coincide'].includes(nextStatus)){patch.reviewedByAuthUid=actorUid;patch.reviewedByUserId=state.profileKey;patch.reviewedByRole=actorRole;patch.reviewedAtMs=Date.now();}
+        if(t.autoSettlementId){Object.assign(patch,{autoSettlementId:txt(t.autoSettlementId),autoSettlementAuditId:txt(t.autoSettlementAuditId||''),autoSettlementStatus:txt(t.autoSettlementStatus||''),settlementExchangeRate:Number(t.settlementExchangeRate)||0,originalAmountDOP:Number(t.originalAmountDOP)||0,originalCommissionDOP:Number(t.originalCommissionDOP)||0,netAmountDOP:Number(t.netAmountDOP)||0,grossAmountHTG:Number(t.grossAmountHTG)||0,localCommissionHTG:Number(t.localCommissionHTG)||0,payoutAmountHTG:Number(t.payoutAmountHTG)||0,approvedByName:txt(t.aprobadoPorNombre||''),approvedAtMs:Number(t.approvedAtMs)||Date.now()});}
         updates[ROOT+'/'+category+'/'+key+'/status']=patch.status;
         updates[ROOT+'/'+category+'/'+key+'/estado']=patch.estado;
         updates[ROOT+'/'+category+'/'+key+'/updatedAtMs']=patch.updatedAtMs;
