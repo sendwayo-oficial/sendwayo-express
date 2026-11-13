@@ -364,7 +364,7 @@ function reply(request, env, data, status = 200) {
     headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type";
     headers["Access-Control-Max-Age"] = "86400";
   }
-  return new Response(JSON.stringify(data), { status, headers });
+  return status === 204 ? new Response(null, { status, headers }) : new Response(JSON.stringify(data), { status, headers });
 }
 async function bodyJson(request) {
   const text = await request.text();
