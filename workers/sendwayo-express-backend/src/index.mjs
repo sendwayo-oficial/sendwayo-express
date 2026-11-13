@@ -218,11 +218,19 @@ async function settleRdHt(env, identity, input) {
       String(parent.createdByUserId || "") === "admin"
     )) { const e = new Error("El agente no puede aprobar operaciones propias ni operaciones creadas por Administración."); e.status = 403; throw e; }
     const amounts = getTransactionAmounts(parent);
-    const senderKey = findUserKey(users, [parent.userId, parent.ownerLegacyId, parent.ownerCode, parent.ownerId, parent.remitenteId, parent.debitAccountId]);
+    const creatorRoleRaw = norm(parent.createdByRole || "");
+    const senderRole = creatorRoleRaw === "remitente" ? "REMITENTE"
+      : creatorRoleRaw === "agente" ? "AGENTE"
+      : ["admin", "administrador"].includes(creatorRoleRaw) ? "ADMIN" : "";
+    if (!senderRole) {
+      const e = new Error("No se pudo confirmar si el envío fue creado por Remitente, Agente o Administración. No se modificó ningún balance."); e.status = 409; throw e;
+    }
+    const senderKey = senderRole === "REMITENTE"
+      ? findUserKey(users, [parent.createdByUserId, parent.userId, parent.ownerLegacyId, parent.ownerCode, parent.ownerId, parent.remitenteId])
+      : "admin";
     const senderProfile = users[senderKey];
-    const senderRole = roleOf(senderProfile);
-    if (!senderKey || !senderProfile || !["REMITENTE", "AGENTE", "ADMIN"].includes(senderRole)) {
-      const e = new Error("No se encontró una cuenta de origen válida. No se modificó ningún balance."); e.status = 409; throw e;
+    if (!senderKey || !senderProfile || (senderRole === "REMITENTE" && roleOf(senderProfile) !== "REMITENTE")) {
+      const e = new Error("No se encontró la cuenta financiera que corresponde al creador de esta operación."); e.status = 409; throw e;
     }
     const sourceKey = senderRole === "REMITENTE" ? senderKey : "admin";
     const sourceProfile = users[sourceKey], admin = users.admin;
