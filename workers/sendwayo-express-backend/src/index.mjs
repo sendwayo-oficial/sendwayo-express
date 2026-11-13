@@ -100,7 +100,7 @@ function actorFrom(root, identity) {
     return { role: "ADMIN", userKey: "admin", profile: admin, uid: identity.uid };
   }
   const mapping = root.agentAuth?.[identity.uid] || {}, profile = users[String(mapping.userId || "")];
-  if (mapping.active === true && mapping.authUid === identity.uid && profile?.authUid === identity.uid && roleOf(profile) === "AGENTE") {
+  if (mapping.active === true && mapping.authUid === identity.uid && profile?.authUid === identity.uid && profile.active !== false && !["inactive", "inactivo", "disabled", "desactivado"].includes(norm(profile.status)) && roleOf(profile) === "AGENTE") {
     return { role: "AGENTE", userKey: String(mapping.userId), profile, uid: identity.uid };
   }
   const e = new Error("La identidad no tiene rol activo de Administración o Agente."); e.status = 403; throw e;
@@ -208,7 +208,14 @@ async function settleRdHt(env, identity, input) {
     if (!found) { const e = new Error("La operación todavía no está guardada en Firebase. Actualice la lista e inténtelo otra vez."); e.status = 404; throw e; }
     const parentKey = found.key, parent = found.row, settlementKey = safeKey("RDHT-" + parentKey);
     const internal = root.internalSettlements?.[settlementKey];
-    if (alreadySettled(parent, internal, settlementKey)) return { ok: true, alreadySettled: true, transactionId: parentKey, settlementId: settlementKey };
+    if (alreadySettled(parent, internal, settlementKey)) return {
+      ok: true, alreadySettled: true, transactionId: parentKey, settlementId: settlementKey,
+      accounting: {
+        grossHtg: cents(internal.accounting?.grossHtg),
+        adminCommissionHtg: cents(internal.accounting?.adminCommissionHtg),
+        adminPayoutHtg: cents(internal.accounting?.adminPayoutHtg)
+      }
+    };
     if (norm(parent.status || parent.estado) !== "pendiente") { const e = new Error("La operación no está Pendiente o ya fue procesada."); e.status = 409; throw e; }
     if (!isRdHtNatcashRoute(parent)) { const e = new Error("No se identificó la ruta RD → HT NatCash/MonCash."); e.status = 422; throw e; }
     if (actor.role === "AGENTE" && (
