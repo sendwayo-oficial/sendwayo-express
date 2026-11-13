@@ -1,0 +1,34 @@
+name: SENDWAYO RD-Haiti NatCash/MonCash settlement checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html'
+      - 'assets/sendwayo-v7-rd-haiti-auto-settlement.js'
+      - 'tests/sendwayo-rd-haiti-settlement.test.cjs'
+      - '.github/workflows/sendwayo-rd-haiti-settlement.yml'
+
+jobs:
+  rd-haiti-settlement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate V7 inline scripts and external settlement script
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const html=fs.readFileSync('SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html','utf8');
+          const blocks=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]).filter(Boolean);
+          if(!blocks.length) throw new Error('No se encontraron scripts inline de V7.');
+          blocks.forEach((source,index)=>new Function(source));
+          const external=fs.readFileSync('assets/sendwayo-v7-rd-haiti-auto-settlement.js','utf8');
+          new Function(external);
+          if(!html.includes('assets/sendwayo-v7-rd-haiti-auto-settlement.js')) throw new Error('No está conectado el módulo de liquidación.');
+          console.log('PASS: '+blocks.length+' scripts inline V7 y módulo externo sin errores de sintaxis.');
+          NODE
+      - name: Verify RD→HT calculation, scope, and accounting metadata
+        run: node tests/sendwayo-rd-haiti-settlement.test.cjs
