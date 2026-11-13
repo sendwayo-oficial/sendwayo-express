@@ -1,0 +1,7 @@
+name = "sendwayo-express-backend"
+main = "src/index.mjs"
+compatibility_date = "2026-11-13"
+
+[vars]
+FIREBASE_DATABASE_URL = "https://sendwayo-express-default-rtdb.firebaseio.com"
+ALLOWED_ORIGINS = "https://sendwayo-oficial.github.io,http://localhost:8787"
