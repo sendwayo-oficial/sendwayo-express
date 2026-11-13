@@ -7510,7 +7510,8 @@ window.sendwayoShareReceipt=async function(){
       autoSettlement:t.autoSettlement===true,
       autoSettlementId:txt(t.autoSettlementId||''),
       autoSettlementStatus:txt(t.autoSettlementStatus||''),
-      autoSettlementLedgerId:txt(t.autoSettlementLedgerId||''),
+      autoSettlementAuditId:txt(t.autoSettlementAuditId||''),
+      autoSettlementLedgerId:txt(t.autoSettlementLedgerId||t.autoSettlementAuditId||''),
       settlementExchangeRate:Number(t.settlementExchangeRate)||0,
       originalAmountDOP:Number(t.originalAmountDOP)||0,
       originalCommissionDOP:Number(t.originalCommissionDOP)||0,
@@ -7572,7 +7573,7 @@ window.sendwayoShareReceipt=async function(){
         created.push({t,category,key,payload,targetKey});
         if(t.autoSettlement===true){
           if(actorRole!=='ADMIN')throw new Error('La liquidación automática Haití→Haití debe ser confirmada por Administración.');
-          const auditKey=safeDbKey(t.autoSettlementLedgerId||t.id);
+          const auditKey=safeDbKey(t.autoSettlementAuditId||t.autoSettlementLedgerId||t.id);
           const parentId=txt(t.parentTransactionId);
           if(!parentId)throw new Error('Falta la transacción RD→Haití vinculada a la liquidación.');
           updates[ROOT+'/audit/'+auditKey]={
