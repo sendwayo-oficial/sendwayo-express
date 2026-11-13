@@ -78,4 +78,20 @@ window.modificar=function(id){
  }
  return typeof oldModify==='function'?oldModify.apply(this,arguments):false;
 };
+const oldGeneric=window.sendwayoActionGeneric;
+if(typeof oldGeneric==='function')window.sendwayoActionGeneric=function(view,action,id){
+ const t=find(id),a=norm(action).replace(/[^a-z]/g,'');
+ const protectedInternal=t&&String(t.firebaseCategory||'')==='internalSettlements';
+ const settledParent=t&&isRdHt(t)&&!!t.internalSettlementId;
+ if(protectedInternal&&/(borrar|eliminar|delete|modificar|editar|modify|edit)/.test(a)){
+   window.alert('El asiento interno forma parte de la auditoría y no se puede modificar ni borrar.');
+   return false;
+ }
+ if(settledParent&&/(modificar|editar|modify|edit)/.test(a)){
+   window.alert('La operación ya está liquidada. Use la reversión administrativa antes de cualquier cambio.');
+   return false;
+ }
+ if(settledParent&&/(borrar|eliminar|delete)/.test(a))return window.borrar(id);
+ return oldGeneric.apply(this,arguments);
+};
 })();
