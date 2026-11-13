@@ -6246,7 +6246,7 @@ window.sendwayoShareReceipt=async function(){
     if(kind==='HTHT'){
       origin='HTG'; receivedCurrency='HTG';
       const feeFn=isWithdrawal?window.v162_getFeeRetiroHT:window.v162_getFeeEnvioHT;
-      fee=typeof feeFn==='function' ? Number(feeFn(amount))||0 : 25;
+      fee=/natcash|moncash/i.test(String(route||''))?Math.round(amount*0.03*100)/100:(typeof feeFn==='function' ? Number(feeFn(amount))||0 : 25);
       net=amount-fee; received=net; rate='Tarifa Haití–Haití';
     } else if(kind==='RDHT'){
       origin='DOP'; receivedCurrency='HTG'; fee=Math.round(amount*0.08*100)/100; net=amount-fee; received=net*2.10; rate='Tasa RD→HT 2.10';
@@ -8752,7 +8752,7 @@ window.sendwayoShareReceipt=async function(){
   var d=routeData(kind),input=$('v162-'+kind+'-monto'),amount=Number(input&&input.value||0);if(!Number.isFinite(amount)||amount<0)amount=0;
   var cur=d.currency,fee=0,net=amount,received=amount,receivedCur=cur;
   if(d.from.alpha2==='HT'&&d.to.alpha2==='HT'){
-   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=typeof feeFn==='function'?Number(feeFn(amount)||0):0;net=amount-fee;received=net;receivedCur='HTG';
+   cur='HTG';var feeFn=kind==='envio'?window.v162_getFeeEnvioHT:window.v162_getFeeRetiroHT;fee=/natcash|moncash/i.test(String(d.provider||'')+' '+String(d.route||''))?Math.round(amount*0.03*100)/100:(typeof feeFn==='function'?Number(feeFn(amount)||0):0);net=amount-fee;received=net;receivedCur='HTG';
   }else{
    fee=Math.round(amount*.08*100)/100;net=amount-fee;
    if(d.from.alpha2==='DO'&&d.to.alpha2==='HT'){cur='DOP';received=net*2.1;receivedCur='HTG';}
