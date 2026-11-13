@@ -41,7 +41,7 @@ async function firebaseServiceToken(env) {
   const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON);
   if (!sa.client_email || !sa.private_key) throw new Error("El secreto de Firebase está incompleto.");
   const unsigned = json64({ alg: "RS256", typ: "JWT" }) + "." + json64({
-    iss: sa.client_email, sub: sa.client_email, aud: TOKEN_URL, iat: now, exp: now + 3500,
+    iss: sa.client_email, aud: TOKEN_URL, iat: now, exp: now + 3500,
     scope: "https://www.googleapis.com/auth/firebase.database"
   });
   const key = await crypto.subtle.importKey("pkcs8", pemBytes(sa.private_key),
