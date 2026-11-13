@@ -357,24 +357,29 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     } catch (error) { console.warn('[SENDWAYO] No se pudo mostrar el aviso:', error); }
   };
 </script>
-<div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
+<div id="login-screen" class="fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
+  <div data-sendwayo-v7-form class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
     <div class="text-center mb-6">
-      <img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" style="display:block;width:150px;height:100px;object-fit:contain;margin:0 auto 12px;">
-      <h2 class="font-extrabold text-[18px]">SENDWAYO EXPRESS</h2>
+      <h1 class="font-extrabold text-[25px] tracking-wide text-[#102b49]">SENDWAYO EXPRESS</h1>
+      <p class="mt-1 text-[12px] font-semibold text-slate-500">Plataforma de envíos y servicios</p>
+      <p class="mt-2 text-[11px] text-slate-500">Acceso seguro a su negocio</p>
     </div>
     <div class="space-y-4">
       <div>
-        <label class="block text-[11px] font-bold mb-1">Usuario</label>
-        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
+        <label class="block text-[12px] font-bold mb-1 text-[#102b49]" for="login-usuario">Usuario</label>
+        <input id="login-usuario" autocomplete="username" type="text" placeholder="Escriba su usuario" class="w-full border rounded-lg p-3 text-[15px]">
       </div>
       <div>
-        <label class="block text-[11px] font-bold mb-1">Contraseña</label>
-        <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
-        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
+        <label class="block text-[12px] font-bold mb-1 text-[#102b49]" for="login-password">Contraseña</label>
+        <div class="flex items-center gap-2">
+          <input id="login-password" autocomplete="current-password" type="password" placeholder="Escriba su contraseña" class="w-full border rounded-lg p-3 text-[15px]">
+          <button type="button" onclick="window.v162_togglePass()" class="border rounded-lg px-3 py-3 text-[12px] font-bold text-[#102b49]">Ver</button>
+        </div>
       </div>
-      <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
-      <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
+      <button id="sendwayo-recover-password" type="button" class="w-full text-right text-[12px] font-semibold text-blue-700 underline">Recuperar cuenta</button>
+      <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">Ingresar</button>
+      <button type="button" onclick="window.alert('Para registrar una cuenta nueva, solicite la activación al administrador de SENDWAYO EXPRESS.')" class="w-full border border-[#0f2440] text-[#0f2440] font-bold py-3 rounded-xl">Registrar</button>
+      <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]" role="status" aria-live="polite"></div>
     </div>
   </div>
 </div>
@@ -7929,9 +7934,10 @@ window.sendwayoShareReceipt=async function(){
   const recoverButton=document.getElementById('sendwayo-recover-password');
   if(recoverButton) recoverButton.onclick=async()=>{
     const candidate=txt(document.getElementById('login-usuario')?.value);
-    if(!candidate.includes('@')){loginError('Escriba primero el correo registrado en Firebase Authentication para recibir el enlace de recuperación.');return;}
-    try{await auth.sendPasswordResetEmail(candidate.toLowerCase());loginError('Si el correo está registrado, Firebase enviará un enlace para restablecer la contraseña.');}
-    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe el correo y la configuración de Authentication.');}
+    const email=resolveEmail(candidate);
+    if(!email){loginError('Escriba su usuario o correo registrado para recuperar la cuenta.');return;}
+    try{await auth.sendPasswordResetEmail(email);loginError('Si la cuenta está registrada, Firebase enviará el enlace de recuperación al correo asociado.');}
+    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe la cuenta y la configuración de Authentication.');}
   };
   // Guardar beneficiarios en Firebase antes de confirmar al usuario; no dejarlos solo en este navegador.
   window.v162_guardarBen = async function(){
