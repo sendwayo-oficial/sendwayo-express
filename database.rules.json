@@ -253,7 +253,7 @@
         }
       },
       "internalSettlements": {
-        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || auth.token.email === 'ideletteismorin@gmail.com' || root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true)",
+        ".read": "auth != null && (auth.token.admin === true || root.child('sendwayo_express_v2/users/admin/authUid').val() === auth.uid || auth.token.email === 'sendwayoexpress@gmail.com' || auth.token.email === 'ideletteismorin@gmail.com' || (root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('active').val() === true && root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('authUid').val() === auth.uid && root.child('sendwayo_express_v2/users').child(root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()).child('authUid').val() === auth.uid && root.child('sendwayo_express_v2/users').child(root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()).child('active').val() !== false && root.child('sendwayo_express_v2/users').child(root.child('sendwayo_express_v2/agentAuth').child(auth.uid).child('userId').val()).child('role').val() === 'agente'))",
         ".write": false,
         ".indexOn": [
           "settlementRoleScope"
