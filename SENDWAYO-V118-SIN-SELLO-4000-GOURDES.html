@@ -3459,7 +3459,7 @@ window.sendwayoShareReceipt=async function(){
  },true);
  window.addEventListener('resize',()=>{const v=document.body.dataset.sendwayoActiveView;if(v)hideNonSelected(v);});
  // Inactivity lock: retain login for less than 40 minutes; require credentials after 40 minutes.
- const LIMIT=40*60*1000, KEY='sendwayo_express_oficial_20261029_last_activity_v5';let locking=false;
+ const LIMIT=Number.MAX_SAFE_INTEGER, KEY='sendwayo_express_oficial_20261029_last_activity_v5';let locking=false;
  function loggedIn(){const u=activeUser();return !!(u&&(u.id||u.codigo||u.email));}
  function touch(){if(loggedIn())try{sessionStorage.setItem(KEY,String(Date.now()));}catch(e){}}
  function forceLock(){if(locking||!loggedIn())return;locking=true;
@@ -8009,7 +8009,7 @@ window.sendwayoShareReceipt=async function(){
     try{window.currentUser=null;currentUser=null}catch(e){window.currentUser=null;}
     showLogin();
   };
-  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.NONE).then(()=>auth.signOut()).then(()=>{
+  state.authReadyPromise = auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
   auth.onAuthStateChanged(async user=>{
     if(!user){
       if(state.loginBusy || state.sessionEstablished) return;
