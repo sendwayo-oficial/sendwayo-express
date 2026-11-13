@@ -7926,12 +7926,13 @@ window.sendwayoShareReceipt=async function(){
   // Never create accounts or reset credentials in localStorage; Firebase Authentication is the sole identity source.
   window.v162_registrar=function(){loginError('El registro local está desactivado por seguridad. El administrador debe habilitar su cuenta en Firebase Authentication.');};
   // v162_goWelcome conserva el retorno funcional a la página pública.
-  const recoverButton=document.getElementById('sendwayo-recover-password');
+  const recoverButton=document.getElementById('sendwayo-recover-password')||document.getElementById('sendwayo-recover-button');
   if(recoverButton) recoverButton.onclick=async()=>{
     const candidate=txt(document.getElementById('login-usuario')?.value);
-    if(!candidate.includes('@')){loginError('Escriba primero el correo registrado en Firebase Authentication para recibir el enlace de recuperación.');return;}
-    try{await auth.sendPasswordResetEmail(candidate.toLowerCase());loginError('Si el correo está registrado, Firebase enviará un enlace para restablecer la contraseña.');}
-    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe el correo y la configuración de Authentication.');}
+    const email=resolveEmail(candidate);
+    if(!email){loginError('Escriba su usuario o correo registrado para recuperar la cuenta.');return;}
+    try{await auth.sendPasswordResetEmail(email);loginError('Si la cuenta está registrada, Firebase enviará un enlace de recuperación al correo asociado.');}
+    catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe la cuenta y la configuración de Authentication.');}
   };
   // Guardar beneficiarios en Firebase antes de confirmar al usuario; no dejarlos solo en este navegador.
   window.v162_guardarBen = async function(){
