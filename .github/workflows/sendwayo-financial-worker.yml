@@ -24,3 +24,20 @@ jobs:
         run: node --check cloudflare-worker/src/index.mjs
       - name: Run settlement tests
         run: node --test cloudflare-worker/tests/*.test.mjs
+
+  v7-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate V7 Firebase rules
+        run: node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('database.rules.json OK')"
+      - name: Run all V7 regression tests
+        run: |
+          set -euo pipefail
+          for test_file in tests/*.test.cjs; do
+            echo "Running $test_file"
+            node "$test_file"
+          done
