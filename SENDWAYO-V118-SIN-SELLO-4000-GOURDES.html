@@ -7190,19 +7190,42 @@ window.sendwayoShareReceipt=async function(){
   }
   async function ensureInitialDirectoryProfiles(firebaseUser){
     if(norm(firebaseUser&&firebaseUser.email)!==ADMIN_EMAIL) throw new Error('Solo la cuenta administrativa puede preparar el directorio inicial.');
-    const snap=await userRoot.once('value');
-    const existing=snapshotRows(snap);
-    const knownEmails=new Set(existing.map(r=>norm(r.data.authEmail||r.data.email)).filter(Boolean));
     const accounts=[...(Array.isArray(AGENTES)?AGENTES:[]),...(Array.isArray(REMITENTES)?REMITENTES:[])];
     for(const account of accounts){
       const email=norm(account.email||account.usuario);
-      if(!email||knownEmails.has(email)) continue;
+      if(!email) continue;
       const role=String(account.role||'').toUpperCase()==='AGENTE'?'AGENTE':'REMITENTE';
-      const key=safeDbKey(account.id||account.codigo||email);
-      const existingKey=await userRoot.child(key).once('value');
-      if(existingKey.exists()){knownEmails.add(email);continue;}
-      await userRoot.child(key).set(seedProfileFromAccount(account,role));
-      knownEmails.add(email);
+      const id=txt(account.id||account.codigo||email);
+      const key=safeDbKey(id);
+      let found=await queryOne('authEmail',email);
+      if(!found) found=await queryOne('email',email);
+      if(!found){
+        const existingKey=await userRoot.child(key).once('value');
+        if(existingKey.exists()) found={key,data:existingKey.val()};
+      }
+      const active=account.activo!==false && norm(account.estado)!=='inactivo';
+      if(found){
+        // Actualiza identidad/estado/ID oficial, pero conserva balances, comisiones e historial.
+        await userRoot.child(found.key).update({
+          id,legacyId:id,accountId:id,staffId:id,code:id,codigo:id,
+          number:txt(account.numero),name:txt(account.name||account.nombre),
+          nombre:txt(account.name||account.nombre),displayName:txt(account.name||account.nombre),
+          email:txt(account.email||account.usuario).toLowerCase(),
+          authEmail:txt(account.email||account.usuario).toLowerCase(),
+          phone:txt(account.telefono||account.phone||account.celular),
+          telefono:txt(account.telefono||account.phone||account.celular),
+          celular:txt(account.telefono||account.phone||account.celular),
+          role:role==='AGENTE'?'agente':'remitente',
+          active,activo:active,estado:active?'Activo':'Inactivo',
+          mustChangePassword:true,passwordChangeRequired:true
+        });
+      }else{
+        const seeded=seedProfileFromAccount(account,role);
+        seeded.id=id;seeded.legacyId=id;seeded.accountId=id;seeded.staffId=id;seeded.code=id;seeded.codigo=id;
+        seeded.active=active;seeded.activo=active;seeded.estado=active?'Activo':'Inactivo';
+        seeded.mustChangePassword=true;seeded.passwordChangeRequired=true;
+        await userRoot.child(key).set(seeded);
+      }
     }
   }
   function uiProfileFromRecord(key, data) {
