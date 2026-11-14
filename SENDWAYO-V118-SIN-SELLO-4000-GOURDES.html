@@ -4181,7 +4181,7 @@ window.sendwayoShareReceipt=async function(){
       heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (editable por Administración)</th><th class="p-3 text-left">Código (fijo)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
       if(!isAdmin()) { el.innerHTML='<div class="p-8 text-center font-bold">Este directorio está disponible para el administrador.</div>';return; }
     } else if(view==='cuentas') heading=`<th class="p-3">Banco / número</th><th class="p-3">Titular / documento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th>`;
-    else if(view==='secretas') heading=`<th class="p-3 text-left">N°</th><th class="p-3 text-left">ID</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
+    else if(view==='secretas') heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
     else heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Beneficiario / titular</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
     const showAdd=true;
     el.innerHTML=`<section class="p-3 md:p-4 space-y-3"><header class="bg-white border rounded-xl p-3"><div class="font-black text-sm mb-3">${esc(titles[view]||view)}</div><div class="flex flex-wrap items-center gap-2">${showAdd?add:''}<input id="sendwayo-search-${view}" type="search" oninput="sendwayoSearchModule('${view}',this.value)" placeholder="Buscador…" class="border rounded-full px-4 py-2.5 text-xs w-52 max-w-full"><button type="button" onclick="sendwayoExportModule('${view}','excel')" class="bg-green-600 text-white px-3 py-2 rounded-full text-xs">Excel</button><button type="button" onclick="sendwayoExportModule('${view}','pdf')" class="bg-red-600 text-white px-3 py-2 rounded-full text-xs">PDF</button><button type="button" onclick="sendwayoExportModule('${view}','csv')" class="bg-blue-700 text-white px-3 py-2 rounded-full text-xs">CSV</button></div></header>${extra}<div class="bg-white border rounded-xl overflow-x-auto"><table id="tabla-sendwayo-${view}" class="w-full text-xs min-w-[820px]"><thead class="bg-[#edf2f8]"><tr><th class="p-3 text-left">N°</th>${heading}</tr></thead><tbody id="tabla-sendwayo-${view}-body"></tbody></table></div></section>`;
@@ -4201,8 +4201,8 @@ window.sendwayoShareReceipt=async function(){
         <td class="p-3">${String(i+1).padStart(2,'0')}</td>
         <td class="p-3 font-bold">${esc(a.id)}</td>
         <td class="p-3">${esc(acctName(a))}<br>${esc(a.email||a.usuario||'')}</td>
-        <td class="p-3">${esc(role)}<br><span class="text-gray-500">Celular: ${esc(a.celular||a.telefono||'')}</span></td>
-        <td class="p-3"><span>${esc(st)}</span></td>
+        <td class="p-3">${esc(role==='ADMINISTRADOR'?'ADMIN':role)}</td>
+        <td class="p-3"><span>${esc(st)}</span><br><span class="text-gray-500">Celular: ${esc(a.celular||a.telefono||'')}</span></td>
         <td class="p-3"><div class="flex flex-wrap gap-1">
           <button onclick="sendwayoEditSecretAccount('${esc(a.id)}')" class="border rounded-full px-3 py-1">Modificar datos</button>
           <button onclick="sendwayoToggleAccountStatus('${esc(a.id)}')" class="border rounded-full px-3 py-1">${norm(st)==='inactivo'?'Activar':'Inactivar'}</button>
