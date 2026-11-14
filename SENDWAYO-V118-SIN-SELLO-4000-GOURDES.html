@@ -635,7 +635,7 @@ let REMITENTES = [
   senderRows.forEach((r,i)=>{
     let a=REMITENTES.find(x=>x.id===r[0]);
     if(!a){a={id:r[0],codigo:'',numero:String(i+1).padStart(2,'0'),balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'};REMITENTES.push(a);}
-    Object.assign(a,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role:'REMITENTE',estado:'Activo',activo:true});
+    const active=r[0]!=='REM00009';Object.assign(a,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role:'REMITENTE',estado:active?'Activo':'Inactivo',activo:active});
   });
   AGENTES.sort((a,b)=>Number(a.id.slice(-5))-Number(b.id.slice(-5)));
   REMITENTES.sort((a,b)=>Number(a.id.slice(-5))-Number(b.id.slice(-5)));
@@ -3772,6 +3772,10 @@ window.sendwayoShareReceipt=async function(){
    return a||null;
  };
  const currentAccount=()=>{const u=user();return u?accountById(u.id)||accountByInput(u.email)||null:null};
+ const SECRET_DIRECTORY_PROFILE_KEY='sendwayo_express_oficial_20261114_secret_directory_profiles_v7';
+ const savedSecretProfiles=readJSON(SECRET_DIRECTORY_PROFILE_KEY,[])||[];
+ savedSecretProfiles.forEach(p=>{const a=accountById(p.id);if(!a)return;['name','nombre','email','usuario','telefono','celular','estado'].forEach(k=>{if(p[k]!==undefined)a[k]=p[k];});if(typeof p.activo==='boolean')a.activo=p.activo;});
+ function saveSecretDirectoryProfiles(){writeJSON(SECRET_DIRECTORY_PROFILE_KEY,allAccounts().map(a=>({id:a.id,name:a.name,nombre:a.nombre,email:a.email,usuario:a.usuario,telefono:a.telefono,celular:a.celular,estado:a.estado,activo:a.activo===false?false:true})));}
  const savedAccountState=readJSON('sendwayo_express_oficial_20261029_account_values_v5',null)||null;window.__sendwayoHadSavedAccountState=Array.isArray(savedAccountState)&&savedAccountState.length>0;
  function saveAccountValues(){const data=allAccounts().map(a=>({id:a.id,balances:balanceObject(a),commissions:commissionObject(a),password:a.password}));writeJSON('sendwayo_express_oficial_20261029_account_values_v5',data);writeJSON('sendwayo_express_oficial_20261029_accounts_v5',data);}
  const currencyFor=t=>{if(!t)return'DOP';const r=norm(text(t.ruta)+' '+text(t.rutaExacta));const fromRD=/^(?:rd\b|republica\s+dominicana\b)/.test(r);const toHaiti=/\b(?:ht|haiti|hati)\b/.test(r);if(fromRD&&toHaiti)return'DOP';if(/^(?:ht\b|haiti\b|hati\b)/.test(r)||/\b(?:naca\s*a\s*naca|montcash\s*a\s*montcash|natcash\s*a\s*natcash|moncash\s*a\s*moncash)\b/.test(r))return'HTG';if(/\b(?:htg|gourdes?|gdes)\b/i.test(text(t.moneda)+' '+text(t.monto)))return'HTG';return'DOP';};
@@ -4076,12 +4080,12 @@ window.sendwayoShareReceipt=async function(){
       const parts=name.split(/\s+/);const idNew=prefix+String(num).padStart(5,'0');const code=(role==='AGENTE'?'AGE-':'REM-')+(parts[0]||'USR').slice(0,3).toUpperCase()+(parts.length>1?parts[parts.length-1]:parts[0]||'USR').slice(0,3).toUpperCase();
       a={id:idNew,codigo:code,codigo2:code,numero:String(num).padStart(2,'0'),name,nombre:name,email,usuario:email,celular:phone,telefono:phone,password:pass,contrasena:pass,role,estado:state,activo:state==='Activo',balances:role==='AGENTE'?undefined:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0}};a.comisiones=a.commissions;arr.push(a);
     } else {a.nombre=a.name=name;a.email=a.usuario=email;a.celular=a.telefono=phone;a.estado=state;a.activo=state==='Activo';}
-    a.estado=state;a.activo=state==='Activo';writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
+    a.estado=state;a.activo=state==='Activo';saveSecretDirectoryProfiles();writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',allAccounts().filter(x=>x.profilePhoto||x.bankDetails).map(x=>({id:x.id,profilePhoto:x.profilePhoto,bankDetails:x.bankDetails})));saveAccountValues();
     const old=window.USUARIOS_LOGIN||[];window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,aliases:[x.idAnterior,...(Array.isArray(x.idAliases)?x.idAliases:[]),x.codigoAnterior,x.codigo2,...(x.loginAliases||[])].filter(Boolean),celular:x.celular||x.telefono,telefono:x.telefono||x.celular,password:x.password||x.contrasena||'',password2:x.celular||x.telefono,allowedPasswords:x.allowedPasswords||[],nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
     const rec=window.USUARIOS_LOGIN.find(x=>x.id===a.id);if(rec&&old.some(x=>x.id===a.id)){rec.allowedPasswords=[...(rec.allowedPasswords||[])];}
     $('sendwayo-v7-modal')?.classList.add('hidden');renderCustom(view);alert('Cuenta guardada. ID y código quedaron protegidos.');
   };
-  window.sendwayoToggleAccountStatus=function(id){if(!isAdmin()){alert('Solo el administrador puede activar o inactivar cuentas.');return;}const a=accountById(id);if(!a)return;const inactive=a.activo===false||norm(a.estado)==='inactivo';a.activo=inactive;a.estado=inactive?'Activo':'Inactivo';const rec=(window.USUARIOS_LOGIN||[]).find(x=>x.id===a.id);if(rec)rec.status=a.estado;saveAccountValues();renderCustom('secretas');if(['agentes','remitentes'].includes(getCurrentView()))renderCustom(getCurrentView());};
+  window.sendwayoToggleAccountStatus=function(id){if(!isAdmin()){alert('Solo el administrador puede activar o inactivar cuentas.');return;}const a=accountById(id);if(!a)return;const inactive=a.activo===false||norm(a.estado)==='inactivo';a.activo=inactive;a.estado=inactive?'Activo':'Inactivo';const rec=(window.USUARIOS_LOGIN||[]).find(x=>x.id===a.id);if(rec)rec.status=a.estado;saveSecretDirectoryProfiles();saveAccountValues();renderCustom('secretas');if(['agentes','remitentes'].includes(getCurrentView()))renderCustom(getCurrentView());};
   window.sendwayoEditSecretAccount=function(id){
     if(!isAdmin())return;
     const a=accountById(id);if(!a)return;
@@ -4096,6 +4100,8 @@ window.sendwayoShareReceipt=async function(){
     const name=$('v7-secret-admin-name')?.value.trim()||'',email=$('v7-secret-admin-email')?.value.trim()||'',phone=$('v7-secret-admin-phone')?.value.trim()||'';
     if(!name||!email||!phone||!/^S+@S+.S+$/.test(email)){alert('Complete nombre, correo válido y celular.');return;}
     Object.assign(ADMIN,{name,nombre:name,email,telefono:phone,celular:phone});
+    saveSecretDirectoryProfiles();
+    window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,celular:x.celular||x.telefono,telefono:x.telefono||x.celular,nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
     saveAccountValues();$('sendwayo-v7-modal')?.classList.add('hidden');renderCustom('secretas');
   };
   window.sendwayoSecretBalanceAction=function(id,action){
