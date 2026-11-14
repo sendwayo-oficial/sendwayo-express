@@ -7398,7 +7398,7 @@ window.sendwayoShareReceipt=async function(){
     const qFor=category=>{
       const ref=db.ref(ROOT+'/'+category);
       if(role==='REMITENTE') return ref.orderByChild('userId').equalTo(profileRow.key);
-      if(category==='internalSettlements') return ref; if(role==='AGENTE') return ref.orderByChild('status').equalTo('Pendiente');
+      if(category==='internalSettlements'||(role==='AGENTE'&&category==='envios')) return ref; if(role==='AGENTE') return ref.orderByChild('status').equalTo('Pendiente');
       return ref;
     };
     let successfulReads=0;
