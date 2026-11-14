@@ -4098,7 +4098,7 @@ window.sendwayoShareReceipt=async function(){
   window.sendwayoSaveSecretAdmin=function(){
     if(!isAdmin())return;
     const name=$('v7-secret-admin-name')?.value.trim()||'',email=$('v7-secret-admin-email')?.value.trim()||'',phone=$('v7-secret-admin-phone')?.value.trim()||'';
-    if(!name||!email||!phone||!/^S+@S+.S+$/.test(email)){alert('Complete nombre, correo válido y celular.');return;}
+    if(!name||!email||!phone||(!email.includes('@')||!email.includes('.'))){alert('Complete nombre, correo válido y celular.');return;}
     Object.assign(ADMIN,{name,nombre:name,email,telefono:phone,celular:phone});
     saveSecretDirectoryProfiles();
     window.USUARIOS_LOGIN=allAccounts().map(x=>({usuario:x.usuario||x.email,email:x.email||x.usuario,id:x.id,codigo:x.codigo,celular:x.celular||x.telefono,telefono:x.telefono||x.celular,nombre:x.nombre||x.name,role:x.role,status:x.estado||'Activo'}));
