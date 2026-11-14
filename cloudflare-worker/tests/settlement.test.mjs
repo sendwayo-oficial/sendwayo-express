@@ -48,3 +48,69 @@ test("uses two-decimal currency rounding", () => {
   assert.equal(__test.round2(3864 * 0.03), 115.92);
   assert.equal(__test.money("RD$ 2,000.00"), 2000);
 });
+
+
+test("refunds a remittee DOP reservation exactly once", () => {
+  const account = {
+    balance: 100,
+    balanceDOP: 100,
+    balanceHTG: 5,
+    balances: { DOP: 100, HTG: 5 },
+    balanceReservations: {
+      "send-123": {
+        id: "send-123", transactionId: "send-123",
+        status: "RESERVED", amount: 2000, currency: "DOP"
+      }
+    }
+  };
+  const refund = __test.applyBalanceRefund(
+    account, "remitente-123", "send-123", 2000, "DOP", "admin-uid", 12345
+  );
+  assert.deepEqual(refund, {
+    accountKey: "remitente-123",
+    reservationId: "send-123",
+    currency: "DOP",
+    amount: 2000,
+    balanceBefore: 100,
+    balanceAfter: 2100
+  });
+  assert.equal(account.balance, 2100);
+  assert.equal(account.balanceDOP, 2100);
+  assert.equal(account.balances.DOP, 2100);
+  assert.equal(account.balanceHTG, 5);
+  assert.equal(account.balanceReservations["send-123"].status, "REVERSED");
+  assert.equal(account.balanceReservations["send-123"].reversedByAuthUid, "admin-uid");
+  assert.throws(
+    () => __test.applyBalanceRefund(account, "remitente-123", "send-123", 2000, "DOP", "admin-uid", 12346),
+    /SOURCE_BALANCE_RESERVATION_NOT_ACTIVE/
+  );
+});
+
+test("refunds the admin-funded DOP balance without a remittee reservation", () => {
+  const admin = {
+    balance: 500,
+    balanceDOP: 500,
+    balances: { DOP: 500, HTG: 0 }
+  };
+  const refund = __test.applyBalanceRefund(admin, "admin", "admin-send-9", 2000, "DOP", "admin-uid", 900);
+  assert.equal(refund.balanceAfter, 2500);
+  assert.equal(admin.balance, 2500);
+  assert.equal(admin.balanceDOP, 2500);
+  assert.equal(admin.balances.DOP, 2500);
+});
+
+test("rejects a source refund if the remittee reservation is missing or mismatched", () => {
+  assert.throws(
+    () => __test.applyBalanceRefund(
+      { balances: { DOP: 0, HTG: 0 } }, "remitente-1", "missing", 100, "DOP", "admin-uid", 1
+    ),
+    /SOURCE_BALANCE_RESERVATION_NOT_ACTIVE/
+  );
+  assert.throws(
+    () => __test.applyBalanceRefund({
+      balanceDOP: 0, balances: { DOP: 0, HTG: 0 },
+      balanceReservations: { "send-1": { status: "RESERVED", amount: 99, currency: "DOP" } }
+    }, "remitente-1", "send-1", 100, "DOP", "admin-uid", 1),
+    /SOURCE_BALANCE_RESERVATION_MISMATCH/
+  );
+});
