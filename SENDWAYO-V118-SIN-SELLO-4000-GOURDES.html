@@ -9240,7 +9240,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  function r2(v){return Math.round((n(v)+Number.EPSILON)*100)/100;}
  function rows(){try{if(Array.isArray(window.TRANSACCIONES))return window.TRANSACCIONES;}catch(_){}try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))return TRANSACCIONES;}catch(_){}try{var a=JSON.parse(localStorage.getItem(TXKEY)||'[]');return Array.isArray(a)?a:[]}catch(_){return[]}}
  function save(){try{localStorage.setItem(TXKEY,JSON.stringify(rows()))}catch(_){}try{window.sendwayoPersistTx&&window.sendwayoPersistTx()}catch(_){}try{window.sendwayoUpdateViews&&window.sendwayoUpdateViews()}catch(_){}try{window.sendwayoRenderSavedNotifications&&window.sendwayoRenderSavedNotifications()}catch(_){}}
- function admin(){var u=window.currentUser||window.usuarioActual||{};var role=norm(u.role||u.rol||u.tipo);var id=norm(u.id||u.codigo||u.username||u.usuario);return role.includes('admin')||id==='admin-administrador'||id==='adminadmin'||id==='admin-000';}
+ function admin(){var u=window.currentUser||window.usuarioActual||(typeof currentUser!=='undefined'?currentUser:null)||{};var role=norm(u.role||u.rol||u.tipo);var id=norm(u.id||u.codigo||u.username||u.usuario);return role.includes('admin')||id==='admin-administrador'||id==='adminadmin'||id==='admin-000';}
  function adminAccount(){try{if(typeof ADMIN!=='undefined'&&ADMIN)return ADMIN}catch(_){}return window.ADMIN||null}
  function routeOf(t){return norm((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''))}
  function isRdHaiti(t){var s=routeOf(t);return /\brd\b/.test(s)&&/\bht\b|haiti|hati/.test(s)&&/(natcash|moncash)/.test(s)&&/(?:->|→| a | to )/.test(s)}
