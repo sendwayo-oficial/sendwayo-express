@@ -1,0 +1,9 @@
+name = "sendwayo-express-financial-api"
+main = "src/index.mjs"
+compatibility_date = "2026-11-13"
+workers_dev = true
+
+[vars]
+FIREBASE_PROJECT_ID = "sendwayo-express"
+FIREBASE_DATABASE_URL = "https://sendwayo-express-default-rtdb.firebaseio.com"
+ALLOWED_ORIGINS = "https://sendwayo-oficial.github.io"
