@@ -247,6 +247,57 @@ function writeAdminMoney(admin, balanceHTG, commissionHTG) {
   admin.comisiones = comisiones;
   admin.updatedAtMs = Date.now();
 }
+function applyBalanceRefund(account, accountKey, reservationId, amountRaw, currencyRaw, actorUid, now) {
+  if (!account) throw new Error("SOURCE_DEBIT_ACCOUNT_NOT_FOUND");
+  const currencyValue = currency(currencyRaw);
+  if (currencyValue !== "DOP" && currencyValue !== "HTG") throw new Error("SOURCE_DEBIT_CURRENCY_INVALID");
+  const amount = money(amountRaw);
+  if (!(amount > 0)) throw new Error("SOURCE_DEBIT_AMOUNT_INVALID");
+
+  if (accountKey !== "admin") {
+    const reservations = account.balanceReservations || {};
+    const reservation = reservations[reservationId];
+    if (!reservation || reservation.status !== "RESERVED") throw new Error("SOURCE_BALANCE_RESERVATION_NOT_ACTIVE");
+    if (currency(reservation.currency) !== currencyValue || Math.abs(money(reservation.amount) - amount) > 0.01) {
+      throw new Error("SOURCE_BALANCE_RESERVATION_MISMATCH");
+    }
+    reservation.status = "REVERSED";
+    reservation.reversedAtMs = now;
+    reservation.reversedByAuthUid = actorUid;
+    reservation.updatedAtMs = now;
+    account.balanceReservations = reservations;
+    account.lastBalanceReservationStatus = "REVERSED";
+    account.lastBalanceReservationReversedAtMs = now;
+  }
+
+  const balances = Object.assign({}, account.balances || {});
+  const before = currencyValue === "DOP"
+    ? money(account.balanceDOP != null ? account.balanceDOP : (account.balance != null ? account.balance : balances.DOP))
+    : money(account.balanceHTG != null ? account.balanceHTG : (account.balanceHtg != null ? account.balanceHtg : balances.HTG));
+  const after = round2(before + amount);
+  if (currencyValue === "DOP") {
+    account.balance = after;
+    account.balanceDOP = after;
+    account.balanceRD = after;
+    balances.DOP = after;
+  } else {
+    account.balanceHTG = after;
+    account.balanceHtg = after;
+    balances.HTG = after;
+  }
+  account.balances = balances;
+  account.updatedAtMs = now;
+  account.updatedByAuthUid = actorUid;
+  return {
+    accountKey: accountKey,
+    reservationId: accountKey === "admin" ? "" : reservationId,
+    currency: currencyValue,
+    amount: amount,
+    balanceBefore: before,
+    balanceAfter: after
+  };
+}
+
 function creatorIsAdmin(record) {
   const role = norm(record.createdByRole || "");
   const userId = norm(record.createdByUserId || record.createdById || "");
@@ -459,6 +510,19 @@ async function reverse(request, env) {
     if (currentCommission + 0.001 < money(amounts.commissionHTG)) throw new Error("ADMIN_COMMISSION_ALREADY_SPENT");
 
     const now = Date.now();
+    const debitAccountKey = String(original.debitAccountId || "").trim();
+    if (!debitAccountKey) throw new Error("SOURCE_DEBIT_ACCOUNT_NOT_AVAILABLE");
+    const debitAccount = debitAccountKey === "admin" ? admin : (root.users && root.users[debitAccountKey]);
+    const reservationId = safeKey(original.balanceReservationId || transactionId);
+    const walletRefund = applyBalanceRefund(
+      debitAccount,
+      debitAccountKey,
+      reservationId,
+      original.amount != null ? original.amount : (original.montoValue != null ? original.montoValue : original.monto),
+      original.currency || original.currencyCode || original.moneda || "DOP",
+      identity.uid,
+      now
+    );
     const newBalance = round2(currentBalance + money(amounts.payoutHTG));
     const newCommission = round2(currentCommission - money(amounts.commissionHTG));
     writeAdminMoney(admin, newBalance, newCommission);
@@ -467,6 +531,9 @@ async function reverse(request, env) {
     original.internalSettlementStatus = "Revertido";
     original.reversedAtMs = now;
     original.reversedByAuthUid = identity.uid;
+    original.balanceRefundedAtMs = now;
+    original.balanceRefundedTo = walletRefund.accountKey;
+    original.balanceRefundedAmount = walletRefund.amount;
     original.updatedAtMs = now;
     internal.status = "Revertido";
     internal.estado = "Revertido";
@@ -493,6 +560,7 @@ async function reverse(request, env) {
       adminBalanceAfter: newBalance,
       adminCommissionBefore: currentCommission,
       adminCommissionAfter: newCommission,
+      sourceWalletRefund: walletRefund,
       settlementId: settlementId,
       actorUid: identity.uid,
       actorRole: actor.role,
@@ -513,7 +581,8 @@ async function reverse(request, env) {
       settlementId: settlementId,
       alreadyReversed: false,
       adminBalanceHTG: newBalance,
-      adminCommissionHTG: newCommission
+      adminCommissionHTG: newCommission,
+      sourceWalletRefund: walletRefund
     };
   });
 }
@@ -539,6 +608,12 @@ function errorResponse(error) {
     INVALID_HTG_SETTLEMENT: 422,
     ADMIN_HTG_BALANCE_INSUFFICIENT: 409,
     ADMIN_COMMISSION_ALREADY_SPENT: 409,
+    SOURCE_DEBIT_ACCOUNT_NOT_AVAILABLE: 409,
+    SOURCE_DEBIT_ACCOUNT_NOT_FOUND: 409,
+    SOURCE_DEBIT_CURRENCY_INVALID: 422,
+    SOURCE_DEBIT_AMOUNT_INVALID: 422,
+    SOURCE_BALANCE_RESERVATION_NOT_ACTIVE: 409,
+    SOURCE_BALANCE_RESERVATION_MISMATCH: 409,
     FINANCIAL_CONFLICT_RETRY_EXHAUSTED: 409,
     TRANSACTION_ID_REQUIRED: 400,
     SERVICE_ACCOUNT_SECRET_INVALID_JSON: 503,
@@ -557,7 +632,8 @@ export const __test = Object.freeze({
   isRdHtNatcashMoncash: isRdHtNatcashMoncash,
   calculateSettlement: calculateSettlement,
   round2: round2,
-  money: money
+  money: money,
+  applyBalanceRefund: applyBalanceRefund
 });
 export default {
   async fetch(request, env) {
