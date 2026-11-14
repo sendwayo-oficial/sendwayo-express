@@ -261,13 +261,25 @@ function applyBalanceRefund(account, accountKey, reservationId, amountRaw, curre
     if (currency(reservation.currency) !== currencyValue || Math.abs(money(reservation.amount) - amount) > 0.01) {
       throw new Error("SOURCE_BALANCE_RESERVATION_MISMATCH");
     }
-    reservation.status = "REVERSED";
-    reservation.reversedAtMs = now;
-    reservation.reversedByAuthUid = actorUid;
+    if (account.transactionBalanceRefunds && account.transactionBalanceRefunds[reservationId]) {
+      throw new Error("SOURCE_BALANCE_ALREADY_REFUNDED");
+    }
+    reservation.status = "REFUNDED";
+    reservation.refundedAtMs = now;
+    reservation.refundedByAuthUid = actorUid;
     reservation.updatedAtMs = now;
     account.balanceReservations = reservations;
-    account.lastBalanceReservationStatus = "REVERSED";
-    account.lastBalanceReservationReversedAtMs = now;
+    account.lastBalanceRefundedReservationId = reservationId;
+    account.transactionBalanceRefunds = Object.assign({}, account.transactionBalanceRefunds || {}, {
+      [reservationId]: {
+        id: reservationId,
+        transactionId: reservationId,
+        currency: currencyValue,
+        amount: amount,
+        refundedAtMs: now,
+        refundedByAuthUid: actorUid
+      }
+    });
   }
 
   const balances = Object.assign({}, account.balances || {});
@@ -614,6 +626,7 @@ function errorResponse(error) {
     SOURCE_DEBIT_AMOUNT_INVALID: 422,
     SOURCE_BALANCE_RESERVATION_NOT_ACTIVE: 409,
     SOURCE_BALANCE_RESERVATION_MISMATCH: 409,
+    SOURCE_BALANCE_ALREADY_REFUNDED: 409,
     FINANCIAL_CONFLICT_RETRY_EXHAUSTED: 409,
     TRANSACTION_ID_REQUIRED: 400,
     SERVICE_ACCOUNT_SECRET_INVALID_JSON: 503,
