@@ -7349,7 +7349,7 @@ window.sendwayoShareReceipt=async function(){
   }
   function mapTransaction(category, key, d) {
     if(!d || typeof d!=='object') return null;
-    const categoryType={envios:'Envío',accountWithdrawals:'Retiro',deposits:'Depósito',recargas:'Recarga',paqueticos:'Paqueticos',pagos:'Servicios',paquetes:'Paquetes',commissions:'Comisión',credits:'Crédito'}[category] || d.tipo || d.type || 'Transacción';
+    const categoryType={envios:'Envío',accountWithdrawals:'Retiro',deposits:'Depósito',recargas:'Recarga',paqueticos:'Paqueticos',pagos:'Servicios',paquetes:'Paquetes',commissions:'Comisión',credits:'Crédito',internalSettlements:'Envío interno HT→HT'}[category] || d.tipo || d.type || 'Transacción';
     const amountRaw=d.amount ?? d.montoValue ?? d.monto ?? d.amountValue ?? 0;
     const amount=Number(String(amountRaw).replace(/[^0-9.\-]/g,'')) || 0;
     const fee=Number(d.commission ?? d.fee ?? d.comision ?? 0) || 0;    const createdAt=Number(d.createdAtMs ?? d.timestamp ?? d.createdAt ?? d.fechaMs ?? 0) || Date.now();
@@ -7369,7 +7369,7 @@ window.sendwayoShareReceipt=async function(){
       _cloudRaw:d
     };
   }
-  const CATEGORIES=['envios','accountWithdrawals','deposits','recargas','paqueticos','pagos','paquetes','commissions','credits'];
+  const CATEGORIES=['envios','internalSettlements','accountWithdrawals','deposits','recargas','paqueticos','pagos','paquetes','commissions','credits'];
   function stopListeners(){ state.listeners.forEach(off=>{try{off()}catch(e){}}); state.listeners=[]; }
   function renderCloudTransactions(){
     const rows=Object.values(state.remoteTransactions).flat().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -7393,12 +7393,12 @@ window.sendwayoShareReceipt=async function(){
   }
   async function loadCloudTransactions(profileRow, role, uid) {
     state.remoteTransactions={};
-    const agentCategories=['envios','accountWithdrawals','recargas','paqueticos','pagos','paquetes'];
-    const categories=role==='AGENTE'?agentCategories:(role==='REMITENTE'?CATEGORIES.filter(c=>!['credits','commissions'].includes(c)):CATEGORIES);
+    const agentCategories=['envios','internalSettlements','accountWithdrawals','recargas','paqueticos','pagos','paquetes'];
+    const categories=role==='AGENTE'?agentCategories:(role==='REMITENTE'?CATEGORIES.filter(c=>!['credits','commissions','internalSettlements'].includes(c)):CATEGORIES);
     const qFor=category=>{
       const ref=db.ref(ROOT+'/'+category);
       if(role==='REMITENTE') return ref.orderByChild('userId').equalTo(profileRow.key);
-      if(role==='AGENTE') return ref.orderByChild('status').equalTo('Pendiente');
+      if(category==='internalSettlements') return ref; if(role==='AGENTE') return ref.orderByChild('status').equalTo('Pendiente');
       return ref;
     };
     let successfulReads=0;
@@ -7438,8 +7438,8 @@ window.sendwayoShareReceipt=async function(){
   function transactionSignature(t){return JSON.stringify({status:txt(t.estado||t.status),amount:Number(t.montoValue??t.amount??0)||0,fee:Number(t.fee??t.commission??0)||0,currency:txt(t.moneda||t.currency||'DOP'),route:txt(t.rutaExacta||t.ruta||t.route),beneficiary:txt(t.beneficiario||t.beneficiary),beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone),net:Number(t.neto??t.net??0)||0,owner:txt(t.remitenteId||t.userId),destination:txt(t.destinoId||t.depositanteId),approvedBy:txt(t.aprobadoPor||t.approvedBy),reviewedBy:txt(t.reviewedByAuthUid||'')});}
   function makeTransactionSnapshot(){return new Map(getTransactions().map(t=>[txt(t.id),transactionSignature(t)]).filter(([id])=>id));}
   function safeDbKey(v){const k=txt(v||'').replace(/[.#$\[\]\/]/g,'_');if(!k||k==='.'||k==='..')throw new Error('El ID de la operación no sirve como clave de base de datos.');return k;}
-  function categoryForTx(t){
-    const k=norm(t&& (t.tipo||t.type)).replace(/[^a-z0-9]/g,'');
+  function categoryForTx(t){ if(txt(t&&t.firebaseCategory)==='internalSettlements')return'internalSettlements';
+    const k=norm(t&& (t.tipo||t.type)).replace(/[^a-z0-9]/g,''); if(k.includes('liquidacion')||k.includes('internoht'))return'internalSettlements';
     if(k.includes('deposit'))return'deposits';
     if(k.includes('retiro'))return'accountWithdrawals';
     if(k.includes('envio'))return'envios';
@@ -7494,7 +7494,7 @@ window.sendwayoShareReceipt=async function(){
       route:txt(t.rutaExacta||t.ruta||t.route||t.tipo),beneficiary:txt(t.beneficiario||t.beneficiary||''),
       beneficiaryPhone:txt(t.beneficiarioTel||t.beneficiaryPhone||''),receiptId:txt(t.comprobanteId||t.receiptId||''),
       receivedAmount:txt(t.montoRecibido||t.receivedAmount||t.neto||''),accountId:txt(t.cuentaBancaria||t.accountId||''),
-      createdAt:txt(t.fecha||t.date||new Date().toISOString()),createdByUserName:txt(window.currentUser?.nombre||window.currentUser?.name||''),
+      createdAt:txt(t.fecha||t.date||new Date().toISOString()),originCountry:txt(t.countryFrom?.iso2||t.paisOrigenISO2||t.originCountry||''), destinationCountry:txt(t.countryTo?.iso2||t.paisDestinoISO2||t.destinationCountry||''), destinationProvider:txt(t.proveedorDestino||t.destinationProvider||t.provider||''), createdByUserName:txt(window.currentUser?.nombre||window.currentUser?.name||''),
       debitAccountId:canonicalRole(state.profile,state.profileKey)==='REMITENTE'?state.profileKey:'admin'
     };
     if(category==='deposits')payload.accountingType='DEPOSITO_CAPITAL';
@@ -8346,6 +8346,131 @@ window.sendwayoShareReceipt=async function(){
     if (selected && typeof window.sendwayoSetLanguage === 'function') window.sendwayoSetLanguage(selected.value);
   }
   window.addEventListener('load', reapplyLanguage);
+})();
+</script>
+<script>
+(function () {
+  const endpoint = "https://sendwayo-express-financial-api.ideletteismorin.workers.dev";
+  const priorApprove = window.aprobar;
+  if (typeof priorApprove !== "function" || priorApprove.__sendwayoRdHtServerApproval) return;
+  function txRows() {
+    try { if (typeof TRANSACCIONES !== "undefined" && Array.isArray(TRANSACCIONES)) return TRANSACCIONES; } catch (_) {}
+    return Array.isArray(window.TRANSACCIONES) ? window.TRANSACCIONES : [];
+  }
+  function targetsRdHt(t) {
+    if (!t) return false;
+    const from = String(t.paisOrigenISO2 || (t.countryFrom && t.countryFrom.iso2) || t.originCountry || "").toUpperCase();
+    const to = String(t.paisDestinoISO2 || (t.countryTo && t.countryTo.iso2) || t.destinationCountry || "").toUpperCase();
+    const route = [t.route, t.ruta, t.routeExact, t.rutaExacta, t.detalleRutaInternacional].filter(Boolean).join(" ");
+    const direction = (from === "DO" && to === "HT") ||
+      /(?:RD|Rep[uú]blica Dominicana)\s*(?:→|->|>|a|to|-)\s*(?:HT|Hait[ií])/i.test(route);
+    const provider = [t.proveedorDestino, t.destinationProvider, t.provider, route].filter(Boolean).join(" ");
+    const moneyLabel = String(t.moneda || t.currency || t.currencyCode || t.monto || "DOP").toUpperCase();
+    const kind = String(t.tipo || t.type || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return direction && /\b(natcash|moncash|montcash)\b/i.test(provider) &&
+      /\b(DOP|RD\$|PESOS?)\b/i.test(moneyLabel) && kind.indexOf("envio") >= 0;
+  }
+  function isAdmin() {
+    const u = window.currentUser || {};
+    return String(u.role || u.rol || "").toUpperCase() === "ADMIN" || String(u.id || "").toUpperCase() === "ADMINADMIN";
+  }
+  function errorText(code) {
+    const messages = {
+      ADMIN_HTG_BALANCE_INSUFFICIENT: "El balance HTG de Administración no alcanza para completar este pago.",
+      AGENT_CANNOT_APPROVE_OWN_OR_ADMIN_TRANSACTION: "El agente no puede aprobar su propia operación ni una operación creada por Administración.",
+      TRANSACTION_NOT_PENDING: "Esta operación ya no está Pendiente.",
+      INVALID_DOP_FEE: "La comisión DOP no coincide con el 8%.",
+      NOT_RD_TO_HT_NATCASH_MONCASH: "Solo aplica a envíos RD→HT por NatCash o MonCash."
+    };
+    return messages[code] || ("No se aprobó la operación: " + String(code || "error de conexión"));
+  }
+  async function request(path, id) {
+    const cloud = window.sendwayoFirebase;
+    const firebaseUser = cloud && cloud.auth && cloud.auth.currentUser;
+    if (!firebaseUser || typeof firebaseUser.getIdToken !== "function") {
+      window.alert("No hay una sesión válida de Firebase. No se aprobó ni se cambió el balance.");
+      return false;
+    }
+    try {
+      const token = await firebaseUser.getIdToken();
+      const response = await fetch(endpoint + path, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ transactionId: String(id) })
+      });
+      const result = await response.json().catch(function () { return {}; });
+      if (!response.ok || result.ok !== true) {
+        window.alert(errorText(result.error || ("HTTP_" + response.status)));
+        return false;
+      }
+      if (path === "/api/settle-rd-ht") {
+        const gross = Number(result.amounts && result.amounts.grossHTG || 0).toFixed(2);
+        window.alert(result.alreadySettled
+          ? "Esta operación ya estaba liquidada. No se volvió a debitar el balance."
+          : "Envío aprobado y liquidación HT→HT completada. Recibido: " + gross + " HTG.");
+      } else {
+        window.alert(result.alreadyReversed ? "Esta liquidación ya estaba revertida." :
+          "Liquidación revertida. Se restauró el débito HTG y se retiró la comisión HTG.");
+      }
+      try { window.sendwayoUpdateViews && window.sendwayoUpdateViews(); } catch (_) {}
+      try { window.renderPrincipal && window.renderPrincipal(); } catch (_) {}
+      return true;
+    } catch (error) {
+      console.error("[SENDWAYO RD-HT settlement]", error);
+      window.alert("No se pudo confirmar la liquidación en el servidor. No vuelva a aprobarla hasta recuperar la conexión.");
+      return false;
+    }
+  }
+  window.aprobar = function (id) {
+    const row = txRows().find(function (t) { return String(t.id) === String(id); });
+    if (!targetsRdHt(row)) return priorApprove.apply(this, arguments);
+    return request("/api/settle-rd-ht", id);
+  };
+  window.aprobar.__sendwayoRdHtServerApproval = true;
+  window.sendwayoReverseRdHt = function (id) {
+    if (!isAdmin()) { window.alert("Solo Administración puede revertir una liquidación."); return false; }
+    return request("/api/reverse-rd-ht", id);
+  };
+  function addReversalButtons() {
+    if (!isAdmin()) return;
+    const transactions = txRows();
+    document.querySelectorAll("tr[data-id],tr[data-tx-id]").forEach(function (tr) {
+      const id = String(tr.getAttribute("data-id") || tr.getAttribute("data-tx-id") || "");
+      if (!id || tr.querySelector("[data-sendwayo-rdht-reverse]")) return;
+      const row = transactions.find(function (t) { return String(t.id) === id; });
+      if (!row || !row.internalSettlementId ||
+          String(row.estado || row.status || "").toLowerCase() !== "aprobado" ||
+          String(row.internalSettlementStatus || "").toLowerCase() === "revertido") return;
+      const cell = tr.lastElementChild;
+      if (!cell) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Revertir liquidación HTG";
+      button.setAttribute("data-sendwayo-rdht-reverse", "1");
+      button.className = "bg-red-700 text-white px-2 py-1 rounded-full text-[9px] ml-1";
+      button.addEventListener("click", function () {
+        if (window.confirm("¿Revertir la liquidación HT→HT? Se restaurará el débito HTG y se retirará la comisión HTG si sigue disponible.")) {
+          window.sendwayoReverseRdHt(id);
+        }
+      });
+      cell.appendChild(button);
+    });
+  }
+  ["renderPrincipal", "renderModuloSeparado"].forEach(function (name) {
+    const original = window[name];
+    if (typeof original !== "function" || original.__sendwayoRdHtRenderHook) return;
+    const wrapped = function () {
+      const value = original.apply(this, arguments);
+      if (typeof queueMicrotask === "function") queueMicrotask(addReversalButtons);
+      else Promise.resolve().then(addReversalButtons);
+      return value;
+    };
+    wrapped.__sendwayoRdHtRenderHook = true;
+    window[name] = wrapped;
+  });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addReversalButtons, { once: true });
+  else addReversalButtons();
 })();
 </script>
 </body>
