@@ -2148,71 +2148,35 @@ console.log('V146 FUNCIONAL - Todos campos dentro foto funcionan - Sugerencia al
 window.renderSecretas = function(){
   const cont = document.getElementById('lista-secretas') || document.getElementById('view-secretas');
   if(!cont) return;
-  
-  let htmlSecret = `
+  const registros = [["ADMINADMIN","ADMINISTRADOR","sendwayoexpress@gmail.com","8297676665","Administrador","Activo"],["AGE00001","HERACE FLEURANVIL","fleuranvil@gmail.com","8292155657","Agente","Activo"],["AGE00002","JULIE OFCEUS","julie@gmail.com","4244461574","Agente","Activo"],["AGE00003","BETINA LINDOR","betina@gmail.com","50944994263","Agente","Activo"],["AGE00004","IDELETTE ISMORIN","idelette@gmail.com","8094995193","Agente","Activo"],["AGE00005","MIKE MYK","mike@gmail.com","8298573044","Agente","Activo"],["AGE00006","HERACE FLEURANVIL","herace91@gmail.com","8292155657","Agente","Activo"],["REM00001","DANIA SAINTHILAIRE","daniasainthilaire@gmail.com","+18493727884","Remitente","Activo"],["REM00002","EDITA ALBERTO","editaalberto@gmail.com","+1-829 829054061","Remitente","Activo"],["REM00003","NENES NENES","nenes@gmail.com","8092703291","Remitente","Activo"],["REM00004","HERACE FLEURANVIL","herace@gmail.com","+18292155657","Remitente","Activo"],["REM00005","WILNORD HILAIRSAINT","wilnordhilairsaint@gmail.com","+1-849 849783078","Remitente","Activo"],["REM00006","JOHN MATLEY EXIL","john06@gmail.com","8096146774","Remitente","Activo"],["REM00007","LIZARA NERLANGE EXIL","lizara@gmail.com","8293555903","Remitente","Activo"],["REM00008","ALANDE SOUFFRANT","alande08@gmail.com","8294581367","Remitente","Activo"],["REM00009","MICHEL Paul","michelpau@gmail.com","+1-829 8292155661","Remitente","Inactivo"],["REM00010","DUPONT Jean","dupontjean@gmail.com","+1-829 8292155662","Remitente","Activo"],["REM00011","MICKENSON SIDNEY","Smikc@gmail.com","8097690254","Remitente","Activo"],["REM00012","REMITENTE 11","remitente11@gmail.com","+1-829 0000011","Remitente","Activo"],["REM00013","REMITENTE 12","remitente12@gmail.com","+1-829 0000012","Remitente","Activo"],["REM00014","REMITENTE 13","remitente13@gmail.com","+1-829 0000013","Remitente","Activo"],["REM00015","ARMAND CHARLES","armand15@gmail.com","+50937622453","Remitente","Activo"],["REM00016","REMITENTE 15","remitente15@gmail.com","+1-829 0000015","Remitente","Activo"],["REM00017","WILSON PAUL","wilson@gmail.com","8098383588","Remitente","Activo"],["REM00018","MONA RENELUS","mona@gmail.com","8293165955","Remitente","Activo"]];
+  const filas = registros.map((r,i)=>`
+    <tr class="border-b border-orange-100">
+      <td class="px-2 py-2 text-center">${i+1}</td>
+      <td class="px-2 py-2 font-bold whitespace-nowrap">${r[0]}</td>
+      <td class="px-2 py-2 whitespace-nowrap">${r[1]}</td>
+      <td class="px-2 py-2">${r[2]}</td>
+      <td class="px-2 py-2 whitespace-nowrap">${r[3]}</td>
+      <td class="px-2 py-2">${r[4]}</td>
+      <td class="px-2 py-2 font-semibold ${r[5]==='Inactivo'?'text-red-600':'text-green-700'}">${r[5]}</td>
+    </tr>`).join('');
+  const htmlSecret = `
     <div class="bg-[#fff8e7] rounded-xl border-2 border-orange-300 p-4">
-      <div class="font-extrabold text-[12px] tracking-widest text-orange-700 mb-3">🔒 INFORMACIONES SECRETAS - SOLO ADMIN - TODOS LOS AGENTES Y ADMIN Y REMITENTES CON CONTRASEÑA</div>
-      
-      <div class="bg-white rounded-lg p-3 border mb-3">
-        <div class="font-bold text-[11px] mb-2">00 ADMIN: Administrador - ID: ADMINADMIN - Código: ADMIN-000</div>
-        <div class="text-[10px] space-y-1">
-          <div>Usuario: ${ADMIN.email} | Celular: ${ADMIN.celular} | ID: ${ADMIN.id} | Código: ${ADMIN.codigo} | Número: ${ADMIN.numero}</div>
-          <div>Contraseña: ${ADMIN.password} | Contraseña: ${ADMIN.password} y el celular | Balance: RD$ ${ADMIN.balances.DOP} / HTG ${ADMIN.balances.HTG} | Comisión: RD$ ${ADMIN.commissions.DOP} / HTG ${ADMIN.commissions.HTG}</div>
-          <div>Balances y comisiones reales cargados desde Firebase</div>
-        </div>
-        <div class="flex gap-2 mt-2">
-          <button onclick="ajustarBalance('ADMINADMIN')" class="bg-[#1e3a5f] text-white px-3 py-1 rounded-full text-[9px]">Ajustar balance - Admin puede acreditar</button>
-          <button onclick="ajustarComision('ADMINADMIN')" class="bg-orange-400 text-white px-3 py-1 rounded-full text-[9px]">Ajustar comisión - Admin</button>
-        </div>
+      <div class="font-extrabold text-[12px] tracking-widest text-orange-700 mb-3">🔒 INFORMACIONES SECRETAS — REGISTROS DE LAS FOTOGRAFÍAS</div>
+      <div class="text-[11px] mb-3">1 administrador · 6 agentes · 18 remitentes</div>
+      <div class="overflow-x-auto bg-white rounded-lg border">
+        <table class="w-full text-left text-[11px]">
+          <thead class="bg-orange-50"><tr>
+            <th class="px-2 py-2">N.º</th><th class="px-2 py-2">ID</th><th class="px-2 py-2">Nombre</th>
+            <th class="px-2 py-2">Correo</th><th class="px-2 py-2">Celular</th><th class="px-2 py-2">Tipo</th><th class="px-2 py-2">Estado</th>
+          </tr></thead><tbody>${filas}</tbody>
+        </table>
       </div>
-      
-      <div class="font-bold text-[11px] mb-2">AGENTES OFICIALES (5 Registrados) - Con su código - AG-001 AG-002 etc - REM-001</div>
-  `;
-  
-  AGENTES.forEach(ag=>{
-    htmlSecret += `
-      <div class="bg-white rounded-lg p-3 border mb-2">
-        <div class="font-bold text-[11px]">${ag.numero} ${ag.nombre} - ID: ${ag.id} - Código: ${ag.codigo} / ${ag.codigo2} - Si agente es ${ag.numero} código ${ag.codigo}</div>
-        <div class="text-[10px] space-y-1">
-          <div>Usuario: ${ag.email} | Celular: ${ag.celular} | Número: ${ag.numero} | ID: ${ag.id} | Código: ${ag.codigo} - Si número ${ag.numero} código ${ag.codigo}</div>
-          <div>Contraseña: ${ag.password} o el celular ${ag.celular} | Contraseña: correo y contraseña de Firebase Authentication</div>
-          <div>Balance: RD$ ${ag.balances.DOP} / HTG ${ag.balances.HTG} | Comisión compartida con Administración</div>
-        </div>
-        <div class="flex gap-2 mt-2">
-          <button onclick="ajustarBalance('${ag.id}')" class="bg-[#1e3a5f] text-white px-3 py-1 rounded-full text-[9px]">Ajustar balance</button>
-          <button onclick="ajustarComision('${ag.id}')" class="bg-orange-400 text-white px-3 py-1 rounded-full text-[9px]">Ajustar comisión</button>
-        </div>
-      </div>
-    `;
-  });
-    htmlSecret += `<div class="font-bold text-[11px] mb-2 mt-4">REMITENTES (15 Registrados) - Código REM-001 si remitente 1 REM-001 - Cuando suba persona en plataforma si es agente debe decir su nombre también y su código - También para administrador</div>`;
-  
-  REMITENTES.forEach(rem=>{
-    htmlSecret += `
-      <div class="bg-white rounded-lg p-2 border mb-1">
-        <div class="font-bold text-[10px]">${rem.numero} ${rem.nombre} - ID: ${rem.id} - Código: ${rem.codigo} - Si remitente ${rem.numero} REM-${rem.numero.padStart(3,'0')}</div>
-        <div class="text-[9px]">Usuario: ${rem.email} / contraseña = número de celular ${rem.celular} | Tel: ${rem.telefono} | Balance RD$ ${rem.balances.DOP} / HTG ${rem.balances.HTG} | Cuando suba persona en plataforma si es agente debe decir su nombre también y su código ${rem.codigo}</div>
-        <div class="flex gap-1 mt-1">
-          <button onclick="ajustarBalance('${rem.id}')" class="bg-[#1e3a5f] text-white px-2 py-0.5 rounded-full text-[8px]">Ajustar balance - Admin acreditar</button>
-          <button onclick="ajustarComision('${rem.id}')" class="bg-orange-400 text-white px-2 py-0.5 rounded-full text-[8px]">Ajustar comisión - Admin</button>
-        </div>
-      </div>
-    `;
-  });
-  
-  htmlSecret += `</div>`;
-  
-  // Insert into secretas container
-  const listaSecretas = document.getElementById('lista-secretas');
-  if(listaSecretas){
-    listaSecretas.innerHTML = htmlSecret;
-  }
-  const viewSecretas = document.getElementById('view-secretas');
-  if(viewSecretas){
-    viewSecretas.innerHTML = htmlSecret;
-  }
-}
-
+    </div>`;
+  const lista = document.getElementById('lista-secretas');
+  const vista = document.getElementById('view-secretas');
+  if(lista) lista.innerHTML = htmlSecret;
+  if(vista && vista !== lista) vista.innerHTML = htmlSecret;
+};
 // Ajustar comisión - admin puede ajustar tanto balances como comisión para admin también para remitentes
 window.ajustarComision = function(id){
   const monto = prompt('Ajustar comisión para '+id+' Monto (puede ser negativo para restar):');
