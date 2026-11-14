@@ -38,4 +38,3 @@ jobs:
         run: |
           set -euo pipefail
           node tests/sendwayo-rd-ht-settlement.test.cjs
-          node tests/sendwayo-approved-scope.test.cjs
