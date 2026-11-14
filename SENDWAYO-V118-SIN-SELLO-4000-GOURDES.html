@@ -7002,7 +7002,7 @@ window.sendwayoShareReceipt=async function(){
       const adminSnap=await userRoot.child('admin').once('value');
       if(adminSnap.exists()) return {key:'admin',data:adminSnap.val()};
       const adminSeed=seedProfileFromAccount(typeof ADMIN!=='undefined'?ADMIN:{},'ADMIN');
-      adminSeed.id='ADMINADMIN';adminSeed.code='ADMIN-000';adminSeed.codigo='ADMIN-000';
+      adminSeed.id='admin-administrador';adminSeed.legacyId='admin-administrador';adminSeed.accountId='admin-administrador';adminSeed.code='ADMIN-000';adminSeed.codigo='ADMIN-000';
       adminSeed.authEmail=ADMIN_EMAIL;adminSeed.email=ADMIN_EMAIL;adminSeed.authUid=firebaseUser.uid;
       await userRoot.child('admin').set(adminSeed);
       return {key:'admin',data:adminSeed};
@@ -7140,7 +7140,7 @@ window.sendwayoShareReceipt=async function(){
     state.directory=rows;
     const mapped=rows.map(r=>uiProfileFromRecord(r.key,r.data)).filter(r=>r.role);
     const adminRow=mapped.find(a=>a.role==='ADMIN');
-    if(adminRow&&typeof ADMIN!=='undefined') Object.assign(ADMIN,adminRow,{id:'ADMINADMIN'});
+    if(adminRow&&typeof ADMIN!=='undefined') Object.assign(ADMIN,adminRow,{id:'admin-administrador'});
     if(adminRow){
       const adminMoney=accountMoney(adminRow);
       try{if(typeof ADMIN_BAL!=='undefined')Object.assign(ADMIN_BAL,adminMoney.balances);if(typeof ADMIN_COM!=='undefined')Object.assign(ADMIN_COM,adminMoney.commissions);}catch(e){}
@@ -8165,7 +8165,7 @@ window.sendwayoShareReceipt=async function(){
     const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||idPrefix+String(next).padStart(5,'0'),
       password='';
     const f=(field,label,value='',type='text',ro=false)=>`<label class="block text-xs font-bold">${label}<input id="v7-admin-${field}" type="${type}" value="${esc(value)}" ${ro?'readonly':''} class="mt-1 w-full border rounded-xl px-3 py-2.5 font-normal ${ro?'bg-slate-100':''}"></label>`;
-    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','12345678','text',true)}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
+    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident,'text',true)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','12345678','text',true)}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
     const modal=accountModal((a?'Modificar ':'Crear nuevo ')+(ag?'agente':'remitente'),body);
     $('sendwayo-admin-account-save').onclick=()=>window.sendwayoSaveAccountForm(view,id);
   };
