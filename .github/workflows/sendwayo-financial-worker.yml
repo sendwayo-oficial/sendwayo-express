@@ -1,0 +1,26 @@
+name: SENDWAYO financial Worker checks
+
+on:
+  pull_request:
+    paths:
+      - "cloudflare-worker/**"
+      - ".github/workflows/sendwayo-financial-worker.yml"
+  push:
+    branches:
+      - "feature/rd-ht-automatic-settlement"
+    paths:
+      - "cloudflare-worker/**"
+      - ".github/workflows/sendwayo-financial-worker.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check Worker syntax
+        run: node --check cloudflare-worker/src/index.mjs
+      - name: Run settlement tests
+        run: node --test cloudflare-worker/tests/*.test.mjs
