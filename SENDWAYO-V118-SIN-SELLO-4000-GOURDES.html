@@ -599,6 +599,7 @@ let REMITENTES = [
 // Directorio V7 cotejado con las dos imágenes del usuario.
 // Se actualizan datos visibles sin reemplazar balances ni comisiones existentes.
 (function(){
+  Object.assign(ADMIN,{id:'ADMINADMIN',name:'ADMINISTRADOR',nombre:'ADMINISTRADOR',email:'sendwayoexpress@gmail.com',telefono:'8297676665',celular:'8297676665',role:'ADMIN'});
   const agentRows=[
     ['AGE00001','HERACE FLEURANVIL','fleuranvil@gmail.com','8292155657'],
     ['AGE00002','JULIE OCCELUS','julie@gmail.com','4244461574'],
@@ -619,7 +620,7 @@ let REMITENTES = [
     ['REM00004','HERACE FLEURANVIL','herace@gmail.com','+1-829 2155657'],
     ['REM00005','WILNORD HILAIRSAINT','wilnordhilairsaint@gmail.com','+1-849 849783078'],
     ['REM00006','JOHN MATLEY EXIL','john06@gmail.com','8096146774'],
-    ['REM00007','LIZARA NERLANGE EXIL','lizara@gmail.com','8293555903'],
+    ['REM00007','LUZARA NERLANGE EXIL','lizara@gmail.com','8293555903'],
     ['REM00008','ALANDE SOUFFRANT','alande08@gmail.com','8294581367'],
     ['REM00009','MICHEL Paul','michelpaul@gmail.com','+1-829 8292155661'],
     ['REM00010','DUPONT Jean','dupontjean@gmail.com','+1-829 8292155662'],
@@ -627,7 +628,7 @@ let REMITENTES = [
     ['REM00012','REMITENTE 11','remitente11@gmail.com','+1-829 0000011'],
     ['REM00013','REMITENTE 12','remitente12@gmail.com','+1-829 0000012'],
     ['REM00014','REMITENTE 13','remitente13@gmail.com','+1-829 0000013'],
-    ['REM00015','ARMAND CHARLES','sarmand15@gmail.com','+509 37622453'],
+    ['REM00015','ARMAND CHARLES','sarmand15@gmail.com','50937622453'],
     ['REM00016','REMITENTE 15','remitente15@gmail.com','+1-829 0000015'],
     ['REM00017','WILSON PAUL','wilson@gmail.com','8098383588'],
     ['REM00018','MONA RENELUS','mona@gmail.com','8293165955']
@@ -4180,7 +4181,7 @@ window.sendwayoShareReceipt=async function(){
       heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (editable por Administración)</th><th class="p-3 text-left">Código (fijo)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
       if(!isAdmin()) { el.innerHTML='<div class="p-8 text-center font-bold">Este directorio está disponible para el administrador.</div>';return; }
     } else if(view==='cuentas') heading=`<th class="p-3">Banco / número</th><th class="p-3">Titular / documento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th>`;
-    else if(view==='secretas') heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
+    else if(view==='secretas') heading=`<th class="p-3 text-left">N°</th><th class="p-3 text-left">ID</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
     else heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Beneficiario / titular</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
     const showAdd=true;
     el.innerHTML=`<section class="p-3 md:p-4 space-y-3"><header class="bg-white border rounded-xl p-3"><div class="font-black text-sm mb-3">${esc(titles[view]||view)}</div><div class="flex flex-wrap items-center gap-2">${showAdd?add:''}<input id="sendwayo-search-${view}" type="search" oninput="sendwayoSearchModule('${view}',this.value)" placeholder="Buscador…" class="border rounded-full px-4 py-2.5 text-xs w-52 max-w-full"><button type="button" onclick="sendwayoExportModule('${view}','excel')" class="bg-green-600 text-white px-3 py-2 rounded-full text-xs">Excel</button><button type="button" onclick="sendwayoExportModule('${view}','pdf')" class="bg-red-600 text-white px-3 py-2 rounded-full text-xs">PDF</button><button type="button" onclick="sendwayoExportModule('${view}','csv')" class="bg-blue-700 text-white px-3 py-2 rounded-full text-xs">CSV</button></div></header>${extra}<div class="bg-white border rounded-xl overflow-x-auto"><table id="tabla-sendwayo-${view}" class="w-full text-xs min-w-[820px]"><thead class="bg-[#edf2f8]"><tr><th class="p-3 text-left">N°</th>${heading}</tr></thead><tbody id="tabla-sendwayo-${view}-body"></tbody></table></div></section>`;
@@ -4196,12 +4197,12 @@ window.sendwayoShareReceipt=async function(){
       tbody.innerHTML=rows.map((r,i)=>{const isService=r.tipoSolicitud==='SERVICIO';return `<tr class="border-t"><td class="p-3 font-bold">${String(i+1).padStart(2,'0')}</td><td class="p-3">${esc(r.id)}<br>${esc(r.fecha||'')}</td><td class="p-3">${esc(r.nombre||'')}<br>${esc(r.email||'')}<br>${esc(r.celular||'')}</td><td class="p-3">${esc(isService?r.servicio:(r.role||'REMITENTE'))}<br>${esc(r.detalle||'')}</td><td class="p-3">${esc(r.nombre||r.email||'')}</td><td class="p-3">${esc(r.estado||'Pendiente')}</td><td class="p-3"><div class="flex flex-wrap gap-1">${isAdmin()&&r.estado==='Pendiente'?`<button onclick="sendwayoActionGeneric('bienvenida','aprobar','${esc(r.id)}')" class="bg-green-600 text-white rounded-full px-3 py-1">Aceptar</button><button onclick="sendwayoActionGeneric('bienvenida','rechazar','${esc(r.id)}')" class="bg-red-600 text-white rounded-full px-3 py-1">Rechazar</button>`:`<button onclick="sendwayoActionGeneric('bienvenida','ver','${esc(r.id)}')" class="border rounded-full px-3 py-1">Ver</button>`}<button onclick="sendwayoActionGeneric('bienvenida','borrar','${esc(r.id)}')" class="border rounded-full px-3 py-1">Borrar</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay solicitudes.</td></tr>';return;
     }
     if(view==='secretas'){
-      tbody.innerHTML=rows.map((a,i)=>{const st=a.estado||(a.activo===false?'Inactivo':'Activo');const role=String(a.role||'').toUpperCase();return `<tr class="border-t">
+      tbody.innerHTML=rows.map((a,i)=>{const st=a.estado||(a.activo===false?'Inactivo':'Activo');const role=String(a.role||'').toUpperCase()==='ADMIN'?'ADMINISTRADOR':String(a.role||'').toUpperCase();return `<tr class="border-t">
         <td class="p-3">${String(i+1).padStart(2,'0')}</td>
         <td class="p-3 font-bold">${esc(a.id)}</td>
         <td class="p-3">${esc(acctName(a))}<br>${esc(a.email||a.usuario||'')}</td>
-        <td class="p-3">${esc(role)}</td>
-        <td class="p-3"><span>${esc(st)}</span><br><span class="text-gray-500">Celular: ${esc(a.celular||a.telefono||'')}</span></td>
+        <td class="p-3">${esc(role)}<br><span class="text-gray-500">Celular: ${esc(a.celular||a.telefono||'')}</span></td>
+        <td class="p-3"><span>${esc(st)}</span></td>
         <td class="p-3"><div class="flex flex-wrap gap-1">
           <button onclick="sendwayoEditSecretAccount('${esc(a.id)}')" class="border rounded-full px-3 py-1">Modificar datos</button>
           <button onclick="sendwayoToggleAccountStatus('${esc(a.id)}')" class="border rounded-full px-3 py-1">${norm(st)==='inactivo'?'Activar':'Inactivar'}</button>
