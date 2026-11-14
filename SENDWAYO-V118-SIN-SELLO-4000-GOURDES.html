@@ -821,8 +821,8 @@ function ajustarBalance(id){ const m=prompt('Ajustar balance para '+id+' Monto:'
 
 function verComprobante(id){
   let t=TRANSACCIONES.find(x=>String(x.id)===String(id));
-  if(!t) t={id:id, fecha:'20/10/2026', hora:'4:54:34 p. m.', tipo:'Envío', ruta:'RD → HT Natcash', beneficiario:'SAUTHER JALBAR', beneficiarioTel:'35249812', montoRecibido:'1,062.60 HTG', creadorId:'ADMINADMIN', aprobadoPor:'ADMINADMIN', estado:'Aprobado', montoValue:2000, fee:160, neto:1840};
-  if(t.estado!=='Aprobado'){ alert('❌ Comprobante no debe aparecer sin antes ser aprobados - Estado: '+t.estado+' - Comprobante solo después aprobado - Error grave'); return; }
+  if(!t){ alert('No se encontró el registro real de esta transacción. No se puede generar un comprobante.'); return; }
+  if(String(t.estado||t.status||'').trim().toLowerCase()!=='aprobado'){ alert('El comprobante solo está disponible después de la aprobación. Estado actual: '+(t.estado||t.status||'Sin estado')); return; }
   
   // COMPROBANTE LIMPIO - SIN COMENTARIO - SIEMPRE CANTIDAD SIN COMENTARIO - INTERNO QUEDA ENTRE NOSOTROS
   // Si es recargas no debe decir persona no va a recibir 95 - queda interno pero comprobante no debe ser así - siempre cantidad sin comentario
@@ -6155,7 +6155,7 @@ window.sendwayoShareReceipt=async function(){
   function agentCanReview(t){return isAgent()&&!ownByCreator(t)&&isSpend(t)&&!isDeposit(t);}
   function requireAdminOnly(t){return isDeposit(t)||isCredit(t)||isAdjustment(t)||isBonus(t)||isCommissionPayment(t)||isWalletTransfer(t);}
   function announce(s){try{window.alert(s);}catch(_){}}
-  function approve(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'){announce('Esta operación ya está aprobada.');return;}if(status(t)==='rechazado'){announce('Esta operación fue rechazada y no puede aprobarse directamente. Registre una nueva operación.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden aprobar operaciones de envío, retiro, recarga, paquetico y servicios de otras cuentas. Los depósitos y ajustes administrativos son exclusivos de Administración.');return;}
+  function approve(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'){announce('ESTA TRANSACCIÓN YA HA SIDO APROBADA.');return;}if(status(t)==='rechazado'){announce('Esta operación fue rechazada y no puede aprobarse directamente. Registre una nueva operación.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden aprobar operaciones de envío, retiro, recarga, paquetico y servicios de otras cuentas. Los depósitos y ajustes administrativos son exclusivos de Administración.');return;}
     const cur=currencyOf(t),amount=amountOf(t);if(!(amount>0)){announce('El monto registrado no es válido.');return;}
     if(isDeposit(t)){if(!isAdmin()){announce('Solo Administración puede aprobar depósitos.');return;}const banks=Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[];if(banks.length&&(!t.cuentaBancaria||!banks.some(b=>String(b.id)===String(t.cuentaBancaria)))){announce('No se puede aprobar: seleccione una cuenta bancaria oficial válida en el depósito.');return;}const depositor=sourceOf(t);const dest=depositor&&roleOf(depositor)==='AGENTE'?(adminAccount()||depositor):(accountById(t.destinoId)||accountById(t.depositanteId)||accountById(t.remitenteId)||adminAccount());if(!dest){announce('No se encontró el destino del depósito.');return;}t.tipoAcreditacion='BALANCE';if(!t.saldoAcreditado)creditTarget(t,dest,'deposito');
     }else if(isCredit(t)||isAdjustment(t)||isBonus(t)){if(!isAdmin()){announce('Solo Administración puede aprobar créditos, ajustes y bonos.');return;}const dest=accountById(t.destinoId)||accountByInput(t.beneficiario||t.rutaExacta);if(!dest){announce('No se encontró la cuenta destino de esta acreditación.');return;}if(!t.saldoAcreditado)creditTarget(t,dest,typeKey(t));
