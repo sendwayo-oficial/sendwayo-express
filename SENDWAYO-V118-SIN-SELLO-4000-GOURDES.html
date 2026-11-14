@@ -564,7 +564,7 @@ let ADMIN = {
   numero: '00',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
-  email:'sendwayoexpress@gmail.com',
+  email:'ideletteismorin@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
   balances:{DOP:0,HTG:0},
@@ -682,7 +682,7 @@ function renderPrincipal(){
       if(currentUser.id==='ADMINADMIN') acciones=`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar - Admin puede aún aprobado</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar - Admin puede aún aprobado</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button>`;
       else acciones=`<button onclick="verComprobante('${t.id}')" class="bg-slate-800 text-white px-2 py-1 rounded-full text-[9px]">🧾 Comprobante</button>`;
     } else if(t.estado==='Pendiente'){
-      if(currentUser.id.startsWith('REM')){
+      if(currentUser.id.startsWith('REM') || (currentUser.id.startsWith('AGE') && String(t.creadorId||t.remitenteId||'')===String(currentUser.id))){
         acciones=`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar</button>`;
       } else {
         acciones=`<button onclick="ver('${t.id}')" class="bg-[#1e3a5f] text-white px-2 py-1 rounded-full text-[9px]">Ver</button> <button onclick="modificar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Modificar</button> <button onclick="borrar('${t.id}')" class="bg-white border px-2 py-1 rounded-full text-[9px]">Borrar</button> <button onclick="verComprobante('${t.id}')" class="bg-orange-400 text-white px-2 py-1 rounded-full text-[9px]">Comprobante</button> <button onclick="aprobar('${t.id}')" class="bg-green-600 text-white px-2 py-1 rounded-full text-[9px]">Aprobado</button> <button onclick="rechazar('${t.id}')" class="bg-red-600 text-white px-2 py-1 rounded-full text-[9px]">Rechazado</button> <button onclick="noCoincide('${t.id}')" class="bg-purple-600 text-white px-2 py-1 rounded-full text-[9px]">No coincide</button>`;
@@ -723,6 +723,16 @@ function renderModulo(view){
   if(view==='paquetikos') filtrados=sorted.filter(t=>['Paquetico','Paqueticos'].includes(t.tipo));
   if(view==='facturas') filtrados=sorted.filter(t=>t.tipo==='Servicios');
   if(view==='recepcion') filtrados=sorted.filter(t=>t.tipo==='Paquetes');
+  const uidVista=String(currentUser&&currentUser.id||'');
+  const esAdminVista=uidVista==='ADMINADMIN';
+  const esAgenteVista=uidVista.startsWith('AGE');
+  if(!esAdminVista){
+    filtrados=filtrados.filter(t=>{
+      const creador=String(t.creadorId||t.remitenteId||'');
+      if(esAgenteVista) return creador===uidVista || String(t.aprobadoPor||'')===uidVista || (t.estado==='Pendiente' && creador!==uidVista && !/dep[oó]sito/i.test(String(t.tipo||'')));
+      return creador===uidVista;
+    });
+  }
   
   cont.innerHTML=`
     <div class="p-3 border-2 border-yellow-400 rounded-xl bg-[#eef6ff] flex flex-wrap justify-between items-center gap-2">
@@ -802,8 +812,8 @@ function exportPDFGlobal(){ exportPDF('principal'); }
 function exportCSVGlobal(){ exportCSV('principal'); }
 function limpiarBuscador(){ document.getElementById('buscador-global').value=''; renderPrincipal(); }
 function aprobar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; const uid=String(currentUser&&currentUser.id||''); const isAdmin=uid==='ADMINADMIN'; const isAgent=uid.indexOf('AGE')===0; const isDeposit=/dep[oó]sito/i.test(String(t.tipo||'')); if(!isAdmin&&!isAgent){alert('Solo administración y agentes autorizados pueden aprobar.');return;} if(isDeposit&&!isAdmin){alert('Solo el administrador puede aprobar depósitos.');return;} if(!isAdmin&&String(t.creadorId||t.remitenteId||'')===uid){alert('No puede aprobar su propia transacción.');return;} if(!isAdmin&&!isAgent){return;} t.estado='Aprobado'; t.aprobadoPor=currentUser.id; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); setTimeout(()=>verComprobante(id),500); alert('✅ APROBADO - Comprobante limpio: '+t.montoRecibido+' - RD->HT en HTG x2.1 - Recargas 100=100 DOP'); }
-function rechazar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; t.estado='Rechazado'; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); }
-function noCoincide(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; t.estado='No coincide'; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); }
+function rechazar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; const uid=String(currentUser&&currentUser.id||''), admin=uid==='ADMINADMIN', agent=uid.startsWith('AGE'); if(!admin&&(!agent||String(t.creadorId||t.remitenteId||'')===uid||t.estado!=='Pendiente'||/dep[oó]sito/i.test(String(t.tipo||'')))){alert('No tiene permiso para rechazar esta transacción.');return;} t.estado='Rechazado'; t.rechazadoPor=uid; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); }
+function noCoincide(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; const uid=String(currentUser&&currentUser.id||''), admin=uid==='ADMINADMIN', agent=uid.startsWith('AGE'); if(!admin&&(!agent||String(t.creadorId||t.remitenteId||'')===uid||t.estado!=='Pendiente'||/dep[oó]sito/i.test(String(t.tipo||'')))){alert('No tiene permiso para marcar esta transacción.');return;} t.estado='No coincide'; t.noCoincidePor=uid; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); }
 function modificar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; if(t.estado==='Aprobado' && currentUser.id!=='ADMINADMIN'){ alert('Aprobado ningún remitente ni agente podrá modificar - Solo admin'); return; } const n=prompt('Modificar monto '+id+' Actual '+t.montoValue); if(n && !isNaN(n)){ t.montoValue=parseFloat(n); t.monto=n+' DOP'; if(t.tipo==='Recarga'){ t.montoRecibido = parseFloat(n)+' DOP'; } else if(t.tipo==='Paqueticos' || t.tipo==='Paquetico'){ t.montoRecibido = parseFloat(n)+' DOP'; } else { const fee=Math.round(parseFloat(n)*0.08); const neto=parseFloat(n)-fee; t.montoRecibido = (neto*2.1).toFixed(2)+' HTG'; t.fee=fee; t.neto=neto; t.feeText='Fee 8%: '+fee+' Neto: '+neto; } renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); } }
 function borrar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; if(t.estado==='Aprobado' && currentUser.id!=='ADMINADMIN'){ alert('Aprobado ningún remitente ni agente podrá eliminar - Solo admin'); return; } if(confirm('Borrar '+id+'? - Si rechazado vuelve balance donde salió')){ if(t.estado==='Rechazado' || t.estado==='Pendiente'){ if(t.remitenteId===ADMIN.id) ADMIN_BAL.DOP+=t.montoValue; else{ const rem=REMITENTES.find(r=>r.id===t.remitenteId); if(rem) rem.balances.DOP+=t.montoValue; } } TRANSACCIONES=TRANSACCIONES.filter(x=>String(x.id)!==String(id)); renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); } }
 function ver(id){ alert('Ver '+id); }
@@ -6960,7 +6970,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -7406,7 +7416,7 @@ window.sendwayoShareReceipt=async function(){
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN') return 'admin-administrador';
+    if(role==='ADMIN') return 'ADMINADMIN';
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
     const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
     let id=String(supplied || known?.id || key || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
