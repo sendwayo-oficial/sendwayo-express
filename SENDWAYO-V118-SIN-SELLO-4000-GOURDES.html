@@ -2907,9 +2907,31 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
     else if(view==='secretas') titulo='Secretas';
 
     if(view==='secretas'){
-      let users=window.USUARIOS_LOGIN||[];
-      cont.innerHTML=`<div class="bg-white rounded-2xl border p-4"><div class="grid grid-cols-4 gap-2 text-[11px]"><div>Balance Pesos ${window.v162_bal.rd}</div><div>Balance Gourdes ${window.v162_bal.htg} HTG</div><div>Comision Pesos ${window.v162_bal.comRD}</div><div>Comision Gourdes ${window.v162_bal.comHTG} HTG</div></div></div><div class="bg-white rounded-2xl border p-4 flex justify-between mt-3 items-center"><h2 class="font-bold">Secretas</h2><div class="flex gap-2 items-center"><button class="bg-[#0f2440] text-white text-[11px] px-5 py-2 rounded-full font-bold">+ Agregar nuevo</button><button class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div><div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full text-[10px]"><thead class="bg-gray-50"><tr><th class="p-3">N°</th><th class="p-2">ID</th><th class="p-2">NOMBRE</th><th class="p-2">ROL</th><th class="p-2">ACCIONES</th></tr></thead><tbody id="tabla-secretas-body"></tbody></table></div>`;
-      const tbody=document.getElementById('tabla-secretas-body'); users.forEach((u,idx)=>{ const tr=document.createElement('tr'); tr.className='border-b'; tr.innerHTML=`<td class="p-3">${String(idx+1).padStart(2,'0')}</td><td class="p-2">${u.id}</td><td class="p-2">${u.nombre}</td><td class="p-2">${u.role}</td><td class="p-2"><button onclick="v162_abrirAjustar('${u.nombre}','${u.id}','${u.role}')" class="bg-[#0f2440] text-white px-4 py-1.5 rounded-full text-[9px]">Ajustar</button></td>`; tbody.appendChild(tr); });
+      const users=allAccounts().sort((a,b)=>{const rank=x=>String(x.id||'')==='ADMINADMIN'?0:Number(String(x.id||'').slice(-5))+1;return rank(a)-rank(b);});
+      cont.innerHTML=`<div class="bg-white rounded-2xl border p-4 flex justify-between mt-3 items-center"><h2 class="font-bold">Informaciones secretas — Solo administrador</h2><div class="flex gap-2 items-center"><button onclick="sendwayoOpenAccountForm('agentes')" class="bg-[#0f2440] text-white text-[11px] px-5 py-2 rounded-full font-bold">+ Agregar nuevo</button><button onclick="sendwayoExportModule('secretas','excel')" class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button onclick="sendwayoExportModule('secretas','pdf')" class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button onclick="sendwayoExportModule('secretas','csv')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div>
+      <div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full min-w-[1050px] text-[10px]"><thead class="bg-[#edf2f8]"><tr><th class="p-3">N°</th><th class="p-2 text-left">ID / FECHA</th><th class="p-2 text-left">DETALLE</th><th class="p-2 text-left">MONTO / INFORMACIÓN</th><th class="p-2 text-left">ESTADO</th><th class="p-2 text-left">ACCIONES</th></tr></thead><tbody id="tabla-secretas-body"></tbody></table></div>`;
+      const tbody=document.getElementById('tabla-secretas-body');
+      tbody.innerHTML=users.map((a,idx)=>{
+        const role=String(a.role||'').toUpperCase()==='ADMIN'?'ADMINISTRADOR':String(a.role||'').toUpperCase();
+        const state=a.estado||(a.activo===false?'Inactivo':'Activo');
+        const phone=a.celular||a.telefono||'';
+        const name=a.nombre||a.name||a.email||a.id;
+        const email=a.email||a.usuario||'';
+        const id=String(a.id||'');
+        return `<tr class="border-b hover:bg-blue-50/50">
+          <td class="p-3 font-bold">${String(idx+1).padStart(2,'0')}</td>
+          <td class="p-2 font-bold">${id}</td>
+          <td class="p-2">${name}<div class="text-[9px] text-gray-500">${email}</div></td>
+          <td class="p-2">${role}</td>
+          <td class="p-2"><span>${state}</span><div class="text-[9px] text-gray-500">Celular: ${phone}</div></td>
+          <td class="p-2"><div class="flex flex-wrap gap-1 min-w-[360px]">
+            <button onclick="sendwayoEditSecretAccount('${id}')" class="border rounded-full px-3 py-1">Modificar datos</button>
+            <button onclick="sendwayoToggleAccountStatus('${id}')" class="border rounded-full px-3 py-1">${state.toLowerCase()==='inactivo'?'Activar':'Inactivar'}</button>
+            <button onclick="v162_abrirAjustar('${name}','${id}','${a.role}')" class="bg-[#0f2440] text-white rounded-full px-3 py-1">Ajustar</button>
+            <button onclick="sendwayoSecretBalanceAction('${id}','acreditar')" class="bg-green-600 text-white rounded-full px-3 py-1">Acreditar</button>
+            <button onclick="sendwayoSecretBalanceAction('${id}','desacreditar')" class="bg-red-600 text-white rounded-full px-3 py-1">Desacreditar</button>
+          </div></td></tr>`;
+      }).join('')||'<tr><td colspan="6" class="p-6 text-center">No hay usuarios registrados.</td></tr>';
       return;
     }
 
