@@ -2908,8 +2908,8 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
 
     if(view==='secretas'){
       const users=[ADMIN,...AGENTES,...REMITENTES].sort((a,b)=>{const rank=x=>{const id=String(x.id||'');if(id==='ADMINADMIN')return 0;const n=Number(id.slice(-5));return (String(x.role||'').toUpperCase()==='AGENTE'?100000:200000)+n;};return rank(a)-rank(b);});
-      cont.innerHTML=`<div class="bg-white rounded-2xl border p-4 mt-3"><h2 class="font-bold">Informaciones secretas — Solo administrador</h2><div class="mt-3 rounded-full bg-amber-700 text-white text-center py-2 text-[10px] font-bold">Contraseñas temporales para todos</div><div class="flex flex-wrap gap-2 mt-3"><button onclick="sendwayoOpenAccountForm('agentes')" class="bg-[#0f2440] text-white text-[11px] px-5 py-2 rounded-full font-bold">+ Agregar nuevo</button><button onclick="sendwayoExportModule('secretas','excel')" class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button onclick="sendwayoExportModule('secretas','pdf')" class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button onclick="sendwayoExportModule('secretas','csv')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div>
-      <div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full min-w-[1050px] text-[10px]"><thead class="bg-[#edf2f8]"><tr><th class="p-3">N°</th><th class="p-2 text-left">ID / Fecha</th><th class="p-2 text-left">Detalle</th><th class="p-2 text-left">Monto / información</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Acciones</th></tr></thead><tbody id="tabla-secretas-body"></tbody></table></div>`;
+      cont.innerHTML=`<div class="bg-white rounded-2xl border p-4 mt-3"><h2 class="font-bold">Informaciones secretas — Solo administrador</h2><div class="mt-3 rounded-full bg-amber-700 text-white text-center py-2 text-[10px] font-bold">Directorio completo: 1 administrador, 6 agentes y 18 remitentes</div><div class="flex flex-wrap gap-2 mt-3"><button onclick="sendwayoOpenAccountForm('agentes')" class="bg-[#0f2440] text-white text-[11px] px-5 py-2 rounded-full font-bold">+ Agregar nuevo</button><button onclick="sendwayoExportModule('secretas','excel')" class="bg-green-600 text-white text-[10px] px-3 py-2 rounded-full">Excel</button><button onclick="sendwayoExportModule('secretas','pdf')" class="bg-red-600 text-white text-[10px] px-3 py-2 rounded-full">PDF</button><button onclick="sendwayoExportModule('secretas','csv')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-full">CSV</button></div></div>
+      <div class="bg-white rounded-2xl border mt-3 overflow-x-auto"><table class="w-full min-w-[1250px] text-[10px]"><thead class="bg-[#edf2f8]"><tr><th class="p-3">N°</th><th class="p-2 text-left">ID</th><th class="p-2 text-left">Nombre / correo</th><th class="p-2 text-left">Rol</th><th class="p-2 text-left">Celular</th><th class="p-2 text-left">Balance / comisión</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Acciones</th></tr></thead><tbody id="tabla-secretas-body"></tbody></table></div>`;
       const tbody=document.getElementById('tabla-secretas-body');
       tbody.innerHTML=users.map((a,idx)=>{
         const role=String(a.role||'').toUpperCase()==='ADMIN'?'ADMINISTRADOR':String(a.role||'').toUpperCase();
@@ -2918,12 +2918,16 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
         const name=a.nombre||a.name||a.email||a.id;
         const email=a.email||a.usuario||'';
         const id=String(a.id||'');
+        const bal=a.balances||{};
+        const com=a.commissions||a.comisiones||{};
         return `<tr class="border-b hover:bg-blue-50/50">
           <td class="p-3 font-bold">${String(idx+1).padStart(2,'0')}</td>
           <td class="p-2 font-bold">${esc(id)}</td>
           <td class="p-2">${esc(name)}<div class="text-[9px] text-gray-500">${esc(email)}</div></td>
           <td class="p-2">${esc(role)}</td>
-          <td class="p-2"><span>${esc(state)}</span><div class="text-[9px] text-gray-500">Celular: ${esc(phone)}</div></td>
+          <td class="p-2">${esc(phone)}</td>
+          <td class="p-2">RD$ ${Number(bal.DOP||0).toLocaleString('es-DO')} / HTG ${Number(bal.HTG||0).toLocaleString('es-DO')}<div class="text-[9px] text-gray-500">Comisión: RD$ ${Number(com.DOP||0).toLocaleString('es-DO')} / HTG ${Number(com.HTG||0).toLocaleString('es-DO')}</div></td>
+          <td class="p-2"><span>${esc(state)}</span></td>
           <td class="p-2"><div class="flex flex-wrap gap-1 min-w-[360px]">
             <button onclick="sendwayoEditSecretAccount('${esc(id)}')" class="border rounded-full px-3 py-1">Modificar datos</button>
             <button onclick="sendwayoToggleAccountStatus('${esc(id)}')" class="border rounded-full px-3 py-1">${state.toLowerCase()==='inactivo'?'Activar':'Inactivar'}</button>
@@ -2931,7 +2935,7 @@ console.log('V162 - bienvenida sin balance/comision/admin + mas lindo + retiros 
             <button onclick="sendwayoSecretBalanceAction('${esc(id)}','acreditar')" class="bg-green-600 text-white rounded-full px-3 py-1">Acreditar</button>
             <button onclick="sendwayoSecretBalanceAction('${esc(id)}','desacreditar')" class="bg-red-600 text-white rounded-full px-3 py-1">Desacreditar</button>
           </div></td></tr>`;
-      }).join('')||'<tr><td colspan="6" class="p-6 text-center">No hay usuarios registrados.</td></tr>';
+      }).join('')||'<tr><td colspan="8" class="p-6 text-center">No hay usuarios registrados.</td></tr>';
       return;
     }
 
