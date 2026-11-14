@@ -717,7 +717,7 @@ function renderModulo(view){
   if(!cont) return;
   let tipoFiltro=view==='envios'?'Envío':view==='recargas'?'Recarga':view==='paquetikos'?'Paqueticos':view==='recepcion'?'Paquetes':view==='facturas'?'Servicios':view==='comisiones'?'Comisión':'TODOS';
   const sorted=[...TRANSACCIONES].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-  let filtrados=tipoFiltro==='TODOS'?sorted:sorted.filter(t=>t.tipo===tipoFiltro || (tipoFiltro==='Envío' && ['Envío','Retiro','Deposito','Depósito'].includes(t.tipo))); const uidVista=String(currentUser&&currentUser.id||''); if(uidVista!=='ADMINADMIN'&&uidVista.indexOf('AGE')===0){filtrados=filtrados.filter(t=>String(t.creadorId||t.remitenteId||'')===uidVista || (t.estado==='Pendiente'&&String(t.assignedAgentId||'')===uidVista));} else if(uidVista!=='ADMINADMIN'){filtrados=filtrados.filter(t=>String(t.creadorId||t.remitenteId||'')===uidVista);}
+  let filtrados=tipoFiltro==='TODOS'?sorted:sorted.filter(t=>t.tipo===tipoFiltro || (tipoFiltro==='Envío' && ['Envío','Retiro','Deposito','Depósito'].includes(t.tipo)));
   if(view==='envios') filtrados=sorted.filter(t=>['Envío','Retiro','Deposito'].includes(t.tipo));
   if(view==='recargas') filtrados=sorted.filter(t=>t.tipo==='Recarga');
   if(view==='paquetikos') filtrados=sorted.filter(t=>['Paquetico','Paqueticos'].includes(t.tipo));
