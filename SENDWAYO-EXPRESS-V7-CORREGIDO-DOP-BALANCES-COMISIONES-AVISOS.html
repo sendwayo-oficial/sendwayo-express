@@ -7231,11 +7231,7 @@ window.sendwayoShareReceipt=async function(){
       state.listeners.push(()=>ref.off('value',callback));
     };
     if(role==='ADMIN') attach(userRoot,'admin-directory');
-    else if(role==='AGENTE'){
-      attach(userRoot.child('admin'),'admin');
-      attach(userRoot.child(profileRow.key),'own');
-      for(const roleValue of ['remitente','Remitente','remitentes']) attach(userRoot.orderByChild('role').equalTo(roleValue),'remitters-'+roleValue,(d,k)=>canonicalRole(d,k)==='REMITENTE');
-    } else attach(userRoot.child(profileRow.key),'own');
+    else attach(userRoot.child(profileRow.key),'own');
   }
   async function activateAgentMapping(firebaseUser, profileRow, role) {
     if(role!=='AGENTE') return;
@@ -7252,16 +7248,6 @@ window.sendwayoShareReceipt=async function(){
       if(role==='ADMIN'){
         const snap=await userRoot.once('value');
         snap.forEach(child=>{const data=child.val();if(data&&typeof data==='object'&&canonicalRole(data,child.key))rows.push({key:child.key,data});});
-      } else if(role==='AGENTE'){
-        const own=await userRoot.child(profileRow.key).once('value');
-        if(own.exists()) rows.push({key:profileRow.key,data:own.val()});
-        const admin=await userRoot.child('admin').once('value');
-        if(admin.exists()) rows.push({key:'admin',data:admin.val()});
-        for(const roleValue of ['remitente','Remitente','REMITENTE','remitentes','REMITENTES']){
-          const snap=await userRoot.orderByChild('role').equalTo(roleValue).once('value');
-          snap.forEach(child=>{const data=child.val();if(data&&canonicalRole(data,child.key)==='REMITENTE')rows.push({key:child.key,data});});
-        }
-        rows=[...new Map(rows.map(r=>[r.key,r])).values()];
       } else rows=[profileRow];
     } catch(err) {
       throw new Error(role==='AGENTE'
@@ -9191,7 +9177,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  'use strict';
  var page=1,query='';
  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
- function allowed(){var u=window.currentUser||{};var r=String(u.role||u.rol||'').toUpperCase();return r.indexOf('ADMIN')>=0||r.indexOf('AGENTE')>=0||String(u.id||'').toUpperCase()==='ADMINADMIN';}
+ function allowed(){var u=window.currentUser||{};var r=String(u.role||u.rol||'').toUpperCase();return r.indexOf('ADMIN')>=0||String(u.id||'').toLowerCase()==='admin-administrador';}
  function rows(){try{var x=window.sendwayoBuildFinancialAudit&&window.sendwayoBuildFinancialAudit();return x&&Array.isArray(x.rows)?x.rows:[];}catch(e){return [];}}
  function mount(){var base=document.getElementById('view-tablero');if(!base||document.getElementById('view-expediente'))return;var v=document.createElement('section');v.id='view-expediente';v.className='view hidden bg-white rounded-xl border shadow-sm';base.parentElement.insertBefore(v,base.nextSibling);}
  function draw(){mount();var root=document.getElementById('view-expediente');if(!root)return;if(!allowed()){root.innerHTML='<div class="p-5 text-sm font-bold text-red-700">Expediente disponible para administración y agentes autorizados.</div>';return;}
