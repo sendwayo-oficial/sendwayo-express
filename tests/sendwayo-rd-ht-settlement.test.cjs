@@ -7,6 +7,7 @@ const worker = fs.readFileSync("cloudflare-worker/src/index.mjs", "utf8");
 
 assert.ok(html.includes("sendwayo-express-financial-api.ideletteismorin.workers.dev"), "V7 debe llamar al Worker financiero aislado");
 assert.ok(html.includes('request("/api/settle-rd-ht", id)'), "la aprobación RD→HT debe ejecutarse en el servidor");
+assert.ok(html.includes('const moneyLabel = String(t.moneda || t.currency || t.currencyCode || "DOP").toUpperCase();'), "la moneda debe leerse de sus campos, no del monto numérico");
 assert.ok(html.includes('request("/api/reverse-rd-ht", id)'), "Administración debe poder solicitar el reverso");
 assert.ok(html.includes("internalSettlements"), "V7 debe leer la colección de liquidaciones internas");
 assert.ok(html.includes("originCountry:txt(t.countryFrom?.iso2"), "V7 debe persistir país de origen ISO");
