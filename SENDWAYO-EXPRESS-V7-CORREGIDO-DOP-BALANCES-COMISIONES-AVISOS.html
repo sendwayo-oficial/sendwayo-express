@@ -7696,6 +7696,25 @@ window.sendwayoShareReceipt=async function(){
     try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith('sendwayo_express_oficial_20261029_'))continue;const raw=localStorage.getItem(k);if(!raw||!/["'](?:password|password2|contrasena|allowedPasswords)["']\s*:/.test(raw))continue;try{const obj=JSON.parse(raw);const clean=x=>{if(Array.isArray(x))x.forEach(clean);else if(x&&typeof x==='object'){strip(x);Object.values(x).forEach(clean);}};clean(obj);localStorage.setItem(k,JSON.stringify(obj));}catch(e){localStorage.removeItem(k);}}}catch(e){}
   }
   // No ejecutar limpiezas repetitivas de localStorage: ralentizaban el portal y no forman parte del acceso.
+  async function requireInitialPasswordChange(found, firebaseUser) {
+    const profile=found&&found.data||{};
+    if(profile.mustChangePassword!==true && profile.passwordChangeRequired!==true) return;
+    const user=firebaseUser||auth.currentUser;
+    if(!user) throw new Error('No se pudo confirmar la sesión para cambiar la contraseña inicial.');
+    let next='',confirm='';
+    while(true){
+      next=window.prompt('Por seguridad, debe cambiar su contraseña temporal antes de entrar. Escriba una nueva contraseña de al menos 8 caracteres:');
+      if(next===null){await auth.signOut();throw new Error('Debe cambiar la contraseña inicial para poder ingresar.');}
+      if(String(next).length<8){window.alert('La nueva contraseña debe tener al menos 8 caracteres.');continue;}
+      confirm=window.prompt('Confirme su nueva contraseña:');
+      if(confirm===null){await auth.signOut();throw new Error('Debe confirmar la nueva contraseña para poder ingresar.');}
+      if(next!==confirm){window.alert('Las contraseñas no coinciden. Inténtelo otra vez.');continue;}
+      break;
+    }
+    await user.updatePassword(next);
+    await db.ref(ROOT+'/users/'+found.key).update({mustChangePassword:false,passwordChangeRequired:false,passwordChangedAtMs:Date.now()});
+    found.data.mustChangePassword=false;found.data.passwordChangeRequired=false;
+  }
   async function attemptLogin() {
     if (state.loginBusy || state.sessionEstablished) return;
     const input = txt(document.getElementById('login-usuario')?.value);
@@ -7738,6 +7757,7 @@ window.sendwayoShareReceipt=async function(){
       const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 12000);
 
       if (!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
+      await loginStep(requireInitialPasswordChange(found,firebaseUser),'El cambio obligatorio de contraseña inicial',120000);
       const role = canonicalRole(found.data, found.key);
       if (!role) throw new Error('El perfil de Firebase no tiene un rol válido. No se otorgó acceso.');
       if (!isActive(found.data)) throw new Error('La cuenta está inactiva o bloqueada. Consulte al administrador.');
@@ -7966,6 +7986,7 @@ window.sendwayoShareReceipt=async function(){
       // El Worker no debe bloquear la apertura del portal si su endpoint externo no responde.
       const found=await readProfile(user);
       if(!found) throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise el directorio.');
+      await requireInitialPasswordChange(found,user);
       const role=canonicalRole(found.data,found.key);
       if(!role||!isActive(found.data)) throw new Error('El perfil no tiene un rol válido o está inactivo.');
       const linked=await bindIdentity(found,user,role);
@@ -8181,7 +8202,7 @@ window.sendwayoShareReceipt=async function(){
         const uid=credential.user.uid,dbKey=uid;
         let next=1,prefix=ag?'AGE':'REM';while(accountArrays().some(x=>norm(x.id)===norm(prefix+String(next).padStart(5,'0'))))next++;
         const idNew=ident;
-        const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid};
+        const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid,mustChangePassword:true,passwordChangeRequired:true};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).set(profile);
         if(ag)await fb.db.ref('sendwayo_express_v2/agentAuth/'+uid).set({authUid:uid,active:true,userId:dbKey,role:'agente',createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid});
       }else{
