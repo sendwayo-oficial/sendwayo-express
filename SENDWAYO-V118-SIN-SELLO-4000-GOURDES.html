@@ -833,11 +833,11 @@ function verComprobante(id){
   document.getElementById('comp-fecha').innerText=t.fecha;
   document.getElementById('comp-hora').innerText=t.fecha.split(' ')[1]||'4:54:34 p. m.';
   document.getElementById('comp-tipo').innerText='Transacción: '+t.tipo+' - '+(t.ruta||'');
-  document.getElementById('comp-beneficiario').innerText=t.beneficiario||'SAUTHER JALBAR';
-  document.getElementById('comp-beneficiario-tel').innerText=t.beneficiarioTel||'35249812';
+  document.getElementById('comp-beneficiario').innerText=t.beneficiario||'—';
+  document.getElementById('comp-beneficiario-tel').innerText=t.beneficiarioTel||'—';
   document.getElementById('comp-monto').innerText=montoLimpio;
-  document.getElementById('comp-creador').innerText=t.creadorId||'ADMINADMIN';
-  document.getElementById('comp-autorizado').innerText=t.aprobadoPor||'ADMINADMIN';
+  document.getElementById('comp-creador').innerText=t.creadorId||'—';
+  document.getElementById('comp-autorizado').innerText=t.aprobadoPor||'—';
   document.getElementById('modal-comprobante').classList.remove('hidden');
 }
 
