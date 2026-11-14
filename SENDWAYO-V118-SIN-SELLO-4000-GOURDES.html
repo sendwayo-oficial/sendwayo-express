@@ -356,29 +356,24 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
     } catch (error) { console.warn('[SENDWAYO] No se pudo mostrar el aviso:', error); }
   };
 </script>
-<div id="login-screen" class="fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
-  <div data-sendwayo-v7-form class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
+<div id="login-screen" class="hidden fixed inset-0 bg-[#0b1a2f] z-[20000] flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
     <div class="text-center mb-6">
-      <h1 class="font-extrabold text-[25px] tracking-wide text-[#102b49]">SENDWAYO EXPRESS</h1>
-      <p class="mt-1 text-[12px] font-semibold text-slate-500">Plataforma de envíos y servicios</p>
-      <p class="mt-2 text-[11px] text-slate-500">Acceso seguro a su negocio</p>
+      <img src="assets/sendwayo-logo-real.jpg" alt="Logo SENDWAYO EXPRESS" style="display:block;width:150px;height:100px;object-fit:contain;margin:0 auto 12px;">
+      <h2 class="font-extrabold text-[18px]">SENDWAYO EXPRESS</h2>
     </div>
     <div class="space-y-4">
       <div>
-        <label class="block text-[12px] font-bold mb-1 text-[#102b49]" for="login-usuario">Usuario</label>
-        <input id="login-usuario" autocomplete="username" type="text" placeholder="Escriba su usuario" class="w-full border rounded-lg p-3 text-[15px]">
+        <label class="block text-[11px] font-bold mb-1">Usuario</label>
+        <input id="login-usuario" type="text" placeholder="Correo, código o teléfono" class="w-full border rounded-lg p-3 text-[13px]">
       </div>
       <div>
-        <label class="block text-[12px] font-bold mb-1 text-[#102b49]" for="login-password">Contraseña</label>
-        <div class="flex items-center gap-2">
-          <input id="login-password" autocomplete="current-password" type="password" placeholder="Escriba su contraseña" class="w-full border rounded-lg p-3 text-[15px]">
-          <button type="button" onclick="window.v162_togglePass()" class="border rounded-lg px-3 py-3 text-[12px] font-bold text-[#102b49]">Ver</button>
-        </div>
+        <label class="block text-[11px] font-bold mb-1">Contraseña</label>
+        <input id="login-password" type="password" placeholder="Contraseña" class="w-full border rounded-lg p-3 text-[13px]">
+        <div class="text-[9px] text-gray-500 mt-1">Puede entrar con correo, código o teléfono; la contraseña se verifica en Firebase Authentication</div>
       </div>
-      <button id="sendwayo-recover-password" type="button" class="w-full text-right text-[12px] font-semibold text-blue-700 underline">Recuperar cuenta</button>
-      <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">Ingresar</button>
-      <button type="button" onclick="window.alert('Para registrar una cuenta nueva, solicite la activación al administrador de SENDWAYO EXPRESS.')" class="w-full border border-[#0f2440] text-[#0f2440] font-bold py-3 rounded-xl">Registrar</button>
-      <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]" role="status" aria-live="polite"></div>
+      <button onclick="intentarLogin()" class="w-full bg-[#0f2440] text-white font-bold py-3 rounded-xl">🔐 Entrar</button>
+      <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[11px]"></div>
     </div>
   </div>
 </div>
@@ -6950,25 +6945,18 @@ window.sendwayoShareReceipt=async function(){
     if (sidebar) sidebar.style.setProperty('visibility','visible','important');
   }
   function showLogin() {
-    document.body.classList.remove('sendwayo-authenticated');
-    document.body.classList.add('sendwayo-login-open');
+    document.body.classList.remove('sendwayo-authenticated', 'sendwayo-login-open');
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-tablero')?.classList.add('hidden');
     const welcome=document.getElementById('welcome-landing');
-    if(welcome){
-      welcome.classList.add('hidden');
-      welcome.style.setProperty('display','none','important');
-      welcome.style.setProperty('visibility','hidden','important');
-      welcome.style.setProperty('pointer-events','none','important');
-    }
+    if(welcome) welcome.remove();
     const login=document.getElementById('login-screen');
     if(login){
-      login.classList.remove('hidden');
+      login.classList.remove('hidden','sendwayo-login-visible');
       login.style.setProperty('display','flex','important');
       login.style.setProperty('visibility','visible','important');
       login.style.setProperty('pointer-events','auto','important');
     }
-    document.querySelectorAll('#login-screen img, #login-screen video, #login-screen iframe').forEach(el=>el.style.setProperty('display','none','important'));
     const top=document.getElementById('user-top'); if(top) top.textContent='';
   }
   function collectAliases() {
@@ -7243,11 +7231,7 @@ window.sendwayoShareReceipt=async function(){
       state.listeners.push(()=>ref.off('value',callback));
     };
     if(role==='ADMIN') attach(userRoot,'admin-directory');
-    else if(role==='AGENTE'){
-      attach(userRoot.child('admin'),'admin');
-      attach(userRoot.child(profileRow.key),'own');
-      for(const roleValue of ['remitente','Remitente','remitentes']) attach(userRoot.orderByChild('role').equalTo(roleValue),'remitters-'+roleValue,(d,k)=>canonicalRole(d,k)==='REMITENTE');
-    } else attach(userRoot.child(profileRow.key),'own');
+    else attach(userRoot.child(profileRow.key),'own');
   }
   async function activateAgentMapping(firebaseUser, profileRow, role) {
     if(role!=='AGENTE') return;
@@ -7264,16 +7248,6 @@ window.sendwayoShareReceipt=async function(){
       if(role==='ADMIN'){
         const snap=await userRoot.once('value');
         snap.forEach(child=>{const data=child.val();if(data&&typeof data==='object'&&canonicalRole(data,child.key))rows.push({key:child.key,data});});
-      } else if(role==='AGENTE'){
-        const own=await userRoot.child(profileRow.key).once('value');
-        if(own.exists()) rows.push({key:profileRow.key,data:own.val()});
-        const admin=await userRoot.child('admin').once('value');
-        if(admin.exists()) rows.push({key:'admin',data:admin.val()});
-        for(const roleValue of ['remitente','Remitente','REMITENTE','remitentes','REMITENTES']){
-          const snap=await userRoot.orderByChild('role').equalTo(roleValue).once('value');
-          snap.forEach(child=>{const data=child.val();if(data&&canonicalRole(data,child.key)==='REMITENTE')rows.push({key:child.key,data});});
-        }
-        rows=[...new Map(rows.map(r=>[r.key,r])).values()];
       } else rows=[profileRow];
     } catch(err) {
       throw new Error(role==='AGENTE'
@@ -7295,12 +7269,13 @@ window.sendwayoShareReceipt=async function(){
     return !(profile.active===false || profile.active===0 || String(profile.active).toLowerCase()==='false' || profile.disabled===true || ['inactive','disabled','inactivo','deshabilitado','bloqueado','blocked'].includes(status));
   }
   function appIdFor(profile, key, role) {
-    if(role==='ADMIN') return 'ADMINADMIN';
+    if(role==='ADMIN') return 'admin-administrador';
     const known=collectAliases().find(a => norm(a.email)===norm(profile.authEmail || profile.email) || norm(a.nombre)===norm(profile.name || profile.nombre) || norm(a.id)===norm(profile.id || profile.staffId || profile.code));
     const supplied=txt(profile.id || profile.legacyId || profile.accountId || profile.staffId || profile.code || profile.codigo || profile.idUsuario);
-    let id=supplied || known?.id || key;
-    if(role==='REMITENTE' && !/^REM/i.test(id)) id='REM-'+id.replace(/^rm[-_]?/i,'');
-    if(role==='AGENTE' && !/^AG/i.test(id)) id='AG-'+id.replace(/^agent[-_]?/i,'');
+    let id=String(supplied || known?.id || key || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const prefix=role==='AGENTE'?'AGE':'REM';
+    const digits=id.replace(/^(AGE|REM)/,'').replace(/\D/g,'').slice(-5);
+    if(!(id.startsWith(prefix)&&id.length===8)) id=prefix+String(digits?Number(digits):1).padStart(5,'0');
     return id;
   }
   function accountMoney(profile) {
@@ -7722,6 +7697,25 @@ window.sendwayoShareReceipt=async function(){
     try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith('sendwayo_express_oficial_20261029_'))continue;const raw=localStorage.getItem(k);if(!raw||!/["'](?:password|password2|contrasena|allowedPasswords)["']\s*:/.test(raw))continue;try{const obj=JSON.parse(raw);const clean=x=>{if(Array.isArray(x))x.forEach(clean);else if(x&&typeof x==='object'){strip(x);Object.values(x).forEach(clean);}};clean(obj);localStorage.setItem(k,JSON.stringify(obj));}catch(e){localStorage.removeItem(k);}}}catch(e){}
   }
   // No ejecutar limpiezas repetitivas de localStorage: ralentizaban el portal y no forman parte del acceso.
+  async function requireInitialPasswordChange(found, firebaseUser) {
+    const profile=found&&found.data||{};
+    if(profile.mustChangePassword!==true && profile.passwordChangeRequired!==true) return;
+    const user=firebaseUser||auth.currentUser;
+    if(!user) throw new Error('No se pudo confirmar la sesión para cambiar la contraseña inicial.');
+    let next='',confirm='';
+    while(true){
+      next=window.prompt('Por seguridad, debe cambiar su contraseña temporal antes de entrar. Escriba una nueva contraseña de al menos 8 caracteres:');
+      if(next===null){await auth.signOut();throw new Error('Debe cambiar la contraseña inicial para poder ingresar.');}
+      if(String(next).length<8){window.alert('La nueva contraseña debe tener al menos 8 caracteres.');continue;}
+      confirm=window.prompt('Confirme su nueva contraseña:');
+      if(confirm===null){await auth.signOut();throw new Error('Debe confirmar la nueva contraseña para poder ingresar.');}
+      if(next!==confirm){window.alert('Las contraseñas no coinciden. Inténtelo otra vez.');continue;}
+      break;
+    }
+    await user.updatePassword(next);
+    await db.ref(ROOT+'/users/'+found.key).update({mustChangePassword:false,passwordChangeRequired:false,passwordChangedAtMs:Date.now()});
+    found.data.mustChangePassword=false;found.data.passwordChangeRequired=false;
+  }
   async function attemptLogin() {
     if (state.loginBusy || state.sessionEstablished) return;
     const input = txt(document.getElementById('login-usuario')?.value);
@@ -7764,6 +7758,7 @@ window.sendwayoShareReceipt=async function(){
       const found = await loginStep(readProfile(firebaseUser), 'La lectura del perfil en Firebase', 12000);
 
       if (!found) throw new Error('La contraseña es correcta, pero esta cuenta no está vinculada a un perfil SENDWAYO EXPRESS en la base de datos. No se otorgó acceso.');
+      await loginStep(requireInitialPasswordChange(found,firebaseUser),'El cambio obligatorio de contraseña inicial',120000);
       const role = canonicalRole(found.data, found.key);
       if (!role) throw new Error('El perfil de Firebase no tiene un rol válido. No se otorgó acceso.');
       if (!isActive(found.data)) throw new Error('La cuenta está inactiva o bloqueada. Consulte al administrador.');
@@ -7897,12 +7892,12 @@ window.sendwayoShareReceipt=async function(){
   // Never create accounts or reset credentials in localStorage; Firebase Authentication is the sole identity source.
   window.v162_registrar=function(){loginError('El registro local está desactivado por seguridad. El administrador debe habilitar su cuenta en Firebase Authentication.');};
   // v162_goWelcome conserva el retorno funcional a la página pública.
-  const recoverButton=document.getElementById('sendwayo-recover-password');
+  const recoverButton=document.getElementById('sendwayo-recover-password')||document.getElementById('sendwayo-recover-button');
   if(recoverButton) recoverButton.onclick=async()=>{
     const candidate=txt(document.getElementById('login-usuario')?.value);
     const email=resolveEmail(candidate);
     if(!email){loginError('Escriba su usuario o correo registrado para recuperar la cuenta.');return;}
-    try{await auth.sendPasswordResetEmail(email);loginError('Si la cuenta está registrada, Firebase enviará el enlace de recuperación al correo asociado.');}
+    try{await auth.sendPasswordResetEmail(email);loginError('Si la cuenta está registrada, Firebase enviará un enlace de recuperación al correo asociado.');}
     catch(error){loginError('Firebase no pudo enviar el enlace de recuperación. Compruebe la cuenta y la configuración de Authentication.');}
   };
   // Guardar beneficiarios en Firebase antes de confirmar al usuario; no dejarlos solo en este navegador.
@@ -7992,6 +7987,7 @@ window.sendwayoShareReceipt=async function(){
       // El Worker no debe bloquear la apertura del portal si su endpoint externo no responde.
       const found=await readProfile(user);
       if(!found) throw new Error('Esta cuenta autenticó en Firebase, pero no tiene un perfil SENDWAYO asignado. Solicite al administrador que revise el directorio.');
+      await requireInitialPasswordChange(found,user);
       const role=canonicalRole(found.data,found.key);
       if(!role||!isActive(found.data)) throw new Error('El perfil no tiene un rol válido o está inactivo.');
       const linked=await bindIdentity(found,user,role);
@@ -8169,7 +8165,7 @@ window.sendwayoShareReceipt=async function(){
     const name=a?.name||a?.nombre||'',email=a?.email||'',phone=a?.phone||a?.celular||a?.telefono||'',username=a?.username||a?.login||'',code=a?.code||a?.codigo||a?.staffId||'',ident=a?.id||idPrefix+String(next).padStart(5,'0'),
       password='';
     const f=(field,label,value='',type='text',ro=false)=>`<label class="block text-xs font-bold">${label}<input id="v7-admin-${field}" type="${type}" value="${esc(value)}" ${ro?'readonly':''} class="mt-1 w-full border rounded-xl px-3 py-2.5 font-normal ${ro?'bg-slate-100':''}"></label>`;
-    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','','password')}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
+    const body=`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f('name','Nombre y apellido',name)}${f('id','ID visible de la cuenta',ident)}${f('username','Usuario / alias de acceso',username)}${f('code','Código',code)}${f('email','Correo de Firebase Authentication',email,'email',!!a)}${f('phone','Celular',phone,'tel')}${a?'':f('password','Contraseña inicial','12345678','text',true)}</div><p class="text-[11px] text-slate-600">El correo de Firebase no se modifica desde este formulario. El usuario y el código sí pueden modificarse. La cuenta nueva se crea en Firebase Authentication y en la base de datos.</p>`;
     const modal=accountModal((a?'Modificar ':'Crear nuevo ')+(ag?'agente':'remitente'),body);
     $('sendwayo-admin-account-save').onclick=()=>window.sendwayoSaveAccountForm(view,id);
   };
@@ -8187,7 +8183,8 @@ window.sendwayoShareReceipt=async function(){
     if(!isAdmin())return deny('Solo el administrador puede guardar cuentas.');
     const name=$('v7-admin-name')?.value.trim()||'',ident=$('v7-admin-id')?.value.trim()||'',username=$('v7-admin-username')?.value.trim()||'',code=$('v7-admin-code')?.value.trim()||'',email=$('v7-admin-email')?.value.trim().toLowerCase()||'',phone=$('v7-admin-phone')?.value.trim()||'',password=$('v7-admin-password')?.value||'';
     if(!name||!ident||!username||!code||!email||!phone)return deny('Complete ID, nombre, usuario, código, correo y celular.');
-    if(!/^[A-Za-z0-9_-]{3,32}$/.test(ident))return deny('El ID debe tener entre 3 y 32 caracteres: letras, números, guion o guion bajo.');
+    const expectedPrefix=view==='agentes'?'AGE':'REM';
+    if(!new RegExp('^'+expectedPrefix+'\\d{5}$').test(ident))return deny('El ID debe tener ocho caracteres: '+expectedPrefix+' seguido de cinco números, sin guiones.');
     if(!/^\S+@\S+\.\S+$/.test(email))return deny('El correo no es válido.');
     const fb=window.sendwayoFirebase;if(!fb?.db||!fb?.auth?.currentUser)return deny('No hay una sesión administrativa confirmada en Firebase.');
     let a=id?findAccount(id):null;const ag=view==='agentes',roleValue=ag?'agente':'remitente';
@@ -8206,7 +8203,7 @@ window.sendwayoShareReceipt=async function(){
         const uid=credential.user.uid,dbKey=uid;
         let next=1,prefix=ag?'AGE':'REM';while(accountArrays().some(x=>norm(x.id)===norm(prefix+String(next).padStart(5,'0'))))next++;
         const idNew=ident;
-        const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid};
+        const profile={id:idNew,legacyId:idNew,accountId:idNew,staffId:code,code,codigo:code,name,nombre:name,displayName:name,username,login:username,email,authEmail:email,authUid:uid,phone,telefono:phone,celular:phone,role:roleValue,active:true,status:'active',balance:0,balanceDOP:0,balanceRD:0,balanceHTG:0,commission:0,commissionDOP:0,commissionHTG:0,balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid,mustChangePassword:true,passwordChangeRequired:true};
         await fb.db.ref('sendwayo_express_v2/users/'+dbKey).set(profile);
         if(ag)await fb.db.ref('sendwayo_express_v2/agentAuth/'+uid).set({authUid:uid,active:true,userId:dbKey,role:'agente',createdAtMs:Date.now(),createdByAuthUid:fb.auth.currentUser.uid});
       }else{
@@ -9140,22 +9137,14 @@ window.sendwayoShareReceipt=async function(){
 </script>
 
 
-<!-- SENDWAYO V7: entrada única, formulario visible y fondo claro -->
+<!-- SENDWAYO V7: entrada única, sin portada, registro ni medios en el acceso -->
 <style id="sendwayo-v7-entry-final">
-  html,body{min-height:100%;background:#f3f5f8!important}
+  html,body{min-height:100%;background:#0b1a2f!important}
   body::before{content:none!important;background-image:none!important}
   #welcome-landing{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#f3f5f8!important;padding:20px!important;overflow:auto!important}
+  body:not(.sendwayo-authenticated) #login-screen{display:flex!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;inset:0!important;z-index:2147483000!important;align-items:center!important;justify-content:center!important;background:#0b1a2f!important;padding:20px!important;overflow:auto!important}
   body:not(.sendwayo-authenticated) #login-screen.hidden{display:flex!important}
   body:not(.sendwayo-authenticated) #login-screen> :not([data-sendwayo-v7-form]){display:none!important}
-  body:not(.sendwayo-authenticated) #login-screen > div[data-sendwayo-v7-form]{display:block!important;visibility:visible!important;opacity:1!important;width:min(100%,440px)!important;max-width:440px!important;min-height:0!important;margin:auto!important;padding:28px!important;background:#fff!important;color:#102b49!important;border-radius:18px!important;box-shadow:0 12px 36px rgba(15,35,60,.12)!important}
-  body:not(.sendwayo-authenticated) #login-screen h1,
-  body:not(.sendwayo-authenticated) #login-screen p,
-  body:not(.sendwayo-authenticated) #login-screen label,
-  body:not(.sendwayo-authenticated) #login-screen button,
-  body:not(.sendwayo-authenticated) #login-screen input{visibility:visible!important;opacity:1!important}
-  body:not(.sendwayo-authenticated) #login-screen input{display:block!important;width:100%!important;min-height:48px!important;box-sizing:border-box!important;background:#fff!important;color:#102b49!important;border:1px solid #cbd5e1!important;border-radius:9px!important;padding:12px!important;font-size:16px!important}
-  body:not(.sendwayo-authenticated) #login-screen button{pointer-events:auto!important;cursor:pointer!important}
   body:not(.sendwayo-authenticated) #login-screen img,
   body:not(.sendwayo-authenticated) #login-screen video,
   body:not(.sendwayo-authenticated) #login-screen picture,
@@ -9192,13 +9181,13 @@ window.sendwayoShareReceipt=async function(){
 </script>
 
 
-<!-- SENDWAYO V7 PATCH: restaurar marca en el panel autenticado -->
+<!-- SENDWAYO V7 PATCH: restaurar marca en el panel autenticado y mantener el acceso único -->
 <style id="sendwayo-v7-brand-and-entry-patch">
-body.sendwayo-authenticated img,body.sendwayo-authenticated picture{display:initial!important;visibility:visible!important}
-body.sendwayo-authenticated img{max-width:100%}
-body.sendwayo-authenticated::before{content:""!important;position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.035!important;background-image:url('assets/sendwayo-logo-real.jpg')!important;background-repeat:repeat!important;background-size:150px!important}
-body.sendwayo-authenticated>#sendwayo-v7-topbar,body.sendwayo-authenticated>#sendwayo-v7-drawer{position:relative}
-body:not(.sendwayo-authenticated) #login-screen img,body:not(.sendwayo-authenticated) #login-screen video{display:none!important}
+  body.sendwayo-authenticated img, body.sendwayo-authenticated picture { display: initial !important; visibility: visible !important; }
+  body.sendwayo-authenticated img { max-width: 100%; }
+  body.sendwayo-authenticated::before { content: "" !important; position: fixed !important; inset: 0 !important; z-index: 0 !important; pointer-events: none !important; opacity: .035 !important; background-image: url('assets/sendwayo-logo-real.jpg') !important; background-repeat: repeat !important; background-size: 150px !important; }
+  body.sendwayo-authenticated > .flex, body.sendwayo-authenticated #sendwayo-v7-topbar, body.sendwayo-authenticated #sendwayo-v7-drawer { position: relative; }
+  body:not(.sendwayo-authenticated) #login-screen img, body:not(.sendwayo-authenticated) #login-screen video { display:none !important; }
 
 body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:none!important;visibility:hidden!important}
 </style>
@@ -9210,7 +9199,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  'use strict';
  var page=1,query='';
  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
- function allowed(){var u=window.currentUser||{};var r=String(u.role||u.rol||'').toUpperCase();return r.indexOf('ADMIN')>=0||r.indexOf('AGENTE')>=0||String(u.id||'').toUpperCase()==='ADMINADMIN';}
+ function allowed(){var u=window.currentUser||{};var r=String(u.role||u.rol||'').toUpperCase();return r.indexOf('ADMIN')>=0||String(u.id||'').toLowerCase()==='admin-administrador';}
  function rows(){try{var x=window.sendwayoBuildFinancialAudit&&window.sendwayoBuildFinancialAudit();return x&&Array.isArray(x.rows)?x.rows:[];}catch(e){return [];}}
  function mount(){var base=document.getElementById('view-tablero');if(!base||document.getElementById('view-expediente'))return;var v=document.createElement('section');v.id='view-expediente';v.className='view hidden bg-white rounded-xl border shadow-sm';base.parentElement.insertBefore(v,base.nextSibling);}
  function draw(){mount();var root=document.getElementById('view-expediente');if(!root)return;if(!allowed()){root.innerHTML='<div class="p-5 text-sm font-bold text-red-700">Expediente disponible para administración y agentes autorizados.</div>';return;}
@@ -9223,117 +9212,5 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  var oldShow=window.showView;if(typeof oldShow==='function')window.showView=function(v){var r=oldShow.apply(this,arguments);if(v==='expediente')setTimeout(draw,0);return r;};
  function init(){mount();addNav();window.addEventListener('sendwayo:firebase-ready',function(){addNav();if(document.body.dataset.sendwayoActiveView==='expediente')draw();});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-})();
-</script>
-
-
-<!-- SENDWAYO V7 AUTO-LINK RD-HT TO HT-HT: 8% DOP + 3% HTG, JOINT ADMIN APPROVAL -->
-<script id="sendwayo-v7-auto-linked-haiti-leg">
-(function(){
- 'use strict';
- if(window.__SENDWAYO_V7_AUTO_LINKED_HAITI_LEG__)return;
- window.__SENDWAYO_V7_AUTO_LINKED_HAITI_LEG__=true;
- var TXKEY='sendwayo_express_oficial_20261029_transacciones';
- var busy=false;
- function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
- function n(v){var x=Number(v);return Number.isFinite(x)?x:0;}
- function r2(v){return Math.round((n(v)+Number.EPSILON)*100)/100;}
- function rows(){try{if(Array.isArray(window.TRANSACCIONES))return window.TRANSACCIONES;}catch(_){}try{if(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES))return TRANSACCIONES;}catch(_){}try{var a=JSON.parse(localStorage.getItem(TXKEY)||'[]');return Array.isArray(a)?a:[]}catch(_){return[]}}
- function save(){try{localStorage.setItem(TXKEY,JSON.stringify(rows()))}catch(_){}try{window.sendwayoPersistTx&&window.sendwayoPersistTx()}catch(_){}try{window.sendwayoUpdateViews&&window.sendwayoUpdateViews()}catch(_){}try{window.sendwayoRenderSavedNotifications&&window.sendwayoRenderSavedNotifications()}catch(_){}}
- function admin(){var u=window.currentUser||window.usuarioActual||(typeof currentUser!=='undefined'?currentUser:null)||{};var role=norm(u.role||u.rol||u.tipo);var id=norm(u.id||u.codigo||u.username||u.usuario);return role.includes('admin')||id==='admin-administrador'||id==='adminadmin'||id==='admin-000';}
- function adminAccount(){try{if(typeof ADMIN!=='undefined'&&ADMIN)return ADMIN}catch(_){}return window.ADMIN||null}
- function routeOf(t){return norm((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''))}
- function isRdHaiti(t){var s=routeOf(t);return (/\brd\b|republica dominicana|dominican republic/.test(s))&&(/\bht\b|haiti|hati/.test(s))&&/(natcash|moncash)/.test(s)&&/(?:->|→| a | to )/.test(s)}
- function channelOf(t){return /moncash/.test(routeOf(t))?'MonCash':'NatCash'}
- function amountHTG(t){
-   var rec=String(t&&t.montoRecibido||'').replace(/,/g,'');
-   var m=rec.match(/[0-9]+(?:\.[0-9]+)?/);
-   var markedHTG=/HTG|GDES|GOURD/i.test(rec);
-   var val=markedHTG&&m?Number(m[0]):0;
-   if(!(val>0)){var net=n(t&&t.neto);if(!(net>0))net=Math.max(0,n(t&&t.montoValue)-n(t&&t.fee));val=net*2.10;}
-   return r2(val);
- }
- function findChild(parent){return rows().find(function(x){return x&&String(x.linkedParentTxId||'')===String(parent.id)&&x.autoGeneratedHaitiLeg===true})||null}
- function makeChild(parent){
-   if(!parent||!isRdHaiti(parent)||parent.autoGeneratedHaitiLeg)return null;
-   var existing=findChild(parent);if(existing){parent.linkedChildTxId=existing.id;return existing;}
-   var amount=amountHTG(parent);if(!(amount>0))return null;
-   var channel=channelOf(parent),fee=r2(amount*.03),net=r2(amount-fee),adminAcc=adminAccount();
-   var stamp=Number(parent.timestamp)||Date.now();
-   var child={
-     id:String(parent.id)+'-HTHT-'+channel.toUpperCase()+'-'+stamp,
-     fecha:new Date().toLocaleString('es-DO'),timestamp:stamp+1,
-     tipo:'Envío',ruta:'HT → HT '+channel+' (3%)',
-     rutaExacta:'HT → HT '+channel+' — operación automática vinculada a '+String(parent.id),
-     monto:amount.toFixed(2)+' HTG',montoValue:amount,fee:fee,neto:net,
-     feeText:'Comisión 3% — '+fee.toFixed(2)+' HTG',
-     moneda:'GOURDES',esHT:true,beneficiario:parent.beneficiario||'Beneficiario de la operación RD → Haití',
-     montoRecibido:net.toFixed(2)+' HTG',estado:'Pendiente',
-     creadorId:adminAcc&&adminAcc.id?String(adminAcc.id):'ADMINADMIN',
-     creadoPorId:adminAcc&&adminAcc.id?String(adminAcc.id):'ADMINADMIN',
-     cuentaOrigenId:adminAcc&&adminAcc.id?String(adminAcc.id):'ADMINADMIN',
-     cuentaOrigenNombre:'Administración',cuentaOrigenRol:'ADMIN',
-     fondosDebitados:true,fondosDevueltos:false,reservaAplicada:false,
-     linkedParentTxId:String(parent.id),autoGeneratedHaitiLeg:true,
-     comisionAplicada:false,comisionAdminAplicada:0,comisionRemitenteAplicada:0,
-     aprobacionConjunta:true,aprobacionSoloAdmin:true
-   };
-   parent.linkedChildTxId=child.id;parent.autoGeneratedHaitiLeg=true;
-   rows().unshift(child);save();
-   try{window.sendwayoQueuePending&&window.sendwayoQueuePending(child);window.sendwayoDeliverQueue&&window.sendwayoDeliverQueue()}catch(_){}
-   return child;
- }
- function linkNew(before){
-   var created=rows().filter(function(t){return t&&!before.has(String(t.id))&&isRdHaiti(t)&&!t.autoGeneratedHaitiLeg});
-   created.forEach(function(t){makeChild(t)});
- }
- function wrapSave(name){
-   var old=window[name];if(typeof old!=='function'||old.__sendwayoAutoHaitiWrap)return;
-   var wrapped=function(){
-     var before=new Set(rows().map(function(t){return String(t.id)}));
-     var result=old.apply(this,arguments);
-     linkNew(before);
-     return result;
-   };
-   wrapped.__sendwayoAutoHaitiWrap=true;window[name]=wrapped;
- }
- ['v162_guardarEnvio','guardarEnvioCompacto'].forEach(wrapSave);
- function linkedParent(t){if(!t)return null;if(t.linkedParentTxId)return rows().find(function(x){return String(x.id)===String(t.linkedParentTxId)})||null;return t.linkedChildTxId?rows().find(function(x){return String(x.id)===String(t.linkedChildTxId)})||null:null}
- function linkedChild(t){if(!t)return null;return findChild(t)|| (t.linkedParentTxId?null:rows().find(function(x){return String(x.id)===String(t.linkedChildTxId)})||null)}
- function status(t){return norm(t&&t.estado)}
- function wrapPairAction(name,kind){
-   var old=window[name];if(typeof old!=='function'||old.__sendwayoAutoHaitiPair)return;
-   var wrapped=function(id){
-     var t=rows().find(function(x){return String(x.id)===String(id)});if(!t)return old.apply(this,arguments);
-     var parent=t.linkedParentTxId?linkedParent(t):t;
-     var child=linkedChild(parent);
-     if(!child&&!t.autoGeneratedHaitiLeg)return old.apply(this,arguments);
-     if(busy)return old.apply(this,arguments);
-     if(kind==='approve'&&!admin()){alert('Esta operación RD → Haití y su pago Haití → Haití requieren aprobación conjunta de Administración.');return;}
-     busy=true;
-     try{
-       if(kind==='approve'){
-         if(status(parent)!=='aprobado')old.call(this,parent.id);
-         if(status(parent)==='aprobado'&&child&&status(child)!=='aprobado')old.call(this,child.id);
-       }else if(kind==='reject'){
-         if(status(parent)!=='rechazado')old.call(this,parent.id);
-         if(child&&status(child)!=='rechazado')old.call(this,child.id);
-       }else if(kind==='noCoincide'){
-         if(status(parent)!=='no coincide')old.call(this,parent.id);
-         if(child&&status(child)!=='no coincide')old.call(this,child.id);
-       }
-       save();
-     }finally{busy=false}
-   };
-   wrapped.__sendwayoAutoHaitiPair=true;window[name]=wrapped;
- }
- wrapPairAction('aprobar','approve');
- wrapPairAction('rechazar','reject');
- wrapPairAction('noCoincide','noCoincide');
- // Also catch transactions created before this add-on initialized, without duplicating an existing linked leg.
- function reconcile(){rows().slice().forEach(function(t){if(t&&!t.autoGeneratedHaitiLeg&&isRdHaiti(t)&&!findChild(t))makeChild(t)})}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',reconcile,{once:true});else reconcile();
- window.addEventListener('load',reconcile);
- window.sendwayoAutoHaitiLegDiagnostics=function(){return rows().filter(function(t){return t&&t.autoGeneratedHaitiLeg}).map(function(t){return{id:t.id,parent:t.linkedParentTxId,amountHTG:t.montoValue,feeHTG:t.fee,status:t.estado}})};
 })();
 </script>
