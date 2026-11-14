@@ -78,8 +78,10 @@ test("refunds a remittee DOP reservation exactly once", () => {
   assert.equal(account.balanceDOP, 2100);
   assert.equal(account.balances.DOP, 2100);
   assert.equal(account.balanceHTG, 5);
-  assert.equal(account.balanceReservations["send-123"].status, "REVERSED");
-  assert.equal(account.balanceReservations["send-123"].reversedByAuthUid, "admin-uid");
+  assert.equal(account.balanceReservations["send-123"].status, "REFUNDED");
+  assert.equal(account.balanceReservations["send-123"].refundedByAuthUid, "admin-uid");
+  assert.equal(account.lastBalanceRefundedReservationId, "send-123");
+  assert.equal(account.transactionBalanceRefunds["send-123"].amount, 2000);
   assert.throws(
     () => __test.applyBalanceRefund(account, "remitente-123", "send-123", 2000, "DOP", "admin-uid", 12346),
     /SOURCE_BALANCE_RESERVATION_NOT_ACTIVE/
