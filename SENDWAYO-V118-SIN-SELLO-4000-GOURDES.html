@@ -717,7 +717,7 @@ function renderModulo(view){
   if(!cont) return;
   let tipoFiltro=view==='envios'?'Envío':view==='recargas'?'Recarga':view==='paquetikos'?'Paqueticos':view==='recepcion'?'Paquetes':view==='facturas'?'Servicios':view==='comisiones'?'Comisión':'TODOS';
   const sorted=[...TRANSACCIONES].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-  let filtrados=tipoFiltro==='TODOS'?sorted:sorted.filter(t=>t.tipo===tipoFiltro || (tipoFiltro==='Envío' && ['Envío','Retiro','Deposito'].includes(t.tipo)));
+  let filtrados=tipoFiltro==='TODOS'?sorted:sorted.filter(t=>t.tipo===tipoFiltro || (tipoFiltro==='Envío' && ['Envío','Retiro','Deposito','Depósito'].includes(t.tipo))); const uidVista=String(currentUser&&currentUser.id||''); if(uidVista!=='ADMINADMIN'&&uidVista.indexOf('AGE')===0){filtrados=filtrados.filter(t=>String(t.creadorId||t.remitenteId||'')===uidVista || (t.estado==='Pendiente'&&String(t.assignedAgentId||'')===uidVista));} else if(uidVista!=='ADMINADMIN'){filtrados=filtrados.filter(t=>String(t.creadorId||t.remitenteId||'')===uidVista);}
   if(view==='envios') filtrados=sorted.filter(t=>['Envío','Retiro','Deposito'].includes(t.tipo));
   if(view==='recargas') filtrados=sorted.filter(t=>t.tipo==='Recarga');
   if(view==='paquetikos') filtrados=sorted.filter(t=>['Paquetico','Paqueticos'].includes(t.tipo));
@@ -759,41 +759,38 @@ function renderModulo(view){
 function filtrarRuta(ruta){ currentFilter=ruta; showView('tablero'); renderPrincipal(); }
 
 function abrirNuevo(tipo){
-  const monto=prompt('Monto '+tipo+' DOP - Ej 100 - Si hago envío de una vez en envío debo ver eso pendiente:')||'100';
-  if(!monto || isNaN(monto)) return;
-  const montoNum=parseFloat(monto);
-  if(currentUser.id==='ADMINADMIN') ADMIN_BAL.DOP-=montoNum;
-  else if(currentUser.id.startsWith('AG')){ const ag=AGENTES.find(a=>a.id===currentUser.id); if(ag) ag.balances.DOP-=montoNum; ADMIN_BAL.DOP-=montoNum; }
-  else{ const rem=REMITENTES.find(r=>r.id===currentUser.id); if(rem) rem.balances.DOP-=montoNum; }
-  
-  let montoRecibidoLimpio='';
-  let fee=0;
-  let neto=0;
-  if(tipo==='Recarga'){
-    // Recargas: siempre en pesos, sin quitarle nada - si son 100, pones 100 - sin comentario - queda interno
-    montoRecibidoLimpio = montoNum + ' DOP';
-    fee = 5;
-    neto = montoNum;
-  } else if(tipo==='Paqueticos' || tipo==='Paquetico' || tipo==='Paquetes'){
-    montoRecibidoLimpio = montoNum + ' DOP';
-    fee = 10;
-    neto = montoNum;
-  } else if(tipo==='Envío' || tipo.includes('RD') && tipo.includes('HT')){
-    // RD a Haití: multiplicación por 2.1 - cantidad recibida en gourde haitiano
-    fee = Math.round(montoNum*0.08);
-    neto = montoNum - fee;
-    montoRecibidoLimpio = (neto * 2.1).toFixed(2) + ' HTG';
-  } else {
-    fee = Math.round(montoNum*0.08);
-    neto = montoNum - fee;
-    montoRecibidoLimpio = montoNum + ' DOP';
+  if(!currentUser || !currentUser.id){ alert('Inicie sesión para continuar.'); return; }
+  let modal=document.getElementById('sendwayo-simple-transaction');
+  if(!modal){
+    modal=document.createElement('div'); modal.id='sendwayo-simple-transaction';
+    modal.className='fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4';
+    modal.innerHTML='<div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 space-y-3"><h3 class="font-extrabold text-lg">Nueva transacción</h3><div class="rounded-lg bg-slate-50 p-3 text-sm"><span class="font-bold">Usuario:</span> <span id="sw-tx-user"></span><br><span class="font-bold">ID:</span> <span id="sw-tx-id"></span></div><label class="block text-xs font-bold">CANTIDAD DE DINERO<input id="sw-tx-amount" type="number" min="0.01" step="0.01" class="mt-1 w-full border rounded-lg p-3" placeholder="Cantidad"></label><label class="block text-xs font-bold">TIPO DE MONEDA<select id="sw-tx-currency" class="mt-1 w-full border rounded-lg p-3"><option value="DOP">DOP (RD$)</option><option value="HTG">HTG (GDES)</option></select></label><label class="block text-xs font-bold">BENEFICIARIO<input id="sw-tx-beneficiary" type="text" class="mt-1 w-full border rounded-lg p-3" placeholder="Nombre o teléfono del beneficiario"></label><div class="flex gap-2 pt-2"><button type="button" id="sw-tx-cancel" class="w-1/2 border rounded-lg py-3 font-bold">Cancelar</button><button type="button" id="sw-tx-save" class="w-1/2 bg-[#1e3a5f] text-white rounded-lg py-3 font-bold">Guardar</button></div></div>';
+    document.body.appendChild(modal);
+    document.getElementById('sw-tx-cancel').onclick=function(){modal.remove();};
+    document.getElementById('sw-tx-save').onclick=function(){
+      const amount=parseFloat(document.getElementById('sw-tx-amount').value);
+      const currency=document.getElementById('sw-tx-currency').value;
+      const beneficiary=document.getElementById('sw-tx-beneficiary').value.trim();
+      if(!(amount>0)||!beneficiary){alert('Escriba la cantidad y el beneficiario.');return;}
+      const uid=String(currentUser.id), isAdmin=uid==='ADMINADMIN', isAgent=uid.indexOf('AGE')===0;
+      const account=isAdmin?ADMIN:(isAgent?AGENTES.find(x=>x.id===uid):REMITENTES.find(x=>x.id===uid));
+      const wallet=currency;
+      if(account && account.balances && Number(account.balances[wallet]||0)<amount){alert('Balance insuficiente en '+currency+'.');return;}
+      if(account && account.balances) account.balances[wallet]-=amount;
+      if(isAgent && ADMIN_BAL && currency==='DOP') ADMIN_BAL.DOP-=amount;
+      const isDeposit=/dep[oó]sito/i.test(tipo);
+      const tx={id:'SW-'+Date.now().toString().slice(-6),fecha:new Date().toLocaleString('es-DO'),tipo:tipo,ruta:tipo,monto:amount+' '+currency,montoValue:amount,moneda:currency,beneficiario:beneficiary,estado:'Pendiente',timestamp:Date.now(),creadorId:uid,remitenteId:uid,depositanteId:isDeposit?uid:undefined,assignedAgentId:window.currentAssignedAgentId||null,montoRecibido:amount+' '+currency};
+      TRANSACCIONES.unshift(tx); modal.remove(); renderPrincipal();
+      const active=document.querySelector('.view:not(.hidden)'); if(active&&active.id!=='view-tablero') renderModulo(active.id.replace('view-',''));
+      addNotificacion('Nueva '+tipo+' de '+uid+' pendiente',tipo);
+    };
   }
-  
-  const nueva={id:'SW-'+Date.now().toString().slice(-6), fecha:new Date().toLocaleString('es-DO'), tipo:tipo==='Recarga'?'Recarga':tipo==='Paqueticos'?'Paqueticos':tipo, ruta:tipo==='Recarga'?'Recarga Claro - 100 pesos':tipo==='Paqueticos'?'Paquetícos - 150 DOP':tipo, rutaExacta:tipo==='Recarga'?'Recarga Claro - 100 pesos entero':tipo, monto:montoNum+' DOP', montoValue:montoNum, fee:fee, neto:neto, feeText:'Fee 8%: '+fee+' Neto: '+neto, moneda:'DOP', beneficiario:'8292155657', estado:'Pendiente', timestamp:Date.now(), creadorId:currentUser.id, remitenteId:currentUser.id, montoRecibido:montoRecibidoLimpio};
-  TRANSACCIONES.unshift(nueva);
-  renderPrincipal();
-  addNotificacion('Nuevo '+tipo+' '+montoNum+' DOP - Pendiente - '+montoRecibidoLimpio, tipo);
-  alert('✅ '+tipo+' creado '+montoNum+' DOP - Recibo: '+montoRecibidoLimpio+' - Comprobante limpio sin comentario - RD->HT en HTG x2.1 - Recargas 100=100 DOP sin quitar nada - Interno queda entre nosotros');
+  document.getElementById('sw-tx-user').textContent=currentUser.name||currentUser.nombre||currentUser.email||currentUser.id;
+  document.getElementById('sw-tx-id').textContent=currentUser.id;
+  document.getElementById('sw-tx-amount').value='';
+  document.getElementById('sw-tx-currency').value='DOP';
+  document.getElementById('sw-tx-beneficiary').value='';
+  modal.classList.remove('hidden');
 }
 
 function filtrarTabla(tbodyId, val){ const tbody=document.getElementById(tbodyId); if(!tbody) return; tbody.querySelectorAll('tr').forEach(tr=>{ tr.style.display=tr.textContent.toLowerCase().includes(val.toLowerCase())?'':'none'; }); }
@@ -804,7 +801,7 @@ function exportExcelGlobal(){ exportExcel('principal'); }
 function exportPDFGlobal(){ exportPDF('principal'); }
 function exportCSVGlobal(){ exportCSV('principal'); }
 function limpiarBuscador(){ document.getElementById('buscador-global').value=''; renderPrincipal(); }
-function aprobar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; t.estado='Aprobado'; t.aprobadoPor=currentUser.id; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); setTimeout(()=>verComprobante(id),500); alert('✅ APROBADO - Comprobante limpio: '+t.montoRecibido+' - RD->HT en HTG x2.1 - Recargas 100=100 DOP'); }
+function aprobar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; const uid=String(currentUser&&currentUser.id||''); const isAdmin=uid==='ADMINADMIN'; const isAgent=uid.indexOf('AGE')===0; const isDeposit=/dep[oó]sito/i.test(String(t.tipo||'')); if(!isAdmin&&!isAgent){alert('Solo administración y agentes autorizados pueden aprobar.');return;} if(isDeposit&&!isAdmin){alert('Solo el administrador puede aprobar depósitos.');return;} if(!isAdmin&&String(t.creadorId||t.remitenteId||'')===uid){alert('No puede aprobar su propia transacción.');return;} if(!isAdmin&&!isAgent){return;} t.estado='Aprobado'; t.aprobadoPor=currentUser.id; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); setTimeout(()=>verComprobante(id),500); alert('✅ APROBADO - Comprobante limpio: '+t.montoRecibido+' - RD->HT en HTG x2.1 - Recargas 100=100 DOP'); }
 function rechazar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; t.estado='Rechazado'; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); }
 function noCoincide(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; t.estado='No coincide'; renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); }
 function modificar(id){ let t=TRANSACCIONES.find(x=>String(x.id)===String(id)); if(!t) return; if(t.estado==='Aprobado' && currentUser.id!=='ADMINADMIN'){ alert('Aprobado ningún remitente ni agente podrá modificar - Solo admin'); return; } const n=prompt('Modificar monto '+id+' Actual '+t.montoValue); if(n && !isNaN(n)){ t.montoValue=parseFloat(n); t.monto=n+' DOP'; if(t.tipo==='Recarga'){ t.montoRecibido = parseFloat(n)+' DOP'; } else if(t.tipo==='Paqueticos' || t.tipo==='Paquetico'){ t.montoRecibido = parseFloat(n)+' DOP'; } else { const fee=Math.round(parseFloat(n)*0.08); const neto=parseFloat(n)-fee; t.montoRecibido = (neto*2.1).toFixed(2)+' HTG'; t.fee=fee; t.neto=neto; t.feeText='Fee 8%: '+fee+' Neto: '+neto; } renderPrincipal(); const viewActual=document.querySelector('.view:not(.hidden)'); if(viewActual && viewActual.id!=='view-tablero') renderModulo(viewActual.id.replace('view-','')); } }
