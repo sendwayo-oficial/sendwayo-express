@@ -27,7 +27,7 @@ El remitente no carga ni ve la operación interna. Administración y agentes la 
 - La identidad de Administración se contrasta con el UID del perfil admin en Firebase; los agentes se validan mediante agentAuth y su perfil activo.
 - Los agentes no pueden aprobar su propia operación ni una operación creada por Administración.
 - Una actualización condicional ETag/If-Match protege toda la escritura financiera en el nodo del proyecto. Los conflictos concurrentes se reintentan; una operación ya liquidada es idempotente.
-- El reverso es exclusivo de Administración. Se bloquea sin cambios parciales si la comisión HTG ya fue retirada y no está disponible para revertir.
+- El reverso es exclusivo de Administración. Además de restaurar el débito neto HTG y descontar la comisión HTG generada, devuelve el importe DOP retenido al remitente (marcando la reserva como revertida) o a la cartera DOP de Administración si el envío fue financiado por fondos administrativos. Se bloquea sin cambios parciales si la comisión HTG ya fue retirada o si no existe la reserva original que debe devolverse.
 - No hay contraseñas ni claves privadas dentro del repositorio.
 
 ## Preparación de Cloudflare
