@@ -596,6 +596,50 @@ let REMITENTES = [
   {id:'REM00014', codigo:'REM-014', numero:'14', name:'REMITENTE 14', nombre:'REMITENTE 14', email:'remitente14@gmail.com', telefono:'+1-829 0000014', celular:'+1-829 0000014', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
   {id:'REM00015', codigo:'REM-015', numero:'15', name:'REMITENTE 15', nombre:'REMITENTE 15', email:'remitente15@gmail.com', telefono:'+1-829 0000015', celular:'+1-829 0000015', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'}
 ];
+// Directorio V7 cotejado con las dos imágenes del usuario.
+// Se actualizan datos visibles sin reemplazar balances ni comisiones existentes.
+(function(){
+  const agentRows=[
+    ['AGE00001','HERACE FLEURANVIL','fleuranvil@gmail.com','8292155657'],
+    ['AGE00002','JULIE OCCELUS','julie@gmail.com','4244461574'],
+    ['AGE00003','BETINA LINDOR','betina@gmail.com','50944994263'],
+    ['AGE00004','IDELETTE ISMORIN','idelette@gmail.com','8094995193'],
+    ['AGE00005','MIKE MYK','mike@gmail.com','8298573044'],
+    ['AGE00006','HERACE FLEURANVIL','herace91@gmail.com','8292155657']
+  ];
+  agentRows.forEach((r,i)=>{
+    let a=AGENTES.find(x=>x.id===r[0]);
+    if(!a){a={id:r[0],codigo:'',numero:String(i+1).padStart(2,'0'),balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'};AGENTES.push(a);}
+    Object.assign(a,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role:'AGENTE',estado:'Activo',activo:true});
+  });
+  const senderRows=[
+    ['REM00001','DANIA SAINTHILAIRE','daniasainthilaire@gmail.com','+1-849 3727884'],
+    ['REM00002','EDITA ALBERTO','editaalberto@gmail.com','+1-829 829054061'],
+    ['REM00003','NENES NENES','nenes@gmail.com','8092703291'],
+    ['REM00004','HERACE FLEURANVIL','herace@gmail.com','+1-829 2155657'],
+    ['REM00005','WILNORD HILAIRSAINT','wilnordhilairsaint@gmail.com','+1-849 849783078'],
+    ['REM00006','JOHN MATLEY EXIL','john06@gmail.com','8096146774'],
+    ['REM00007','LIZARA NERLANGE EXIL','lizara@gmail.com','8293555903'],
+    ['REM00008','ALANDE SOUFFRANT','alande08@gmail.com','8294581367'],
+    ['REM00009','MICHEL Paul','michelpaul@gmail.com','+1-829 8292155661'],
+    ['REM00010','DUPONT Jean','dupontjean@gmail.com','+1-829 8292155662'],
+    ['REM00011','MICKENSON SIDNEY','Smikc@gmail.com','8097690254'],
+    ['REM00012','REMITENTE 11','remitente11@gmail.com','+1-829 0000011'],
+    ['REM00013','REMITENTE 12','remitente12@gmail.com','+1-829 0000012'],
+    ['REM00014','REMITENTE 13','remitente13@gmail.com','+1-829 0000013'],
+    ['REM00015','ARMAND CHARLES','sarmand15@gmail.com','+509 37622453'],
+    ['REM00016','WILSON PAUL','wilson@gmail.com','8098383588'],
+    ['REM00017','MONA RENELUS','smona@gmail.com','8293165955'],
+    ['REM00018','MONA RENELUS','smona@gmail.com','8293165955']
+  ];
+  senderRows.forEach((r,i)=>{
+    let a=REMITENTES.find(x=>x.id===r[0]);
+    if(!a){a={id:r[0],codigo:'',numero:String(i+1).padStart(2,'0'),balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'};REMITENTES.push(a);}
+    Object.assign(a,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role:'REMITENTE',estado:'Activo',activo:true});
+  });
+  AGENTES.sort((a,b)=>Number(a.id.slice(-5))-Number(b.id.slice(-5)));
+  REMITENTES.sort((a,b)=>Number(a.id.slice(-5))-Number(b.id.slice(-5)));
+})();
 let ADMIN_BAL = {DOP:0,HTG:0};
 let ADMIN_COM = {DOP:0,HTG:0};
 let TRANSACCIONES = [];
@@ -4038,6 +4082,35 @@ window.sendwayoShareReceipt=async function(){
     $('sendwayo-v7-modal')?.classList.add('hidden');renderCustom(view);alert('Cuenta guardada. ID y código quedaron protegidos.');
   };
   window.sendwayoToggleAccountStatus=function(id){if(!isAdmin()){alert('Solo el administrador puede activar o inactivar cuentas.');return;}const a=accountById(id);if(!a)return;const inactive=a.activo===false||norm(a.estado)==='inactivo';a.activo=inactive;a.estado=inactive?'Activo':'Inactivo';const rec=(window.USUARIOS_LOGIN||[]).find(x=>x.id===a.id);if(rec)rec.status=a.estado;saveAccountValues();renderCustom('secretas');if(['agentes','remitentes'].includes(getCurrentView()))renderCustom(getCurrentView());};
+  window.sendwayoEditSecretAccount=function(id){
+    if(!isAdmin())return;
+    const a=accountById(id);if(!a)return;
+    if(String(a.role||'').toUpperCase()==='ADMIN'){
+      sendwayoModal('Modificar administrador',`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${inp('v7-secret-admin-name','Nombre','Nombre completo','text',acctName(a))}${inp('v7-secret-admin-email','Correo','correo@dominio.com','email',a.email||'')}${inp('v7-secret-admin-phone','Celular','Número de celular','tel',a.celular||a.telefono||'')}</div><button type="button" onclick="sendwayoSaveSecretAdmin()" class="w-full bg-green-600 text-white rounded-full py-3 font-bold">Guardar cambios</button>`);
+      return;
+    }
+    window.sendwayoOpenAccountForm(a.role==='AGENTE'?'agentes':'remitentes',id);
+  };
+  window.sendwayoSaveSecretAdmin=function(){
+    if(!isAdmin())return;
+    const name=$('v7-secret-admin-name')?.value.trim()||'',email=$('v7-secret-admin-email')?.value.trim()||'',phone=$('v7-secret-admin-phone')?.value.trim()||'';
+    if(!name||!email||!phone||!/^S+@S+.S+$/.test(email)){alert('Complete nombre, correo válido y celular.');return;}
+    Object.assign(ADMIN,{name,nombre:name,email,telefono:phone,celular:phone});
+    saveAccountValues();$('sendwayo-v7-modal')?.classList.add('hidden');renderCustom('secretas');
+  };
+  window.sendwayoSecretBalanceAction=function(id,action){
+    if(!isAdmin())return;
+    const a=accountById(id);if(!a)return;
+    if(String(a.role||'').toUpperCase()==='AGENTE'){alert('Los agentes utilizan los fondos de administración y no tienen balance personal.');return;}
+    const currency=(prompt('Moneda para '+acctName(a)+': escriba DOP o HTG','DOP')||'').trim().toUpperCase();
+    if(!['DOP','HTG'].includes(currency))return;
+    const raw=prompt((action==='acreditar'?'Monto a acreditar':'Monto a desacreditar')+' en '+currency+':');
+    if(raw===null||raw.trim()===''||!Number.isFinite(Number(raw))||Number(raw)<=0){alert('Introduzca un monto válido mayor que cero.');return;}
+    const amount=Number(raw),bal=balanceObject(a);
+    if(action==='desacreditar'&&Number(bal[currency]||0)<amount){alert('El balance disponible no alcanza para ese descuento.');return;}
+    bal[currency]=Number(bal[currency]||0)+(action==='acreditar'?amount:-amount);
+    saveAccountValues();renderCustom('secretas');window.renderPrincipal?.();
+  };
 
   // Personal page fields: editable photo and password for admin, agent and remitter; current password required.
   window.sendwayoProfilePhoto=function(input){const file=input?.files?.[0];if(!file)return;if(!file.type.startsWith('image/')){alert('Seleccione una imagen.');return;}if(file.size>2*1024*1024){alert('La foto debe pesar 2 MB o menos.');return;}const reader=new FileReader();reader.onload=()=>{const a=currentAccount()||admin();if(!a)return;a.profilePhoto=String(reader.result);const data=readJSON('sendwayo_express_oficial_20261029_profile_details_v7',[]).filter(x=>x.id!==a.id);data.push({id:a.id,profilePhoto:a.profilePhoto,bankDetails:a.bankDetails});writeJSON('sendwayo_express_oficial_20261029_profile_details_v7',data);renderCustom('perfil');};reader.readAsDataURL(file);};
@@ -4101,6 +4174,7 @@ window.sendwayoShareReceipt=async function(){
       heading=`<th class="p-3 text-left">Nombre y apellido</th><th class="p-3 text-left">Correo / celular</th><th class="p-3 text-left">ID (editable por Administración)</th><th class="p-3 text-left">Código (fijo)</th><th class="p-3 text-left">${view==='agentes'?'Balance compartido con administración':'Balances DOP / HTG'}</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
       if(!isAdmin()) { el.innerHTML='<div class="p-8 text-center font-bold">Este directorio está disponible para el administrador.</div>';return; }
     } else if(view==='cuentas') heading=`<th class="p-3">Banco / número</th><th class="p-3">Titular / documento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th>`;
+    else if(view==='secretas') heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
     else heading=`<th class="p-3 text-left">ID / Fecha</th><th class="p-3 text-left">Detalle</th><th class="p-3 text-left">Monto / información</th><th class="p-3 text-left">Beneficiario / titular</th><th class="p-3 text-left">Estado</th><th class="p-3 text-left">Acciones</th>`;
     const showAdd=true;
     el.innerHTML=`<section class="p-3 md:p-4 space-y-3"><header class="bg-white border rounded-xl p-3"><div class="font-black text-sm mb-3">${esc(titles[view]||view)}</div><div class="flex flex-wrap items-center gap-2">${showAdd?add:''}<input id="sendwayo-search-${view}" type="search" oninput="sendwayoSearchModule('${view}',this.value)" placeholder="Buscador…" class="border rounded-full px-4 py-2.5 text-xs w-52 max-w-full"><button type="button" onclick="sendwayoExportModule('${view}','excel')" class="bg-green-600 text-white px-3 py-2 rounded-full text-xs">Excel</button><button type="button" onclick="sendwayoExportModule('${view}','pdf')" class="bg-red-600 text-white px-3 py-2 rounded-full text-xs">PDF</button><button type="button" onclick="sendwayoExportModule('${view}','csv')" class="bg-blue-700 text-white px-3 py-2 rounded-full text-xs">CSV</button></div></header>${extra}<div class="bg-white border rounded-xl overflow-x-auto"><table id="tabla-sendwayo-${view}" class="w-full text-xs min-w-[820px]"><thead class="bg-[#edf2f8]"><tr><th class="p-3 text-left">N°</th>${heading}</tr></thead><tbody id="tabla-sendwayo-${view}-body"></tbody></table></div></section>`;
@@ -4116,7 +4190,19 @@ window.sendwayoShareReceipt=async function(){
       tbody.innerHTML=rows.map((r,i)=>{const isService=r.tipoSolicitud==='SERVICIO';return `<tr class="border-t"><td class="p-3 font-bold">${String(i+1).padStart(2,'0')}</td><td class="p-3">${esc(r.id)}<br>${esc(r.fecha||'')}</td><td class="p-3">${esc(r.nombre||'')}<br>${esc(r.email||'')}<br>${esc(r.celular||'')}</td><td class="p-3">${esc(isService?r.servicio:(r.role||'REMITENTE'))}<br>${esc(r.detalle||'')}</td><td class="p-3">${esc(r.nombre||r.email||'')}</td><td class="p-3">${esc(r.estado||'Pendiente')}</td><td class="p-3"><div class="flex flex-wrap gap-1">${isAdmin()&&r.estado==='Pendiente'?`<button onclick="sendwayoActionGeneric('bienvenida','aprobar','${esc(r.id)}')" class="bg-green-600 text-white rounded-full px-3 py-1">Aceptar</button><button onclick="sendwayoActionGeneric('bienvenida','rechazar','${esc(r.id)}')" class="bg-red-600 text-white rounded-full px-3 py-1">Rechazar</button>`:`<button onclick="sendwayoActionGeneric('bienvenida','ver','${esc(r.id)}')" class="border rounded-full px-3 py-1">Ver</button>`}<button onclick="sendwayoActionGeneric('bienvenida','borrar','${esc(r.id)}')" class="border rounded-full px-3 py-1">Borrar</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay solicitudes.</td></tr>';return;
     }
     if(view==='secretas'){
-      tbody.innerHTML=rows.map((a,i)=>{const st=a.estado||(a.activo===false?'Inactivo':'Activo');return `<tr class="border-t"><td class="p-3">${String(i+1).padStart(2,'0')}</td><td class="p-3">${esc(a.id)}</td><td class="p-3">${esc(acctName(a))}<br>${esc(a.email||a.usuario||'')}</td><td class="p-3">${esc(a.role||'')}</td><td class="p-3">${esc(a.codigo||'')}</td><td class="p-3"><span>${esc(st)}</span><br><span class="text-gray-500">Celular: ${esc(a.celular||a.telefono||'')}</span></td><td class="p-3"><div class="flex flex-wrap gap-1"><button onclick="sendwayoOpenAccountForm('${a.role==='AGENTE'?'agentes':'remitentes'}','${esc(a.id)}')" class="border rounded-full px-3 py-1">Modificar datos</button><button onclick="sendwayoToggleAccountStatus('${esc(a.id)}')" class="border rounded-full px-3 py-1">${norm(st)==='inactivo'?'Activar':'Inactivar'}</button><button onclick="v162_abrirAjustar('${esc(acctName(a))}','${esc(a.id)}','${esc(a.role)}')" class="bg-[#0f2440] text-white rounded-full px-3 py-1">Ajustar</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="p-6 text-center">No hay usuarios.</td></tr>';return;
+      tbody.innerHTML=rows.map((a,i)=>{const st=a.estado||(a.activo===false?'Inactivo':'Activo');const role=String(a.role||'').toUpperCase();return `<tr class="border-t">
+        <td class="p-3">${String(i+1).padStart(2,'0')}</td>
+        <td class="p-3 font-bold">${esc(a.id)}</td>
+        <td class="p-3">${esc(acctName(a))}<br>${esc(a.email||a.usuario||'')}</td>
+        <td class="p-3">${esc(role)}</td>
+        <td class="p-3"><span>${esc(st)}</span><br><span class="text-gray-500">Celular: ${esc(a.celular||a.telefono||'')}</span></td>
+        <td class="p-3"><div class="flex flex-wrap gap-1">
+          <button onclick="sendwayoEditSecretAccount('${esc(a.id)}')" class="border rounded-full px-3 py-1">Modificar datos</button>
+          <button onclick="sendwayoToggleAccountStatus('${esc(a.id)}')" class="border rounded-full px-3 py-1">${norm(st)==='inactivo'?'Activar':'Inactivar'}</button>
+          <button onclick="v162_abrirAjustar('${esc(acctName(a))}','${esc(a.id)}','${esc(a.role)}')" class="bg-[#0f2440] text-white rounded-full px-3 py-1">Ajustar</button>
+          <button onclick="sendwayoSecretBalanceAction('${esc(a.id)}','acreditar')" class="bg-green-600 text-white rounded-full px-3 py-1">Acreditar</button>
+          <button onclick="sendwayoSecretBalanceAction('${esc(a.id)}','desacreditar')" class="bg-red-600 text-white rounded-full px-3 py-1">Desacreditar</button>
+        </div></td></tr>`;}).join('')||'<tr><td colspan="6" class="p-6 text-center">No hay usuarios.</td></tr>';return;
     }
     if(view==='perfil'||view==='mibanco'){
       tbody.innerHTML=rows.map((r,i)=>`<tr class="border-t"><td class="p-3">${String(i+1).padStart(2,'0')}</td><td class="p-3">${esc(r.id)}</td><td class="p-3">${esc(r.rutaExacta)}<br>${esc(r.beneficiario||'')}</td><td class="p-3">${esc(r.monto)}</td><td class="p-3">${esc(r.ruta)}</td><td class="p-3">${esc(r.estado)}</td><td class="p-3">${view==='perfil'?'ID/código fijos':'Editar datos en el formulario anterior'}</td></tr>`).join('')||'<tr><td colspan="7" class="p-6">No hay información de perfil.</td></tr>';return;
