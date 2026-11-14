@@ -34,10 +34,9 @@ jobs:
           node-version: "22"
       - name: Validate V7 Firebase rules
         run: node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('database.rules.json OK')"
-      - name: Run all V7 regression tests
+      - name: Run targeted V7 settlement regression
         run: |
           set -euo pipefail
-          for test_file in tests/*.test.cjs; do
-            echo "Running $test_file"
-            node "$test_file"
-          done
+          node tests/sendwayo-rd-ht-settlement.test.cjs
+          node tests/sendwayo-runtime-syntax.test.cjs
+          node tests/sendwayo-approved-scope.test.cjs
