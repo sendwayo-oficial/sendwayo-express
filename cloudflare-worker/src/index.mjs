@@ -367,7 +367,6 @@ async function settle(request, env) {
     original.internalSettlementId = settlementId;
     original.internalSettlementStatus = "Aprobado";
     original.settlementType = "RD_TO_HT_NATCASH_MONCASH";
-    original.settlementAmounts = amounts;
 
     root.internalSettlements[settlementId] = internal;
     root.commissions[settlementId] = {
