@@ -9178,3 +9178,62 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+
+
+<script id="sendwayo-secretas-final-fix">
+// Refuerzo de renderizado de Informaciones secretas: mantener visibles los 25 registros oficiales.
+(function(){
+  const DATA = [
+    ["ADMINADMIN","ADMINISTRADOR","sendwayoexpress@gmail.com","8297676665","Administrador","Activo"],
+    ["AGE00001","HERACE FLEURANVIL","fleuranvil@gmail.com","8292155657","Agente","Activo"],
+    ["AGE00002","JULIE OFCEUS","julie@gmail.com","4244461574","Agente","Activo"],
+    ["AGE00003","BETINA LINDOR","betina@gmail.com","50944994263","Agente","Activo"],
+    ["AGE00004","IDELETTE ISMORIN","idelette@gmail.com","8094995193","Agente","Activo"],
+    ["AGE00005","MIKE MYK","mike@gmail.com","8298573044","Agente","Activo"],
+    ["AGE00006","HERACE FLEURANVIL","herace91@gmail.com","8292155657","Agente","Activo"],
+    ["REM00001","DANIA SAINTHILAIRE","daniasainthilaire@gmail.com","+18493727884","Remitente","Activo"],
+    ["REM00002","EDITA ALBERTO","editaalberto@gmail.com","+1-829 829054061","Remitente","Activo"],
+    ["REM00003","NENES NENES","nenes@gmail.com","8092703291","Remitente","Activo"],
+    ["REM00004","HERACE FLEURANVIL","herace@gmail.com","+18292155657","Remitente","Activo"],
+    ["REM00005","WILNORD HILAIRSAINT","wilnordhilairsaint@gmail.com","+1-849 849783078","Remitente","Activo"],
+    ["REM00006","JOHN MATLEY EXIL","john06@gmail.com","8096146774","Remitente","Activo"],
+    ["REM00007","LIZARA NERLANGE EXIL","lizara@gmail.com","8293555903","Remitente","Activo"],
+    ["REM00008","ALANDE SOUFFRANT","alande08@gmail.com","8294581367","Remitente","Activo"],
+    ["REM00009","MICHEL Paul","michelpau@gmail.com","+1-829 8292155661","Remitente","Inactivo"],
+    ["REM00010","DUPONT Jean","dupontjean@gmail.com","+1-829 8292155662","Remitente","Activo"],
+    ["REM00011","MICKENSON SIDNEY","Smikc@gmail.com","8097690254","Remitente","Activo"],
+    ["REM00012","REMITENTE 11","remitente11@gmail.com","+1-829 0000011","Remitente","Activo"],
+    ["REM00013","REMITENTE 12","remitente12@gmail.com","+1-829 0000012","Remitente","Activo"],
+    ["REM00014","REMITENTE 13","remitente13@gmail.com","+1-829 0000013","Remitente","Activo"],
+    ["REM00015","ARMAND CHARLES","armand15@gmail.com","+50937622453","Remitente","Activo"],
+    ["REM00016","REMITENTE 15","remitente15@gmail.com","+1-829 0000015","Remitente","Activo"],
+    ["REM00017","WILSON PAUL","wilson@gmail.com","8098383588","Remitente","Activo"],
+    ["REM00018","MONA RENELUS","mona@gmail.com","8293165955","Remitente","Activo"]
+  ];
+  function paint(){
+    const host = document.getElementById('lista-secretas') || document.getElementById('view-secretas');
+    if(!host) return;
+    const rows = DATA.map((r,i)=>'<tr class="border-b border-orange-100"><td class="px-2 py-2 text-center">'+(i+1)+'</td><td class="px-2 py-2 font-bold whitespace-nowrap">'+r[0]+'</td><td class="px-2 py-2 whitespace-nowrap">'+r[1]+'</td><td class="px-2 py-2">'+r[2]+'</td><td class="px-2 py-2 whitespace-nowrap">'+r[3]+'</td><td class="px-2 py-2">'+r[4]+'</td><td class="px-2 py-2 font-semibold '+(r[5]==='Inactivo'?'text-red-600':'text-green-700')+'">'+r[5]+'</td></tr>').join('');
+    const html = '<div data-sendwayo-secretas-official="1" class="bg-[#fff8e7] rounded-xl border-2 border-orange-300 p-4"><div class="font-extrabold text-[12px] tracking-widest text-orange-700 mb-3">🔒 INFORMACIONES SECRETAS — REGISTROS OFICIALES</div><div class="text-[11px] mb-3 font-semibold">1 administrador · 6 agentes · 18 remitentes</div><div class="overflow-x-auto bg-white rounded-lg border"><table class="w-full text-left text-[11px]"><thead class="bg-orange-50"><tr><th class="px-2 py-2">N.º</th><th class="px-2 py-2">ID</th><th class="px-2 py-2">Nombre</th><th class="px-2 py-2">Correo</th><th class="px-2 py-2">Celular</th><th class="px-2 py-2">Tipo</th><th class="px-2 py-2">Estado</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    const list=document.getElementById('lista-secretas'), view=document.getElementById('view-secretas');
+    if(list && !list.querySelector('[data-sendwayo-secretas-official]')) list.innerHTML=html;
+    else if(!list && view && !view.querySelector('[data-sendwayo-secretas-official]')) view.innerHTML=html;
+  }
+  function start(){
+    paint();
+    const root=document.body;
+    if(root && !window.__sendwayoSecretasObserver){
+      window.__sendwayoSecretasObserver=new MutationObserver(function(){
+        const list=document.getElementById('lista-secretas'), view=document.getElementById('view-secretas');
+        if((list && !list.querySelector('[data-sendwayo-secretas-official]')) || (!list && view && !view.querySelector('[data-sendwayo-secretas-official]'))) paint();
+      });
+      window.__sendwayoSecretasObserver.observe(root,{childList:true,subtree:true});
+    }
+    document.addEventListener('click',function(e){
+      const b=e.target.closest('button,[role="button"],a');
+      if(b && /informaciones secretas/i.test(b.textContent||'')) setTimeout(paint,80);
+    },true);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+})();
+</script>
