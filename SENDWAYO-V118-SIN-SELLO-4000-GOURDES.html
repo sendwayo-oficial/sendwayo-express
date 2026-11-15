@@ -596,51 +596,54 @@ let REMITENTES = [
   {id:'REM00014', codigo:'REM-014', numero:'14', name:'REMITENTE 14', nombre:'REMITENTE 14', email:'remitente14@gmail.com', telefono:'+1-829 0000014', celular:'+1-829 0000014', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
   {id:'REM00015', codigo:'REM-015', numero:'15', name:'REMITENTE 15', nombre:'REMITENTE 15', email:'remitente15@gmail.com', telefono:'+1-829 0000015', celular:'+1-829 0000015', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'}
 ];
-// Directorio V7 cotejado con las dos imágenes del usuario.
-// Se actualizan datos visibles sin reemplazar balances ni comisiones existentes.
+// DIRECTORIO OFICIAL V7: sustituye el listado anterior sin tocar saldos, comisiones ni historial.
 (function(){
-  Object.assign(ADMIN,{id:'ADMINADMIN',name:'ADMINISTRADOR',nombre:'ADMINISTRADOR',email:'ideletteismorin@gmail.com',telefono:'8297676665',celular:'8297676665',role:'ADMIN'});
-  const agentRows=[
+  const agentesOficiales=[
     ['AGE00001','HERACE FLEURANVIL','fleuranvil@gmail.com','8292155657'],
     ['AGE00002','JULIE OCCELUS','julie@gmail.com','4244461574'],
-    ['AGE00003','BETINA LINDOR','betina@gmail.com','5094494263'],
-    ['AGE00004','IDELETTE ISMORIN','idelette@gmail.com','8094995103'],
-    ['AGE00005','MIKE MYK','smike@gmail.com','8298573044'],
+    ['AGE00003','BETINA LINDOR','betina@gmail.com','50944994263'],
+    ['AGE00004','IDELETTE ISMORIN','idelette@gmail.com','8094995193'],
+    ['AGE00005','MIKE MYK','mike@gmail.com','8298573044'],
     ['AGE00006','HERACE FLEURANVIL','herace91@gmail.com','8292155657']
   ];
-  agentRows.forEach((r,i)=>{
-    let a=AGENTES.find(x=>x.id===r[0]);
-    if(!a){a={id:r[0],numero:String(i+1).padStart(2,'0'),balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'};AGENTES.push(a);}
-    Object.assign(a,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role:'AGENTE',estado:a.estado||'Activo',activo:a.activo!==false});
-  });
-  const senderRows=[
-    ['REM00001','DANIA SAINTHILAIRE','daniasainthilaire@gmail.com','+1-849 8493727884'],
-    ['REM00002','EDITA ALBERTO','editaalberto@gmail.com','+1-829 829054061'],
-    ['REM00003','NENES NENES','nenes@gmail.com','8092703291'],
-    ['REM00004','HERACE FLEURANVIL','herace@gmail.com','+1-829 2155657'],
-    ['REM00005','WILNORD HILAIRSAINT','wilnordhilairsaint@gmail.com','+1-849 849783078'],
-    ['REM00006','JOHN MATLEY EXIL','john06@gmail.com','8096146774'],
-    ['REM00007','LIZARA NERLANGE EXIL','lizara@gmail.com','8293555903'],
-    ['REM00008','ALANDE SOUFFRANT','alande08@gmail.com','8294581367'],
-    ['REM00009','MICHEL Paul','michelpaul@gmail.com','+1-829 8292155661'],
-    ['REM00010','DUPONT Jean','dupontjean@gmail.com','+1-829 8292155662'],
-    ['REM00011','MICKENSON SIDNEY','Smikc@gmail.com','8097690254'],
-    ['REM00012','REMITENTE 11','remitente11@gmail.com','+1-829 0000011'],
-    ['REM00013','REMITENTE 12','remitente12@gmail.com','+1-829 0000012'],
-    ['REM00014','REMITENTE 13','remitente13@gmail.com','+1-829 0000013'],
-    ['REM00015','ARMAND CHARLES','sarmand15@gmail.com','+509 37622453'],
-    ['REM00016','REMITENTE 15','remitente15@gmail.com','+1-829 0000015'],
-    ['REM00017','WILSON PAUL','wilson@gmail.com','8098383588'],
-    ['REM00018','MONA RENELUS','mona@gmail.com','8293165955']
+  const remitentesOficiales=[
+    ['REM00001','DANIA SAINTHILAIRE','daniasainthilaire@gmail.com','+18493727884',true],
+    ['REM00002','EDITA ALBERTO','editaalberto@gmail.com','+1-829 829054061',true],
+    ['REM00003','NENES NENES','nenes@gmail.com','8092703291',true],
+    ['REM00004','HERACE FLEURANVIL','herace@gmail.com','+18292155657',true],
+    ['REM00005','WILNORD HILAIRSAINT','wilnordhilairsaint@gmail.com','+1-849 849783078',true],
+    ['REM00006','JOHN MATLEY EXIL','john06@gmail.com','8096146774',true],
+    ['REM00007','LIZARA NERLANGE EXIL','lizara@gmail.com','8293555903',true],
+    ['REM00008','ALANDE SOUFFRANT','alande08@gmail.com','8294581367',true],
+    ['REM00009','MICHEL Paul','michelpaul@gmail.com','+1-829 8292155661',false],
+    ['REM00010','DUPONT Jean','dupontjean@gmail.com','+1-829 8292155662',true],
+    ['REM00011','MICKENSON SIDNEY','mikc@gmail.com','8097690254',true],
+    ['REM00012','REMITENTE 11','remitente11@gmail.com','+1-829 0000011',false],
+    ['REM00013','REMITENTE 12','remitente12@gmail.com','+1-829 0000012',false],
+    ['REM00014','REMITENTE 13','remitente13@gmail.com','+1-829 0000013',false],
+    ['REM00015','ARMAND CHARLES','armand15@gmail.com','+50937622453',true],
+    ['REM00016','REMITENTE 15','remitente15@gmail.com','+1-829 0000015',false],
+    ['REM00017','WILSON PAUL','wilson@gmail.com','8098383588',false],
+    ['REM00018','MONA RENELUS','mona@gmail.com','8293165955',true]
   ];
-  senderRows.forEach((r,i)=>{
-    let a=REMITENTES.find(x=>x.id===r[0]);
-    if(!a){a={id:r[0],numero:String(i+1).padStart(2,'0'),balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'};REMITENTES.push(a);}
-    const active=r[0]!=='REM00009';
-    Object.assign(a,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role:'REMITENTE',estado:active?'Activo':'Inactivo',activo:active});
-  });
-  AGENTES.sort((a,b)=>Number(a.id.slice(-5))-Number(b.id.slice(-5)));
-  REMITENTES.sort((a,b)=>Number(a.id.slice(-5))-Number(b.id.slice(-5)));
+  function mergePreservingFinance(oldList, rows, role){
+    return rows.map((r,i)=>{
+      const prior=oldList.find(x=>String(x.id)===r[0])||{};
+      const item={...prior};
+      ['codigo','codigo2','code','userCode','codigoUsuario'].forEach(k=>delete item[k]);
+      Object.assign(item,{id:r[0],numero:String(i+1).padStart(2,'0'),name:r[1],nombre:r[1],email:r[2],telefono:r[3],celular:r[3],role});
+      if(role==='REMITENTE'){item.estado=r[4]?'Activo':'Inactivo';item.activo=!!r[4];}
+      else {item.estado=prior.estado||'Activo';item.activo=prior.activo!==false;}
+      if(!item.balances)item.balances={DOP:0,HTG:0};
+      if(!item.commissions)item.commissions={DOP:0,HTG:0};
+      if(!item.comisiones)item.comisiones=item.commissions;
+      return item;
+    });
+  }
+  AGENTES=mergePreservingFinance(AGENTES,agentesOficiales,'AGENTE');
+  REMITENTES=mergePreservingFinance(REMITENTES,remitentesOficiales,'REMITENTE');
+  Object.assign(ADMIN,{id:'ADMINADMIN',name:'ADMINISTRADOR',nombre:'ADMINISTRADOR',email:'sendwayoexpress@gmail.com',loginEmail:'ideletteismorin@gmail.com',telefono:'8297676665',celular:'8297676665',role:'ADMIN'});
+  ['codigo','codigo2','code','userCode','codigoUsuario'].forEach(k=>delete ADMIN[k]);
 })();
 let ADMIN_BAL = {DOP:0,HTG:0};
 let ADMIN_COM = {DOP:0,HTG:0};
