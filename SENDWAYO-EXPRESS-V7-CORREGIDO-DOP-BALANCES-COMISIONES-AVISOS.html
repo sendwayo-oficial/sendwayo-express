@@ -5921,17 +5921,22 @@ window.sendwayoShareReceipt=async function(){
     const s=normalize((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''));
     return /(?:\bht\b|\bhaiti\b|\bhati\b)\s*(?:->|→|a|[-–—]|to)\s*(?:\bht\b|\bhaiti\b|\bhati\b)|natcash\s*(?:a|->|→|[-–—]|to)\s*natcash|moncash\s*(?:a|->|→|[-–—]|to)\s*moncash|naca\s*a\s*naca|montcash\s*a\s*montcash/.test(s);
   }
+  function isRDToHaitiNatMon(t){
+    const s=normalize([t&&t.ruta,t&&t.rutaExacta,t&&t.metodo,t&&t.canal,t&&t.proveedor].filter(Boolean).join(' '));
+    const channel=/natcash|moncash/.test(s);
+    const fromRD=/(^|\b)rd(\b|$)|republica dominicana/.test(s);
+    const toHaiti=/haiti|hati|\bht\b/.test(s);
+    return channel&&fromRD&&toHaiti&&!isHTHT(t);
+  }
+  function prepareRDHaitiReceipt(t){
+    if(!isRDToHaitiNatMon(t))return;
+    const base=amountOf(t),fee=round2(feeFor(t)),net=round2(Math.max(0,base-fee)),received=round2(net*2.10);
+    t.comisionDOP=fee;t.netoDOP=net;t.tasaConversionHTG=2.10;t.montoRecibido=received.toFixed(2)+' HTG';t.montoRecibidoValue=received;t.monedaRecibida='HTG';
+  }
   function feeFor(t){
     const amount=amountOf(t),k=typeKey(t);
-    // Haitian domestic transfers always use the configured local tariff table, never the international 8% rule.
-    if(isHTHT(t)){
-      if(/natcash|moncash/i.test(normalize((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''))))return round2(amount*.03);
-      const fn=k.startsWith('retiro')?window.v162_getFeeRetiroHT:window.v162_getFeeEnvioHT;
-      if(typeof fn==='function'){
-        try{const localFee=Number(fn(amount));if(Number.isFinite(localFee)&&localFee>=0)return round2(localFee);}catch(_){}
-      }
-      return t&&t.tarifaLocalHT===true?round2(num(t.fee)):0;
-    }
+    // Regla vigente: toda operación Haití→Haití cobra 3%, sin tarifas locales antiguas.
+    if(isHTHT(t)) return round2(amount*.03);
     if(['recarga','recargas','paquetiko','paquetikos','factura','facturas','servicio','servicios'].includes(k))return round2(amount*.05);
     if(num(t&&t.fee)>0)return round2(num(t.fee));
     if(['envio','envios','retiro','retiros'].includes(k))return round2(amount*.08);
@@ -5972,8 +5977,46 @@ window.sendwayoShareReceipt=async function(){
   function agentCanReview(t){return isAgent()&&!ownByCreator(t)&&isSpend(t)&&!isDeposit(t);}
   function requireAdminOnly(t){return isDeposit(t)||isCredit(t)||isAdjustment(t)||isBonus(t)||isCommissionPayment(t)||isWalletTransfer(t);}
   function announce(s){try{window.alert(s);}catch(_){}}
+  function createLinkedHaitiTransaction(parent){
+    if(!isRDToHaitiNatMon(parent))return {ok:true,skipped:true};
+    if(parent.autoHTHTCreada&&parent.autoHTHTId&&findTx(parent.autoHTHTId))return {ok:true,already:true};
+    const admin=adminAccount();if(!admin)return {ok:false,reason:'No se encontró la cuenta administrativa.'};
+    prepareRDHaitiReceipt(parent);
+    const received=round2(Number(parent.montoRecibidoValue)||0);
+    if(!(received>0))return {ok:false,reason:'No se pudo calcular el monto recibido en HTG.'};
+    const b=balances(admin);
+    if(num(b.HTG)+0.000001<received)return {ok:false,reason:'La cuenta HTG de administración no tiene fondos suficientes para crear la operación Haití→Haití. Disponible: '+num(b.HTG).toFixed(2)+' HTG; requerido: '+received.toFixed(2)+' HTG.'};
+    const channel=/moncash/.test(normalize((parent.ruta||'')+' '+(parent.rutaExacta||'')+' '+(parent.metodo||'')+' '+(parent.canal||'')))?'MonCash':'NatCash';
+    const childId='AUTO-HTHT-'+String(parent.id);
+    const existing=getTxs().find(x=>String(x.id)===childId||String(x.operacionOrigenId||'')===String(parent.id));
+    if(existing){parent.autoHTHTCreada=true;parent.autoHTHTId=String(existing.id);return {ok:true,already:true};}
+    const fee=round2(received*.03),now=new Date().toISOString();
+    b.HTG=round2(num(b.HTG)-received);
+    const ac=ownCommissions(admin);ac.HTG=round2(num(ac.HTG)+fee);
+    const child={
+      id:childId,tipo:parent.tipo||'Envío',tipoOriginal:parent.tipoOriginal||parent.tipo||'Envío',
+      ruta:'Haití → Haití',rutaExacta:'Haití → Haití — '+channel,metodo:channel,canal:channel,
+      moneda:'HTG',esHT:true,montoValue:received,amount:received,monto:received.toFixed(2)+' HTG',
+      montoRecibido:received.toFixed(2)+' HTG',montoRecibidoValue:received,neto:received,
+      fee:fee,comisionAplicada:true,comisionAdminAplicada:fee,comisionAdminBalanceAplicada:0,
+      comisionRemitenteAplicada:0,comisionAgenteAplicada:0,comisionMoneda:'HTG',
+      feeText:'Comisión administrativa 3%',estado:'Pendiente',status:'pending',
+      creadorId:String(admin.id||'ADMINADMIN'),creadoPorId:String(admin.id||'ADMINADMIN'),
+      remitenteId:String(admin.id||'ADMINADMIN'),cuentaOrigenId:String(admin.id||'ADMINADMIN'),
+      cuentaOrigenNombre:acctName(admin),cuentaOrigenRol:'ADMIN',debitAccountId:String(admin.id||'ADMINADMIN'),
+      debitAmount:received,fondosDebitados:true,fondosDevueltos:false,reservaAplicada:false,
+      operacionOrigenId:String(parent.id),operacionOrigenTipo:'RD→Haití',automatica:true,
+      timestamp:Date.now(),fecha:new Date().toLocaleString('es-DO'),createdAt:now,
+      beneficiario:parent.beneficiario||'',beneficiarioTel:parent.beneficiarioTel||'',
+      notaInterna:'Generada automáticamente al aprobar RD→Haití; comisión 3% registrada en comisión administrativa HTG.'
+    };
+    getTxs().push(child);
+    parent.autoHTHTCreada=true;parent.autoHTHTId=childId;parent.autoHTHTMonto=received;parent.autoHTHTComision=fee;
+    return {ok:true,transaction:child};
+  }
   function approve(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'){announce('Esta operación ya está aprobada.');return;}if(status(t)==='rechazado'){announce('Esta operación fue rechazada y no puede aprobarse directamente. Registre una nueva operación.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden aprobar operaciones de envío, retiro, recarga, paquetico y servicios de otras cuentas. Los depósitos y ajustes administrativos son exclusivos de Administración.');return;}
     const cur=currencyOf(t),amount=amountOf(t);if(!(amount>0)){announce('El monto registrado no es válido.');return;}
+    if(isSpend(t)&&isRDToHaitiNatMon(t)){prepareRDHaitiReceipt(t);const linked=createLinkedHaitiTransaction(t);if(!linked.ok){announce(linked.reason);return;}}
     if(isDeposit(t)){if(!isAdmin()){announce('Solo Administración puede aprobar depósitos.');return;}const banks=Array.isArray(window.SENDWAYO_BANKS)?window.SENDWAYO_BANKS:[];if(banks.length&&(!t.cuentaBancaria||!banks.some(b=>String(b.id)===String(t.cuentaBancaria)))){announce('No se puede aprobar: seleccione una cuenta bancaria oficial válida en el depósito.');return;}const depositor=sourceOf(t);const dest=depositor&&roleOf(depositor)==='AGENTE'?(adminAccount()||depositor):(accountById(t.destinoId)||accountById(t.depositanteId)||accountById(t.remitenteId)||adminAccount());if(!dest){announce('No se encontró el destino del depósito.');return;}t.tipoAcreditacion='BALANCE';if(!t.saldoAcreditado)creditTarget(t,dest,'deposito');
     }else if(isCredit(t)||isAdjustment(t)||isBonus(t)){if(!isAdmin()){announce('Solo Administración puede aprobar créditos, ajustes y bonos.');return;}const dest=accountById(t.destinoId)||accountByInput(t.beneficiario||t.rutaExacta);if(!dest){announce('No se encontró la cuenta destino de esta acreditación.');return;}if(!t.saldoAcreditado)creditTarget(t,dest,typeKey(t));
     }else if(isCommissionPayment(t)){if(!isAdmin()){announce('Solo Administración puede gestionar pagos de comisión.');return;}const dest=accountById(t.destinoId);if(!dest||roleOf(dest)!=='REMITENTE'){announce('Seleccione un remitente válido para trasladar su propia comisión al balance.');return;}if(!t.pagoComisionAplicado){const sourceCom=commissions(dest),destBal=balances(dest);if(num(sourceCom[cur])+0.000001<amount){announce('Comisión insuficiente del remitente. Disponible: '+num(sourceCom[cur]).toFixed(2)+' '+cur+'.');return;}sourceCom[cur]=round2(num(sourceCom[cur])-amount);destBal[cur]=round2(num(destBal[cur])+amount);t.pagoComisionAplicado=true;t.pagoComisionWallet=true;t.pagoComisionMonto=amount;t.pagoComisionDestinoId=String(dest.id);t.pagoComisionOrigenId=String(dest.id);t.pagoComisionMoneda=cur;}
@@ -5985,7 +6028,7 @@ window.sendwayoShareReceipt=async function(){
   function noCoincide(id){const t=findTx(id);if(!t)return;if(status(t)==='aprobado'||status(t)==='rechazado'){announce('Solo se puede marcar No coincide una operación que siga pendiente.');return;}if(!isAdmin()&&!agentCanReview(t)){announce('Los agentes solo pueden marcar No coincide operaciones permitidas de otras cuentas.');return;}if(isSpend(t)&&!(t.fondosDebitados&&!t.fondosDevueltos)){const r=debit(t,true);if(!r.ok){announce(r.reason||'No se pudo reservar el balance.');return;}}t.estado='No coincide';t.reservaAplicada=false;t.actualizadoEn=new Date().toLocaleString('es-DO');refreshAll();announce('La operación quedó marcada como No coincide y el monto continúa retenido.');}
   window.aprobar=approve;window.rechazar=reject;window.noCoincide=noCoincide;
   // Apply the immediate principal debit after a new pending operation is created.
-  function postprocessNew(before){const txs=getTxs(),created=txs.filter(t=>t&&!before.has(String(t.id))).sort((a,b)=>(num(b.timestamp)-num(a.timestamp)));let changed=false;for(const t of created){if(!isSpend(t))continue;if(!t.cuentaOrigenId){const src=sourceOf(t);if(src){t.cuentaOrigenId=String(src.id);t.cuentaOrigenNombre=acctName(src);t.cuentaOrigenRol=roleOf(src);}}if(!t.fondosDebitados||t.fondosDevueltos){const r=debit(t,true);if(!r.ok){t.estado='Rechazado';t.reservaAplicada=false;t.rechazoFinanciero=r.reason||'Fondos insuficientes';announce(t.rechazoFinanciero);changed=true;continue;}changed=true;}else{t.reservaAplicada=false;changed=true;}}
+  function postprocessNew(before){const txs=getTxs(),created=txs.filter(t=>t&&!before.has(String(t.id))).sort((a,b)=>(num(b.timestamp)-num(a.timestamp)));let changed=false;for(const t of created){if(!isSpend(t))continue;if(isRDToHaitiNatMon(t))prepareRDHaitiReceipt(t);if(!t.cuentaOrigenId){const src=sourceOf(t);if(src){t.cuentaOrigenId=String(src.id);t.cuentaOrigenNombre=acctName(src);t.cuentaOrigenRol=roleOf(src);}}if(!t.fondosDebitados||t.fondosDevueltos){const r=debit(t,true);if(!r.ok){t.estado='Rechazado';t.reservaAplicada=false;t.rechazoFinanciero=r.reason||'Fondos insuficientes';announce(t.rechazoFinanciero);changed=true;continue;}changed=true;}else{t.reservaAplicada=false;changed=true;}}
     if(changed)refreshAll();return created;}
   function wrapSave(name){const old=window[name];if(typeof old!=='function'||old.__sendwayoFinancialWrap)return;const wrapped=function(){const before=new Set(getTxs().map(t=>String(t.id)));const r=old.apply(this,arguments);if(!(Number(window.__sendwayoDopOuterSaveDepth)||0))postprocessNew(before);return r;};wrapped.__sendwayoFinancialWrap=true;window[name]=wrapped;}
   ['v162_guardarEnvio','v162_guardarRetiro','guardarEnvioCompacto','guardarRetiroCompacto','v162_guardarRec','v162_guardarPkt','v162_guardarPaq'].forEach(wrapSave);
@@ -6017,7 +6060,7 @@ window.sendwayoShareReceipt=async function(){
         if(wasApproved){undoAccounting(t);t.estado='Pendiente';t.fondosDebitados=false;t.fondosDevueltos=false;t.comisionAplicada=false;t.comisionAdminAplicada=0;t.comisionRemitenteAplicada=0;t.saldoAcreditado=false;t.saldoAcreditadoMonto=0;t.pagoComisionAplicado=false;}
         else if(isSpend(t)&&t.fondosDebitados&&!t.fondosDevueltos){const src=sourceOf(t),cash=spendingOwner(src),b=balances(cash),cur0=currencyOf(t),delta=round2(newAmount-oldAmount);if(delta>0&&num(b[cur0])-reservedByOthers(cash,cur0,t.id)<delta){announce('Fondos insuficientes para aumentar este monto. No se modificó la operación.');return;}b[cur0]=round2(num(b[cur0])-delta);t.debitAmount=newAmount;t.fondosDebitados=true;t.fondosDevueltos=false;}
         t.montoValue=newAmount;const cur=currencyOf(t);t.monto=newAmount.toFixed(2)+' '+cur;t.neto=newAmount-num(t.fee||0);t.actualizadoEn=new Date().toLocaleString('es-DO');
-        if(isSpend(t)){if(['recarga','recargas','paquetiko','paquetikos','factura','facturas','servicio','servicios'].includes(typeKey(t)))t.fee=round2(newAmount*.05);else if(isHTHT(t)){if(/natcash|moncash/i.test(normalize((t&&t.ruta||'')+' '+(t&&t.rutaExacta||''))))t.fee=round2(newAmount*.03);else{const fn=typeKey(t).startsWith('retiro')?window.v162_getFeeRetiroHT:window.v162_getFeeEnvioHT;t.fee=typeof fn==='function'?round2(num(fn(newAmount))):0;}}else if(['envio','envios','retiro','retiros'].includes(typeKey(t)))t.fee=round2(newAmount*.08);t.neto=round2(newAmount-num(t.fee||0));t.feeText='Comisión '+num(t.fee).toFixed(2)+' '+cur;}
+        if(isSpend(t)){if(['recarga','recargas','paquetiko','paquetikos','factura','facturas','servicio','servicios'].includes(typeKey(t)))t.fee=round2(newAmount*.05);else if(isHTHT(t)){t.fee=round2(newAmount*.03);}else if(['envio','envios','retiro','retiros'].includes(typeKey(t)))t.fee=round2(newAmount*.08);t.neto=round2(newAmount-num(t.fee||0));t.feeText='Comisión '+num(t.fee).toFixed(2)+' '+cur;}
         if(wasRejected){t.fondosDebitados=false;t.fondosDevueltos=false;t.debitAmount=0;}if(wasRejected||wasNoCoincide)t.estado='Pendiente';t.reservaAplicada=false;if(wasApproved){t.fechaAprobacion='';refreshAll();approve(t.id);return;}
         if(isSpend(t)&&(!t.fondosDebitados||t.fondosDevueltos)){const r=debit(t,true);if(!r.ok){announce(r.reason||'No se pudo aplicar el nuevo monto.');return;}refreshAll();}else refreshAll();return;
       }
