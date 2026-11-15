@@ -564,7 +564,7 @@ let ADMIN = {
   numero: '00',
   name:'ADMINISTRADOR',
   nombre:'ADMINISTRADOR',
-  email:'sendwayoexpress@gmail.com',
+  email:'ideletteismorin@gmail.com',
   telefono:'8297676665',
   celular:'8297676665',
   balances:{DOP:0,HTG:0},
@@ -4146,10 +4146,9 @@ window.sendwayoShareReceipt=async function(){
   const hint=$('login-screen')?.querySelector('.text-gray-500');if(hint&&/ADMIN:/.test(hint.textContent))hint.textContent='Usa tu correo, ID o código y tu contraseña.';
   console.log('Sendwayo V7: agente 04/remitente 11, altas de cuentas, transferencia, bono, perfil, Mi banco, reportes y bienvenida actualizados.');
 
- // Firebase Authentication is the only credential source; no hard-coded user accounts.
- // La cuenta administrativa solo admite la contraseña administrativa especificada.
+ // Firebase Authentication valida la contraseña. No introducir bloqueos locales del administrador.
  const loginBeforeV8=window.intentarLogin;
- window.intentarLogin=function(){const raw=$('login-usuario')?.value.trim()||'',pass=$('login-password')?.value||'',rec=(window.USUARIOS_LOGIN||[]).find(x=>[x.usuario,x.email,x.id,x.codigo,...(x.aliases||[])].some(v=>norm(v)===norm(raw))),err=$('login-error');if(rec&&rec.id==='ADMINADMIN'&&pass!==''){if(err){err.textContent='Contraseña incorrecta.';err.classList.remove('hidden')}else alert('Contraseña incorrecta.');return;}if(typeof loginBeforeV8==='function')loginBeforeV8();};
+ window.intentarLogin=function(){if(typeof loginBeforeV8==='function')return loginBeforeV8();};
  console.log('Sendwayo V8: administrador y agente 04 normalizados; remitente 11 conservado.');
 
  console.log('Sendwayo V7 patch loaded: requested module corrections and validations.');
@@ -6830,7 +6829,7 @@ window.sendwayoShareReceipt=async function(){
   const ROOT = 'sendwayo_express_v2';
   // Cuenta administrativa confirmada por el propietario del sistema.
   // No asignar este rol a otras cuentas ni depender de un UID antiguo.
-  const ADMIN_EMAIL = 'sendwayoexpress@gmail.com';
+  const ADMIN_EMAIL = 'ideletteismorin@gmail.com';
   const userRootPath = ROOT + '/users';
   const authApp = firebase.apps.find(a => a.options && a.options.projectId === CONFIG.projectId)
     || firebase.initializeApp(CONFIG, 'sendwayoExpressOfficialV7');
@@ -6986,7 +6985,7 @@ window.sendwayoShareReceipt=async function(){
     const entered=txt(identifier);
     const key=norm(entered);
     // Alias administrativo histórico: siempre autenticar con el correo real de Firebase.
-    if (key === 'sendwayoexpress@gmail.com' || key === 'ideletteismorin@gmail.com' || key === 'admin-administrador') return ADMIN_EMAIL;
+    if (key === 'sendwayoexpress@gmail.com' || key === 'ideletteismorin@gmail.com' || key === 'admin-administrador' || key === 'adminadmin') return ADMIN_EMAIL;
     // Resolver primero los alias registrados, incluso cuando el usuario escribe un correo.
     const match=collectAliases().find(a=>a.aliases.some(alias=>norm(alias)===key));
     if (match) return match.email;
