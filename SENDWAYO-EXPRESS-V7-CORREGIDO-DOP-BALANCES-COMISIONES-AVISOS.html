@@ -559,42 +559,38 @@ body.sendwayo-login-open #login-screen button{filter:none!important;opacity:1!im
 // DATA LIMPIA - COMPROBANTE LIMPIO SIN COMENTARIO
 // DATOS CORREGIDOS - 5 AGENTES + ADMIN CON CODIGO - RECUERDA QUE ESTOS SON LOS 5 AGENTES, TIENES QUE PONERLO CON SU CODIGO
 let ADMIN = {
-  id:'ADMINADMIN',
-  codigo:'ADMIN-000', username:'admin-administrador', aliases:['ADMIN-ADMIN','admin-administrador','ADMIN-ADMINISTRADOR'],
-  numero: '00',
-  name:'ADMINISTRADOR',
-  nombre:'ADMINISTRADOR',
-  email:'sendwayoexpress@gmail.com',
-  telefono:'8297676665',
-  celular:'8297676665',
-  balances:{DOP:0,HTG:0},
-  commissions:{DOP:0,HTG:0},
-  comisiones:{DOP:0,HTG:0},
-  role:'ADMIN'
+  id:'ADMINADMIN', username:'ADMINADMIN', login:'ADMINADMIN',
+  numero:'00', name:'ADMINISTRADOR', nombre:'ADMINISTRADOR',
+  email:'sendwayoexpress@gmail.com', telefono:'8297676665', celular:'8297676665',
+  active:true, status:'active', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'ADMIN'
 };
 let AGENTES = [
-  {id:'AG-HERACE', codigo:'AG-001', codigo2:'AG-01', numero:'01', name:'HERACE FLEURANVIL', nombre:'HERACE FLEURANVIL', email:'fleuranvil@gmail.com', telefono:'8292155657', celular:'8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AG-JULIE', codigo:'AG-002', codigo2:'AG-02', numero:'02', name:'JULIE OCCELUS', nombre:'JULIE OCCELUS', email:'julie@gmail.com', telefono:'4244461574', celular:'4244461574', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AG-BETINA', codigo:'AG-003', codigo2:'AG-03', numero:'03', name:'BETINA LINDOR', nombre:'BETINA LINDOR', email:'betina@gmail.com', telefono:'50944994263', celular:'50944994263', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AGE00004', codigo:'AGE-IDEISM', codigo2:'AGE-IDEISM', numero:'04', name:'IDELETTE ISMORIN', nombre:'IDELETTE ISMORIN', email:'idelette@gmail.com', telefono:'8094995193', celular:'8094995193', commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'},
-  {id:'AG-MIKE', codigo:'AG-005', codigo2:'AG-05', numero:'05', name:'MIKE MYK', nombre:'MIKE MYK', email:'mike@gmail.com', telefono:'8298573044', celular:'8298573044', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'AGENTE'}
+  {id:'AGE00001',username:'AGE00001',login:'AGE00001',numero:'01',name:'HERACE FLEURANVIL',nombre:'HERACE FLEURANVIL',email:'fleuranvil@gmail.com',telefono:'8292155657',celular:'8292155657',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'},
+  {id:'AGE00002',username:'AGE00002',login:'AGE00002',numero:'02',name:'JULIE OCCELUS',nombre:'JULIE OCCELUS',email:'julie@gmail.com',telefono:'4244461574',celular:'4244461574',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'},
+  {id:'AGE00003',username:'AGE00003',login:'AGE00003',numero:'03',name:'BETINA LINDOR',nombre:'BETINA LINDOR',email:'betina@gmail.com',telefono:'50944994263',celular:'50944994263',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'},
+  {id:'AGE00004',username:'AGE00004',login:'AGE00004',numero:'04',name:'IDELETTE ISMORIN',nombre:'IDELETTE ISMORIN',email:'idelette@gmail.com',telefono:'8094995193',celular:'8094995193',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'},
+  {id:'AGE00005',username:'AGE00005',login:'AGE00005',numero:'05',name:'MIKE MYK',nombre:'MIKE MYK',email:'mike@gmail.com',telefono:'8298573044',celular:'8298573044',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'},
+  {id:'AGE00006',username:'AGE00006',login:'AGE00006',numero:'06',name:'HERACE FLEURANVIL',nombre:'HERACE FLEURANVIL',email:'herace91@gmail.com',telefono:'8292155657',celular:'8292155657',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'AGENTE'}
 ];
 let REMITENTES = [
-  {id:'REM-DANIA', codigo:'REM-001', numero:'01', name:'DANIA SAINTHILAIRE', nombre:'DANIA SAINTHILAIRE', email:'daniasainthilaire@gmail.com', telefono:'+1-849 8493727884', celular:'+1-849 8493727884', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-EDITA', codigo:'REM-002', numero:'02', name:'EDITA ALBERTO', nombre:'EDITA ALBERTO', email:'editaalberto@gmail.com', telefono:'+1-829 829054061', celular:'+1-829 829054061', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-NENES', codigo:'REM-003', numero:'03', name:'NENES NENES', nombre:'NENES NENES', email:'nenesnenes@gmail.com', telefono:'+1-809 8092703291', celular:'+1-809 8092703291', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-FLEURANVIL', codigo:'REM-004', numero:'04', name:'FLEURANVIL Herace', nombre:'FLEURANVIL Herace', email:'fleurancilherace@gmail.com', telefono:'+1-829 8292155657', celular:'+1-829 8292155657', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-WILNORD', codigo:'REM-005', numero:'05', name:'WILNORD HILAIRSAINT', nombre:'WILNORD HILAIRSAINT', email:'wilnordhilairsaint@gmail.com', telefono:'+1-849 849783078', celular:'+1-849 849783078', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734453', codigo:'REM-006', numero:'06', name:'JEAN Marie', nombre:'JEAN Marie', email:'jeanmarie@gmail.com', telefono:'+1-829 8292155658', celular:'+1-829 8292155658', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734454', codigo:'REM-007', numero:'07', name:'PIERRE Jacques', nombre:'PIERRE Jacques', email:'pierrejacques@gmail.com', telefono:'+1-829 8292155659', celular:'+1-829 8292155659', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734455', codigo:'REM-008', numero:'08', name:'LOUIS Claude', nombre:'LOUIS Claude', email:'louisclaude@gmail.com', telefono:'+1-829 8292155660', celular:'+1-829 8292155660', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734456', codigo:'REM-009', numero:'09', name:'MICHEL Paul', nombre:'MICHEL Paul', email:'michelpaul@gmail.com', telefono:'+1-829 8292155661', celular:'+1-829 8292155661', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'ID65734457', codigo:'REM-010', numero:'10', name:'DUPONT Jean', nombre:'DUPONT Jean', email:'dupontjean@gmail.com', telefono:'+1-829 8292155662', celular:'+1-829 8292155662', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-011', codigo:'REM-011', numero:'11', name:'REMITENTE 11', nombre:'REMITENTE 11', email:'remitente11@gmail.com', telefono:'+1-829 0000011', celular:'+1-829 0000011', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-012', codigo:'REM-012', numero:'12', name:'REMITENTE 12', nombre:'REMITENTE 12', email:'remitente12@gmail.com', telefono:'+1-829 0000012', celular:'+1-829 0000012', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-013', codigo:'REM-013', numero:'13', name:'REMITENTE 13', nombre:'REMITENTE 13', email:'remitente13@gmail.com', telefono:'+1-829 0000013', celular:'+1-829 0000013', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-014', codigo:'REM-014', numero:'14', name:'REMITENTE 14', nombre:'REMITENTE 14', email:'remitente14@gmail.com', telefono:'+1-829 0000014', celular:'+1-829 0000014', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'},
-  {id:'REM-015', codigo:'REM-015', numero:'15', name:'REMITENTE 15', nombre:'REMITENTE 15', email:'remitente15@gmail.com', telefono:'+1-829 0000015', celular:'+1-829 0000015', balances:{DOP:0,HTG:0}, commissions:{DOP:0,HTG:0}, comisiones:{DOP:0,HTG:0}, role:'REMITENTE'}
+  {id:'REM00001',username:'REM00001',login:'REM00001',numero:'01',name:'DANIA SAINTHILAIRE',nombre:'DANIA SAINTHILAIRE',email:'daniasainthilaire@gmail.com',telefono:'+18493727884',celular:'+18493727884',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00002',username:'REM00002',login:'REM00002',numero:'02',name:'EDITA ALBERTO',nombre:'EDITA ALBERTO',email:'editaalberto@gmail.com',telefono:'+1-829 829054061',celular:'+1-829 829054061',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00003',username:'REM00003',login:'REM00003',numero:'03',name:'NENES NENES',nombre:'NENES NENES',email:'nenes@gmail.com',telefono:'8092703291',celular:'8092703291',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00004',username:'REM00004',login:'REM00004',numero:'04',name:'HERACE FLEURANVIL',nombre:'HERACE FLEURANVIL',email:'herace@gmail.com',telefono:'+18292155657',celular:'+18292155657',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00005',username:'REM00005',login:'REM00005',numero:'05',name:'WILNORD HILAIRSAINT',nombre:'WILNORD HILAIRSAINT',email:'wilnordhilairsaint@gmail.com',telefono:'+1-849 849783078',celular:'+1-849 849783078',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00006',username:'REM00006',login:'REM00006',numero:'06',name:'JOHN MATLEY EXIL',nombre:'JOHN MATLEY EXIL',email:'john06@gmail.com',telefono:'8096146774',celular:'8096146774',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00007',username:'REM00007',login:'REM00007',numero:'07',name:'LIZARA NERLANGE EXIL',nombre:'LIZARA NERLANGE EXIL',email:'lizara@gmail.com',telefono:'8293555903',celular:'8293555903',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00008',username:'REM00008',login:'REM00008',numero:'08',name:'ALANDE SOUFFRANT',nombre:'ALANDE SOUFFRANT',email:'alande08@gmail.com',telefono:'8294581367',celular:'8294581367',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00009',username:'REM00009',login:'REM00009',numero:'09',name:'MICHEL Paul',nombre:'MICHEL Paul',email:'michelpau@gmail.com',telefono:'+1-829 8292155661',celular:'+1-829 8292155661',active:false,status:'inactive',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00010',username:'REM00010',login:'REM00010',numero:'10',name:'DUPONT Jean',nombre:'DUPONT Jean',email:'dupontjean@gmail.com',telefono:'+1-829 8292155662',celular:'+1-829 8292155662',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00011',username:'REM00011',login:'REM00011',numero:'11',name:'MICKENSON SIDNEY',nombre:'MICKENSON SIDNEY',email:'Smikc@gmail.com',telefono:'8097690254',celular:'8097690254',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00012',username:'REM00012',login:'REM00012',numero:'12',name:'REMITENTE 11',nombre:'REMITENTE 11',email:'remitente11@gmail.com',telefono:'+1-829 0000011',celular:'+1-829 0000011',active:false,status:'inactive',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00013',username:'REM00013',login:'REM00013',numero:'13',name:'REMITENTE 12',nombre:'REMITENTE 12',email:'remitente12@gmail.com',telefono:'+1-829 0000012',celular:'+1-829 0000012',active:false,status:'inactive',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00014',username:'REM00014',login:'REM00014',numero:'14',name:'REMITENTE 13',nombre:'REMITENTE 13',email:'remitente13@gmail.com',telefono:'+1-829 0000013',celular:'+1-829 0000013',active:false,status:'inactive',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00015',username:'REM00015',login:'REM00015',numero:'15',name:'ARMAND CHARLES',nombre:'ARMAND CHARLES',email:'armand15@gmail.com',telefono:'+50937622453',celular:'+50937622453',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00016',username:'REM00016',login:'REM00016',numero:'16',name:'REMITENTE 15',nombre:'REMITENTE 15',email:'remitente15@gmail.com',telefono:'+1-829 0000015',celular:'+1-829 0000015',active:false,status:'inactive',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00017',username:'REM00017',login:'REM00017',numero:'17',name:'WILSON PAUL',nombre:'WILSON PAUL',email:'wilson@gmail.com',telefono:'8098383588',celular:'8098383588',active:false,status:'inactive',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'},
+  {id:'REM00018',username:'REM00018',login:'REM00018',numero:'18',name:'MONA RENELUS',nombre:'MONA RENELUS',email:'mona@gmail.com',telefono:'8293165955',celular:'8293165955',active:true,status:'active',balances:{DOP:0,HTG:0},commissions:{DOP:0,HTG:0},comisiones:{DOP:0,HTG:0},role:'REMITENTE'}
 ];
 let ADMIN_BAL = {DOP:0,HTG:0};
 let ADMIN_COM = {DOP:0,HTG:0};
@@ -2148,7 +2144,7 @@ console.log('V146 FUNCIONAL - Todos campos dentro foto funcionan - Sugerencia al
 window.renderSecretas = function(){
   const cont = document.getElementById('lista-secretas') || document.getElementById('view-secretas');
   if(!cont) return;
-  const registros = [["ADMINADMIN","ADMINISTRADOR","sendwayoexpress@gmail.com","8297676665","Administrador","Activo"],["AGE00001","HERACE FLEURANVIL","fleuranvil@gmail.com","8292155657","Agente","Activo"],["AGE00002","JULIE OFCEUS","julie@gmail.com","4244461574","Agente","Activo"],["AGE00003","BETINA LINDOR","betina@gmail.com","50944994263","Agente","Activo"],["AGE00004","IDELETTE ISMORIN","idelette@gmail.com","8094995193","Agente","Activo"],["AGE00005","MIKE MYK","mike@gmail.com","8298573044","Agente","Activo"],["AGE00006","HERACE FLEURANVIL","herace91@gmail.com","8292155657","Agente","Activo"],["REM00001","DANIA SAINTHILAIRE","daniasainthilaire@gmail.com","+18493727884","Remitente","Activo"],["REM00002","EDITA ALBERTO","editaalberto@gmail.com","+1-829 829054061","Remitente","Activo"],["REM00003","NENES NENES","nenes@gmail.com","8092703291","Remitente","Activo"],["REM00004","HERACE FLEURANVIL","herace@gmail.com","+18292155657","Remitente","Activo"],["REM00005","WILNORD HILAIRSAINT","wilnordhilairsaint@gmail.com","+1-849 849783078","Remitente","Activo"],["REM00006","JOHN MATLEY EXIL","john06@gmail.com","8096146774","Remitente","Activo"],["REM00007","LIZARA NERLANGE EXIL","lizara@gmail.com","8293555903","Remitente","Activo"],["REM00008","ALANDE SOUFFRANT","alande08@gmail.com","8294581367","Remitente","Activo"],["REM00009","MICHEL Paul","michelpau@gmail.com","+1-829 8292155661","Remitente","Inactivo"],["REM00010","DUPONT Jean","dupontjean@gmail.com","+1-829 8292155662","Remitente","Activo"],["REM00011","MICKENSON SIDNEY","Smikc@gmail.com","8097690254","Remitente","Activo"],["REM00012","REMITENTE 11","remitente11@gmail.com","+1-829 0000011","Remitente","Activo"],["REM00013","REMITENTE 12","remitente12@gmail.com","+1-829 0000012","Remitente","Activo"],["REM00014","REMITENTE 13","remitente13@gmail.com","+1-829 0000013","Remitente","Activo"],["REM00015","ARMAND CHARLES","armand15@gmail.com","+50937622453","Remitente","Activo"],["REM00016","REMITENTE 15","remitente15@gmail.com","+1-829 0000015","Remitente","Activo"],["REM00017","WILSON PAUL","wilson@gmail.com","8098383588","Remitente","Activo"],["REM00018","MONA RENELUS","mona@gmail.com","8293165955","Remitente","Activo"]];
+  const registros = [["ADMINADMIN","ADMINISTRADOR","sendwayoexpress@gmail.com","8297676665","Administrador","Activo"],["AGE00001","HERACE FLEURANVIL","fleuranvil@gmail.com","8292155657","Agente","Activo"],["AGE00002","JULIE OCCELUS","julie@gmail.com","4244461574","Agente","Activo"],["AGE00003","BETINA LINDOR","betina@gmail.com","50944994263","Agente","Activo"],["AGE00004","IDELETTE ISMORIN","idelette@gmail.com","8094995193","Agente","Activo"],["AGE00005","MIKE MYK","mike@gmail.com","8298573044","Agente","Activo"],["AGE00006","HERACE FLEURANVIL","herace91@gmail.com","8292155657","Agente","Activo"],["REM00001","DANIA SAINTHILAIRE","daniasainthilaire@gmail.com","+18493727884","Remitente","Activo"],["REM00002","EDITA ALBERTO","editaalberto@gmail.com","+1-829 829054061","Remitente","Activo"],["REM00003","NENES NENES","nenes@gmail.com","8092703291","Remitente","Activo"],["REM00004","HERACE FLEURANVIL","herace@gmail.com","+18292155657","Remitente","Activo"],["REM00005","WILNORD HILAIRSAINT","wilnordhilairsaint@gmail.com","+1-849 849783078","Remitente","Activo"],["REM00006","JOHN MATLEY EXIL","john06@gmail.com","8096146774","Remitente","Activo"],["REM00007","LIZARA NERLANGE EXIL","lizara@gmail.com","8293555903","Remitente","Activo"],["REM00008","ALANDE SOUFFRANT","alande08@gmail.com","8294581367","Remitente","Activo"],["REM00009","MICHEL Paul","michelpau@gmail.com","+1-829 8292155661","Remitente","Inactivo"],["REM00010","DUPONT Jean","dupontjean@gmail.com","+1-829 8292155662","Remitente","Activo"],["REM00011","MICKENSON SIDNEY","Smikc@gmail.com","8097690254","Remitente","Activo"],["REM00012","REMITENTE 11","remitente11@gmail.com","+1-829 0000011","Remitente","Inactivo"],["REM00013","REMITENTE 12","remitente12@gmail.com","+1-829 0000012","Remitente","Inactivo"],["REM00014","REMITENTE 13","remitente13@gmail.com","+1-829 0000013","Remitente","Inactivo"],["REM00015","ARMAND CHARLES","armand15@gmail.com","+50937622453","Remitente","Activo"],["REM00016","REMITENTE 15","remitente15@gmail.com","+1-829 0000015","Remitente","Inactivo"],["REM00017","WILSON PAUL","wilson@gmail.com","8098383588","Remitente","Inactivo"],["REM00018","MONA RENELUS","mona@gmail.com","8293165955","Remitente","Inactivo"]];
   const filas = registros.map((r,i)=>`
     <tr class="border-b border-orange-100">
       <td class="px-2 py-2 text-center">${i+1}</td>
@@ -6990,13 +6986,14 @@ window.sendwayoShareReceipt=async function(){
     const email=txt(account.email||account.usuario).toLowerCase();
     const name=txt(account.name||account.nombre||'Usuario SENDWAYO');
     const id=txt(account.id||account.codigo||email);
-    const code=txt(account.codigo||account.code||account.staffId||id);
     const phone=txt(account.phone||account.telefono||account.celular);
+    const username=txt(account.username||account.login||id);
+    const active=account.active!==false && norm(account.status||'active')!=='inactive';
     const money=accountMoney(account||{});
     return {
-      id,legacyId:id,accountId:id,staffId:code,code,codigo:code,number:txt(account.numero),
+      id,legacyId:id,accountId:id,username,login:username,number:txt(account.numero),
       name,nombre:name,displayName:name,email,authEmail:email,phone,telefono:phone,celular:phone,
-      role:role==='ADMIN'?'admin':role==='AGENTE'?'agente':'remitente',active:true,status:'active',
+      role:role==='ADMIN'?'admin':role==='AGENTE'?'agente':'remitente',active,status:active?'active':'inactive',
       balance:money.balances.DOP,balanceDOP:money.balances.DOP,balanceRD:money.balances.DOP,balanceHTG:money.balances.HTG,
       commission:money.commissions.DOP,commissionDOP:money.commissions.DOP,commissionHTG:money.commissions.HTG,
       balances:{DOP:money.balances.DOP,HTG:money.balances.HTG},
@@ -9186,7 +9183,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
   const DATA = [
     ["ADMINADMIN","ADMINISTRADOR","sendwayoexpress@gmail.com","8297676665","Administrador","Activo"],
     ["AGE00001","HERACE FLEURANVIL","fleuranvil@gmail.com","8292155657","Agente","Activo"],
-    ["AGE00002","JULIE OFCEUS","julie@gmail.com","4244461574","Agente","Activo"],
+    ["AGE00002","JULIE OCCELUS","julie@gmail.com","4244461574","Agente","Activo"],
     ["AGE00003","BETINA LINDOR","betina@gmail.com","50944994263","Agente","Activo"],
     ["AGE00004","IDELETTE ISMORIN","idelette@gmail.com","8094995193","Agente","Activo"],
     ["AGE00005","MIKE MYK","mike@gmail.com","8298573044","Agente","Activo"],
@@ -9202,12 +9199,12 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
     ["REM00009","MICHEL Paul","michelpau@gmail.com","+1-829 8292155661","Remitente","Inactivo"],
     ["REM00010","DUPONT Jean","dupontjean@gmail.com","+1-829 8292155662","Remitente","Activo"],
     ["REM00011","MICKENSON SIDNEY","Smikc@gmail.com","8097690254","Remitente","Activo"],
-    ["REM00012","REMITENTE 11","remitente11@gmail.com","+1-829 0000011","Remitente","Activo"],
-    ["REM00013","REMITENTE 12","remitente12@gmail.com","+1-829 0000012","Remitente","Activo"],
-    ["REM00014","REMITENTE 13","remitente13@gmail.com","+1-829 0000013","Remitente","Activo"],
+    ["REM00012","REMITENTE 11","remitente11@gmail.com","+1-829 0000011","Remitente","Inactivo"],
+    ["REM00013","REMITENTE 12","remitente12@gmail.com","+1-829 0000012","Remitente","Inactivo"],
+    ["REM00014","REMITENTE 13","remitente13@gmail.com","+1-829 0000013","Remitente","Inactivo"],
     ["REM00015","ARMAND CHARLES","armand15@gmail.com","+50937622453","Remitente","Activo"],
-    ["REM00016","REMITENTE 15","remitente15@gmail.com","+1-829 0000015","Remitente","Activo"],
-    ["REM00017","WILSON PAUL","wilson@gmail.com","8098383588","Remitente","Activo"],
+    ["REM00016","REMITENTE 15","remitente15@gmail.com","+1-829 0000015","Remitente","Inactivo"],
+    ["REM00017","WILSON PAUL","wilson@gmail.com","8098383588","Remitente","Inactivo"],
     ["REM00018","MONA RENELUS","mona@gmail.com","8293165955","Remitente","Activo"]
   ];
   function paint(){
@@ -9235,5 +9232,131 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
     },true);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+})();
+</script>
+
+
+<!-- SENDWAYO V7 TEST BRANCH — RD→HT NATCASH/MONCASH AUTOMATION -->
+<script id="sendwayo-v7-rdht-linked-htg-automation">
+(function(){
+ 'use strict';
+ if(window.__sendwayoV7LinkedHtgAutomationInstalled)return;
+ window.__sendwayoV7LinkedHtgAutomationInstalled=true;
+ const money=n=>Math.round((Number(n)||0)*100)/100;
+ const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+ const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES)?TRANSACCIONES:[]);
+ const admin=()=>{try{return typeof ADMIN!=='undefined'?ADMIN:(window.ADMIN||null)}catch(e){return window.ADMIN||null}};
+ const isRdHaitiCash=t=>{
+   const route=norm([t&&t.ruta,t&&t.rutaExacta,t&&t.tipo].join(' '));
+   return /(?:rd|republica dominicana).*(?:ht|haiti|hati)/.test(route)&&/natcash|narkash|moncash|montcash/.test(route);
+ };
+ const isPending=t=>/^(pendiente|pending)$/i.test(String(t&& (t.estado||t.status)||'').trim());
+ const setAccountValue=(a,kind,cur,value)=>{
+   if(!a)return;
+   const key=kind==='balance'?'balances':'commissions';
+   a[key]=a[key]&&typeof a[key]==='object'?a[key]:{};
+   a[key][cur]=money(value);
+   if(kind==='commission'){a.comisiones=a.comisiones&&typeof a.comisiones==='object'?a.comisiones:a[key];a.comisiones[cur]=money(value);}
+   const flat=kind==='balance'?(cur==='DOP'?'balanceDOP':'balanceHTG'):(cur==='DOP'?'commissionDOP':'commissionHTG');
+   a[flat]=money(value);
+ };
+ function refreshAdminMirrors(a){
+   if(!a)return;
+   try{if(typeof ADMIN_BAL!=='undefined'){ADMIN_BAL.DOP=Number(a.balances&&a.balances.DOP)||0;ADMIN_BAL.HTG=Number(a.balances&&a.balances.HTG)||0;}}catch(e){}
+   try{if(typeof ADMIN_COM!=='undefined'){ADMIN_COM.DOP=Number(a.commissions&&a.commissions.DOP)||0;ADMIN_COM.HTG=Number(a.commissions&&a.commissions.HTG)||0;}}catch(e){}
+ }
+ function createLinkedHaitiTx(parent){
+   const all=txs();
+   const already=all.find(x=>String(x.transaccionOrigenId||x.linkedFromTransactionId||'')===String(parent.id));
+   if(already)return {ok:true,existing:true,tx:already};
+   const adminAccount=admin();
+   if(!adminAccount)throw new Error('No se encontró la cuenta administrativa para la operación HTG.');
+   const amount=money((Number(parent.montoValue)||0)-(Number(parent.fee)||0))*2.10;
+   const gross=money(amount);
+   if(!(gross>0))throw new Error('El monto convertido a HTG no es válido.');
+   const adminBalance=Number((adminAccount.balances&&adminAccount.balances.HTG) ?? adminAccount.balanceHTG ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
+   if(adminBalance+0.0001<gross)throw new Error('La operación original no puede aprobarse: Administración no dispone de '+gross.toFixed(2)+' HTG para crear la operación Haití→Haití.');
+   const commission=money(gross*0.03);
+   const tx={
+     id:'SW-HTHT-AUTO-'+String(parent.id),
+     fecha:new Date().toLocaleString('es-DO'),
+     timestamp:Date.now(),
+     tipo:'Envío',
+     tipoOriginal:'Automática RD→HT',
+     ruta:/moncash|montcash/.test(norm(parent.ruta+' '+parent.rutaExacta))?'HT → HT MonCash':'HT → HT NatCash',
+     rutaExacta:'Operación Haití → Haití generada automáticamente al aprobar '+parent.id,
+     monto:gross.toFixed(2)+' HTG',
+     montoValue:gross,
+     amount:gross,
+     moneda:'HTG',
+     currency:'HTG',
+     esHT:true,
+     fee:commission,
+     comisionAdminAplicada:commission,
+     comisionAplicada:true,
+     feeText:'Comisión administrativa 3%: '+commission.toFixed(2)+' HTG',
+     neto:gross,
+     montoRecibido:gross.toFixed(2)+' HTG',
+     beneficiario:parent.beneficiario||'',
+     beneficiarioTel:parent.beneficiarioTel||'',
+     estado:'Pendiente',
+     creadorId:'ADMINADMIN',
+     remitenteId:'ADMINADMIN',
+     cuentaOrigenId:'ADMINADMIN',
+     cuentaOrigenRol:'ADMIN',
+     debitAccountId:'ADMINADMIN',
+     fondosDebitados:true,
+     fondosDevueltos:false,
+     reservaAplicada:false,
+     transaccionOrigenId:String(parent.id),
+     linkedFromTransactionId:String(parent.id),
+     automatizacionRDHT:true,
+     comisionAdministracionRegistrada:true
+   };
+   setAccountValue(adminAccount,'balance','HTG',adminBalance-gross);
+   const commissionBalance=Number((adminAccount.commissions&&adminAccount.commissions.HTG) ?? adminAccount.comisionHTG ?? (typeof ADMIN_COM!=='undefined'?ADMIN_COM.HTG:0))||0;
+   setAccountValue(adminAccount,'commission','HTG',commissionBalance+commission);
+   refreshAdminMirrors(adminAccount);
+   all.unshift(tx);
+   if(typeof window.sendwayoPersistTx==='function')window.sendwayoPersistTx();
+   if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();
+   if(typeof window.renderPrincipal==='function')window.renderPrincipal();
+   window.dispatchEvent(new CustomEvent('sendwayo:v7-linked-htg-created',{detail:{sourceId:parent.id,transactionId:tx.id,amount:gross,commission}}));
+   return {ok:true,existing:false,tx};
+ }
+ const oldApprove=window.aprobar;
+ if(typeof oldApprove==='function'&&!oldApprove.__sendwayoLinkedHtg){
+   const wrapped=function(id){
+     const parent=txs().find(x=>String(x.id)===String(id));
+     if(!parent)return oldApprove.apply(this,arguments);
+     if(!isPending(parent)||!isRdHaitiCash(parent))return oldApprove.apply(this,arguments);
+     const duplicate=txs().some(x=>String(x.transaccionOrigenId||x.linkedFromTransactionId||'')===String(parent.id));
+     if(!duplicate){
+       const a=admin();
+       const bal=Number((a&&a.balances&&a.balances.HTG) ?? (a&&a.balanceHTG) ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
+       const required=money((Number(parent.montoValue)||0)-(Number(parent.fee)||0))*2.10;
+       if(bal+0.0001<required){window.alert('No se aprobó: la cuenta administrativa no tiene fondos HTG suficientes para crear la segunda operación.');return false;}
+     }
+     const result=oldApprove.apply(this,arguments);
+     if(!/^(aprobado|aprobada|approved)$/i.test(String(parent.estado||parent.status||'')))return result;
+     try{
+       const created=createLinkedHaitiTx(parent);
+       window.alert(created.existing?'La operación Haití→Haití ya estaba registrada.':'Aprobación completada: se creó la operación Haití→Haití pendiente, se descontó el balance HTG de Administración y se registró el 3% en su comisión.');
+     }catch(error){
+       console.error('[SENDWAYO V7 linked HTG]',error);
+       window.alert('La operación RD→HT fue aprobada, pero no se pudo completar la segunda operación automática. No realice otro débito manual. Motivo: '+(error&&error.message||'error'));
+     }
+     return result;
+   };
+   wrapped.__sendwayoLinkedHtg=true;
+   window.aprobar=wrapped;
+ }
+ // La tarifa antigua por rango queda desactivada en el cálculo de todas las rutas Haití→Haití.
+ window.addEventListener('load',function(){
+   document.querySelectorAll('#sendwayo-main-sidebar button').forEach(function(b){
+     if(/tarifas locales hait[ií]/i.test(b.textContent||''))b.textContent='🇭🇹 Haití → Haití · 3%';
+   });
+ });
+ window.sendwayoV7LinkedHtgStatus='Instalado en rama de pruebas; requiere prueba de aprobación, sincronización Firebase y saldos antes de publicar.';
 })();
 </script>
