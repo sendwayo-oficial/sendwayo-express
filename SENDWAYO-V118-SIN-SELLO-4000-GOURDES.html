@@ -1561,7 +1561,7 @@ window.guardarRetiroCompacto = function(){
   let montoRecibido = '';
   
   if(ruta.includes('HT → HT')){
-    fee = 25;
+    fee = Math.round(monto * 0.03 * 100) / 100;
     neto = monto - fee;
     montoRecibido = neto.toFixed(2) + ' HTG - 1975 si 2000';
   } else {
@@ -1977,7 +1977,7 @@ window.calcularEnvio = function(){
   
   if(ruta.includes('HT → HT') || ruta.includes('HT->HT')){
     // HAITI A HAITI: 2000 gourdes, cobra 25, 1975 comprobante
-    fee = 25;
+    fee = Math.round(monto * 0.03 * 100) / 100;
     neto = monto - fee;
     aRecibirValor = neto;
     aRecibir = neto.toFixed(2) + ' HTG - 1975 si 2000 - Comprobante 1975';
@@ -2046,7 +2046,7 @@ window.calcularRetiro = function(){
   let aRecibir = '';
   
   if(ruta.includes('HT → HT')){
-    fee = 25;
+    fee = Math.round(monto * 0.03 * 100) / 100;
     neto = monto - fee;
     aRecibir = neto.toFixed(2) + ' HTG - 1975 si 2000 comprobante';
   } else if(ruta.includes('RD → HT')){
@@ -2335,7 +2335,7 @@ window.ajustarBalance = function(id){
 
 // Haiti-Haiti tabla: 2000 gourdes, 25 fee, neto 1975 comprobante - monto recibido 1975 gourde haitianos
 window.calcularHaitiHaiti = function(monto){
-  const fee = 25;
+  const fee = Math.round(monto * 0.03 * 100) / 100;
   const neto = monto - fee;
   return {fee:fee, neto:neto, recibido:neto, comprobante: neto + ' gourde haitianos - 1975 si 2000'};
 }
