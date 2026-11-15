@@ -59,9 +59,9 @@ jobs:
           grep -q 'createUserWithEmailAndPassword' SENDWAYO-V7-FAST-ENTRY.html
           grep -q 'sendPasswordResetEmail' SENDWAYO-V7-FAST-ENTRY.html
           grep -q "const ADMIN_EMAIL='ideletteismorin@gmail.com'" SENDWAYO-V7-FAST-ENTRY.html
-grep -q "addAliases(ADMIN_EMAIL,['ADMINADMIN','admin-administrador','sendwayoexpress@gmail.com','ideletteismorin@gmail.com'])" SENDWAYO-V7-FAST-ENTRY.html
+          grep -q "addAliases(ADMIN_EMAIL,['ADMINADMIN','admin-administrador','sendwayoexpress@gmail.com','ideletteismorin@gmail.com'])" SENDWAYO-V7-FAST-ENTRY.html
           grep -q "window.SENDWAYO_REQUESTS=rows" SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
-grep -q "database.ref(ROOT+'/requests/'+id).set(row)" SENDWAYO-V7-FAST-ENTRY.html
+          grep -q "database.ref(ROOT+'/requests/'+id).set(row)" SENDWAYO-V7-FAST-ENTRY.html
           grep -q 'sendwayo_express_v2/users/' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
           grep -q "ROOT+'/requests'" SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
           grep -q 'balanceDOP' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
