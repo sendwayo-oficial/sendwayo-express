@@ -699,7 +699,7 @@ function renderPrincipal(){
       <td class="p-3 font-bold">${num}</td>
       <td class="p-3"><div class="font-bold">${t.id}</div><div class="text-[9px] text-gray-500">${t.fecha}</div></td>
       <td class="p-3"><span class="bg-blue-50 text-[#1e3a5f] px-2 py-1 rounded-full text-[9px] font-bold">${t.ruta}</span><div class="text-[9px] text-gray-500 mt-1">${t.rutaExacta}</div></td>
-      <td class="p-3"><div class="font-bold">${t.monto}</div><div class="text-[9px] text-orange-600">${t.feeText}</div></td>
+      <td class="p-3"><div class="font-bold">${t.monto}</div>${t.estado==="Pendiente" && /RD\\s*(?:→|->)\\s*HT/i.test(String(t.ruta||"")) ? `<div class="text-[10px] font-bold text-emerald-700 mt-1">Pendiente de recibir: ${t.montoRecibido||"Por calcular"}</div>` : ""}<div class="text-[9px] text-orange-600">${t.feeText||""}</div></td>
       <td class="p-3"><span class="px-3 py-1 rounded-full text-[9px] font-bold ${estadoClass}">${t.estado}</span></td>
       <td class="p-3"><div class="flex flex-wrap gap-1">${acciones}</div></td>
     `;
