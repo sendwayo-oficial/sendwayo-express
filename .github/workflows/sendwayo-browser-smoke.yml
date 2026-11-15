@@ -45,8 +45,8 @@ jobs:
           node <<'NODE'
           const fs=require('node:fs');
           const entry=fs.readFileSync('SENDWAYO-V7-FAST-ENTRY.html','utf8');
-          if(!entry.includes("const ADMIN_EMAIL='sendwayoexpress@gmail.com'") ||
-             !entry.includes("addAliases(ADMIN_EMAIL,['admin-administrador','ideletteismorin@gmail.com'") ||
+          if(!entry.includes("const ADMIN_EMAIL='ideletteismorin@gmail.com'") ||
+             !entry.includes("addAliases(ADMIN_EMAIL,['ADMINADMIN','admin-administrador','sendwayoexpress@gmail.com','ideletteismorin@gmail.com'") ||
              !entry.includes("'ADMIN-ADMINISTRADOR'")) {
             throw new Error('La pantalla pública no vincula los identificadores administrativos al correo real de Firebase.');
           }
@@ -83,9 +83,9 @@ jobs:
               }
               if(!deployed)throw new Error('La URL pública no está entregando el logo oficial original.');
 
-              await page.locator('#login-email').fill('sendwayoexpress@gmail.com');
+              await page.locator('#login-email').fill('ADMINADMIN');
               await page.locator('#login-password').fill('solo-prueba-de-interfaz');
-              if(await page.locator('#login-email').inputValue()!=='sendwayoexpress@gmail.com')throw new Error('El usuario no acepta escritura.');
+              if(await page.locator('#login-email').inputValue()!=='ADMINADMIN')throw new Error('El usuario no acepta escritura.');
               await page.locator('#show-password').click();
               if(await page.locator('#login-password').getAttribute('type')!=='text')throw new Error('Ver contraseña no responde.');
               await page.locator('#show-password').click();
