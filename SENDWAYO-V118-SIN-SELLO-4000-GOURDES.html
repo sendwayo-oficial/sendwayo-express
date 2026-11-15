@@ -1430,11 +1430,11 @@ window.calcularEnvio = function(){
   let tasa = 'Tasa 2.10';
   
   if(ruta.includes('HT → HT') || ruta.includes('HT->HT')){
-    // HAITI A HAITI: 2000 gourdes, cobra 25 pesos, monto a recibir 1975 - comprobante 1975
-    fee = 25;
+    // Haití → Haití NatCash/MonCash: comisión única del 3%.
+    fee = Math.round(monto * 0.03 * 100) / 100;
     neto = monto - fee;
-    aRecibir = neto.toFixed(2) + ' HTG - 1975 si 2000';
-    tasa = 'Haiti-Haiti fee 25 - 2000 = 1975 comprobante';
+    aRecibir = neto.toFixed(2) + ' HTG';
+    tasa = 'Comisión Haití → Haití: 3%';
   } else if(ruta.includes('RD → HT') || ruta.includes('RD->HT')){
     fee = Math.round(monto*0.08);
     neto = monto - fee;
@@ -1466,9 +1466,9 @@ window.calcularRetiro = function(){
   let aRecibir = '';
   
   if(ruta.includes('HT → HT') || ruta.includes('HT->HT')){
-    fee = 25;
+    fee = Math.round(monto * 0.03 * 100) / 100;
     neto = monto - fee;
-    aRecibir = neto.toFixed(2) + ' HTG - 1975 si 2000 - comprobante 1975';
+    aRecibir = neto.toFixed(2) + ' HTG';
   } else {
     fee = Math.round(monto*0.08);
     neto = monto - fee;
@@ -1496,8 +1496,8 @@ window.guardarEnvioCompacto = function(){
   let moneda = 'DOP';
   
   if(ruta.includes('HT → HT') || ruta.includes('HT->HT')){
-    // HAITI A HAITI 2000 gourdes = 25 fee = 1975 comprobante - por favor por favor y por favor
-    fee = 25;
+    // Haití → Haití NatCash/MonCash: comisión única del 3%.
+    fee = Math.round(monto * 0.03 * 100) / 100;
     neto = monto - fee;
     montoRecibido = neto.toFixed(2) + ' HTG';
     moneda = 'HTG';
@@ -1529,7 +1529,7 @@ window.guardarEnvioCompacto = function(){
     montoValue:monto,
     fee:fee,
     neto:neto,
-    feeText:'Fee: '+fee+' Neto: '+neto + (ruta.includes('HT → HT')?' - Haiti-Haiti 25 = 1975':''),
+    feeText:'Fee: '+fee+' Neto: '+neto,
     moneda:moneda,
     beneficiario:beneficiarioFinal,
     beneficiarioTel:telFinal,
