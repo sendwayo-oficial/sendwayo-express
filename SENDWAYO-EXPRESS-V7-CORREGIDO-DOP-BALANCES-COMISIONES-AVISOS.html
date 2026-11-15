@@ -9277,7 +9277,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
    const amount=money((Number(parent.montoValue)||0)-(Number(parent.fee)||0))*2.10;
    const gross=money(amount);
    if(!(gross>0))throw new Error('El monto convertido a HTG no es válido.');
-   const adminBalance=Number(adminAccount.balances&&adminAccount.balances.HTG ?? adminAccount.balanceHTG ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
+   const adminBalance=Number((adminAccount.balances&&adminAccount.balances.HTG) ?? adminAccount.balanceHTG ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
    if(adminBalance+0.0001<gross)throw new Error('La operación original no puede aprobarse: Administración no dispone de '+gross.toFixed(2)+' HTG para crear la operación Haití→Haití.');
    const commission=money(gross*0.03);
    const tx={
@@ -9317,7 +9317,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
      comisionAdministracionRegistrada:true
    };
    setAccountValue(adminAccount,'balance','HTG',adminBalance-gross);
-   const commissionBalance=Number(adminAccount.commissions&&adminAccount.commissions.HTG ?? adminAccount.comisionHTG ?? (typeof ADMIN_COM!=='undefined'?ADMIN_COM.HTG:0))||0;
+   const commissionBalance=Number((adminAccount.commissions&&adminAccount.commissions.HTG) ?? adminAccount.comisionHTG ?? (typeof ADMIN_COM!=='undefined'?ADMIN_COM.HTG:0))||0;
    setAccountValue(adminAccount,'commission','HTG',commissionBalance+commission);
    refreshAdminMirrors(adminAccount);
    all.unshift(tx);
@@ -9336,7 +9336,7 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
      const duplicate=txs().some(x=>String(x.transaccionOrigenId||x.linkedFromTransactionId||'')===String(parent.id));
      if(!duplicate){
        const a=admin();
-       const bal=Number(a&&a.balances&&a.balances.HTG ?? a&&a.balanceHTG ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
+       const bal=Number((a&&a.balances&&a.balances.HTG) ?? (a&&a.balanceHTG) ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
        const required=money((Number(parent.montoValue)||0)-(Number(parent.fee)||0))*2.10;
        if(bal+0.0001<required){window.alert('No se aprobó: la cuenta administrativa no tiene fondos HTG suficientes para crear la segunda operación.');return false;}
      }
