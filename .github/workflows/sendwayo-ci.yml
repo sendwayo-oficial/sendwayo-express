@@ -63,7 +63,7 @@ grep -q "addAliases(ADMIN_EMAIL,['ADMINADMIN','admin-administrador','sendwayoexp
           grep -q "window.SENDWAYO_REQUESTS=rows" SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
 grep -q "database.ref(ROOT+'/requests/'+id).set(row)" SENDWAYO-V7-FAST-ENTRY.html
           grep -q 'sendwayo_express_v2/users/' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
-          grep -q 'sendwayo_express_v2/requests/' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
+          grep -q "ROOT+'/requests'" SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
           grep -q 'balanceDOP' SENDWAYO-EXPRESS-V7-CORREGIDO-DOP-BALANCES-COMISIONES-AVISOS.html
           echo "SENDWAYO secure registration, admin approval and Firebase identity markers OK"
       - name: Run V7 regression tests
