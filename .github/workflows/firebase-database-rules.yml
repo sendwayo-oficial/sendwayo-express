@@ -115,3 +115,5 @@ jobs:
         if: always()
         shell: bash
         run: rm -f "$RUNNER_TEMP/firebase-service-account.json"
+
+# 2026-11-15: retrigger deployment after correcting the Realtime Database request rules to keep $id scoped to its child node.
