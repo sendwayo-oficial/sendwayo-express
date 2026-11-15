@@ -9237,3 +9237,129 @@ body.sendwayo-authenticated img:not([src*="sendwayo-logo-real.jpg"]){display:non
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
 })();
 </script>
+
+
+<!-- SENDWAYO V7 TEST BRANCH — RD→HT NATCASH/MONCASH AUTOMATION -->
+<script id="sendwayo-v7-rdht-linked-htg-automation">
+(function(){
+ 'use strict';
+ if(window.__sendwayoV7LinkedHtgAutomationInstalled)return;
+ window.__sendwayoV7LinkedHtgAutomationInstalled=true;
+ const money=n=>Math.round((Number(n)||0)*100)/100;
+ const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+ const txs=()=>Array.isArray(window.TRANSACCIONES)?window.TRANSACCIONES:(typeof TRANSACCIONES!=='undefined'&&Array.isArray(TRANSACCIONES)?TRANSACCIONES:[]);
+ const admin=()=>{try{return typeof ADMIN!=='undefined'?ADMIN:(window.ADMIN||null)}catch(e){return window.ADMIN||null}};
+ const isRdHaitiCash=t=>{
+   const route=norm([t&&t.ruta,t&&t.rutaExacta,t&&t.tipo].join(' '));
+   return /(?:rd|republica dominicana).*(?:ht|haiti|hati)/.test(route)&&/natcash|narkash|moncash|montcash/.test(route);
+ };
+ const isPending=t=>/^(pendiente|pending)$/i.test(String(t&& (t.estado||t.status)||'').trim());
+ const setAccountValue=(a,kind,cur,value)=>{
+   if(!a)return;
+   const key=kind==='balance'?'balances':'commissions';
+   a[key]=a[key]&&typeof a[key]==='object'?a[key]:{};
+   a[key][cur]=money(value);
+   if(kind==='commission'){a.comisiones=a.comisiones&&typeof a.comisiones==='object'?a.comisiones:a[key];a.comisiones[cur]=money(value);}
+   const flat=kind==='balance'?(cur==='DOP'?'balanceDOP':'balanceHTG'):(cur==='DOP'?'commissionDOP':'commissionHTG');
+   a[flat]=money(value);
+ };
+ function refreshAdminMirrors(a){
+   if(!a)return;
+   try{if(typeof ADMIN_BAL!=='undefined'){ADMIN_BAL.DOP=Number(a.balances&&a.balances.DOP)||0;ADMIN_BAL.HTG=Number(a.balances&&a.balances.HTG)||0;}}catch(e){}
+   try{if(typeof ADMIN_COM!=='undefined'){ADMIN_COM.DOP=Number(a.commissions&&a.commissions.DOP)||0;ADMIN_COM.HTG=Number(a.commissions&&a.commissions.HTG)||0;}}catch(e){}
+ }
+ function createLinkedHaitiTx(parent){
+   const all=txs();
+   const already=all.find(x=>String(x.transaccionOrigenId||x.linkedFromTransactionId||'')===String(parent.id));
+   if(already)return {ok:true,existing:true,tx:already};
+   const adminAccount=admin();
+   if(!adminAccount)throw new Error('No se encontró la cuenta administrativa para la operación HTG.');
+   const amount=money((Number(parent.montoValue)||0)-(Number(parent.fee)||0))*2.10;
+   const gross=money(amount);
+   if(!(gross>0))throw new Error('El monto convertido a HTG no es válido.');
+   const adminBalance=Number(adminAccount.balances&&adminAccount.balances.HTG ?? adminAccount.balanceHTG ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
+   if(adminBalance+0.0001<gross)throw new Error('La operación original no puede aprobarse: Administración no dispone de '+gross.toFixed(2)+' HTG para crear la operación Haití→Haití.');
+   const commission=money(gross*0.03);
+   const tx={
+     id:'SW-HTHT-AUTO-'+String(parent.id),
+     fecha:new Date().toLocaleString('es-DO'),
+     timestamp:Date.now(),
+     tipo:'Envío',
+     tipoOriginal:'Automática RD→HT',
+     ruta:/moncash|montcash/.test(norm(parent.ruta+' '+parent.rutaExacta))?'HT → HT MonCash':'HT → HT NatCash',
+     rutaExacta:'Operación Haití → Haití generada automáticamente al aprobar '+parent.id,
+     monto:gross.toFixed(2)+' HTG',
+     montoValue:gross,
+     amount:gross,
+     moneda:'HTG',
+     currency:'HTG',
+     esHT:true,
+     fee:commission,
+     comisionAdminAplicada:commission,
+     comisionAplicada:true,
+     feeText:'Comisión administrativa 3%: '+commission.toFixed(2)+' HTG',
+     neto:gross,
+     montoRecibido:gross.toFixed(2)+' HTG',
+     beneficiario:parent.beneficiario||'',
+     beneficiarioTel:parent.beneficiarioTel||'',
+     estado:'Pendiente',
+     creadorId:'ADMINADMIN',
+     remitenteId:'ADMINADMIN',
+     cuentaOrigenId:'ADMINADMIN',
+     cuentaOrigenRol:'ADMIN',
+     debitAccountId:'ADMINADMIN',
+     fondosDebitados:true,
+     fondosDevueltos:false,
+     reservaAplicada:false,
+     transaccionOrigenId:String(parent.id),
+     linkedFromTransactionId:String(parent.id),
+     automatizacionRDHT:true,
+     comisionAdministracionRegistrada:true
+   };
+   setAccountValue(adminAccount,'balance','HTG',adminBalance-gross);
+   const commissionBalance=Number(adminAccount.commissions&&adminAccount.commissions.HTG ?? adminAccount.comisionHTG ?? (typeof ADMIN_COM!=='undefined'?ADMIN_COM.HTG:0))||0;
+   setAccountValue(adminAccount,'commission','HTG',commissionBalance+commission);
+   refreshAdminMirrors(adminAccount);
+   all.unshift(tx);
+   if(typeof window.sendwayoPersistTx==='function')window.sendwayoPersistTx();
+   if(typeof window.sendwayoUpdateViews==='function')window.sendwayoUpdateViews();
+   if(typeof window.renderPrincipal==='function')window.renderPrincipal();
+   window.dispatchEvent(new CustomEvent('sendwayo:v7-linked-htg-created',{detail:{sourceId:parent.id,transactionId:tx.id,amount:gross,commission}}));
+   return {ok:true,existing:false,tx};
+ }
+ const oldApprove=window.aprobar;
+ if(typeof oldApprove==='function'&&!oldApprove.__sendwayoLinkedHtg){
+   const wrapped=function(id){
+     const parent=txs().find(x=>String(x.id)===String(id));
+     if(!parent)return oldApprove.apply(this,arguments);
+     if(!isPending(parent)||!isRdHaitiCash(parent))return oldApprove.apply(this,arguments);
+     const duplicate=txs().some(x=>String(x.transaccionOrigenId||x.linkedFromTransactionId||'')===String(parent.id));
+     if(!duplicate){
+       const a=admin();
+       const bal=Number(a&&a.balances&&a.balances.HTG ?? a&&a.balanceHTG ?? (typeof ADMIN_BAL!=='undefined'?ADMIN_BAL.HTG:0))||0;
+       const required=money((Number(parent.montoValue)||0)-(Number(parent.fee)||0))*2.10;
+       if(bal+0.0001<required){window.alert('No se aprobó: la cuenta administrativa no tiene fondos HTG suficientes para crear la segunda operación.');return false;}
+     }
+     const result=oldApprove.apply(this,arguments);
+     if(!/^(aprobado|aprobada|approved)$/i.test(String(parent.estado||parent.status||'')))return result;
+     try{
+       const created=createLinkedHaitiTx(parent);
+       window.alert(created.existing?'La operación Haití→Haití ya estaba registrada.':'Aprobación completada: se creó la operación Haití→Haití pendiente, se descontó el balance HTG de Administración y se registró el 3% en su comisión.');
+     }catch(error){
+       console.error('[SENDWAYO V7 linked HTG]',error);
+       window.alert('La operación RD→HT fue aprobada, pero no se pudo completar la segunda operación automática. No realice otro débito manual. Motivo: '+(error&&error.message||'error'));
+     }
+     return result;
+   };
+   wrapped.__sendwayoLinkedHtg=true;
+   window.aprobar=wrapped;
+ }
+ // La tarifa antigua por rango queda desactivada en el cálculo de todas las rutas Haití→Haití.
+ window.addEventListener('load',function(){
+   document.querySelectorAll('#sendwayo-main-sidebar button').forEach(function(b){
+     if(/tarifas locales hait[ií]/i.test(b.textContent||''))b.textContent='🇭🇹 Haití → Haití · 3%';
+   });
+ });
+ window.sendwayoV7LinkedHtgStatus='Instalado en rama de pruebas; requiere prueba de aprobación, sincronización Firebase y saldos antes de publicar.';
+})();
+</script>
